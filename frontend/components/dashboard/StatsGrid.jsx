@@ -127,14 +127,14 @@ function StatsGrid({
   };
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className={`relative overflow-hidden rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${statStyles[stat.color].card}`}
+            className={`relative overflow-hidden rounded-xl border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:rounded-2xl sm:p-4 ${statStyles[stat.color].card}`}
           >
             <div
-              className={`mb-3 grid h-9 w-9 place-items-center rounded-xl text-base ${statStyles[stat.color].icon}`}
+              className={`mb-2 grid h-8 w-8 place-items-center rounded-lg text-sm sm:mb-3 sm:h-9 sm:w-9 sm:rounded-xl sm:text-base ${statStyles[stat.color].icon}`}
             >
               {stat.icon}
             </div>
@@ -142,7 +142,7 @@ function StatsGrid({
               <span className="block text-[10px] font-semibold text-slate-500">
                 {stat.label}
               </span>
-              <strong className="mt-1 block font-cairo text-2xl font-extrabold text-slate-900">
+              <strong className="mt-1 block font-cairo text-xl font-extrabold text-slate-900 sm:text-2xl">
                 {stat.value}
               </strong>
               <small className="mt-1 block truncate text-[9px] text-slate-400">
@@ -154,7 +154,7 @@ function StatsGrid({
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
@@ -177,7 +177,7 @@ function StatsGrid({
             </div>
           </div>
           <div
-            className="mt-6 grid min-h-40 grid-cols-7 items-end gap-2"
+            className="mt-4 grid min-h-36 grid-cols-7 items-end gap-1 sm:mt-6 sm:min-h-40 sm:gap-2"
             aria-label="مخطط الحضور والغياب خلال الأسبوع"
           >
             {attendanceDays.map((day) => {
@@ -214,7 +214,7 @@ function StatsGrid({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
@@ -229,9 +229,9 @@ function StatsGrid({
             </div>
             <span className="text-[10px] text-slate-400">{sessionDate}</span>
           </div>
-          <div className="flex min-h-32 items-center justify-center gap-6">
+          <div className="flex min-h-28 items-center justify-center gap-3 sm:min-h-32 sm:gap-6">
             <div
-              className="relative grid h-32 w-32 place-content-center rounded-full text-center transition-all duration-700 ease-out after:absolute after:inset-2.5 after:rounded-full after:bg-white"
+              className="relative grid h-28 w-28 place-content-center rounded-full text-center transition-all duration-700 ease-out after:absolute after:inset-2.5 after:rounded-full after:bg-white sm:h-32 sm:w-32"
               style={{
                 background: `conic-gradient(#38a169 ${attendanceRate}%, #edf1f4 0)`,
               }}

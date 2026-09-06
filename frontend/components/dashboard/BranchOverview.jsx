@@ -48,7 +48,7 @@ export default function BranchOverview({
 
           return (
             <article
-              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-red-200 hover:shadow-md"
+              className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-red-200 hover:shadow-md sm:p-3"
               key={branch._id}
             >
               <button
@@ -72,7 +72,7 @@ export default function BranchOverview({
                 </span>
               </button>
 
-              <div className="mt-3 grid grid-cols-4 gap-1 border-y border-slate-100 py-2.5 text-center">
+              <div className="mt-2 grid grid-cols-4 gap-1 border-y border-slate-100 py-2 text-center">
                 <div>
                   <strong className="block text-sm font-extrabold text-green-600">
                     {present}

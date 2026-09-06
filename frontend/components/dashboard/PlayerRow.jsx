@@ -43,7 +43,7 @@ function PlayerRow({
     }
   }
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-slate-100 p-4 last:border-b-0 lg:grid-cols-[2.2fr_0.7fr_1fr_1.7fr_1.15fr_0.35fr] lg:items-center lg:gap-4 lg:px-6 lg:py-3">
+    <div className="mb-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm last:mb-0 lg:mb-0 lg:grid-cols-[2.2fr_0.7fr_1fr_1.7fr_1.15fr_0.35fr] lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:border-b lg:border-slate-100 lg:px-6 lg:py-3 lg:shadow-none">
       {/* اسم اللاعب */}
       <div className="col-span-1 flex min-w-0 items-center gap-2 lg:col-auto">
         <input
@@ -55,10 +55,10 @@ function PlayerRow({
         />
         <button
           type="button"
-          className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 text-right"
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-2 text-right"
           onClick={onOpen}
         >
-          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-linear-to-br from-red-100 to-red-200 text-lg font-bold text-red-700 ring-2 ring-white shadow-sm">
+          <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-linear-to-br from-red-100 to-red-200 text-base font-bold text-red-700 ring-2 ring-white shadow-sm sm:h-11 sm:w-11 sm:text-lg">
             {player.photo ? (
               <img src={player.photo} alt="" />
             ) : (
@@ -77,7 +77,7 @@ function PlayerRow({
       </div>
 
       {/* العمر والفرع */}
-      <div className="col-span-2 flex items-center gap-3 text-[11px] lg:col-auto lg:contents">
+      <div className="col-span-2 flex items-center gap-3 border-t border-slate-100 pt-2 text-[11px] lg:col-auto lg:contents lg:border-0 lg:pt-0">
         <span className="shrink-0 font-semibold text-slate-900 lg:col-start-2">
           {player.age}
           <span className="font-normal text-slate-400"> سنة</span>
@@ -91,7 +91,7 @@ function PlayerRow({
       <div className="col-span-1 grid grid-cols-2 gap-1.5 lg:col-auto lg:flex">
         <button
           type="button"
-          className={`min-h-10 rounded-lg px-2 text-[11px] font-bold transition ${present ? "bg-green-100 text-green-700 ring-1 ring-green-200" : "bg-slate-50 text-slate-500 hover:bg-green-50"}`}
+          className={`min-h-9 rounded-lg px-1.5 text-[10px] font-bold transition sm:min-h-10 sm:px-2 sm:text-[11px] ${present ? "bg-green-100 text-green-700 ring-1 ring-green-200" : "bg-slate-50 text-slate-500 hover:bg-green-50"}`}
           disabled={Boolean(attendanceBusy)}
           onClick={() => updateAttendance("present")}
         >
@@ -99,7 +99,7 @@ function PlayerRow({
         </button>
         <button
           type="button"
-          className={`min-h-10 rounded-lg px-2 text-[11px] font-bold transition ${absent ? "bg-red-100 text-red-700 ring-1 ring-red-200" : "bg-slate-50 text-slate-500 hover:bg-red-50"}`}
+          className={`min-h-9 rounded-lg px-1.5 text-[10px] font-bold transition sm:min-h-10 sm:px-2 sm:text-[11px] ${absent ? "bg-red-100 text-red-700 ring-1 ring-red-200" : "bg-slate-50 text-slate-500 hover:bg-red-50"}`}
           disabled={Boolean(attendanceBusy)}
           onClick={() => updateAttendance("absent")}
         >
@@ -110,7 +110,7 @@ function PlayerRow({
       {/* الدفع */}
       <button
         type="button"
-        className={`col-span-1 min-h-10 rounded-lg px-2 text-[11px] font-bold transition lg:col-auto ${paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-red-50 text-red-600 hover:bg-red-100"}`}
+        className={`col-span-1 min-h-9 rounded-lg px-1.5 text-[10px] font-bold transition sm:min-h-10 sm:px-2 sm:text-[11px] lg:col-auto ${paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-red-50 text-red-600 hover:bg-red-100"}`}
         disabled={paymentBusy}
         onClick={updatePayment}
       >

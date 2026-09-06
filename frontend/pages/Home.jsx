@@ -348,19 +348,19 @@ export default function Home() {
     <main className="min-h-screen bg-slate-100 text-slate-900" dir="rtl">
       <Header />
 
-      <section className="mx-auto w-full max-w-360 px-4 py-6 sm:px-8 sm:py-8">
+      <section className="mx-auto w-full max-w-360 px-3 py-4 sm:px-8 sm:py-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-cairo text-2xl font-extrabold text-slate-900">
+            <h2 className="font-cairo text-xl font-extrabold text-slate-900 sm:text-2xl">
               لوحة التحكم
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-xs leading-6 text-slate-500 sm:text-sm">
               بيانات <strong>{branch}</strong> · تابع لاعبي الأكاديمية وحضورهم
               ومدفوعاتهم من مكان واحد.
             </p>
           </div>
           <button
-            className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-100 transition hover:-translate-y-0.5 hover:bg-red-700"
+            className="w-full rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-100 transition hover:-translate-y-0.5 hover:bg-red-700 sm:w-auto"
             onClick={() => setShowForm(true)}
           >
             <span>＋</span> إضافة لاعب
@@ -388,10 +388,10 @@ export default function Home() {
 
         <div
           ref={playerListRef}
-          className="scroll-mt-24 mt-8 flex items-center justify-between gap-3"
+          className="mt-7 flex flex-wrap items-center justify-between gap-3 scroll-mt-20"
         >
           <div className="flex items-center gap-2">
-            <h2 className="font-cairo text-lg font-bold text-slate-900">
+            <h2 className="font-cairo text-base font-bold text-slate-900 sm:text-lg">
               قائمة اللاعبين
             </h2>
             <span className="mr-2 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-600">
@@ -407,14 +407,14 @@ export default function Home() {
             )}
           </div>
           <button
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-red-200 hover:text-red-600"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-red-200 hover:text-red-600 sm:text-[11px]"
             onClick={() => setShowForm(true)}
           >
             ＋ تسجيل لاعب
           </button>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:flex-row lg:items-center">
+        <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm lg:flex-row lg:items-center lg:gap-3 lg:p-3">
           <div className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-red-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-100 lg:w-72">
             <span className="text-lg text-slate-400">⌕</span>
             <input
@@ -491,7 +491,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-3 grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-2">
+        <div className="mt-2 grid gap-2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm sm:grid-cols-2 sm:gap-3 sm:p-3">
           <label className="grid grid-cols-[auto_1fr] items-center gap-2 text-xs font-bold text-slate-500">
             📅 تاريخ الحصة
             <input
@@ -516,7 +516,7 @@ export default function Home() {
           </label>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm sm:gap-2 sm:p-3">
           <span className="w-full px-1 text-xs font-bold text-slate-500 sm:w-auto">
             فلترة:
           </span>
@@ -618,7 +618,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="mt-3 overflow-visible rounded-2xl border-0 bg-transparent shadow-none lg:overflow-hidden lg:border lg:border-slate-200 lg:bg-white lg:shadow-sm">
           <div className="hidden grid-cols-[2.2fr_0.7fr_1fr_1.7fr_1.15fr_0.35fr] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-4 text-[11px] font-bold text-slate-400 lg:grid">
             <span>اللاعب</span>
             <span>العمر</span>
