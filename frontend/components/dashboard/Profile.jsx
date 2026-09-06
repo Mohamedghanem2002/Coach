@@ -196,9 +196,20 @@ export default function Profile({
     const file =
       (_a = event.target.files) === null || _a === void 0 ? void 0 : _a[0];
     if (!file) return;
+    const image = new Image();
     const reader = new FileReader();
     reader.onload = () => {
-      setEditPhoto(String(reader.result));
+      image.onload = () => {
+        const scale = Math.min(1, 480 / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        canvas
+          .getContext("2d")
+          ?.drawImage(image, 0, 0, canvas.width, canvas.height);
+        setEditPhoto(canvas.toDataURL("image/jpeg", 0.78));
+      };
+      image.src = String(reader.result);
     };
     reader.readAsDataURL(file);
   }

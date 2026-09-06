@@ -1,11 +1,6 @@
+import { memo } from "react";
 import { paymentStatusFor } from "../../lib/dashboard-utils";
-export default function PlayerRow({
-  player,
-  sessionDate,
-  paymentMonth,
-  onOpen,
-  onUpdate,
-}) {
+function PlayerRow({ player, sessionDate, paymentMonth, onOpen, onUpdate }) {
   const record = player.attendance.find((item) => item.date === sessionDate);
   const present =
     (record === null || record === void 0 ? void 0 : record.status) ===
@@ -93,3 +88,5 @@ export default function PlayerRow({
     </div>
   );
 }
+
+export default memo(PlayerRow);

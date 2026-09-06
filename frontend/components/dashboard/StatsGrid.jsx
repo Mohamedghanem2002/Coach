@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { localDate, paymentStatusFor } from "../../lib/dashboard-utils";
 const ICONS = {
   players: "👥",
@@ -7,7 +8,7 @@ const ICONS = {
   unpaid: "⏳",
   branches: "🏢",
 };
-export default function StatsGrid({
+function StatsGrid({
   players,
   branches,
   branch,
@@ -209,3 +210,5 @@ export default function StatsGrid({
     </>
   );
 }
+
+export default memo(StatsGrid);

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -32,6 +32,7 @@ export default function Home() {
   const [paymentMonth, setPaymentMonth] = useState(currentMonth);
   const [quickBranchName, setQuickBranchName] = useState("");
   const [isAddingBranch, setIsAddingBranch] = useState(false);
+  const deferredSearch = useDeferredValue(search);
   const paymentMonthLabel = new Intl.DateTimeFormat("ar-EG", {
     month: "long",
     year: "numeric",
@@ -102,10 +103,12 @@ export default function Home() {
           (statusFilter === "unpaid" &&
             paymentStatusFor(player, paymentMonth) === "unpaid");
         return (
-          matchesBranch && matchesStatus && player.name.includes(search.trim())
+          matchesBranch &&
+          matchesStatus &&
+          player.name.includes(deferredSearch.trim())
         );
       }),
-    [players, branch, search, statusFilter, sessionDate, paymentMonth],
+    [players, branch, deferredSearch, statusFilter, sessionDate, paymentMonth],
   );
   const dashboardPlayers =
     branch === "كل الصالات"
@@ -135,7 +138,9 @@ export default function Home() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          Object.assign(Object.assign({ id }, data), { paymentMonth }),
+          Object.assign(Object.assign({ id }, data), {
+            paymentMonth: data.paymentMonth || paymentMonth,
+          }),
         ),
       });
       const result = await response.json();

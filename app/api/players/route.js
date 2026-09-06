@@ -32,11 +32,7 @@ export async function GET() {
         { error: "يجب تسجيل الدخول أولًا" },
         { status: 401 },
       );
-    console.log("GET /api/players: connecting to MongoDB...");
-    console.log("MONGODB_DB:", process.env.MONGODB_DB);
-    console.log("MONGODB_URI exists:", !!process.env.MONGODB_URI);
     const client = await clientPromise;
-    console.log("GET /api/players: MongoDB connected");
     const dbName = process.env.MONGODB_DB;
     if (!dbName) {
       throw new Error("MONGODB_DB environment variable is not defined");
@@ -47,7 +43,6 @@ export async function GET() {
       .find({ ownerId })
       .sort({ createdAt: -1 })
       .toArray();
-    console.log(`GET /api/players: found ${players.length} players`);
     const currentMonth = appDate().slice(0, 7);
     return NextResponse.json(
       players.map((player) => {

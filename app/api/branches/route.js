@@ -11,16 +11,18 @@ export async function GET() {
         { status: 401 },
       );
     const client = await clientPromise;
-    const branches = await client
-      .db(process.env.MONGODB_DB)
-      .collection("branches")
-      .find({ ownerId })
-      .sort({ createdAt: 1 })
-      .toArray();
-    const playerBranches = await client
-      .db(process.env.MONGODB_DB)
-      .collection("players")
-      .distinct("branch", { ownerId });
+    const [branches, playerBranches] = await Promise.all([
+      client
+        .db(process.env.MONGODB_DB)
+        .collection("branches")
+        .find({ ownerId })
+        .sort({ createdAt: 1 })
+        .toArray(),
+      client
+        .db(process.env.MONGODB_DB)
+        .collection("players")
+        .distinct("branch", { ownerId }),
+    ]);
     const knownNames = new Set(branches.map((branch) => branch.name));
     const legacyBranches = playerBranches
       .filter((name) => typeof name === "string" && !knownNames.has(name))
