@@ -27,9 +27,9 @@ export default function Header() {
     <header className="main-header" dir="rtl">
       {/* البراند */}
       <div className="header-brand">
-        <span className="brand-mark">拳</span>
+        <span className="brand-mark">🥋</span>
         <div>
-          <strong>DOJO</strong>
+          <strong>coach</strong>
           <small>إدارة أكاديمية الكاراتيه</small>
         </div>
       </div>

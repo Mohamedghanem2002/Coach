@@ -59,9 +59,9 @@ export default function SignInPage() {
   return (
     <main className="signin-page" dir="rtl">
       <section className="signin-panel">
-        <div className="signin-mark">拳</div>
+        <div className="signin-mark">🥋</div>
         <p className="signin-kicker">إدارة أكاديمية الكاراتيه</p>
-        <h1>{isRegistering ? "إنشاء حساب جديد" : "مرحبًا بك في DOJO"}</h1>
+        <h1>{isRegistering ? "إنشاء حساب جديد" : "مرحبًا بك في coach"}</h1>
         <p className="signin-copy">
           {isRegistering
             ? "أنشئ حسابك للوصول إلى لوحة الأكاديمية."
