@@ -169,6 +169,11 @@ export default function Home() {
           `تم تسجيل ${data.attendanceStatus === "present" ? "حضور" : "غياب"} اللاعب بنجاح.`,
         );
       }
+      if (data.paymentStatus) {
+        setNotice(
+          `تم ${data.paymentStatus === "paid" ? "تسجيل دفع" : "إلغاء الدفع"} اللاعب بنجاح.`,
+        );
+      }
       return safePlayer;
     } catch (_a) {
       setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
@@ -304,6 +309,23 @@ export default function Home() {
     if (savedCount) {
       setNotice(
         `تم تسجيل ${status === "present" ? "حضور" : "غياب"} ${savedCount} لاعب.`,
+      );
+    }
+  }
+  async function markSelectedPayment(status) {
+    if (!selectedPlayerIds.length || bulkAttendanceBusy) return;
+    setBulkAttendanceBusy(true);
+    const results = await Promise.all(
+      selectedPlayerIds.map((id) =>
+        updatePlayer(id, { paymentStatus: status }),
+      ),
+    );
+    const savedCount = results.filter(Boolean).length;
+    setBulkAttendanceBusy(false);
+    setSelectedPlayerIds([]);
+    if (savedCount) {
+      setNotice(
+        `تم ${status === "paid" ? "تسجيل دفع" : "إلغاء دفع"} ${savedCount} لاعب.`,
       );
     }
   }
@@ -553,6 +575,20 @@ export default function Home() {
                 onClick={() => markSelectedAttendance("absent")}
               >
                 × غياب للمحدد
+              </button>
+              <button
+                className="min-h-9 rounded-lg bg-blue-600 px-3 text-[11px] font-bold text-white disabled:opacity-60"
+                disabled={bulkAttendanceBusy}
+                onClick={() => markSelectedPayment("paid")}
+              >
+                💰 دفع للمحدد
+              </button>
+              <button
+                className="min-h-9 rounded-lg border border-blue-200 bg-white px-3 text-[11px] font-bold text-blue-600 disabled:opacity-60"
+                disabled={bulkAttendanceBusy}
+                onClick={() => markSelectedPayment("unpaid")}
+              >
+                إلغاء دفع
               </button>
               <button
                 className="min-h-9 rounded-lg border border-red-200 bg-white px-3 text-[11px] font-bold text-red-600"

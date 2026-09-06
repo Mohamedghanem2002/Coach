@@ -43,6 +43,7 @@ export default function BranchOverview({
           const paid = branchPlayers.filter(
             (player) => paymentStatusFor(player, paymentMonth) === "paid",
           ).length;
+          const unpaid = branchPlayers.length - paid;
           const busy = busyBranch === branch.name;
 
           return (
@@ -51,6 +52,7 @@ export default function BranchOverview({
               key={branch._id}
             >
               <button
+                type="button"
                 className="flex w-full items-center gap-3 text-right"
                 onClick={() => onSelectBranch(branch.name)}
               >
@@ -68,7 +70,7 @@ export default function BranchOverview({
                 <span className="text-slate-300">←</span>
               </button>
 
-              <div className="mt-4 grid grid-cols-3 gap-2 border-y border-slate-100 py-3 text-center">
+              <div className="mt-4 grid grid-cols-4 gap-2 border-y border-slate-100 py-3 text-center">
                 <div>
                   <strong className="block text-base font-extrabold text-green-600">
                     {present}
@@ -87,9 +89,16 @@ export default function BranchOverview({
                   </strong>
                   <span className="text-[10px] text-slate-400">مدفوع</span>
                 </div>
+                <div>
+                  <strong className="block text-base font-extrabold text-orange-600">
+                    {unpaid}
+                  </strong>
+                  <span className="text-[10px] text-slate-400">متأخر</span>
+                </div>
               </div>
 
               <button
+                type="button"
                 className="mt-3 min-h-10 w-full rounded-xl bg-green-600 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
                 disabled={!branchPlayers.length || busy}
                 onClick={() => onMarkPresent(branch.name)}

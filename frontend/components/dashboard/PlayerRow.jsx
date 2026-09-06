@@ -10,6 +10,7 @@ function PlayerRow({
   onToggleSelection,
 }) {
   const [attendanceBusy, setAttendanceBusy] = useState("");
+  const [paymentBusy, setPaymentBusy] = useState(false);
   const record = player.attendance.find((item) => item.date === sessionDate);
   const present =
     (record === null || record === void 0 ? void 0 : record.status) ===
@@ -28,6 +29,17 @@ function PlayerRow({
       });
     } finally {
       setAttendanceBusy("");
+    }
+  }
+  async function updatePayment() {
+    if (paymentBusy) return;
+    setPaymentBusy(true);
+    try {
+      await onUpdate(player._id, {
+        paymentStatus: paymentStatus === "paid" ? "unpaid" : "paid",
+      });
+    } finally {
+      setPaymentBusy(false);
     }
   }
   return (
@@ -99,13 +111,14 @@ function PlayerRow({
       <button
         type="button"
         className={`col-span-1 min-h-10 rounded-lg px-2 text-[11px] font-bold transition lg:col-auto ${paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-red-50 text-red-600 hover:bg-red-100"}`}
-        onClick={() =>
-          onUpdate(player._id, {
-            paymentStatus: paymentStatus === "paid" ? "unpaid" : "paid",
-          })
-        }
+        disabled={paymentBusy}
+        onClick={updatePayment}
       >
-        {paymentStatus === "paid" ? "✓ مدفوع" : "لم يدفع"}
+        {paymentBusy
+          ? "جاري..."
+          : paymentStatus === "paid"
+            ? "✓ مدفوع"
+            : "لم يدفع"}
       </button>
 
       {/* تفاصيل */}
