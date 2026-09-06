@@ -345,26 +345,44 @@ export default function Home() {
     }
   }
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900" dir="rtl">
+    <main className="min-h-screen bg-[#f6f7f9] text-slate-900" dir="rtl">
       <Header />
 
       <section className="mx-auto w-full max-w-360 px-3 py-4 sm:px-8 sm:py-8">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="font-cairo text-xl font-extrabold text-slate-900 sm:text-2xl">
-              لوحة التحكم
-            </h2>
-            <p className="mt-1 text-xs leading-6 text-slate-500 sm:text-sm">
-              بيانات <strong>{branch}</strong> · تابع لاعبي الأكاديمية وحضورهم
-              ومدفوعاتهم من مكان واحد.
-            </p>
+        <div className="w-full">
+          <div className="relative w-full overflow-hidden rounded-[28px] bg-slate-950 p-5 text-white shadow-xl shadow-slate-200 sm:p-8">
+            <div className="absolute -left-10 -top-16 h-40 w-40 rounded-full bg-red-600/20 blur-3xl" />
+            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-300">
+                  <span className="h-2 w-2 rounded-full bg-green-400 shadow-[0_0_12px_#4ade80]" />
+                  مركز إدارة الأكاديمية
+                </div>
+                <h2 className="font-cairo text-2xl font-extrabold tracking-tight sm:text-4xl">
+                  لوحة التحكم
+                </h2>
+                <p className="mt-2 max-w-xl text-xs leading-6 text-slate-300 sm:text-sm">
+                  كل ما يخص لاعبيك وحضورهم واشتراكاتهم في مكان واحد.
+                </p>
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur sm:min-w-64">
+                <div>
+                  <span className="block text-[10px] text-slate-400">
+                    الصالة الحالية
+                  </span>
+                  <strong className="mt-1 block text-sm text-white">
+                    {branch}
+                  </strong>
+                </div>
+                <button
+                  className="rounded-xl bg-red-500 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-400"
+                  onClick={() => setShowForm(true)}
+                >
+                  ＋ لاعب جديد
+                </button>
+              </div>
+            </div>
           </div>
-          <button
-            className="w-full rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-100 transition hover:-translate-y-0.5 hover:bg-red-700 sm:w-auto"
-            onClick={() => setShowForm(true)}
-          >
-            <span>＋</span> إضافة لاعب
-          </button>
         </div>
 
         <StatsGrid
