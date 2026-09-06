@@ -98,86 +98,59 @@ export default function Profile({
     const paymentHistory = Array.isArray(player.paymentHistory)
       ? [...player.paymentHistory].reverse().slice(0, 6)
       : [];
-    const lines = [
-      "بيانات لاعب أكاديمية coach",
-      `مرسلة من الكابتن: ${captainName}`,
-      `الاسم: ${player.name}`,
-      `السن: ${player.age} سنة`,
-      `الصالة: ${player.branch}`,
-      `تاريخ التسجيل: ${registrationDate}`,
-      "",
-      "ملخص الحضور",
-      `مرات الحضور: ${attended}`,
-      `الحصص المسجلة: ${(player.attendance || []).length}`,
-      `اشتراك ${paymentMonth}: ${monthlyStatus === "paid" ? "مدفوع" : "غير مدفوع"}`,
-      "",
-      "آخر سجلات الحضور",
-      ...(attendanceHistory.length
-        ? attendanceHistory.map(
-            (item) =>
-              `${item.date}   ${item.status === "present" ? "حاضر" : "غائب"}`,
-          )
-        : ["لا يوجد سجل حضور"]),
-      "",
-      "سجل الاشتراكات",
-      ...(paymentHistory.length
-        ? paymentHistory.map(
-            (item) =>
-              `${item.month}   ${item.status === "paid" ? "مدفوع" : "لم يدفع"}`,
-          )
-        : ["لا توجد مدفوعات مسجلة"]),
-    ];
+    const attendanceLines = attendanceHistory.length
+      ? attendanceHistory.map(
+          (item) =>
+            `${item.date}   ${item.status === "present" ? "حاضر" : "غائب"}`,
+        )
+      : ["لا يوجد سجل حضور"];
+    const paymentLines = paymentHistory.length
+      ? paymentHistory.map(
+          (item) =>
+            `${item.month}   ${item.status === "paid" ? "مدفوع" : "لم يدفع"}`,
+        )
+      : ["لا توجد مدفوعات مسجلة"];
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
-    canvas.height = Math.max(1580, 700 + lines.length * 42);
+    canvas.height = 1880;
     const context = canvas.getContext("2d");
     if (!context) return;
+    const drawRight = (text, x, y, font, color) => {
+      context.font = font;
+      context.fillStyle = color;
+      context.textAlign = "right";
+      context.direction = "rtl";
+      context.fillText(text, x, y);
+    };
     context.fillStyle = "#edf3f2";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#d94841";
     context.fillRect(0, 0, canvas.width, 24);
     context.fillStyle = "#ffffff";
     context.fillRect(42, 42, canvas.width - 84, canvas.height - 84);
+
     context.fillStyle = "#fff4f2";
-    context.fillRect(42, 42, canvas.width - 84, 170);
-    context.fillStyle = "#d94841";
-    context.font = "700 50px Cairo, sans-serif";
-    context.textAlign = "right";
-    context.direction = "rtl";
-    context.fillText("coach  |  ملف اللاعب", canvas.width - 100, 112);
-    context.fillStyle = monthlyStatus === "paid" ? "#218c4b" : "#c53030";
-    context.fillRect(760, 195, 220, 54);
-    context.fillStyle = "#ffffff";
-    context.font = "700 25px Cairo, sans-serif";
-    context.fillText(
-      monthlyStatus === "paid" ? "مدفوع" : "غير مدفوع",
-      950,
-      231,
+    context.fillRect(72, 72, canvas.width - 144, 160);
+    drawRight(
+      "coach  |  ملف اللاعب",
+      canvas.width - 112,
+      126,
+      "700 46px Cairo, sans-serif",
+      "#d94841",
     );
-    let y = 270;
-    for (const line of lines) {
-      if (!line) {
-        y += 22;
-        continue;
-      }
-      if (line === "بيانات لاعب أكاديمية coach") {
-        context.fillStyle = "#d94841";
-        context.font = "700 34px Cairo, sans-serif";
-      } else if (line.startsWith("اشتراك ")) {
-        context.fillStyle = monthlyStatus === "paid" ? "#218c4b" : "#c53030";
-        context.font = "700 30px Cairo, sans-serif";
-      } else if (
-        ["ملخص الحضور", "آخر سجلات الحضور", "سجل الاشتراكات"].includes(line)
-      ) {
-        context.fillStyle = "#218c4b";
-        context.font = "700 30px Cairo, sans-serif";
-      } else {
-        context.fillStyle = "#17212b";
-        context.font = "500 28px Cairo, sans-serif";
-      }
-      context.fillText(line, canvas.width - 100, y);
-      y += 42;
-    }
+    drawRight(
+      `مرسل من الكابتن: ${captainName}`,
+      canvas.width - 112,
+      184,
+      "600 29px Cairo, sans-serif",
+      "#17212b",
+    );
+
+    context.fillStyle = "#f8fafb";
+    context.fillRect(72, 264, canvas.width - 144, 300);
+    context.strokeStyle = "#e5eaee";
+    context.lineWidth = 2;
+    context.strokeRect(72, 264, canvas.width - 144, 300);
     if (player.photo) {
       const photo = await new Promise((resolve) => {
         const image = new Image();
@@ -186,22 +159,98 @@ export default function Profile({
         image.src = player.photo;
       });
       if (photo) {
-        context.fillStyle = "#fff4f2";
-        context.fillRect(100, y + 18, canvas.width - 200, 220);
         context.save();
         context.beginPath();
-        context.arc(canvas.width / 2, y + 128, 82, 0, Math.PI * 2);
+        context.arc(220, 414, 104, 0, Math.PI * 2);
         context.clip();
-        context.drawImage(photo, canvas.width / 2 - 82, y + 46, 164, 164);
+        context.drawImage(photo, 116, 310, 208, 208);
         context.restore();
       }
     }
-    context.fillStyle = "#8b9aaa";
-    context.font = "500 22px Cairo, sans-serif";
-    context.fillText(
+    drawRight(player.name, 930, 354, "700 42px Cairo, sans-serif", "#17212b");
+    drawRight(
+      `السن: ${player.age} سنة`,
+      930,
+      414,
+      "500 29px Cairo, sans-serif",
+      "#4a5568",
+    );
+    drawRight(
+      `الصالة: ${player.branch}`,
+      930,
+      462,
+      "500 29px Cairo, sans-serif",
+      "#4a5568",
+    );
+    drawRight(
+      `تاريخ التسجيل: ${registrationDate}`,
+      930,
+      510,
+      "500 25px Cairo, sans-serif",
+      "#8b9aaa",
+    );
+
+    drawRight(
+      "ملخص الحضور والاشتراك",
+      930,
+      642,
+      "700 34px Cairo, sans-serif",
+      "#218c4b",
+    );
+    drawRight(
+      `مرات الحضور: ${attended}`,
+      930,
+      700,
+      "500 29px Cairo, sans-serif",
+      "#17212b",
+    );
+    drawRight(
+      `الحصص المسجلة: ${(player.attendance || []).length}`,
+      930,
+      746,
+      "500 29px Cairo, sans-serif",
+      "#17212b",
+    );
+    drawRight(
+      `اشتراك ${paymentMonth}: ${monthlyStatus === "paid" ? "مدفوع" : "غير مدفوع"}`,
+      930,
+      792,
+      "700 29px Cairo, sans-serif",
+      monthlyStatus === "paid" ? "#218c4b" : "#c53030",
+    );
+
+    drawRight(
+      "آخر سجلات الحضور",
+      930,
+      892,
+      "700 32px Cairo, sans-serif",
+      "#218c4b",
+    );
+    let y = 944;
+    for (const line of attendanceLines) {
+      drawRight(line, 930, y, "500 25px Cairo, sans-serif", "#17212b");
+      y += 38;
+    }
+    drawRight(
+      "سجل الاشتراكات",
+      930,
+      y + 34,
+      "700 32px Cairo, sans-serif",
+      "#218c4b",
+    );
+    y += 88;
+    for (const line of paymentLines) {
+      drawRight(line, 930, y, "500 25px Cairo, sans-serif", "#17212b");
+      y += 38;
+    }
+    context.fillStyle = monthlyStatus === "paid" ? "#218c4b" : "#c53030";
+    context.fillRect(72, canvas.height - 150, canvas.width - 144, 2);
+    drawRight(
       "تم إنشاء الملف من تطبيق coach",
-      canvas.width - 100,
-      canvas.height - 92,
+      canvas.width - 112,
+      canvas.height - 96,
+      "500 22px Cairo, sans-serif",
+      "#8b9aaa",
     );
     const blob = await new Promise((resolve) =>
       canvas.toBlob(resolve, "image/png"),

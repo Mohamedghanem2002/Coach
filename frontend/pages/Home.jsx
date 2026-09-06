@@ -301,50 +301,49 @@ export default function Home() {
                   {item.name}
                 </button>
               ))}
-
-              {isAddingBranch ? (
-                <form
-                  onSubmit={handleQuickBranchSubmit}
-                  className="quick-branch-form"
-                >
-                  <input
-                    value={quickBranchName}
-                    onChange={(e) => setQuickBranchName(e.target.value)}
-                    placeholder="اسم الصالة..."
-                    className="quick-branch-input"
-                    autoFocus
-                    required
-                  />
-                  <button
-                    className="primary-button compact-button"
-                    type="submit"
-                  >
-                    حفظ
-                  </button>
-                  <button
-                    className="outline-button compact-button"
-                    type="button"
-                    onClick={() => setIsAddingBranch(false)}
-                  >
-                    إلغاء
-                  </button>
-                </form>
-              ) : (
-                <button
-                  className="outline-button add-branch-button"
-                  onClick={() => setIsAddingBranch(true)}
-                >
-                  ＋ صالة
-                </button>
-              )}
-
-              <button
-                className="outline-button manage-branches-button"
-                onClick={() => setShowBranches(true)}
-              >
-                ⚙️ الفروع
-              </button>
             </div>
+          </div>
+
+          <div className="branch-actions">
+            {isAddingBranch ? (
+              <form
+                onSubmit={handleQuickBranchSubmit}
+                className="quick-branch-form"
+              >
+                <input
+                  value={quickBranchName}
+                  onChange={(e) => setQuickBranchName(e.target.value)}
+                  placeholder="اسم الصالة..."
+                  className="quick-branch-input"
+                  autoFocus
+                  required
+                />
+                <button className="primary-button compact-button" type="submit">
+                  حفظ
+                </button>
+                <button
+                  className="outline-button compact-button"
+                  type="button"
+                  onClick={() => setIsAddingBranch(false)}
+                >
+                  إلغاء
+                </button>
+              </form>
+            ) : (
+              <button
+                className="outline-button add-branch-button"
+                onClick={() => setIsAddingBranch(true)}
+              >
+                ＋ صالة
+              </button>
+            )}
+
+            <button
+              className="outline-button manage-branches-button"
+              onClick={() => setShowBranches(true)}
+            >
+              ⚙️ الفروع
+            </button>
           </div>
         </div>
 
