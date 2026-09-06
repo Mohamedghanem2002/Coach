@@ -4,6 +4,7 @@ export default function BranchManager({
   players = [],
   onAdd,
   onDelete,
+  onDeleteBlocked,
   onClose,
 }) {
   const [name, setName] = useState("");
@@ -76,14 +77,20 @@ export default function BranchManager({
                   </small>
                 </span>
                 <button
-                  className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  onClick={() => onDelete(branch.name)}
-                  disabled={players.some(
-                    (player) => player.branch === branch.name,
-                  )}
+                  className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100"
+                  onClick={() => {
+                    const playerCount = players.filter(
+                      (player) => player.branch === branch.name,
+                    ).length;
+                    if (playerCount) {
+                      onDeleteBlocked?.(branch.name, playerCount);
+                      return;
+                    }
+                    onDelete(branch.name);
+                  }}
                   title="حذف الفرع"
                 >
-                  حذف
+                  حذف الفرع
                 </button>
               </div>
             ))

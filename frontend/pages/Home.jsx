@@ -1,5 +1,5 @@
 "use client";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -36,6 +36,7 @@ export default function Home() {
   const [busyBranch, setBusyBranch] = useState("");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState([]);
   const [bulkAttendanceBusy, setBulkAttendanceBusy] = useState(false);
+  const playerListRef = useRef(null);
   const deferredSearch = useDeferredValue(search);
   const paymentMonthLabel = new Intl.DateTimeFormat("ar-EG", {
     month: "long",
@@ -230,6 +231,20 @@ export default function Home() {
     if (branch === name) setBranch("كل الصالات");
     setNotice("تم حذف الفرع.");
   }
+  function handleSelectBranch(name) {
+    setBranch(name);
+    requestAnimationFrame(() => {
+      playerListRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+  function handleBlockedBranchDelete(name, playerCount) {
+    setNotice(
+      `لا يمكن حذف ${name} لأنها تحتوي على ${playerCount} لاعب. انقل اللاعبين أولًا إلى صالة أخرى.`,
+    );
+  }
   async function deletePlayer(id) {
     const response = await fetch("/api/players", {
       method: "DELETE",
@@ -367,11 +382,14 @@ export default function Home() {
           sessionDate={sessionDate}
           paymentMonth={paymentMonth}
           busyBranch={busyBranch}
-          onSelectBranch={setBranch}
+          onSelectBranch={handleSelectBranch}
           onMarkPresent={markBranchPresent}
         />
 
-        <div className="mt-8 flex items-center justify-between gap-3">
+        <div
+          ref={playerListRef}
+          className="scroll-mt-24 mt-8 flex items-center justify-between gap-3"
+        >
           <div className="flex items-center gap-2">
             <h2 className="font-cairo text-lg font-bold text-slate-900">
               قائمة اللاعبين
@@ -667,6 +685,7 @@ export default function Home() {
           players={players}
           onAdd={addBranch}
           onDelete={deleteBranch}
+          onDeleteBlocked={handleBlockedBranchDelete}
           onClose={() => setShowBranches(false)}
         />
       )}

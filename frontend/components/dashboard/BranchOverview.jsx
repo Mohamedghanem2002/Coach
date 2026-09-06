@@ -53,7 +53,7 @@ export default function BranchOverview({
             >
               <button
                 type="button"
-                className="flex w-full items-center gap-3 text-right"
+                className="flex w-full items-center gap-3 rounded-xl text-right transition hover:bg-slate-50"
                 onClick={() => onSelectBranch(branch.name)}
               >
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-50 text-xl text-red-600">
@@ -97,14 +97,21 @@ export default function BranchOverview({
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="mt-3 min-h-10 w-full rounded-xl bg-green-600 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
-                disabled={!branchPlayers.length || busy}
-                onClick={() => onMarkPresent(branch.name)}
-              >
-                {busy ? "جاري تسجيل الحضور..." : "تسجيل حضور المجموعة"}
-              </button>
+              <div className="mt-3 rounded-xl border border-green-100 bg-green-50/60 p-2">
+                <p className="mb-2 text-center text-[10px] font-semibold text-green-700">
+                  تسجيل حضور كل لاعبي {branch.name} دفعة واحدة
+                </p>
+                <button
+                  type="button"
+                  className="min-h-10 w-full rounded-lg bg-green-600 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
+                  disabled={!branchPlayers.length || busy}
+                  onClick={() => onMarkPresent(branch.name)}
+                >
+                  {busy
+                    ? "جاري تسجيل كل اللاعبين..."
+                    : "تسجيل حضور المجموعة بالكامل"}
+                </button>
+              </div>
             </article>
           );
         })}

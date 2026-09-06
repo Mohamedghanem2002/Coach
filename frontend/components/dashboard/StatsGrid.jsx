@@ -163,6 +163,9 @@ function StatsGrid({
               <h3 className="mt-1 text-sm font-bold text-slate-900">
                 الحضور والغياب خلال الأسبوع
               </h3>
+              <p className="mt-1 text-[10px] text-slate-400">
+                الصالة: {branch}
+              </p>
             </div>
             <div className="flex gap-3 text-[10px] font-semibold text-slate-500">
               <span className="flex items-center gap-1.5">
@@ -190,13 +193,13 @@ function StatsGrid({
                   </div>
                   <div className="flex h-28 items-end justify-center gap-1 border-b border-slate-200 bg-[repeating-linear-gradient(to_top,transparent_0,transparent_27px,#f1f4f7_28px)] px-1">
                     <span
-                      className="w-3 rounded-t-md bg-linear-to-t from-green-600 to-green-300"
+                      className="w-3 rounded-t-md bg-linear-to-t from-green-600 to-green-300 transition-all duration-500 ease-out"
                       style={{
                         height: `${Math.max((day.present / max) * 100, day.present ? 8 : 0)}%`,
                       }}
                     />
                     <span
-                      className="w-3 rounded-t-md bg-linear-to-t from-red-600 to-red-300"
+                      className="w-3 rounded-t-md bg-linear-to-t from-red-600 to-red-300 transition-all duration-500 ease-out"
                       style={{
                         height: `${Math.max((day.absent / max) * 100, day.absent ? 8 : 0)}%`,
                       }}
@@ -220,12 +223,15 @@ function StatsGrid({
               <h3 className="mt-1 text-sm font-bold text-slate-900">
                 نسبة الحضور
               </h3>
+              <p className="mt-1 text-[10px] text-slate-400">
+                الصالة: {branch}
+              </p>
             </div>
             <span className="text-[10px] text-slate-400">{sessionDate}</span>
           </div>
           <div className="flex min-h-32 items-center justify-center gap-6">
             <div
-              className="relative grid h-32 w-32 place-content-center rounded-full text-center after:absolute after:inset-2.5 after:rounded-full after:bg-white"
+              className="relative grid h-32 w-32 place-content-center rounded-full text-center transition-all duration-700 ease-out after:absolute after:inset-2.5 after:rounded-full after:bg-white"
               style={{
                 background: `conic-gradient(#38a169 ${attendanceRate}%, #edf1f4 0)`,
               }}
