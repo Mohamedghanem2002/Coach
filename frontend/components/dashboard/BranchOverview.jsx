@@ -48,12 +48,12 @@ export default function BranchOverview({
 
           return (
             <article
-              className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-red-200 hover:shadow-md sm:p-3"
+              className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm transition duration-200 hover:border-red-200 hover:shadow-md"
               key={branch._id}
             >
               <button
                 type="button"
-                className="flex w-full items-center gap-2 rounded-lg p-1 text-right transition hover:bg-slate-50"
+                className="flex w-full items-center gap-2 text-right"
                 onClick={() => onSelectBranch(branch.name)}
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-base text-red-600">
@@ -67,8 +67,8 @@ export default function BranchOverview({
                     {branchPlayers.length} لاعب مسجل
                   </span>
                 </span>
-                <span className="whitespace-nowrap rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-500">
-                  عرض اللاعبين ←
+                <span className="text-[10px] font-bold text-slate-400">
+                  عرض ←
                 </span>
               </button>
 
@@ -99,17 +99,21 @@ export default function BranchOverview({
                 </div>
               </div>
 
-              <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-100 bg-green-50/60 p-2">
-                <p className="min-w-0 flex-1 text-[10px] font-semibold leading-5 text-green-700">
-                  حضور كل لاعبي الصالة
-                </p>
+              <div className="mt-2 flex gap-2">
                 <button
                   type="button"
-                  className="min-h-9 shrink-0 rounded-lg bg-green-600 px-2.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
+                  className="min-h-8 flex-1 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-600 transition hover:border-red-200 hover:text-red-600"
+                  onClick={() => onSelectBranch(branch.name)}
+                >
+                  عرض اللاعبين
+                </button>
+                <button
+                  type="button"
+                  className="min-h-8 flex-1 rounded-lg bg-green-600 px-2 text-[10px] font-bold text-white transition hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
                   disabled={!branchPlayers.length || busy}
                   onClick={() => onMarkPresent(branch.name)}
                 >
-                  {busy ? "جاري..." : "حضور المجموعة"}
+                  {busy ? "جاري..." : "حضور الكل"}
                 </button>
               </div>
             </article>

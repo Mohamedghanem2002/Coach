@@ -349,38 +349,34 @@ export default function Home() {
       <Header />
 
       <section className="mx-auto w-full max-w-360 px-3 py-4 sm:px-8 sm:py-8">
-        <div className="w-full">
-          <div className="relative w-full overflow-hidden rounded-[28px] bg-slate-950 p-5 text-white shadow-xl shadow-slate-200 sm:p-8">
-            <div className="absolute -left-10 -top-16 h-40 w-40 rounded-full bg-red-600/20 blur-3xl" />
-            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-300">
-                  <span className="h-2 w-2 rounded-full bg-green-400 shadow-[0_0_12px_#4ade80]" />
-                  مركز إدارة الأكاديمية
-                </div>
-                <h2 className="font-cairo text-2xl font-extrabold tracking-tight sm:text-4xl">
-                  لوحة التحكم
-                </h2>
-                <p className="mt-2 max-w-xl text-xs leading-6 text-slate-300 sm:text-sm">
-                  كل ما يخص لاعبيك وحضورهم واشتراكاتهم في مكان واحد.
-                </p>
+        <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-red-600">
+                مركز إدارة الأكاديمية
+              </p>
+              <h2 className="font-cairo text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                لوحة التحكم
+              </h2>
+              <p className="mt-1 text-xs leading-6 text-slate-500 sm:text-sm">
+                تابع لاعبي الأكاديمية وحضورهم واشتراكاتهم بسهولة.
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50/70 p-2.5 sm:min-w-64">
+              <div className="min-w-0">
+                <span className="block text-[10px] text-slate-500">
+                  الصالة الحالية
+                </span>
+                <strong className="mt-1 block truncate text-sm text-slate-900">
+                  {branch}
+                </strong>
               </div>
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur sm:min-w-64">
-                <div>
-                  <span className="block text-[10px] text-slate-400">
-                    الصالة الحالية
-                  </span>
-                  <strong className="mt-1 block text-sm text-white">
-                    {branch}
-                  </strong>
-                </div>
-                <button
-                  className="rounded-xl bg-red-500 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-400"
-                  onClick={() => setShowForm(true)}
-                >
-                  ＋ لاعب جديد
-                </button>
-              </div>
+              <button
+                className="shrink-0 rounded-lg bg-red-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-red-700"
+                onClick={() => setShowForm(true)}
+              >
+                ＋ لاعب
+              </button>
             </div>
           </div>
         </div>
