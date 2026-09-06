@@ -492,6 +492,7 @@ export default function Home() {
       {showForm && (
         <AddPlayerModal
           branches={branches}
+          initialBranch={branch === "كل الصالات" ? "" : branch}
           onClose={() => setShowForm(false)}
           onAdd={handleAddPlayer}
           onManageBranches={() => {
