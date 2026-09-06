@@ -1,6 +1,14 @@
 import { memo } from "react";
 import { paymentStatusFor } from "../../lib/dashboard-utils";
-function PlayerRow({ player, sessionDate, paymentMonth, onOpen, onUpdate }) {
+function PlayerRow({
+  player,
+  sessionDate,
+  paymentMonth,
+  onOpen,
+  onUpdate,
+  isSelected,
+  onToggleSelection,
+}) {
   const record = player.attendance.find((item) => item.date === sessionDate);
   const present =
     (record === null || record === void 0 ? void 0 : record.status) ===
@@ -12,26 +20,35 @@ function PlayerRow({ player, sessionDate, paymentMonth, onOpen, onUpdate }) {
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-slate-100 p-4 last:border-b-0 lg:grid-cols-[2.2fr_0.7fr_1fr_1.7fr_1.15fr_0.35fr] lg:items-center lg:gap-4 lg:px-6 lg:py-3">
       {/* اسم اللاعب */}
-      <button
-        className="col-span-1 flex min-h-11 min-w-0 items-center gap-2.5 text-right lg:col-auto"
-        onClick={onOpen}
-      >
-        <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-linear-to-br from-red-100 to-red-200 text-lg font-bold text-red-700 ring-2 ring-white shadow-sm">
-          {player.photo ? (
-            <img src={player.photo} alt="" />
-          ) : (
-            player.name.charAt(0)
-          )}
-        </span>
-        <span className="min-w-0">
-          <strong className="block truncate text-sm font-bold text-slate-900">
-            {player.name}
-          </strong>
-          <small className="mt-0.5 block text-[10px] text-slate-400">
-            تسجيل {new Date(player.createdAt).toLocaleDateString("ar-EG")}
-          </small>
-        </span>
-      </button>
+      <div className="col-span-1 flex min-w-0 items-center gap-2 lg:col-auto">
+        <input
+          type="checkbox"
+          aria-label={`اختيار ${player.name}`}
+          checked={isSelected}
+          onChange={() => onToggleSelection(player._id)}
+          className="h-4 w-4 shrink-0 accent-red-600"
+        />
+        <button
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 text-right"
+          onClick={onOpen}
+        >
+          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-linear-to-br from-red-100 to-red-200 text-lg font-bold text-red-700 ring-2 ring-white shadow-sm">
+            {player.photo ? (
+              <img src={player.photo} alt="" />
+            ) : (
+              player.name.charAt(0)
+            )}
+          </span>
+          <span className="min-w-0">
+            <strong className="block truncate text-sm font-bold text-slate-900">
+              {player.name}
+            </strong>
+            <small className="mt-0.5 block text-[10px] text-slate-400">
+              تسجيل {new Date(player.createdAt).toLocaleDateString("ar-EG")}
+            </small>
+          </span>
+        </button>
+      </div>
 
       {/* العمر والفرع */}
       <div className="col-span-2 flex items-center gap-3 text-[11px] lg:col-auto lg:contents">

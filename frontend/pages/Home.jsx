@@ -34,6 +34,8 @@ export default function Home() {
   const [quickBranchName, setQuickBranchName] = useState("");
   const [isAddingBranch, setIsAddingBranch] = useState(false);
   const [busyBranch, setBusyBranch] = useState("");
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState([]);
+  const [bulkAttendanceBusy, setBulkAttendanceBusy] = useState(false);
   const deferredSearch = useDeferredValue(search);
   const paymentMonthLabel = new Intl.DateTimeFormat("ar-EG", {
     month: "long",
@@ -262,6 +264,44 @@ export default function Home() {
       setNotice(`تم تسجيل حضور ${savedCount} لاعب من ${branchName}.`);
     }
   }
+  function togglePlayerSelection(id) {
+    setSelectedPlayerIds((current) =>
+      current.includes(id)
+        ? current.filter((playerId) => playerId !== id)
+        : [...current, id],
+    );
+  }
+  function toggleFilteredSelection() {
+    const filteredIds = filteredPlayers.map((player) => player._id);
+    const allSelected = filteredIds.every((id) =>
+      selectedPlayerIds.includes(id),
+    );
+    setSelectedPlayerIds((current) =>
+      allSelected
+        ? current.filter((id) => !filteredIds.includes(id))
+        : [...new Set([...current, ...filteredIds])],
+    );
+  }
+  async function markSelectedAttendance(status) {
+    if (!selectedPlayerIds.length || bulkAttendanceBusy) return;
+    setBulkAttendanceBusy(true);
+    const results = await Promise.all(
+      selectedPlayerIds.map((id) =>
+        updatePlayer(id, {
+          attendanceStatus: status,
+          date: sessionDate,
+        }),
+      ),
+    );
+    const savedCount = results.filter(Boolean).length;
+    setBulkAttendanceBusy(false);
+    setSelectedPlayerIds([]);
+    if (savedCount) {
+      setNotice(
+        `تم تسجيل ${status === "present" ? "حضور" : "غياب"} ${savedCount} لاعب.`,
+      );
+    }
+  }
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900" dir="rtl">
       <Header />
@@ -305,13 +345,21 @@ export default function Home() {
         />
 
         <div className="mt-8 flex items-center justify-between gap-3">
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div className="flex items-center gap-2">
             <h2 className="font-cairo text-lg font-bold text-slate-900">
               قائمة اللاعبين
             </h2>
             <span className="mr-2 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-600">
               {filteredPlayers.length} لاعب
             </span>
+            {filteredPlayers.length > 0 && (
+              <button
+                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-500 transition hover:border-red-200 hover:text-red-600"
+                onClick={toggleFilteredSelection}
+              >
+                تحديد الكل
+              </button>
+            )}
           </div>
           <button
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-red-200 hover:text-red-600"
@@ -472,6 +520,45 @@ export default function Home() {
           </div>
         )}
 
+        {selectedPlayerIds.length > 0 && (
+          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-xs font-bold text-red-700">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-red-600 text-white">
+                {selectedPlayerIds.length}
+              </span>
+              لاعب محدد
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="min-h-9 rounded-lg bg-white px-3 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200"
+                onClick={toggleFilteredSelection}
+              >
+                تحديد الكل في الفلترة
+              </button>
+              <button
+                className="min-h-9 rounded-lg bg-green-600 px-3 text-[11px] font-bold text-white disabled:opacity-60"
+                disabled={bulkAttendanceBusy}
+                onClick={() => markSelectedAttendance("present")}
+              >
+                ✓ حاضر للمحدد
+              </button>
+              <button
+                className="min-h-9 rounded-lg bg-red-600 px-3 text-[11px] font-bold text-white disabled:opacity-60"
+                disabled={bulkAttendanceBusy}
+                onClick={() => markSelectedAttendance("absent")}
+              >
+                × غياب للمحدد
+              </button>
+              <button
+                className="min-h-9 rounded-lg border border-red-200 bg-white px-3 text-[11px] font-bold text-red-600"
+                onClick={() => setSelectedPlayerIds([])}
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="hidden grid-cols-[2.2fr_0.7fr_1fr_1.7fr_1.15fr_0.35fr] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-4 text-[11px] font-bold text-slate-400 lg:grid">
             <span>اللاعب</span>
@@ -512,6 +599,8 @@ export default function Home() {
                 paymentMonth={paymentMonth}
                 onOpen={() => setSelected(player)}
                 onUpdate={updatePlayer}
+                isSelected={selectedPlayerIds.includes(player._id)}
+                onToggleSelection={togglePlayerSelection}
               />
             ))
           )}
