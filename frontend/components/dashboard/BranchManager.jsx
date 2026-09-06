@@ -5,6 +5,7 @@ export default function BranchManager({
   onAdd,
   onDelete,
   onDeleteBlocked,
+  notice = "",
   onClose,
 }) {
   const [name, setName] = useState("");
@@ -40,6 +41,17 @@ export default function BranchManager({
         <p className="mb-4 text-sm leading-7 text-slate-500">
           أضف عدد الصالات وأسماءها، وستظهر تلقائيًا عند تسجيل أي لاعب.
         </p>
+        {notice && (
+          <div
+            className={`mb-4 flex items-start gap-2 rounded-xl border p-3 text-xs font-semibold leading-6 ${notice.startsWith("تم") ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}
+            role="status"
+          >
+            <span aria-hidden="true">
+              {notice.startsWith("تم") ? "✓" : "⚠️"}
+            </span>
+            <span>{notice}</span>
+          </div>
+        )}
         <form className="flex flex-col gap-2 sm:flex-row" onSubmit={submit}>
           <input
             className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-right text-sm text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"

@@ -233,12 +233,12 @@ export default function Home() {
   }
   function handleSelectBranch(name) {
     setBranch(name);
-    requestAnimationFrame(() => {
+    window.setTimeout(() => {
       playerListRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-    });
+    }, 80);
   }
   function handleBlockedBranchDelete(name, playerCount) {
     setNotice(
@@ -686,6 +686,7 @@ export default function Home() {
           onAdd={addBranch}
           onDelete={deleteBranch}
           onDeleteBlocked={handleBlockedBranchDelete}
+          notice={notice}
           onClose={() => setShowBranches(false)}
         />
       )}

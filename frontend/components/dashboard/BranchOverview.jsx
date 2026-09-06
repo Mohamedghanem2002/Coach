@@ -18,7 +18,7 @@ export default function BranchOverview({
           <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
             نظرة سريعة
           </p>
-          <h2 className="mt-1 text-lg font-extrabold text-slate-900">
+          <h2 className="mt-1 text-base font-extrabold text-slate-900">
             إدارة الصالات
           </h2>
         </div>
@@ -48,68 +48,68 @@ export default function BranchOverview({
 
           return (
             <article
-              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-red-200 hover:shadow-md"
+              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-red-200 hover:shadow-md"
               key={branch._id}
             >
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl text-right transition hover:bg-slate-50"
+                className="flex w-full items-center gap-2 rounded-lg p-1 text-right transition hover:bg-slate-50"
                 onClick={() => onSelectBranch(branch.name)}
               >
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-50 text-xl text-red-600">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-base text-red-600">
                   🏢
                 </span>
                 <span className="min-w-0 flex-1">
-                  <strong className="block truncate text-sm font-extrabold text-slate-900">
+                  <strong className="block truncate text-[13px] font-extrabold text-slate-900">
                     {branch.name}
                   </strong>
                   <span className="mt-1 block text-[10px] text-slate-400">
                     {branchPlayers.length} لاعب مسجل
                   </span>
                 </span>
-                <span className="text-slate-300">←</span>
+                <span className="whitespace-nowrap rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-500">
+                  عرض اللاعبين ←
+                </span>
               </button>
 
-              <div className="mt-4 grid grid-cols-4 gap-2 border-y border-slate-100 py-3 text-center">
+              <div className="mt-3 grid grid-cols-4 gap-1 border-y border-slate-100 py-2.5 text-center">
                 <div>
-                  <strong className="block text-base font-extrabold text-green-600">
+                  <strong className="block text-sm font-extrabold text-green-600">
                     {present}
                   </strong>
                   <span className="text-[10px] text-slate-400">حاضر</span>
                 </div>
                 <div>
-                  <strong className="block text-base font-extrabold text-red-600">
+                  <strong className="block text-sm font-extrabold text-red-600">
                     {absent}
                   </strong>
                   <span className="text-[10px] text-slate-400">غائب</span>
                 </div>
                 <div>
-                  <strong className="block text-base font-extrabold text-blue-600">
+                  <strong className="block text-sm font-extrabold text-blue-600">
                     {paid}
                   </strong>
                   <span className="text-[10px] text-slate-400">مدفوع</span>
                 </div>
                 <div>
-                  <strong className="block text-base font-extrabold text-orange-600">
+                  <strong className="block text-sm font-extrabold text-orange-600">
                     {unpaid}
                   </strong>
                   <span className="text-[10px] text-slate-400">متأخر</span>
                 </div>
               </div>
 
-              <div className="mt-3 rounded-xl border border-green-100 bg-green-50/60 p-2">
-                <p className="mb-2 text-center text-[10px] font-semibold text-green-700">
-                  تسجيل حضور كل لاعبي {branch.name} دفعة واحدة
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-100 bg-green-50/60 p-2">
+                <p className="min-w-0 flex-1 text-[10px] font-semibold leading-5 text-green-700">
+                  حضور كل لاعبي الصالة
                 </p>
                 <button
                   type="button"
-                  className="min-h-10 w-full rounded-lg bg-green-600 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
+                  className="min-h-9 shrink-0 rounded-lg bg-green-600 px-2.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
                   disabled={!branchPlayers.length || busy}
                   onClick={() => onMarkPresent(branch.name)}
                 >
-                  {busy
-                    ? "جاري تسجيل كل اللاعبين..."
-                    : "تسجيل حضور المجموعة بالكامل"}
+                  {busy ? "جاري..." : "حضور المجموعة"}
                 </button>
               </div>
             </article>
