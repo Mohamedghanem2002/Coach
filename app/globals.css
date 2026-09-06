@@ -642,6 +642,209 @@ a {
   margin-top: 2px;
 }
 
+.attendance-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-xs);
+}
+
+.chart-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.chart-heading .eyebrow {
+  margin-bottom: 4px;
+}
+
+.chart-heading h3 {
+  font-family: "Cairo", sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chart-legend span,
+.summary-values div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot.present {
+  background: var(--green);
+}
+.legend-dot.absent {
+  background: var(--red);
+}
+
+.attendance-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  gap: 10px;
+  min-height: 150px;
+}
+
+.attendance-day {
+  display: grid;
+  grid-template-rows: 24px 104px 20px;
+  align-items: end;
+  text-align: center;
+}
+
+.bar-values {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-placeholder);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.bar-track {
+  height: 104px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--border);
+  background: repeating-linear-gradient(
+    to top,
+    transparent 0,
+    transparent 25px,
+    var(--border-subtle) 26px
+  );
+}
+
+.bar {
+  display: block;
+  width: min(18px, 35%);
+  min-height: 0;
+  border-radius: 5px 5px 0 0;
+  transition: height var(--transition-slow);
+}
+
+.bar.present {
+  background: linear-gradient(to top, var(--green-600), #68d391);
+}
+.bar.absent {
+  background: linear-gradient(to top, var(--red-600), #fc8181);
+}
+
+.attendance-day small {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  padding-top: 5px;
+}
+
+.chart-date {
+  color: var(--text-muted);
+  font-size: 10px;
+  direction: ltr;
+}
+
+.attendance-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  min-height: 130px;
+}
+
+.attendance-donut {
+  width: 126px;
+  height: 126px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  border-radius: 50%;
+  background: conic-gradient(var(--green) var(--attendance-rate), #edf1f4 0);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.attendance-donut::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  background: var(--bg-card);
+}
+
+.attendance-donut strong,
+.attendance-donut span {
+  position: relative;
+  z-index: 1;
+}
+
+.attendance-donut strong {
+  font-family: "Cairo", sans-serif;
+  font-size: 25px;
+  line-height: 1.1;
+  color: var(--text-main);
+}
+
+.attendance-donut span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.summary-values {
+  display: grid;
+  gap: 12px;
+  min-width: 120px;
+}
+
+.summary-values div {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.summary-values strong {
+  margin-right: auto;
+  color: var(--text-main);
+  font-size: 16px;
+}
+
+.summary-values small {
+  color: var(--text-placeholder);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
 /* ================================================================
    شريط الأدوات والبحث - Toolbar
    ================================================================ */
@@ -1579,6 +1782,10 @@ a {
     padding: 24px 24px 64px;
   }
 
+  .attendance-charts {
+    grid-template-columns: 1fr;
+  }
+
   .main-header {
     padding: 0 24px;
   }
@@ -1670,6 +1877,27 @@ a {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     margin-bottom: 26px;
+  }
+
+  .attendance-charts {
+    gap: 10px;
+    margin-bottom: 26px;
+  }
+
+  .chart-card {
+    padding: 16px 12px;
+  }
+
+  .chart-heading h3 {
+    font-size: 14px;
+  }
+
+  .attendance-bars {
+    gap: 5px;
+  }
+
+  .attendance-summary {
+    gap: 20px;
   }
 
   .stat-card {
