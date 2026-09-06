@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { paymentStatusFor } from "../../lib/dashboard-utils";
 function PlayerRow({
   player,
@@ -9,6 +9,7 @@ function PlayerRow({
   isSelected,
   onToggleSelection,
 }) {
+  const [attendanceBusy, setAttendanceBusy] = useState("");
   const record = player.attendance.find((item) => item.date === sessionDate);
   const present =
     (record === null || record === void 0 ? void 0 : record.status) ===
@@ -17,6 +18,18 @@ function PlayerRow({
     (record === null || record === void 0 ? void 0 : record.status) ===
     "absent";
   const paymentStatus = paymentStatusFor(player, paymentMonth);
+  async function updateAttendance(status) {
+    if (attendanceBusy) return;
+    setAttendanceBusy(status);
+    try {
+      await onUpdate(player._id, {
+        attendanceStatus: status,
+        date: sessionDate,
+      });
+    } finally {
+      setAttendanceBusy("");
+    }
+  }
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-slate-100 p-4 last:border-b-0 lg:grid-cols-[2.2fr_0.7fr_1fr_1.7fr_1.15fr_0.35fr] lg:items-center lg:gap-4 lg:px-6 lg:py-3">
       {/* اسم اللاعب */}
@@ -29,6 +42,7 @@ function PlayerRow({
           className="h-4 w-4 shrink-0 accent-red-600"
         />
         <button
+          type="button"
           className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 text-right"
           onClick={onOpen}
         >
@@ -64,31 +78,26 @@ function PlayerRow({
       {/* الحضور */}
       <div className="col-span-1 grid grid-cols-2 gap-1.5 lg:col-auto lg:flex">
         <button
+          type="button"
           className={`min-h-10 rounded-lg px-2 text-[11px] font-bold transition ${present ? "bg-green-100 text-green-700 ring-1 ring-green-200" : "bg-slate-50 text-slate-500 hover:bg-green-50"}`}
-          onClick={() =>
-            onUpdate(player._id, {
-              attendanceStatus: "present",
-              date: sessionDate,
-            })
-          }
+          disabled={Boolean(attendanceBusy)}
+          onClick={() => updateAttendance("present")}
         >
-          ✓ حاضر
+          {attendanceBusy === "present" ? "جاري..." : "✓ حاضر"}
         </button>
         <button
+          type="button"
           className={`min-h-10 rounded-lg px-2 text-[11px] font-bold transition ${absent ? "bg-red-100 text-red-700 ring-1 ring-red-200" : "bg-slate-50 text-slate-500 hover:bg-red-50"}`}
-          onClick={() =>
-            onUpdate(player._id, {
-              attendanceStatus: "absent",
-              date: sessionDate,
-            })
-          }
+          disabled={Boolean(attendanceBusy)}
+          onClick={() => updateAttendance("absent")}
         >
-          × غياب
+          {attendanceBusy === "absent" ? "جاري..." : "× غياب"}
         </button>
       </div>
 
       {/* الدفع */}
       <button
+        type="button"
         className={`col-span-1 min-h-10 rounded-lg px-2 text-[11px] font-bold transition lg:col-auto ${paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-red-50 text-red-600 hover:bg-red-100"}`}
         onClick={() =>
           onUpdate(player._id, {
@@ -101,6 +110,7 @@ function PlayerRow({
 
       {/* تفاصيل */}
       <button
+        type="button"
         className="col-start-2 row-start-1 grid h-10 w-10 place-items-center rounded-lg text-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 lg:col-auto lg:row-auto"
         onClick={onOpen}
         title="عرض الملف"

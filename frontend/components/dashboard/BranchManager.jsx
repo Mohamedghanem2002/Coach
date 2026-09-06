@@ -1,5 +1,11 @@
 import { useState } from "react";
-export default function BranchManager({ branches, onAdd, onDelete, onClose }) {
+export default function BranchManager({
+  branches,
+  players = [],
+  onAdd,
+  onDelete,
+  onClose,
+}) {
   const [name, setName] = useState("");
   function submit(event) {
     event.preventDefault();
@@ -57,12 +63,24 @@ export default function BranchManager({ branches, onAdd, onDelete, onClose }) {
                 key={branch._id}
               >
                 <span className="text-lg text-red-600">⌂</span>
-                <strong className="flex-1 text-sm font-semibold text-slate-900">
-                  {branch.name}
-                </strong>
+                <span className="min-w-0 flex-1">
+                  <strong className="block truncate text-sm font-semibold text-slate-900">
+                    {branch.name}
+                  </strong>
+                  <small className="text-[10px] text-slate-400">
+                    {
+                      players.filter((player) => player.branch === branch.name)
+                        .length
+                    }{" "}
+                    لاعب
+                  </small>
+                </span>
                 <button
-                  className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100"
+                  className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => onDelete(branch.name)}
+                  disabled={players.some(
+                    (player) => player.branch === branch.name,
+                  )}
                   title="حذف الفرع"
                 >
                   حذف

@@ -164,6 +164,11 @@ export default function Home() {
           ? safePlayer
           : current,
       );
+      if (data.attendanceStatus) {
+        setNotice(
+          `تم تسجيل ${data.attendanceStatus === "present" ? "حضور" : "غياب"} اللاعب بنجاح.`,
+        );
+      }
       return safePlayer;
     } catch (_a) {
       setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
@@ -623,6 +628,7 @@ export default function Home() {
       {showBranches && (
         <BranchManager
           branches={branches}
+          players={players}
           onAdd={addBranch}
           onDelete={deleteBranch}
           onClose={() => setShowBranches(false)}
