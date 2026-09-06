@@ -129,6 +129,22 @@ export default function Profile({
     context.textAlign = "right";
     context.direction = "rtl";
     context.fillText("🥋 coach", canvas.width - 100, 150);
+    if (player.photo) {
+      const photo = await new Promise((resolve) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = player.photo;
+      });
+      if (photo) {
+        context.save();
+        context.beginPath();
+        context.arc(170, 135, 68, 0, Math.PI * 2);
+        context.clip();
+        context.drawImage(photo, 102, 67, 136, 136);
+        context.restore();
+      }
+    }
     let y = 245;
     for (const line of lines) {
       if (!line) {
