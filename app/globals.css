@@ -1638,6 +1638,52 @@ a {
   font-weight: 500;
 }
 
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.image-share-button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: #fff6e8;
+  border: 1px solid #f4d49a;
+  color: #a86608;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.image-share-button:hover {
+  background: #fff0d4;
+  border-color: #e9bd68;
+  transform: translateY(-1px);
+}
+
+.whatsapp-share-button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: #e9f8ef;
+  border: 1px solid #b7e4c7;
+  color: #218c4b;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.whatsapp-share-button:hover {
+  background: #d8f3e2;
+  border-color: #8fd3a7;
+  transform: translateY(-1px);
+}
+
 .profile-date {
   display: block;
   margin-top: 6px;
@@ -2097,6 +2143,20 @@ a {
     max-height: 92vh;
     width: 100%;
     padding: 24px 16px;
+  }
+
+  .profile-head {
+    flex-wrap: wrap;
+  }
+
+  .profile-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .profile-actions button {
+    flex: 1;
+    min-height: 40px;
   }
 
   .form-row {
