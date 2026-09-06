@@ -108,21 +108,18 @@ function StatsGrid({
     },
   ];
   const statStyles = {
-    red: {
-      card: "border-red-100 bg-red-50/60",
-      icon: "bg-red-100 text-red-600",
-    },
+    red: { card: "border-slate-200 bg-white", icon: "bg-red-50 text-red-600" },
     green: {
-      card: "border-green-100 bg-green-50/60",
-      icon: "bg-green-100 text-green-600",
+      card: "border-slate-200 bg-white",
+      icon: "bg-green-50 text-green-600",
     },
     blue: {
-      card: "border-blue-100 bg-blue-50/60",
-      icon: "bg-blue-100 text-blue-600",
+      card: "border-slate-200 bg-white",
+      icon: "bg-blue-50 text-blue-600",
     },
     orange: {
-      card: "border-orange-100 bg-orange-50/60",
-      icon: "bg-orange-100 text-orange-600",
+      card: "border-slate-200 bg-white",
+      icon: "bg-orange-50 text-orange-600",
     },
   };
   return (
@@ -131,7 +128,7 @@ function StatsGrid({
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className={`relative overflow-hidden rounded-xl border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:rounded-2xl sm:p-4 ${statStyles[stat.color].card}`}
+            className={`relative overflow-hidden rounded-xl border p-3 shadow-sm transition hover:border-slate-300 hover:shadow-md sm:rounded-2xl sm:p-4 ${statStyles[stat.color].card}`}
           >
             <div
               className={`mb-2 grid h-8 w-8 place-items-center rounded-lg text-sm sm:mb-3 sm:h-9 sm:w-9 sm:rounded-xl sm:text-base ${statStyles[stat.color].icon}`}
@@ -153,8 +150,8 @@ function StatsGrid({
         ))}
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
@@ -214,7 +211,7 @@ function StatsGrid({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">

@@ -25,16 +25,16 @@ export default function Header() {
       : "";
   return (
     <header
-      className="sticky top-0 z-50 flex min-h-[60px] items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 shadow-sm sm:min-h-[68px] sm:gap-4 sm:px-10"
+      className="sticky top-0 z-50 flex min-h-[60px] items-center justify-between gap-3 border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur sm:min-h-[68px] sm:gap-4 sm:px-10"
       dir="rtl"
     >
       {/* البراند */}
       <div className="flex items-center gap-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-linear-to-br from-red-500 to-red-700 text-lg text-white shadow-md shadow-red-100 sm:h-10 sm:w-10 sm:text-xl">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-600 text-lg text-white shadow-sm sm:h-10 sm:w-10 sm:text-xl">
           🥋
         </span>
         <div>
-          <strong className="block text-base font-extrabold leading-tight text-slate-900 sm:text-[17px]">
+          <strong className="block text-base font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[17px]">
             coach
           </strong>
           <small className="hidden text-[10px] text-slate-400 sm:block">
@@ -80,7 +80,7 @@ export default function Header() {
           </span>
         </div>
         <button
-          className="flex items-center gap-1 rounded-lg border border-transparent bg-red-50 px-2.5 py-2 text-[10px] font-bold text-red-600 transition hover:border-red-200 hover:bg-red-100 sm:px-3.5 sm:text-[11px]"
+          className="flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-2.5 py-2 text-[10px] font-bold text-red-600 transition hover:bg-red-100 sm:px-3.5 sm:text-[11px]"
           onClick={async () => {
             await signOut({ redirect: false });
             router.push("/auth/signin");

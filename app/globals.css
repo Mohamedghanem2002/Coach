@@ -11,6 +11,8 @@ html {
 body {
   min-width: 320px;
   font-family: var(--font-arabic);
+  background: #f8fafc;
+  color: #17212b;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -23,6 +25,14 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgb(239 68 68 / 0.2);
+  outline-offset: 2px;
 }
 
 img {

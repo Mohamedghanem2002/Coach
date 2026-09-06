@@ -12,14 +12,14 @@ export default function BranchOverview({
   if (!branches.length) return null;
 
   return (
-    <section className="mt-5">
+    <section className="mt-7">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
-            نظرة سريعة
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            مساحات التدريب
           </p>
-          <h2 className="mt-1 text-base font-extrabold text-slate-900">
-            إدارة الصالات
+          <h2 className="mt-1 text-lg font-extrabold text-slate-900">
+            الصالات والفروع
           </h2>
         </div>
         <span className="text-[11px] text-slate-400">بيانات {sessionDate}</span>

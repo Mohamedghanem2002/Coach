@@ -345,24 +345,24 @@ export default function Home() {
     }
   }
   return (
-    <main className="min-h-screen bg-[#f6f7f9] text-slate-900" dir="rtl">
+    <main className="min-h-screen bg-[#f8fafc] text-slate-900" dir="rtl">
       <Header />
 
-      <section className="mx-auto w-full max-w-360 px-3 py-4 sm:px-8 sm:py-8">
+      <section className="mx-auto w-full max-w-360 px-3 py-4 sm:px-8 sm:py-7">
         <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-red-600">
-                مركز إدارة الأكاديمية
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                لوحة الأكاديمية
               </p>
               <h2 className="font-cairo text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                لوحة التحكم
+                صباح الخير يا كابتن
               </h2>
               <p className="mt-1 text-xs leading-6 text-slate-500 sm:text-sm">
-                تابع لاعبي الأكاديمية وحضورهم واشتراكاتهم بسهولة.
+                تابع الأداء اليومي للاعبين من مساحة واحدة هادئة وواضحة.
               </p>
             </div>
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50/70 p-2.5 sm:min-w-64">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5 sm:min-w-64">
               <div className="min-w-0">
                 <span className="block text-[10px] text-slate-500">
                   الصالة الحالية
