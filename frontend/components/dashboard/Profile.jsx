@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { localDate, paymentStatusFor } from "../../lib/dashboard-utils";
 export default function Profile({
   player,
@@ -24,6 +24,8 @@ export default function Profile({
   const [customPaymentStatus, setCustomPaymentStatus] = useState("paid");
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState("");
+  const [profileNotice, setProfileNotice] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
   const attended = (
     Array.isArray(player.attendance) ? player.attendance : []
   ).filter((item) => item.status === "present").length;
@@ -31,6 +33,11 @@ export default function Profile({
   const registrationDate = new Date(player.createdAt).toLocaleDateString(
     "ar-EG",
   );
+  useEffect(() => {
+    if (!profileNotice) return undefined;
+    const timer = setTimeout(() => setProfileNotice(""), 3500);
+    return () => clearTimeout(timer);
+  }, [profileNotice]);
   function shareOnWhatsApp() {
     const attendanceHistory = Array.isArray(player.attendance)
       ? [...player.attendance].reverse()
@@ -117,20 +124,22 @@ export default function Profile({
     ];
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
-    canvas.height = Math.max(1350, 560 + lines.length * 42);
+    canvas.height = Math.max(1450, 650 + lines.length * 42);
     const context = canvas.getContext("2d");
     if (!context) return;
-    context.fillStyle = "#f4f7f6";
+    context.fillStyle = "#edf3f2";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#d94841";
-    context.fillRect(0, 0, canvas.width, 18);
+    context.fillRect(0, 0, canvas.width, 24);
     context.fillStyle = "#ffffff";
-    context.fillRect(54, 54, canvas.width - 108, canvas.height - 108);
+    context.fillRect(42, 42, canvas.width - 84, canvas.height - 84);
+    context.fillStyle = "#fff4f2";
+    context.fillRect(42, 42, canvas.width - 84, 245);
     context.fillStyle = "#d94841";
-    context.font = "700 54px Cairo, sans-serif";
+    context.font = "700 50px Cairo, sans-serif";
     context.textAlign = "right";
     context.direction = "rtl";
-    context.fillText("🥋 coach", canvas.width - 100, 150);
+    context.fillText("coach  |  ملف اللاعب", canvas.width - 100, 112);
     if (player.photo) {
       const photo = await new Promise((resolve) => {
         const image = new Image();
@@ -141,13 +150,22 @@ export default function Profile({
       if (photo) {
         context.save();
         context.beginPath();
-        context.arc(170, 135, 68, 0, Math.PI * 2);
+        context.arc(170, 160, 78, 0, Math.PI * 2);
         context.clip();
-        context.drawImage(photo, 102, 67, 136, 136);
+        context.drawImage(photo, 92, 82, 156, 156);
         context.restore();
       }
     }
-    let y = 245;
+    context.fillStyle = monthlyStatus === "paid" ? "#218c4b" : "#c53030";
+    context.fillRect(760, 195, 220, 54);
+    context.fillStyle = "#ffffff";
+    context.font = "700 25px Cairo, sans-serif";
+    context.fillText(
+      monthlyStatus === "paid" ? "مدفوع" : "غير مدفوع",
+      950,
+      231,
+    );
+    let y = 350;
     for (const line of lines) {
       if (!line) {
         y += 22;
@@ -156,6 +174,9 @@ export default function Profile({
       if (line === "بيانات لاعب أكاديمية coach") {
         context.fillStyle = "#d94841";
         context.font = "700 34px Cairo, sans-serif";
+      } else if (line.startsWith("اشتراك ")) {
+        context.fillStyle = monthlyStatus === "paid" ? "#218c4b" : "#c53030";
+        context.font = "700 30px Cairo, sans-serif";
       } else if (
         ["ملخص الحضور", "آخر سجلات الحضور", "سجل الاشتراكات"].includes(line)
       ) {
@@ -215,16 +236,24 @@ export default function Profile({
     };
     reader.readAsDataURL(file);
   }
-  function saveInfo(e) {
+  async function saveInfo(e) {
     e.preventDefault();
-    onUpdate(player._id, {
+    if (profileSaving) return;
+    setProfileSaving(true);
+    const updatedPlayer = await onUpdate(player._id, {
       updateInfo: "true",
       name: editName.trim(),
       age: String(editAge),
       branch: editBranch,
       photo: editPhoto,
     });
-    setIsEditing(false);
+    setProfileNotice(
+      updatedPlayer
+        ? "تم تعديل بيانات اللاعب بنجاح"
+        : "تعذر تعديل بيانات اللاعب. حاول مرة أخرى.",
+    );
+    if (updatedPlayer) setIsEditing(false);
+    setProfileSaving(false);
   }
   function addCustomAttendance(e) {
     e.preventDefault();
@@ -262,6 +291,17 @@ export default function Profile({
           overflowY: "auto",
         }}
       >
+        {profileNotice && (
+          <div
+            className={`profile-toast ${profileNotice.startsWith("تعذر") ? "error" : ""}`}
+            role="status"
+          >
+            <span>{profileNotice}</span>
+            <button type="button" onClick={() => setProfileNotice("")}>
+              ×
+            </button>
+          </div>
+        )}
         <button className="close" onClick={onClose}>
           ×
         </button>
@@ -352,8 +392,12 @@ export default function Profile({
               )}
             </label>
             <div className="form-row" style={{ marginTop: "20px" }}>
-              <button className="primary-button" type="submit">
-                حفظ التعديلات
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={profileSaving}
+              >
+                {profileSaving ? "جاري الحفظ..." : "حفظ التعديلات"}
               </button>
               <button
                 className="outline-button"
@@ -499,8 +543,10 @@ export default function Profile({
                   <button
                     style={{
                       background:
-                        item.status === "paid" ? "var(--green)" : "#eaf7f0",
-                      color: item.status === "paid" ? "white" : "var(--green)",
+                        item.status === "paid"
+                          ? "var(--green)"
+                          : "var(--red-light)",
+                      color: item.status === "paid" ? "white" : "var(--red)",
                       border: "0",
                       borderRadius: "4px",
                       padding: "4px 8px",

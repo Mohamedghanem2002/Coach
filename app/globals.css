@@ -1613,6 +1613,38 @@ a {
   margin-bottom: 8px;
 }
 
+.profile-toast {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--green-border);
+  border-radius: var(--radius);
+  background: var(--green-light);
+  color: var(--green-600);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profile-toast button {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: inherit;
+  font-size: 18px;
+}
+
+.profile-toast.error {
+  border-color: var(--red-border);
+  background: var(--red-light);
+  color: var(--red-600);
+}
+
 .profile-head {
   display: grid;
   gap: 20px;
