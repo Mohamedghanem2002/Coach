@@ -57,30 +57,52 @@ export default function SignInPage() {
     }
   }
   return (
-    <main className="signin-page" dir="rtl">
-      <section className="signin-panel">
-        <div className="signin-mark">🥋</div>
-        <p className="signin-kicker">إدارة أكاديمية الكاراتيه</p>
-        <h1>{isRegistering ? "إنشاء حساب جديد" : "مرحبًا بك في coach"}</h1>
-        <p className="signin-copy">
+    <main
+      className="grid min-h-screen place-items-center bg-linear-to-br from-slate-50 via-white to-red-50 p-6"
+      dir="rtl"
+    >
+      <section className="relative w-full max-w-110 overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-10 text-center shadow-2xl sm:px-10">
+        <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-red-600 via-red-400 to-red-600" />
+        <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-2xl bg-linear-to-br from-red-500 to-red-700 text-3xl text-white shadow-lg shadow-red-200">
+          🥋
+        </div>
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.5px] text-red-600">
+          إدارة أكاديمية الكاراتيه
+        </p>
+        <h1 className="mb-2 text-2xl font-extrabold text-slate-900">
+          {isRegistering ? "إنشاء حساب جديد" : "مرحبًا بك في coach"}
+        </h1>
+        <p className="mb-8 text-[13px] leading-7 text-slate-500">
           {isRegistering
             ? "أنشئ حسابك للوصول إلى لوحة الأكاديمية."
             : "سجّل الدخول للوصول إلى لوحة الأكاديمية."}
         </p>
-        <form className="signin-form" onSubmit={submit}>
+        <form className="grid gap-4 text-right" onSubmit={submit}>
           {isRegistering && (
-            <label>
+            <label className="grid gap-1.5 text-xs font-bold text-slate-600">
               الاسم
-              <input name="name" required autoComplete="name" />
+              <input
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100"
+                name="name"
+                required
+                autoComplete="name"
+              />
             </label>
           )}
-          <label>
+          <label className="grid gap-1.5 text-xs font-bold text-slate-600">
             البريد الإلكتروني
-            <input name="email" type="email" required autoComplete="email" />
+            <input
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+            />
           </label>
-          <label>
+          <label className="grid gap-1.5 text-xs font-bold text-slate-600">
             كلمة المرور
             <input
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100"
               name="password"
               type="password"
               minLength={8}
@@ -88,8 +110,16 @@ export default function SignInPage() {
               autoComplete={isRegistering ? "new-password" : "current-password"}
             />
           </label>
-          {error && <p className="signin-error">{error}</p>}
-          <button className="google-button" type="submit" disabled={busy}>
+          {error && (
+            <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-center text-xs font-semibold text-red-600">
+              {error}
+            </p>
+          )}
+          <button
+            className="flex w-full items-center justify-center rounded-xl bg-linear-to-br from-red-500 to-red-700 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-200 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+            type="submit"
+            disabled={busy}
+          >
             {busy
               ? "جاري التنفيذ..."
               : isRegistering
@@ -98,7 +128,7 @@ export default function SignInPage() {
           </button>
         </form>
         <button
-          className="signin-switch"
+          className="mt-5 inline-block text-xs font-semibold text-slate-500 transition hover:text-red-600"
           type="button"
           onClick={() => {
             setError("");

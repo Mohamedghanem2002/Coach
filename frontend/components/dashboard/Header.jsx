@@ -24,28 +24,39 @@ export default function Header() {
       ? _c
       : "";
   return (
-    <header className="main-header" dir="rtl">
+    <header
+      className="sticky top-0 z-50 flex min-h-[68px] items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 shadow-sm sm:px-10"
+      dir="rtl"
+    >
       {/* البراند */}
-      <div className="header-brand">
-        <span className="brand-mark">🥋</span>
+      <div className="flex items-center gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-linear-to-br from-red-500 to-red-700 text-xl text-white shadow-md shadow-red-100">
+          🥋
+        </span>
         <div>
-          <strong>coach</strong>
-          <small>إدارة أكاديمية الكاراتيه</small>
+          <strong className="block text-[17px] font-extrabold leading-tight text-slate-900">
+            coach
+          </strong>
+          <small className="block text-[10px] text-slate-400">
+            إدارة أكاديمية الكاراتيه
+          </small>
         </div>
       </div>
 
       {/* الوسط */}
-      <div className="header-center">
-        <p className="eyebrow">{todayFormatted}</p>
-        <h1>
+      <div className="hidden text-center sm:block">
+        <p className="mb-0.5 text-[10px] font-semibold text-slate-400">
+          {todayFormatted}
+        </p>
+        <h1 className="text-base font-bold text-slate-900">
           مرحباً يا كابتن {firstName} <span>👋</span>
         </h1>
       </div>
 
       {/* الحساب */}
-      <div className="account-actions">
-        <div className="account-details">
-          <strong>
+      <div className="flex items-center gap-3">
+        <div className="hidden gap-px text-left sm:grid" dir="ltr">
+          <strong className="text-xs font-semibold text-slate-900">
             {(_e =
               (_d =
                 session === null || session === void 0
@@ -56,7 +67,7 @@ export default function Header() {
               ? _e
               : "حساب الأكاديمية"}
           </strong>
-          <span>
+          <span className="text-[10px] text-slate-400">
             {(_g =
               (_f =
                 session === null || session === void 0
@@ -69,7 +80,7 @@ export default function Header() {
           </span>
         </div>
         <button
-          className="logout-button"
+          className="flex items-center gap-1 rounded-lg border border-transparent bg-red-50 px-3.5 py-2 text-[11px] font-bold text-red-600 transition hover:border-red-200 hover:bg-red-100"
           onClick={async () => {
             await signOut({ redirect: false });
             router.push("/auth/signin");

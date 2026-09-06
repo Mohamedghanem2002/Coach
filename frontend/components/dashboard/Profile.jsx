@@ -336,20 +336,13 @@ export default function Profile({
   }
   return (
     <div
-      className="modal-backdrop"
+      className="fixed inset-0 z-100 flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
-      <aside
-        className="profile-panel"
-        style={{
-          width: "min(100%, 550px)",
-          maxHeight: "92vh",
-          overflowY: "auto",
-        }}
-      >
+      <aside className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-7">
         {profileNotice && (
           <div
-            className={`profile-toast ${profileNotice.startsWith("تعذر") ? "error" : ""}`}
+            className={`sticky top-0 z-10 mb-3 flex items-center justify-between gap-2 rounded-xl border p-3 text-xs font-bold ${profileNotice.startsWith("تعذر") ? "border-red-200 bg-red-50 text-red-600" : "border-green-200 bg-green-50 text-green-700"}`}
             role="status"
           >
             <span>{profileNotice}</span>
@@ -358,35 +351,40 @@ export default function Profile({
             </button>
           </div>
         )}
-        <button className="close" onClick={onClose}>
+        <button
+          className="mb-2 mr-auto grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-lg text-slate-500"
+          onClick={onClose}
+        >
           ×
         </button>
 
         {isEditing ? (
-          <form
-            onSubmit={saveInfo}
-            className="modal"
-            style={{ padding: 0, width: "100%", boxShadow: "none" }}
-          >
-            <div className="modal-title">
+          <form onSubmit={saveInfo} className="w-full">
+            <div className="mb-6 border-b border-slate-100 pb-5">
               <div>
-                <p className="eyebrow">تعديل ملف لاعب</p>
-                <h2>تعديل البيانات</h2>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-red-600">
+                  تعديل ملف لاعب
+                </p>
+                <h2 className="text-xl font-extrabold text-slate-900">
+                  تعديل البيانات
+                </h2>
               </div>
             </div>
-            <label>
+            <label className="mb-4 block text-xs font-bold text-slate-600">
               اسم اللاعب
               <input
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 required
                 placeholder="مثال: أحمد محمد"
               />
             </label>
-            <div className="form-row">
-              <label>
+            <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
+              <label className="mb-4 block text-xs font-bold text-slate-600">
                 السن
                 <input
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                   type="number"
                   min="4"
                   max="80"
@@ -396,9 +394,10 @@ export default function Profile({
                   placeholder="12"
                 />
               </label>
-              <label>
+              <label className="mb-4 block text-xs font-bold text-slate-600">
                 الفرع
                 <select
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                   value={editBranch}
                   onChange={(e) => setEditBranch(e.target.value)}
                 >
@@ -410,53 +409,41 @@ export default function Profile({
                 </select>
               </label>
             </div>
-            <label>
+            <label className="mb-4 block text-xs font-bold text-slate-600">
               صورة اللاعب
               <input
+                className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-red-50 file:px-3 file:py-2 file:text-xs file:font-bold file:text-red-600"
                 type="file"
                 accept="image/*"
                 onChange={handlePhotoChange}
               />
               {editPhoto && (
-                <div
-                  style={{
-                    marginTop: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
-                >
+                <div className="mt-2.5 flex items-center gap-2.5">
                   <img
                     src={editPhoto}
                     alt="Preview"
-                    style={{
-                      width: "50px",
-                      height: "50px",
-                      borderRadius: "8px",
-                      objectFit: "cover",
-                    }}
+                    className="h-12 w-12 rounded-lg object-cover"
                   />
                   <button
                     type="button"
                     onClick={() => setEditPhoto("")}
-                    className="delete-branch"
-                    style={{ padding: "4px 8px" }}
+                    className="rounded-lg bg-red-50 px-2 py-1 text-xs font-semibold text-red-600"
                   >
                     إزالة الصورة
                   </button>
                 </div>
               )}
             </label>
-            <div className="form-row" style={{ marginTop: "20px" }}>
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <button
-                className="primary-button"
+                className="rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-60"
                 type="submit"
                 disabled={profileSaving}
               >
                 {profileSaving ? "جاري الحفظ..." : "حفظ التعديلات"}
               </button>
               <button
-                className="outline-button"
+                className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600"
                 type="button"
                 onClick={() => setIsEditing(false)}
               >
@@ -466,45 +453,52 @@ export default function Profile({
           </form>
         ) : (
           <>
-            <div className="profile-head">
-              <div className="profile-identity">
-                <span className="profile-photo">
+            <div className="grid gap-5 border-b border-slate-200 pb-5">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-linear-to-br from-red-100 to-red-200 text-2xl font-bold text-red-700 ring-2 ring-white shadow-md">
                   {player.photo ? (
                     <img src={player.photo} alt="" />
                   ) : (
                     player.name.charAt(0)
                   )}
                 </span>
-                <div className="profile-details">
-                  <p className="eyebrow">ملف لاعب</p>
-                  <h2>{player.name}</h2>
-                  <div className="profile-meta">
-                    <span>🏢 {player.branch}</span>
-                    <span>🎂 {player.age} سنة</span>
+                <div className="min-w-0">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-red-600">
+                    ملف لاعب
+                  </p>
+                  <h2 className="truncate text-2xl font-extrabold text-slate-900">
+                    {player.name}
+                  </h2>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600">
+                      🏢 {player.branch}
+                    </span>
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600">
+                      🎂 {player.age} سنة
+                    </span>
                   </div>
-                  <small className="profile-date">
+                  <small className="mt-2 block text-[10px] text-slate-400">
                     تاريخ التسجيل: {registrationDate}
                   </small>
                 </div>
               </div>
-              <div className="profile-actions">
+              <div className="grid gap-2 sm:grid-cols-3">
                 <button
-                  className="image-share-button"
+                  className="min-h-10 rounded-lg border border-amber-200 bg-amber-50 px-2 text-[11px] font-bold text-amber-700"
                   type="button"
                   onClick={shareProfileImage}
                 >
                   <span aria-hidden="true">▣</span> مشاركة كصورة
                 </button>
                 <button
-                  className="whatsapp-share-button"
+                  className="min-h-10 rounded-lg border border-green-200 bg-green-50 px-2 text-[11px] font-bold text-green-700"
                   type="button"
                   onClick={shareOnWhatsApp}
                 >
                   <span aria-hidden="true">◉</span> مشاركة واتساب
                 </button>
                 <button
-                  className="outline-button"
-                  style={{ padding: "6px 12px", fontSize: "11px" }}
+                  className="min-h-10 rounded-lg border border-slate-200 px-2 text-[11px] font-bold text-slate-600"
                   onClick={() => {
                     setEditName(player.name);
                     setEditAge(player.age);
@@ -518,13 +512,17 @@ export default function Profile({
               </div>
             </div>
 
-            <div className="profile-stats">
-              <div>
-                <strong>{attended}</strong>
-                <span>حصة حضور</span>
+            <div className="grid grid-cols-3 gap-2 py-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
+                <strong className="block text-xl font-extrabold text-slate-900">
+                  {attended}
+                </strong>
+                <span className="mt-1 block text-[10px] text-slate-400">
+                  حصة حضور
+                </span>
               </div>
-              <div>
-                <strong>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
+                <strong className="block text-xl font-extrabold text-slate-900">
                   {
                     ((_a = player.attendance) !== null && _a !== void 0
                       ? _a
@@ -532,27 +530,29 @@ export default function Profile({
                     ).length
                   }
                 </strong>
-                <span>حصة مسجلة</span>
+                <span className="mt-1 block text-[10px] text-slate-400">
+                  حصة مسجلة
+                </span>
               </div>
               <div>
                 <strong
-                  className={
-                    monthlyStatus === "paid" ? "green-text" : "red-text"
-                  }
+                  className={`block text-xl font-extrabold ${monthlyStatus === "paid" ? "text-green-600" : "text-red-600"}`}
                 >
                   {monthlyStatus === "paid" ? "مدفوع" : "غير مدفوع"}
                 </strong>
-                <span>{paymentMonth}</span>
+                <span className="mt-1 block text-[10px] text-slate-400">
+                  {paymentMonth}
+                </span>
               </div>
             </div>
 
-            <div className="profile-section payment-section">
-              <div className="section-title">
-                <h3>اشتراك {paymentMonth}</h3>
+            <div className="border-b border-slate-100 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-bold text-slate-900">
+                  اشتراك {paymentMonth}
+                </h3>
                 <button
-                  className={
-                    monthlyStatus === "paid" ? "payment paid" : "payment unpaid"
-                  }
+                  className={`rounded-lg px-3 py-2 text-xs font-bold ${monthlyStatus === "paid" ? "bg-green-100 text-green-700" : "bg-red-50 text-red-600"}`}
                   onClick={() =>
                     onUpdate(player._id, {
                       paymentStatus:
@@ -564,51 +564,38 @@ export default function Profile({
                   {monthlyStatus === "paid" ? "تم الدفع ✓" : "تسجيل الدفع"}
                 </button>
               </div>
-              <p className="muted">حالة هذا الشهر مستقلة عن الشهور السابقة.</p>
+              <p className="mt-1 text-xs text-slate-400">
+                حالة هذا الشهر مستقلة عن الشهور السابقة.
+              </p>
             </div>
           </>
         )}
 
         {/* سجل المدفوعات التاريخي */}
-        <div className="profile-section">
-          <div className="section-title">
+        <div className="border-b border-slate-100 py-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <p className="eyebrow">الاشتراكات</p>
-              <h3>سجل المدفوعات</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
+                الاشتراكات
+              </p>
+              <h3 className="text-sm font-bold text-slate-900">
+                سجل المدفوعات
+              </h3>
             </div>
-            <span className="profile-section-hint">اختر أي شهر</span>
+            <span className="text-[10px] text-slate-400">اختر أي شهر</span>
           </div>
           {!player.paymentHistory || player.paymentHistory.length === 0 ? (
-            <p className="muted">لا توجد مدفوعات مسجلة بعد.</p>
+            <p className="text-xs text-slate-400">لا توجد مدفوعات مسجلة بعد.</p>
           ) : (
             [...player.paymentHistory].reverse().map((item) => (
               <div
-                className="history-row"
+                className="flex items-center justify-between border-b border-slate-100 py-2 text-xs text-slate-600"
                 key={item.month}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 0",
-                }}
               >
                 <span>{item.month}</span>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
+                <div className="flex items-center gap-1.5">
                   <button
-                    style={{
-                      background:
-                        item.status === "paid"
-                          ? "var(--green)"
-                          : "var(--red-light)",
-                      color: item.status === "paid" ? "white" : "var(--red)",
-                      border: "0",
-                      borderRadius: "4px",
-                      padding: "4px 8px",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                    }}
+                    className={`rounded px-2 py-1 text-[10px] font-bold ${item.status === "paid" ? "bg-green-600 text-white" : "bg-red-50 text-red-600"}`}
                     onClick={() =>
                       onUpdate(player._id, {
                         paymentStatus:
@@ -620,14 +607,7 @@ export default function Profile({
                     {item.status === "paid" ? "مدفوع ✓" : "لم يدفع"}
                   </button>
                   <button
-                    style={{
-                      background: "#fff0ec",
-                      color: "var(--red)",
-                      border: "0",
-                      borderRadius: "4px",
-                      padding: "4px 6px",
-                      fontSize: "10px",
-                    }}
+                    className="rounded bg-red-50 px-1.5 py-1 text-[10px] text-red-600"
                     onClick={() => {
                       if (confirm(`هل تريد حذف اشتراك شهر ${item.month}؟`)) {
                         onUpdate(player._id, {
@@ -646,15 +626,22 @@ export default function Profile({
           )}
 
           {/* إضافة شهر اشتراك مخصص */}
-          <form onSubmit={addCustomPayment} className="custom-history-add">
-            <span className="custom-history-label">تسجيل اشتراك لشهر محدد</span>
+          <form
+            onSubmit={addCustomPayment}
+            className="mt-4 grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[1fr_1fr_auto]"
+          >
+            <span className="text-[11px] font-bold text-slate-600 sm:col-span-full">
+              تسجيل اشتراك لشهر محدد
+            </span>
             <input
               type="month"
               value={customPaymentMonth}
               onChange={(e) => setCustomPaymentMonth(e.target.value)}
+              className="min-h-10 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus:border-red-500"
               required
             />
             <select
+              className="min-h-10 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus:border-red-500"
               value={customPaymentStatus}
               onChange={(e) => setCustomPaymentStatus(e.target.value)}
             >
@@ -662,49 +649,39 @@ export default function Profile({
               <option value="unpaid">لم يدفع</option>
             </select>
             <button
-              className="primary-button"
+              className="min-h-10 rounded-lg bg-red-600 px-3 text-xs font-bold text-white disabled:opacity-60"
               type="submit"
               disabled={paymentSaving}
             >
               {paymentSaving ? "جاري الحفظ..." : "حفظ الحالة"}
             </button>
           </form>
-          {paymentNotice && <p className="payment-notice">{paymentNotice}</p>}
+          {paymentNotice && (
+            <p className="mt-2 text-xs font-semibold text-green-600">
+              {paymentNotice}
+            </p>
+          )}
         </div>
 
         {/* سجل الحضور التاريخي */}
-        <div className="profile-section">
-          <h3>سجل الحضور والغياب</h3>
+        <div className="border-b border-slate-100 py-5">
+          <h3 className="mb-3 text-sm font-bold text-slate-900">
+            سجل الحضور والغياب
+          </h3>
           {!player.attendance || player.attendance.length === 0 ? (
-            <p className="muted">لا توجد حصص حضور مسجلة بعد.</p>
+            <p className="text-xs text-slate-400">
+              لا توجد حصص حضور مسجلة بعد.
+            </p>
           ) : (
             [...player.attendance].reverse().map((item) => (
               <div
-                className="history-row"
+                className="flex items-center justify-between border-b border-slate-100 py-2 text-xs text-slate-600"
                 key={item.date}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 0",
-                }}
               >
                 <span>{item.date}</span>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
+                <div className="flex items-center gap-1.5">
                   <button
-                    style={{
-                      background:
-                        item.status === "present" ? "var(--green)" : "#eaf7f0",
-                      color:
-                        item.status === "present" ? "white" : "var(--green)",
-                      border: "0",
-                      borderRadius: "4px",
-                      padding: "4px 8px",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                    }}
+                    className={`rounded px-2 py-1 text-[10px] font-bold ${item.status === "present" ? "bg-green-600 text-white" : "bg-green-50 text-green-700"}`}
                     onClick={() =>
                       onUpdate(player._id, {
                         attendanceStatus: "present",
@@ -715,16 +692,7 @@ export default function Profile({
                     حاضر
                   </button>
                   <button
-                    style={{
-                      background:
-                        item.status === "absent" ? "var(--red)" : "#fff0ec",
-                      color: item.status === "absent" ? "white" : "var(--red)",
-                      border: "0",
-                      borderRadius: "4px",
-                      padding: "4px 8px",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                    }}
+                    className={`rounded px-2 py-1 text-[10px] font-bold ${item.status === "absent" ? "bg-red-600 text-white" : "bg-red-50 text-red-600"}`}
                     onClick={() =>
                       onUpdate(player._id, {
                         attendanceStatus: "absent",
@@ -735,14 +703,7 @@ export default function Profile({
                     غائب
                   </button>
                   <button
-                    style={{
-                      background: "#fff0ec",
-                      color: "var(--red)",
-                      border: "0",
-                      borderRadius: "4px",
-                      padding: "4px 6px",
-                      fontSize: "10px",
-                    }}
+                    className="rounded bg-red-50 px-1.5 py-1 text-[10px] text-red-600"
                     onClick={() => {
                       if (confirm(`هل تريد حذف حضور تاريخ ${item.date}؟`)) {
                         onUpdate(player._id, {
@@ -763,21 +724,9 @@ export default function Profile({
           {/* إضافة حصة حضور مخصصة */}
           <form
             onSubmit={addCustomAttendance}
-            className="custom-history-add"
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginTop: "16px",
-              alignItems: "center",
-            }}
+            className="mt-4 flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center"
           >
-            <span
-              style={{
-                fontSize: "11px",
-                color: "var(--muted)",
-                whiteSpace: "nowrap",
-              }}
-            >
+            <span className="whitespace-nowrap text-[11px] text-slate-500">
               تسجيل حصة مخصصة:
             </span>
             <input
@@ -785,38 +734,19 @@ export default function Profile({
               max={today}
               value={customAttendanceDate}
               onChange={(e) => setCustomAttendanceDate(e.target.value)}
-              style={{
-                border: "1px solid var(--line)",
-                borderRadius: "6px",
-                padding: "6px",
-                fontSize: "11px",
-                flex: 1,
-                background: "#fbfcfb",
-              }}
+              className="min-h-9 flex-1 rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus:border-red-500"
               required
             />
             <select
               value={customAttendanceStatus}
               onChange={(e) => setCustomAttendanceStatus(e.target.value)}
-              style={{
-                border: "1px solid var(--line)",
-                borderRadius: "6px",
-                padding: "6px",
-                fontSize: "11px",
-                background: "#fbfcfb",
-              }}
+              className="min-h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus:border-red-500"
             >
               <option value="present">حاضر</option>
               <option value="absent">غائب</option>
             </select>
             <button
-              className="primary-button"
-              style={{
-                padding: "6px 12px",
-                minHeight: "auto",
-                fontSize: "11px",
-                boxShadow: "none",
-              }}
+              className="min-h-9 rounded-lg bg-red-600 px-3 text-xs font-bold text-white"
               type="submit"
             >
               إضافة
@@ -825,7 +755,7 @@ export default function Profile({
         </div>
 
         <button
-          className="delete-player"
+          className="mt-5 w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-100"
           onClick={() => {
             if (window.confirm("هل تريد حذف هذا اللاعب نهائيًا؟"))
               onDelete(player._id);

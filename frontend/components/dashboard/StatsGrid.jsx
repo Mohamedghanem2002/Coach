@@ -107,98 +107,152 @@ function StatsGrid({
       color: "orange",
     },
   ];
+  const statStyles = {
+    red: {
+      card: "border-red-100 bg-red-50/60",
+      icon: "bg-red-100 text-red-600",
+    },
+    green: {
+      card: "border-green-100 bg-green-50/60",
+      icon: "bg-green-100 text-green-600",
+    },
+    blue: {
+      card: "border-blue-100 bg-blue-50/60",
+      icon: "bg-blue-100 text-blue-600",
+    },
+    orange: {
+      card: "border-orange-100 bg-orange-50/60",
+      icon: "bg-orange-100 text-orange-600",
+    },
+  };
   return (
     <>
-      <div className="stats-grid">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {stats.map((stat) => (
-          <div key={stat.label} className={`stat-card ${stat.color}`}>
-            <div className={`stat-icon ${stat.color}`}>{stat.icon}</div>
+          <div
+            key={stat.label}
+            className={`relative overflow-hidden rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${statStyles[stat.color].card}`}
+          >
+            <div
+              className={`mb-3 grid h-9 w-9 place-items-center rounded-xl text-base ${statStyles[stat.color].icon}`}
+            >
+              {stat.icon}
+            </div>
             <div>
-              <span>{stat.label}</span>
-              <strong>{stat.value}</strong>
-              <small>{stat.note}</small>
+              <span className="block text-[10px] font-semibold text-slate-500">
+                {stat.label}
+              </span>
+              <strong className="mt-1 block font-cairo text-2xl font-extrabold text-slate-900">
+                {stat.value}
+              </strong>
+              <small className="mt-1 block truncate text-[9px] text-slate-400">
+                {stat.note}
+              </small>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="attendance-charts">
-        <section className="chart-card attendance-trend-card">
-          <div className="chart-heading">
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="eyebrow">متابعة الحضور</p>
-              <h3>الحضور والغياب خلال الأسبوع</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
+                متابعة الحضور
+              </p>
+              <h3 className="mt-1 text-sm font-bold text-slate-900">
+                الحضور والغياب خلال الأسبوع
+              </h3>
             </div>
-            <div className="chart-legend">
-              <span>
-                <i className="legend-dot present" /> حاضر
+            <div className="flex gap-3 text-[10px] font-semibold text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <i className="h-2 w-2 rounded-full bg-green-500" /> حاضر
               </span>
-              <span>
-                <i className="legend-dot absent" /> غائب
+              <span className="flex items-center gap-1.5">
+                <i className="h-2 w-2 rounded-full bg-red-500" /> غائب
               </span>
             </div>
           </div>
           <div
-            className="attendance-bars"
+            className="mt-6 grid min-h-40 grid-cols-7 items-end gap-2"
             aria-label="مخطط الحضور والغياب خلال الأسبوع"
           >
             {attendanceDays.map((day) => {
               const max = Math.max(day.present, day.absent, 1);
               return (
-                <div className="attendance-day" key={day.date}>
-                  <div className="bar-values">
+                <div
+                  className="grid grid-rows-[20px_112px_20px] items-end text-center"
+                  key={day.date}
+                >
+                  <div className="flex justify-center gap-2 text-[9px] font-bold text-slate-400">
                     <span>{day.present}</span>
                     <span>{day.absent}</span>
                   </div>
-                  <div className="bar-track">
+                  <div className="flex h-28 items-end justify-center gap-1 border-b border-slate-200 bg-[repeating-linear-gradient(to_top,transparent_0,transparent_27px,#f1f4f7_28px)] px-1">
                     <span
-                      className="bar present"
+                      className="w-3 rounded-t-md bg-linear-to-t from-green-600 to-green-300"
                       style={{
                         height: `${Math.max((day.present / max) * 100, day.present ? 8 : 0)}%`,
                       }}
                     />
                     <span
-                      className="bar absent"
+                      className="w-3 rounded-t-md bg-linear-to-t from-red-600 to-red-300"
                       style={{
                         height: `${Math.max((day.absent / max) * 100, day.absent ? 8 : 0)}%`,
                       }}
                     />
                   </div>
-                  <small>{day.label}</small>
+                  <small className="pt-1 text-[10px] font-semibold text-slate-400">
+                    {day.label}
+                  </small>
                 </div>
               );
             })}
           </div>
         </section>
 
-        <section className="chart-card attendance-summary-card">
-          <div className="chart-heading">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="eyebrow">ملخص اليوم</p>
-              <h3>نسبة الحضور</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
+                ملخص اليوم
+              </p>
+              <h3 className="mt-1 text-sm font-bold text-slate-900">
+                نسبة الحضور
+              </h3>
             </div>
-            <span className="chart-date">{sessionDate}</span>
+            <span className="text-[10px] text-slate-400">{sessionDate}</span>
           </div>
-          <div className="attendance-summary">
+          <div className="flex min-h-32 items-center justify-center gap-6">
             <div
-              className="attendance-donut"
-              style={{ "--attendance-rate": `${attendanceRate}%` }}
+              className="relative grid h-32 w-32 place-content-center rounded-full text-center after:absolute after:inset-2.5 after:rounded-full after:bg-white"
+              style={{
+                background: `conic-gradient(#38a169 ${attendanceRate}%, #edf1f4 0)`,
+              }}
             >
-              <strong>{attendanceRate}%</strong>
-              <span>حضور</span>
+              <div className="relative z-10">
+                <strong className="block text-2xl font-extrabold text-slate-900">
+                  {attendanceRate}%
+                </strong>
+                <span className="text-[10px] text-slate-400">حضور</span>
+              </div>
             </div>
-            <div className="summary-values">
-              <div>
-                <i className="legend-dot present" />
+            <div className="grid min-w-28 gap-3">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <i className="h-2 w-2 rounded-full bg-green-500" />
                 <span>حاضرون</span>
-                <strong>{presentToday}</strong>
+                <strong className="mr-auto text-base text-slate-900">
+                  {presentToday}
+                </strong>
               </div>
-              <div>
-                <i className="legend-dot absent" />
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <i className="h-2 w-2 rounded-full bg-red-500" />
                 <span>غائبون</span>
-                <strong>{absentToday}</strong>
+                <strong className="mr-auto text-base text-slate-900">
+                  {absentToday}
+                </strong>
               </div>
-              <small>
+              <small className="text-[9px] leading-5 text-slate-400">
                 {attendanceTotal
                   ? `${attendanceTotal} لاعب لديهم تسجيل اليوم`
                   : "لا توجد تسجيلات لهذا اليوم"}

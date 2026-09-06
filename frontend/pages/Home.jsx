@@ -238,19 +238,24 @@ export default function Home() {
     setIsAddingBranch(false);
   }
   return (
-    <main className="dashboard-container" dir="rtl">
+    <main className="min-h-screen bg-slate-100 text-slate-900" dir="rtl">
       <Header />
 
-      <section className="content">
-        <div className="page-heading">
+      <section className="mx-auto w-full max-w-360 px-4 py-6 sm:px-8 sm:py-8">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h2>لوحة التحكم</h2>
-            <p>
+            <h2 className="font-cairo text-2xl font-extrabold text-slate-900">
+              لوحة التحكم
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
               بيانات <strong>{branch}</strong> · تابع لاعبي الأكاديمية وحضورهم
               ومدفوعاتهم من مكان واحد.
             </p>
           </div>
-          <button className="primary-button" onClick={() => setShowForm(true)}>
+          <button
+            className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-100 transition hover:-translate-y-0.5 hover:bg-red-700"
+            onClick={() => setShowForm(true)}
+          >
             <span>＋</span> إضافة لاعب
           </button>
         </div>
@@ -264,30 +269,38 @@ export default function Home() {
           paymentMonthLabel={paymentMonthLabel}
         />
 
-        <div className="section-header">
+        <div className="mt-8 flex items-center justify-between gap-3">
           <div style={{ display: "flex", alignItems: "center" }}>
-            <h2>قائمة اللاعبين</h2>
-            <span className="count-pill">{filteredPlayers.length} لاعب</span>
+            <h2 className="font-cairo text-lg font-bold text-slate-900">
+              قائمة اللاعبين
+            </h2>
+            <span className="mr-2 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-600">
+              {filteredPlayers.length} لاعب
+            </span>
           </div>
-          <button className="outline-button" onClick={() => setShowForm(true)}>
+          <button
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-red-200 hover:text-red-600"
+            onClick={() => setShowForm(true)}
+          >
             ＋ تسجيل لاعب
           </button>
         </div>
 
-        <div className="toolbar">
-          <div className="search-box">
-            <span>⌕</span>
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:flex-row lg:items-center">
+          <div className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-red-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-100 lg:w-72">
+            <span className="text-lg text-slate-400">⌕</span>
             <input
+              className="min-w-0 flex-1 bg-transparent px-1 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="ابحث باسم اللاعب..."
             />
           </div>
 
-          <div className="branch-filters-container">
-            <div className="branch-filters">
+          <div className="min-w-0 flex-1 overflow-x-auto scrollbar-none">
+            <div className="flex min-w-max items-center gap-2 py-1">
               <button
-                className={branch === "كل الصالات" ? "filter active" : "filter"}
+                className={`whitespace-nowrap rounded-full border px-4 py-2 text-[11px] font-semibold transition ${branch === "كل الصالات" ? "border-red-200 bg-red-50 text-red-600" : "border-transparent bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
                 onClick={() => setBranch("كل الصالات")}
               >
                 كل الصالات
@@ -295,7 +308,7 @@ export default function Home() {
               {branches.map((item) => (
                 <button
                   key={item._id}
-                  className={branch === item.name ? "filter active" : "filter"}
+                  className={`whitespace-nowrap rounded-full border px-4 py-2 text-[11px] font-semibold transition ${branch === item.name ? "border-red-200 bg-red-50 text-red-600" : "border-transparent bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
                   onClick={() => setBranch(item.name)}
                 >
                   {item.name}
@@ -304,25 +317,28 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="branch-actions">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             {isAddingBranch ? (
               <form
                 onSubmit={handleQuickBranchSubmit}
-                className="quick-branch-form"
+                className="flex w-full min-w-0 flex-col gap-2 rounded-2xl border border-green-200 bg-green-50 p-2 sm:w-auto sm:flex-row sm:items-center"
               >
                 <input
                   value={quickBranchName}
                   onChange={(e) => setQuickBranchName(e.target.value)}
                   placeholder="اسم الصالة..."
-                  className="quick-branch-input"
+                  className="h-11 min-w-0 flex-1 rounded-xl border border-green-200 bg-white px-3 text-right text-sm text-slate-900 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100 sm:w-40"
                   autoFocus
                   required
                 />
-                <button className="primary-button compact-button" type="submit">
+                <button
+                  className="w-full whitespace-nowrap rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm sm:w-auto"
+                  type="submit"
+                >
                   حفظ
                 </button>
                 <button
-                  className="outline-button compact-button"
+                  className="w-full whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 sm:w-auto"
                   type="button"
                   onClick={() => setIsAddingBranch(false)}
                 >
@@ -331,7 +347,7 @@ export default function Home() {
               </form>
             ) : (
               <button
-                className="outline-button add-branch-button"
+                className="w-full whitespace-nowrap rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-bold text-green-700 shadow-sm hover:bg-green-100 sm:w-auto"
                 onClick={() => setIsAddingBranch(true)}
               >
                 ＋ صالة
@@ -339,7 +355,7 @@ export default function Home() {
             )}
 
             <button
-              className="outline-button manage-branches-button"
+              className="w-full whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm sm:w-auto"
               onClick={() => setShowBranches(true)}
             >
               ⚙️ الفروع
@@ -347,10 +363,11 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="control-strip">
-          <label>
+        <div className="mt-3 grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-2">
+          <label className="grid grid-cols-[auto_1fr] items-center gap-2 text-xs font-bold text-slate-500">
             📅 تاريخ الحصة
             <input
+              className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
               type="date"
               max={today}
               value={sessionDate}
@@ -360,9 +377,10 @@ export default function Home() {
               }}
             />
           </label>
-          <label>
+          <label className="grid grid-cols-[auto_1fr] items-center gap-2 text-xs font-bold text-slate-500">
             🗓️ شهر الدفع
             <input
+              className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
               type="month"
               value={paymentMonth}
               onChange={(event) => setPaymentMonth(event.target.value)}
@@ -370,52 +388,36 @@ export default function Home() {
           </label>
         </div>
 
-        <div className="status-filters">
-          <span>فلترة:</span>
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <span className="w-full px-1 text-xs font-bold text-slate-500 sm:w-auto">
+            فلترة:
+          </span>
           <button
-            className={
-              statusFilter === "all" ? "status-filter active" : "status-filter"
-            }
+            className={`flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition ${statusFilter === "all" ? "border-slate-300 bg-slate-100 text-slate-900" : "border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100"}`}
             onClick={() => setStatusFilter("all")}
           >
             الكل
           </button>
           <button
-            className={
-              statusFilter === "present"
-                ? "status-filter present active"
-                : "status-filter present"
-            }
+            className={`flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition ${statusFilter === "present" ? "border-green-200 bg-green-50 text-green-600" : "border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100"}`}
             onClick={() => setStatusFilter("present")}
           >
             ✓ حاضر <b>{presentToday}</b>
           </button>
           <button
-            className={
-              statusFilter === "absent"
-                ? "status-filter absent active"
-                : "status-filter absent"
-            }
+            className={`flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition ${statusFilter === "absent" ? "border-red-200 bg-red-50 text-red-600" : "border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100"}`}
             onClick={() => setStatusFilter("absent")}
           >
             × غائب <b>{absentToday}</b>
           </button>
           <button
-            className={
-              statusFilter === "paid"
-                ? "status-filter paid active"
-                : "status-filter paid"
-            }
+            className={`flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition ${statusFilter === "paid" ? "border-green-200 bg-green-50 text-green-600" : "border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100"}`}
             onClick={() => setStatusFilter("paid")}
           >
             💰 دفع <b>{paidCount}</b>
           </button>
           <button
-            className={
-              statusFilter === "unpaid"
-                ? "status-filter unpaid active"
-                : "status-filter unpaid"
-            }
+            className={`flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition ${statusFilter === "unpaid" ? "border-red-200 bg-red-50 text-red-600" : "border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100"}`}
             onClick={() => setStatusFilter("unpaid")}
           >
             ⏳ لم يدفع <b>{unpaidCount}</b>
@@ -423,17 +425,20 @@ export default function Home() {
         </div>
 
         {notice && (
-          <div className="notice" onClick={() => setNotice("")}>
+          <div
+            className="mt-3 flex cursor-pointer items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-700 shadow-sm"
+            onClick={() => setNotice("")}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span className="notice-icon">🔔</span>
+              <span>🔔</span>
               <span>{notice}</span>
             </div>
-            <span className="notice-close">×</span>
+            <span className="text-lg">×</span>
           </div>
         )}
 
-        <div className="players-table">
-          <div className="table-head">
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="hidden grid-cols-[2.2fr_0.7fr_1fr_1.7fr_1.15fr_0.35fr] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-4 text-[11px] font-bold text-slate-400 lg:grid">
             <span>اللاعب</span>
             <span>العمر</span>
             <span>الفرع</span>
@@ -442,18 +447,22 @@ export default function Home() {
             <span></span>
           </div>
           {loading ? (
-            <div className="empty">
-              <span style={{ fontSize: "32px" }}>⏳</span>
-              <strong>جاري تحميل البيانات...</strong>
-              <span>يرجى الانتظار لحظة.</span>
+            <div className="flex flex-col items-center gap-3 px-6 py-16 text-center text-slate-400">
+              <span className="text-3xl">⏳</span>
+              <strong className="text-lg font-bold text-slate-900">
+                جاري تحميل البيانات...
+              </strong>
+              <span className="text-sm">يرجى الانتظار لحظة.</span>
             </div>
           ) : filteredPlayers.length === 0 ? (
-            <div className="empty">
-              <span style={{ fontSize: "40px" }}>🥋</span>
-              <strong>لا يوجد لاعبين هنا</strong>
-              <span>ابدأ بإضافة أول لاعب للأكاديمية.</span>
+            <div className="flex flex-col items-center gap-3 px-6 py-16 text-center text-slate-400">
+              <span className="text-4xl">🥋</span>
+              <strong className="text-lg font-bold text-slate-900">
+                لا يوجد لاعبين هنا
+              </strong>
+              <span className="text-sm">ابدأ بإضافة أول لاعب للأكاديمية.</span>
               <button
-                className="primary-button"
+                className="rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-100"
                 onClick={() => setShowForm(true)}
               >
                 ＋ إضافة لاعب
