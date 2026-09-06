@@ -1604,7 +1604,7 @@ a {
   width: min(100%, 560px);
   max-height: 90vh;
   overflow-y: auto;
-  padding: 32px;
+  padding: 26px;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
@@ -1614,56 +1614,103 @@ a {
 }
 
 .profile-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border-subtle);
+  display: grid;
+  gap: 20px;
+  padding: 8px 0 22px;
+  border-bottom: 1px solid var(--border);
 }
-.profile-head > div:nth-child(2) {
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   min-width: 0;
 }
 
 .profile-photo {
-  width: 68px;
-  height: 68px;
-  border-radius: var(--radius-md);
-  font-size: 26px;
+  width: 84px;
+  height: 84px;
+  border-radius: 24px;
+  font-size: 30px;
   flex-shrink: 0;
-  border: 2px solid var(--border);
+  border: 4px solid #fff;
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 8px 20px rgba(13, 17, 23, 0.12);
+  background: linear-gradient(135deg, #ffe7e5, #f5c6c2);
+}
+
+.profile-details {
+  min-width: 0;
 }
 
 .profile-head h2 {
-  font-size: 20px;
+  font-family: "Cairo", sans-serif;
+  font-size: 24px;
   font-weight: 800;
-  margin-bottom: 4px;
+  line-height: 1.2;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.profile-head span {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
+.profile-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profile-meta span {
+  color: var(--text-secondary);
+  background: #f4f7f8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.profile-date {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px !important;
+  color: var(--text-placeholder) !important;
 }
 
 .profile-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
 }
 
-.image-share-button {
-  min-height: 32px;
-  padding: 6px 10px;
+.profile-actions button {
+  min-height: 40px;
+  width: 100%;
+}
+
+.profile-head .profile-actions .outline-button {
+  padding: 6px 10px !important;
+  font-size: 11px !important;
+}
+
+.image-share-button,
+.whatsapp-share-button {
+  min-height: 40px;
+  padding: 6px 8px;
   border-radius: var(--radius-sm);
-  background: #fff6e8;
-  border: 1px solid #f4d49a;
-  color: #a86608;
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
   transition: var(--transition);
+}
+
+.image-share-button {
+  background: #fff6e8;
+  border: 1px solid #f4d49a;
+  color: #a86608;
 }
 
 .image-share-button:hover {
@@ -1673,16 +1720,9 @@ a {
 }
 
 .whatsapp-share-button {
-  min-height: 32px;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
   background: #e9f8ef;
   border: 1px solid #b7e4c7;
   color: #218c4b;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: var(--transition);
 }
 
 .whatsapp-share-button:hover {
@@ -1691,23 +1731,19 @@ a {
   transform: translateY(-1px);
 }
 
-.profile-date {
-  display: block;
-  margin-top: 6px;
-  font-size: 10px !important;
-  color: var(--text-placeholder) !important;
-}
-
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 20px 0;
+  gap: 8px;
+  padding: 18px 0 6px;
   text-align: center;
 }
 
-.profile-stats div + div {
-  border-right: 1px solid var(--border-subtle);
+.profile-stats div {
+  padding: 12px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fbfcfd;
 }
 
 .profile-stats strong,
@@ -1739,8 +1775,7 @@ a {
 }
 
 .profile-section {
-  padding: 20px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 22px 0 8px;
 }
 
 .profile-section:last-of-type {
@@ -2208,12 +2243,27 @@ a {
   }
 
   .profile-head {
-    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .profile-identity {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .profile-photo {
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    font-size: 24px;
+  }
+
+  .profile-head h2 {
+    font-size: 20px;
   }
 
   .profile-actions {
-    width: 100%;
-    justify-content: stretch;
+    grid-template-columns: 1fr;
   }
 
   .profile-actions button {

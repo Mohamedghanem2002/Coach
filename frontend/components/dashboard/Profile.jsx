@@ -367,22 +367,25 @@ export default function Profile({
         ) : (
           <>
             <div className="profile-head">
-              <span className="profile-photo">
-                {player.photo ? (
-                  <img src={player.photo} alt="" />
-                ) : (
-                  player.name.charAt(0)
-                )}
-              </span>
-              <div style={{ flex: 1 }}>
-                <p className="eyebrow">ملف لاعب</p>
-                <h2>{player.name}</h2>
-                <span>
-                  {player.branch} · {player.age} سنة
+              <div className="profile-identity">
+                <span className="profile-photo">
+                  {player.photo ? (
+                    <img src={player.photo} alt="" />
+                  ) : (
+                    player.name.charAt(0)
+                  )}
                 </span>
-                <small className="profile-date">
-                  تاريخ التسجيل: {registrationDate}
-                </small>
+                <div className="profile-details">
+                  <p className="eyebrow">ملف لاعب</p>
+                  <h2>{player.name}</h2>
+                  <div className="profile-meta">
+                    <span>🏢 {player.branch}</span>
+                    <span>🎂 {player.age} سنة</span>
+                  </div>
+                  <small className="profile-date">
+                    تاريخ التسجيل: {registrationDate}
+                  </small>
+                </div>
               </div>
               <div className="profile-actions">
                 <button
