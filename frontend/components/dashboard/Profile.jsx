@@ -22,6 +22,8 @@ export default function Profile({
     today.slice(0, 7),
   );
   const [customPaymentStatus, setCustomPaymentStatus] = useState("paid");
+  const [paymentSaving, setPaymentSaving] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState("");
   const attended = (
     Array.isArray(player.attendance) ? player.attendance : []
   ).filter((item) => item.status === "present").length;
@@ -232,12 +234,20 @@ export default function Profile({
       date: customAttendanceDate,
     });
   }
-  function addCustomPayment(e) {
+  async function addCustomPayment(e) {
     e.preventDefault();
-    onUpdate(player._id, {
+    setPaymentSaving(true);
+    setPaymentNotice("");
+    const updatedPlayer = await onUpdate(player._id, {
       paymentStatus: customPaymentStatus,
       paymentMonth: customPaymentMonth,
     });
+    setPaymentSaving(false);
+    setPaymentNotice(
+      updatedPlayer
+        ? `تم تحديث اشتراك شهر ${customPaymentMonth}`
+        : "تعذر تحديث الاشتراك. حاول مرة أخرى.",
+    );
   }
   return (
     <div
@@ -433,7 +443,7 @@ export default function Profile({
               </div>
             </div>
 
-            <div className="profile-section">
+            <div className="profile-section payment-section">
               <div className="section-title">
                 <h3>اشتراك {paymentMonth}</h3>
                 <button
@@ -444,6 +454,7 @@ export default function Profile({
                     onUpdate(player._id, {
                       paymentStatus:
                         monthlyStatus === "paid" ? "unpaid" : "paid",
+                      paymentMonth,
                     })
                   }
                 >
@@ -457,7 +468,13 @@ export default function Profile({
 
         {/* سجل المدفوعات التاريخي */}
         <div className="profile-section">
-          <h3>سجل المدفوعات</h3>
+          <div className="section-title">
+            <div>
+              <p className="eyebrow">الاشتراكات</p>
+              <h3>سجل المدفوعات</h3>
+            </div>
+            <span className="profile-section-hint">اختر أي شهر</span>
+          </div>
           {!player.paymentHistory || player.paymentHistory.length === 0 ? (
             <p className="muted">لا توجد مدفوعات مسجلة بعد.</p>
           ) : (
@@ -524,66 +541,30 @@ export default function Profile({
           )}
 
           {/* إضافة شهر اشتراك مخصص */}
-          <form
-            onSubmit={addCustomPayment}
-            className="custom-history-add"
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginTop: "16px",
-              alignItems: "center",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "11px",
-                color: "var(--muted)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              تسجيل شهر مخصص:
-            </span>
+          <form onSubmit={addCustomPayment} className="custom-history-add">
+            <span className="custom-history-label">تسجيل اشتراك لشهر محدد</span>
             <input
               type="month"
               value={customPaymentMonth}
               onChange={(e) => setCustomPaymentMonth(e.target.value)}
-              style={{
-                border: "1px solid var(--line)",
-                borderRadius: "6px",
-                padding: "6px",
-                fontSize: "11px",
-                flex: 1,
-                background: "#fbfcfb",
-              }}
               required
             />
             <select
               value={customPaymentStatus}
               onChange={(e) => setCustomPaymentStatus(e.target.value)}
-              style={{
-                border: "1px solid var(--line)",
-                borderRadius: "6px",
-                padding: "6px",
-                fontSize: "11px",
-                background: "#fbfcfb",
-              }}
             >
               <option value="paid">مدفوع</option>
               <option value="unpaid">لم يدفع</option>
             </select>
             <button
               className="primary-button"
-              style={{
-                padding: "6px 12px",
-                minHeight: "auto",
-                fontSize: "11px",
-                boxShadow: "none",
-              }}
               type="submit"
+              disabled={paymentSaving}
             >
-              إضافة
+              {paymentSaving ? "جاري الحفظ..." : "حفظ الحالة"}
             </button>
           </form>
+          {paymentNotice && <p className="payment-notice">{paymentNotice}</p>}
         </div>
 
         {/* سجل الحضور التاريخي */}

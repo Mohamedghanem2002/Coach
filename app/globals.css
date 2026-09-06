@@ -1608,6 +1608,10 @@ a {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
+.profile-panel > .close {
+  margin-right: auto;
+  margin-bottom: 8px;
+}
 
 .profile-head {
   display: flex;
@@ -1615,6 +1619,9 @@ a {
   gap: 16px;
   padding-bottom: 24px;
   border-bottom: 1px solid var(--border-subtle);
+}
+.profile-head > div:nth-child(2) {
+  min-width: 0;
 }
 
 .profile-photo {
@@ -1752,6 +1759,61 @@ a {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-main);
+}
+
+.profile-section-hint {
+  color: var(--text-muted) !important;
+  font-size: 10px !important;
+}
+
+.custom-history-add {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #f8fafb;
+}
+
+.custom-history-label {
+  grid-column: 1 / -1;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.custom-history-add input,
+.custom-history-add select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  background: #fff;
+  color: var(--text-main);
+  font-size: 11px;
+}
+
+.custom-history-add button {
+  min-height: 38px;
+  padding: 6px 12px;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+.payment-notice {
+  margin-top: 8px;
+  color: var(--green-600);
+  font-size: 11px;
+  font-weight: 700;
+}
+.payment-section {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fbfcfd;
 }
 
 .history-row {
@@ -2157,6 +2219,14 @@ a {
   .profile-actions button {
     flex: 1;
     min-height: 40px;
+  }
+
+  .custom-history-add {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .custom-history-add button {
+    grid-column: 1 / -1;
   }
 
   .form-row {

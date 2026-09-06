@@ -131,7 +131,7 @@ export default function Home() {
   async function updatePlayer(id, data) {
     if (data.attendanceStatus && data.date > today) {
       setNotice("لا يمكن تسجيل حضور أو غياب في تاريخ مستقبلي.");
-      return;
+      return null;
     }
     try {
       const response = await fetch("/api/players", {
@@ -149,7 +149,7 @@ export default function Home() {
           (result === null || result === void 0 ? void 0 : result.error) ||
             "تعذر تحديث بيانات اللاعب.",
         );
-        return;
+        return null;
       }
       const safePlayer = normalizePlayer(result);
       setPlayers((current) =>
@@ -160,8 +160,10 @@ export default function Home() {
           ? safePlayer
           : current,
       );
+      return safePlayer;
     } catch (_a) {
       setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
+      return null;
     }
   }
   async function handleAddPlayer(playerData) {
@@ -192,7 +194,7 @@ export default function Home() {
     const data = await response.json();
     if (!response.ok) {
       setNotice(data.error || "تعذر إضافة الفرع.");
-      return;
+      return null;
     }
     setBranches((current) => [...current, data]);
     setNotice("تمت إضافة الفرع بنجاح.");
