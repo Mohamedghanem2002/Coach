@@ -13,6 +13,7 @@ import Profile from "../components/dashboard/Profile";
 import Header from "../components/dashboard/Header";
 import StatsGrid from "../components/dashboard/StatsGrid";
 import AddPlayerModal from "../components/dashboard/AddPlayerModal";
+import BranchOverview from "../components/dashboard/BranchOverview";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 export default function Home() {
@@ -32,6 +33,7 @@ export default function Home() {
   const [paymentMonth, setPaymentMonth] = useState(currentMonth);
   const [quickBranchName, setQuickBranchName] = useState("");
   const [isAddingBranch, setIsAddingBranch] = useState(false);
+  const [busyBranch, setBusyBranch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const paymentMonthLabel = new Intl.DateTimeFormat("ar-EG", {
     month: "long",
@@ -237,6 +239,29 @@ export default function Home() {
     setQuickBranchName("");
     setIsAddingBranch(false);
   }
+  async function markBranchPresent(branchName) {
+    const branchPlayers = players.filter(
+      (player) => player.branch === branchName,
+    );
+    if (!branchPlayers.length) {
+      setNotice("لا يوجد لاعبين مسجلين في هذه الصالة.");
+      return;
+    }
+    setBusyBranch(branchName);
+    const results = await Promise.all(
+      branchPlayers.map((player) =>
+        updatePlayer(player._id, {
+          attendanceStatus: "present",
+          date: sessionDate,
+        }),
+      ),
+    );
+    setBusyBranch("");
+    const savedCount = results.filter(Boolean).length;
+    if (savedCount) {
+      setNotice(`تم تسجيل حضور ${savedCount} لاعب من ${branchName}.`);
+    }
+  }
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900" dir="rtl">
       <Header />
@@ -267,6 +292,16 @@ export default function Home() {
           sessionDate={sessionDate}
           paymentMonth={paymentMonth}
           paymentMonthLabel={paymentMonthLabel}
+        />
+
+        <BranchOverview
+          branches={branches}
+          players={players}
+          sessionDate={sessionDate}
+          paymentMonth={paymentMonth}
+          busyBranch={busyBranch}
+          onSelectBranch={setBranch}
+          onMarkPresent={markBranchPresent}
         />
 
         <div className="mt-8 flex items-center justify-between gap-3">

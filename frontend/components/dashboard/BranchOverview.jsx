@@ -1,0 +1,105 @@
+import { paymentStatusFor } from "../../lib/dashboard-utils";
+
+export default function BranchOverview({
+  branches,
+  players,
+  sessionDate,
+  paymentMonth,
+  onSelectBranch,
+  onMarkPresent,
+  busyBranch,
+}) {
+  if (!branches.length) return null;
+
+  return (
+    <section className="mt-5">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-red-600">
+            نظرة سريعة
+          </p>
+          <h2 className="mt-1 text-lg font-extrabold text-slate-900">
+            إدارة الصالات
+          </h2>
+        </div>
+        <span className="text-[11px] text-slate-400">بيانات {sessionDate}</span>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {branches.map((branch) => {
+          const branchPlayers = players.filter(
+            (player) => player.branch === branch.name,
+          );
+          const present = branchPlayers.filter((player) =>
+            player.attendance.some(
+              (item) => item.date === sessionDate && item.status === "present",
+            ),
+          ).length;
+          const absent = branchPlayers.filter((player) =>
+            player.attendance.some(
+              (item) => item.date === sessionDate && item.status === "absent",
+            ),
+          ).length;
+          const paid = branchPlayers.filter(
+            (player) => paymentStatusFor(player, paymentMonth) === "paid",
+          ).length;
+          const busy = busyBranch === branch.name;
+
+          return (
+            <article
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-red-200 hover:shadow-md"
+              key={branch._id}
+            >
+              <button
+                className="flex w-full items-center gap-3 text-right"
+                onClick={() => onSelectBranch(branch.name)}
+              >
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-50 text-xl text-red-600">
+                  🏢
+                </span>
+                <span className="min-w-0 flex-1">
+                  <strong className="block truncate text-sm font-extrabold text-slate-900">
+                    {branch.name}
+                  </strong>
+                  <span className="mt-1 block text-[10px] text-slate-400">
+                    {branchPlayers.length} لاعب مسجل
+                  </span>
+                </span>
+                <span className="text-slate-300">←</span>
+              </button>
+
+              <div className="mt-4 grid grid-cols-3 gap-2 border-y border-slate-100 py-3 text-center">
+                <div>
+                  <strong className="block text-base font-extrabold text-green-600">
+                    {present}
+                  </strong>
+                  <span className="text-[10px] text-slate-400">حاضر</span>
+                </div>
+                <div>
+                  <strong className="block text-base font-extrabold text-red-600">
+                    {absent}
+                  </strong>
+                  <span className="text-[10px] text-slate-400">غائب</span>
+                </div>
+                <div>
+                  <strong className="block text-base font-extrabold text-blue-600">
+                    {paid}
+                  </strong>
+                  <span className="text-[10px] text-slate-400">مدفوع</span>
+                </div>
+              </div>
+
+              <button
+                className="mt-3 min-h-10 w-full rounded-xl bg-green-600 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-wait disabled:opacity-60"
+                disabled={!branchPlayers.length || busy}
+                onClick={() => onMarkPresent(branch.name)}
+              >
+                {busy ? "جاري تسجيل الحضور..." : "تسجيل حضور المجموعة"}
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
