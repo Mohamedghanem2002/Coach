@@ -1,6 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Player Management Dashboard
 
-## Getting Started
+A Next.js dashboard for managing players and branches with MongoDB-backed authentication.
+
+## Requirements
+
+- Node.js 20.9 or newer
+- A MongoDB database
+
+## Local setup
+
+Install dependencies with `npm ci`, then copy `.env.example` to `.env.local` and
+fill in the MongoDB values and a long random `AUTH_SECRET`. Never commit
+`.env.local` or put real credentials in `.env.example`.
 
 First, run the development server:
 
@@ -16,7 +27,33 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Account login
+
+The dashboard and its API routes require an account. From the sign-in page you can
+create an account with a name, email, and password of at least eight characters,
+then use the logout button in the dashboard to end the session.
+
+Copy `.env.example` to `.env.local` and fill in `AUTH_SECRET` alongside the existing
+MongoDB values.
+
+Open [http://localhost:3000](http://localhost:3000). Create an account from the
+sign-in page, then manage players and branches from the dashboard.
+
+## Production checks
+
+```bash
+npm run lint
+npm run build
+```
+
+## GitHub and deployment
+
+Push the repository to GitHub without committing `.env.local`, `node_modules`,
+or `.next`. Configure `MONGODB_URI`, `MONGODB_DB`, and `AUTH_SECRET` as secrets
+or environment variables in the deployment provider, then use `npm run build`
+and `npm run start`.
+
+GitHub Actions runs lint and build checks for pushes and pull requests.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
