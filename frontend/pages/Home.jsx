@@ -305,42 +305,24 @@ export default function Home() {
               {isAddingBranch ? (
                 <form
                   onSubmit={handleQuickBranchSubmit}
-                  style={{
-                    display: "inline-flex",
-                    gap: "5px",
-                    alignItems: "center",
-                  }}
+                  className="quick-branch-form"
                 >
                   <input
                     value={quickBranchName}
                     onChange={(e) => setQuickBranchName(e.target.value)}
                     placeholder="اسم الصالة..."
-                    style={{
-                      border: "1.5px solid var(--border)",
-                      borderRadius: "var(--radius-sm)",
-                      padding: "6px 10px",
-                      fontSize: "11px",
-                      outline: "none",
-                      background: "#fff",
-                      color: "var(--text-main)",
-                    }}
+                    className="quick-branch-input"
                     autoFocus
                     required
                   />
                   <button
-                    className="primary-button"
-                    style={{
-                      padding: "6px 12px",
-                      fontSize: "11px",
-                      boxShadow: "none",
-                    }}
+                    className="primary-button compact-button"
                     type="submit"
                   >
                     حفظ
                   </button>
                   <button
-                    className="outline-button"
-                    style={{ padding: "6px 12px", fontSize: "11px" }}
+                    className="outline-button compact-button"
                     type="button"
                     onClick={() => setIsAddingBranch(false)}
                   >
@@ -349,13 +331,7 @@ export default function Home() {
                 </form>
               ) : (
                 <button
-                  className="outline-button"
-                  style={{
-                    padding: "6px 12px",
-                    fontSize: "11px",
-                    color: "var(--green)",
-                    borderColor: "var(--green-border)",
-                  }}
+                  className="outline-button add-branch-button"
                   onClick={() => setIsAddingBranch(true)}
                 >
                   ＋ صالة
@@ -363,8 +339,7 @@ export default function Home() {
               )}
 
               <button
-                className="outline-button"
-                style={{ padding: "6px 12px", fontSize: "11px" }}
+                className="outline-button manage-branches-button"
                 onClick={() => setShowBranches(true)}
               >
                 ⚙️ الفروع

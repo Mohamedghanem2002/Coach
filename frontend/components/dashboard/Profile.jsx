@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { localDate, paymentStatusFor } from "../../lib/dashboard-utils";
 export default function Profile({
   player,
@@ -9,6 +10,8 @@ export default function Profile({
   onDelete,
 }) {
   var _a;
+  const { data: session } = useSession();
+  const captainName = session?.user?.name || "كابتن الأكاديمية";
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(player.name);
   const [editAge, setEditAge] = useState(player.age);
@@ -63,6 +66,7 @@ export default function Profile({
       : "لا توجد مدفوعات مسجلة بعد";
     const message = [
       "🥋 بيانات لاعب أكاديمية coach",
+      `📨 مرسلة من الكابتن: ${captainName}`,
       "",
       `👤 الاسم: ${player.name}`,
       `🎂 السن: ${player.age} سنة`,
@@ -96,6 +100,7 @@ export default function Profile({
       : [];
     const lines = [
       "بيانات لاعب أكاديمية coach",
+      `مرسلة من الكابتن: ${captainName}`,
       `الاسم: ${player.name}`,
       `السن: ${player.age} سنة`,
       `الصالة: ${player.branch}`,
@@ -124,7 +129,7 @@ export default function Profile({
     ];
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
-    canvas.height = Math.max(1450, 650 + lines.length * 42);
+    canvas.height = Math.max(1580, 700 + lines.length * 42);
     const context = canvas.getContext("2d");
     if (!context) return;
     context.fillStyle = "#edf3f2";
@@ -134,28 +139,12 @@ export default function Profile({
     context.fillStyle = "#ffffff";
     context.fillRect(42, 42, canvas.width - 84, canvas.height - 84);
     context.fillStyle = "#fff4f2";
-    context.fillRect(42, 42, canvas.width - 84, 245);
+    context.fillRect(42, 42, canvas.width - 84, 170);
     context.fillStyle = "#d94841";
     context.font = "700 50px Cairo, sans-serif";
     context.textAlign = "right";
     context.direction = "rtl";
     context.fillText("coach  |  ملف اللاعب", canvas.width - 100, 112);
-    if (player.photo) {
-      const photo = await new Promise((resolve) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => resolve(null);
-        image.src = player.photo;
-      });
-      if (photo) {
-        context.save();
-        context.beginPath();
-        context.arc(170, 160, 78, 0, Math.PI * 2);
-        context.clip();
-        context.drawImage(photo, 92, 82, 156, 156);
-        context.restore();
-      }
-    }
     context.fillStyle = monthlyStatus === "paid" ? "#218c4b" : "#c53030";
     context.fillRect(760, 195, 220, 54);
     context.fillStyle = "#ffffff";
@@ -165,7 +154,7 @@ export default function Profile({
       950,
       231,
     );
-    let y = 350;
+    let y = 270;
     for (const line of lines) {
       if (!line) {
         y += 22;
@@ -188,6 +177,24 @@ export default function Profile({
       }
       context.fillText(line, canvas.width - 100, y);
       y += 42;
+    }
+    if (player.photo) {
+      const photo = await new Promise((resolve) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = player.photo;
+      });
+      if (photo) {
+        context.fillStyle = "#fff4f2";
+        context.fillRect(100, y + 18, canvas.width - 200, 220);
+        context.save();
+        context.beginPath();
+        context.arc(canvas.width / 2, y + 128, 82, 0, Math.PI * 2);
+        context.clip();
+        context.drawImage(photo, canvas.width / 2 - 82, y + 46, 164, 164);
+        context.restore();
+      }
     }
     context.fillStyle = "#8b9aaa";
     context.font = "500 22px Cairo, sans-serif";
