@@ -22,7 +22,7 @@ export default function Header() {
         ? void 0
         : _b.split(" ")[0]) !== null && _c !== void 0
       ? _c
-      : "ياسر";
+      : "";
   return (
     <header className="main-header" dir="rtl">
       {/* البراند */}
