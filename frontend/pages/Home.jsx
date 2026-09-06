@@ -160,19 +160,23 @@ export default function Home() {
     }
   }
   async function handleAddPlayer(playerData) {
-    const response = await fetch("/api/players", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(playerData),
-    });
-    if (!response.ok) {
-      setNotice("راجع بيانات اللاعب وحاول مرة أخرى.");
-      return;
+    try {
+      const response = await fetch("/api/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(playerData),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setNotice(result.error || "راجع بيانات اللاعب وحاول مرة أخرى.");
+        return;
+      }
+      setPlayers((current) => [normalizePlayer(result), ...current]);
+      setShowForm(false);
+      setNotice("تمت إضافة اللاعب بنجاح.");
+    } catch (_error) {
+      setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
     }
-    const newPlayer = await response.json();
-    setPlayers((current) => [normalizePlayer(newPlayer), ...current]);
-    setShowForm(false);
-    setNotice("تمت إضافة اللاعب بنجاح.");
   }
   async function addBranch(name) {
     const response = await fetch("/api/branches", {

@@ -11,6 +11,7 @@ export default function AddPlayerModal({
   const [branch, setBranch] = useState(initialBranch || "");
   const [photo, setPhoto] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   function handlePhotoChange(event) {
     var _a;
     const file =
@@ -24,7 +25,11 @@ export default function AddPlayerModal({
   }
   async function submit(event) {
     event.preventDefault();
-    if (!name.trim() || !age || !branch) return;
+    if (!name.trim() || !age || !branch) {
+      setError("اكتب اسم اللاعب والسن واختر الصالة.");
+      return;
+    }
+    setError("");
     setSubmitting(true);
     try {
       await onAdd({
@@ -94,7 +99,11 @@ export default function AddPlayerModal({
                 <select
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
+                  required
                 >
+                  <option value="" disabled>
+                    اختر الصالة
+                  </option>
                   {branches.map((item) => (
                     <option key={item._id} value={item.name}>
                       {item.name}
@@ -125,6 +134,7 @@ export default function AddPlayerModal({
                 </div>
               )}
             </label>
+            {error && <p className="signin-error">{error}</p>}
             <button
               className="primary-button full"
               type="submit"
