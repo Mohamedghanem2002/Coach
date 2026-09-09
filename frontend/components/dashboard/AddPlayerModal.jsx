@@ -7,7 +7,8 @@ export default function AddPlayerModal({
   onManageBranches,
 }) {
   const [name, setName] = useState("");
-  const [age, setAge] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [guardianPhone, setGuardianPhone] = useState("");
   const [branch, setBranch] = useState(initialBranch || "");
   const [photo, setPhoto] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -36,8 +37,8 @@ export default function AddPlayerModal({
   }
   async function submit(event) {
     event.preventDefault();
-    if (!name.trim() || !age || !branch) {
-      setError("اكتب اسم اللاعب والسن واختر الصالة.");
+    if (!name.trim() || !dateOfBirth || !branch) {
+      setError("اكتب اسم اللاعب وتاريخ الميلاد واختر الصالة.");
       return;
     }
     setError("");
@@ -45,7 +46,8 @@ export default function AddPlayerModal({
     try {
       await onAdd({
         name: name.trim(),
-        age: Number(age),
+        dateOfBirth,
+        guardianPhone: guardianPhone.trim(),
         branch,
         photo,
       });
@@ -108,16 +110,14 @@ export default function AddPlayerModal({
             </label>
             <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
               <label className="mb-4 block text-xs font-bold text-slate-600">
-                السن
+                تاريخ الميلاد
                 <input
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
-                  type="number"
-                  min="4"
-                  max="80"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
+                  type="date"
+                  max={new Date().toISOString().slice(0, 10)}
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
                   required
-                  placeholder="12"
                 />
               </label>
               <label className="mb-4 block text-xs font-bold text-slate-600">
@@ -139,6 +139,18 @@ export default function AddPlayerModal({
                 </select>
               </label>
             </div>
+            <label className="mb-4 block text-xs font-bold text-slate-600">
+              رقم ولي الأمر{" "}
+              <span className="font-normal text-slate-400">(اختياري)</span>
+              <input
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                type="tel"
+                inputMode="tel"
+                value={guardianPhone}
+                onChange={(e) => setGuardianPhone(e.target.value)}
+                placeholder="01xxxxxxxxx"
+              />
+            </label>
             <label className="mb-4 block text-xs font-bold text-slate-600">
               صورة اللاعب
               <input

@@ -15,6 +15,26 @@ function appDate() {
   );
   return `${values.year}-${values.month}-${values.day}`;
 }
+function ageFromDateOfBirth(dateOfBirth) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return null;
+  const [year, month, day] = dateOfBirth.split("-").map(Number);
+  const birthday = new Date(year, month - 1, day);
+  if (
+    birthday.getFullYear() !== year ||
+    birthday.getMonth() !== month - 1 ||
+    birthday.getDate() !== day
+  ) {
+    return null;
+  }
+  const [currentYear, currentMonth, currentDay] = appDate()
+    .split("-")
+    .map(Number);
+  let age = currentYear - year;
+  if (currentMonth < month || (currentMonth === month && currentDay < day)) {
+    age -= 1;
+  }
+  return age;
+}
 function serializePlayer(player) {
   return Object.assign(Object.assign({}, player), {
     attendance: Array.isArray(player.attendance) ? player.attendance : [],
@@ -98,7 +118,9 @@ export async function POST(request) {
     const body = await request.json();
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const branch = typeof body.branch === "string" ? body.branch.trim() : "";
-    const age = Number(body.age);
+    const dateOfBirth =
+      typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
+    const age = ageFromDateOfBirth(dateOfBirth);
     if (!name || !branch || !Number.isInteger(age) || age < 4 || age > 80) {
       return NextResponse.json(
         { error: "بيانات اللاعب غير مكتملة" },
@@ -109,6 +131,9 @@ export async function POST(request) {
       ownerId,
       name,
       age,
+      dateOfBirth,
+      guardianPhone:
+        typeof body.guardianPhone === "string" ? body.guardianPhone.trim() : "",
       branch,
       photo: typeof body.photo === "string" ? body.photo : "",
       paymentStatus: body.paymentStatus === "paid" ? "paid" : "unpaid",
@@ -159,7 +184,11 @@ export async function PATCH(request) {
     if (body.updateInfo === true || body.updateInfo === "true") {
       const name = typeof body.name === "string" ? body.name.trim() : "";
       const branch = typeof body.branch === "string" ? body.branch.trim() : "";
-      const age = Number(body.age);
+      const dateOfBirth =
+        typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
+      const calculatedAge = ageFromDateOfBirth(dateOfBirth);
+      const legacyAge = Number(body.age);
+      const age = dateOfBirth ? calculatedAge : legacyAge;
       if (!name || !branch || !Number.isInteger(age) || age < 4 || age > 80) {
         return NextResponse.json(
           { error: "بيانات اللاعب غير صالحة" },
@@ -170,7 +199,12 @@ export async function PATCH(request) {
         name,
         age,
         branch,
+        guardianPhone:
+          typeof body.guardianPhone === "string"
+            ? body.guardianPhone.trim()
+            : "",
       };
+      if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
       if (typeof body.photo === "string") {
         updateData.photo = body.photo;
       }

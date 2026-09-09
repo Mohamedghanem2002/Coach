@@ -7,6 +7,7 @@ import {
   normalizePlayer,
   paymentStatusFor,
 } from "../lib/dashboard-utils";
+
 import BranchManager from "../components/dashboard/BranchManager";
 import PlayerRow from "../components/dashboard/PlayerRow";
 import Profile from "../components/dashboard/Profile";
@@ -16,9 +17,11 @@ import AddPlayerModal from "../components/dashboard/AddPlayerModal";
 import BranchOverview from "../components/dashboard/BranchOverview";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
+
 export default function Home() {
   const router = useRouter();
-  const { status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
+  const captainName = session?.user?.name || "كابتن";
   const [players, setPlayers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [branch, setBranch] = useState("كل الصالات");
@@ -344,6 +347,7 @@ export default function Home() {
       );
     }
   }
+
   return (
     <main className="min-h-screen bg-[#f8fafc] text-slate-900" dir="rtl">
       <Header />
@@ -356,7 +360,7 @@ export default function Home() {
                 لوحة الأكاديمية
               </p>
               <h2 className="font-cairo text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                صباح الخير يا كابتن
+                صباح الخير يا {captainName}
               </h2>
               <p className="mt-1 text-xs leading-6 text-slate-500 sm:text-sm">
                 تابع الأداء اليومي للاعبين من مساحة واحدة هادئة وواضحة.

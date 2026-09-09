@@ -12,9 +12,19 @@ export default function Profile({
   var _a;
   const { data: session } = useSession();
   const captainName = session?.user?.name || "كابتن الأكاديمية";
+  const guardianPhone =
+    player.guardianPhone ||
+    player.parentPhone ||
+    player.guardianMobile ||
+    player.mobile ||
+    player.phone ||
+    "";
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(player.name);
-  const [editAge, setEditAge] = useState(player.age);
+  const [editDateOfBirth, setEditDateOfBirth] = useState(
+    player.dateOfBirth || "",
+  );
+  const [editGuardianPhone, setEditGuardianPhone] = useState(guardianPhone);
   const [editBranch, setEditBranch] = useState(player.branch);
   const [editPhoto, setEditPhoto] = useState(player.photo || "");
   const today = localDate();
@@ -70,6 +80,7 @@ export default function Profile({
       "",
       `👤 الاسم: ${player.name}`,
       `🎂 السن: ${player.age} سنة`,
+      ...(guardianPhone ? [`📞 ولي الأمر: ${guardianPhone}`] : []),
       `🏢 الصالة: ${player.branch}`,
       `📅 تاريخ التسجيل: ${registrationDate}`,
       "",
@@ -299,7 +310,9 @@ export default function Profile({
     const updatedPlayer = await onUpdate(player._id, {
       updateInfo: "true",
       name: editName.trim(),
-      age: String(editAge),
+      dateOfBirth: editDateOfBirth,
+      guardianPhone: editGuardianPhone.trim(),
+      age: String(player.age),
       branch: editBranch,
       photo: editPhoto,
     });
@@ -382,16 +395,14 @@ export default function Profile({
             </label>
             <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
               <label className="mb-4 block text-xs font-bold text-slate-600">
-                السن
+                تاريخ الميلاد
                 <input
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
-                  type="number"
-                  min="4"
-                  max="80"
-                  value={editAge}
-                  onChange={(e) => setEditAge(Number(e.target.value))}
-                  required
-                  placeholder="12"
+                  type="date"
+                  max={new Date().toISOString().slice(0, 10)}
+                  value={editDateOfBirth}
+                  onChange={(e) => setEditDateOfBirth(e.target.value)}
+                  required={!player.dateOfBirth}
                 />
               </label>
               <label className="mb-4 block text-xs font-bold text-slate-600">
@@ -409,6 +420,18 @@ export default function Profile({
                 </select>
               </label>
             </div>
+            <label className="mb-4 block text-xs font-bold text-slate-600">
+              رقم ولي الأمر{" "}
+              <span className="font-normal text-slate-400">(اختياري)</span>
+              <input
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                type="tel"
+                inputMode="tel"
+                value={editGuardianPhone}
+                onChange={(e) => setEditGuardianPhone(e.target.value)}
+                placeholder="01xxxxxxxxx"
+              />
+            </label>
             <label className="mb-4 block text-xs font-bold text-slate-600">
               صورة اللاعب
               <input
@@ -477,6 +500,9 @@ export default function Profile({
                       🎂 {player.age} سنة
                     </span>
                   </div>
+                  <p className="mt-2 text-xs font-semibold text-slate-500">
+                    📞 رقم ولي الأمر: {guardianPhone || "غير مسجل"}
+                  </p>
                   <small className="mt-2 block text-[10px] text-slate-400">
                     تاريخ التسجيل: {registrationDate}
                   </small>
@@ -501,7 +527,8 @@ export default function Profile({
                   className="min-h-10 rounded-lg border border-slate-200 px-2 text-[11px] font-bold text-slate-600"
                   onClick={() => {
                     setEditName(player.name);
-                    setEditAge(player.age);
+                    setEditDateOfBirth(player.dateOfBirth || "");
+                    setEditGuardianPhone(guardianPhone);
                     setEditBranch(player.branch);
                     setEditPhoto(player.photo || "");
                     setIsEditing(true);
