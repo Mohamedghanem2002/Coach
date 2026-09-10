@@ -75,6 +75,8 @@ export default function Profile({
   const [modalImageBlob, setModalImageBlob] = useState(null);
   const [imageCopied, setImageCopied] = useState(false);
   const [cachedCardBlob, setCachedCardBlob] = useState(null);
+  const [modalNotice, setModalNotice] = useState("");
+  const [isSendingModalImage, setIsSendingModalImage] = useState(false);
 
   // Confirm delete player
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -578,6 +580,7 @@ export default function Profile({
       setModalImageDataUrl(dataUrl);
       setModalImageBlob(blob);
       setImageCopied(false);
+      setModalNotice("");
       setImageModalOpen(true);
       setProfileNotice("");
     } catch (error) {
@@ -585,6 +588,52 @@ export default function Profile({
       setProfileNotice("❌ حدث خطأ أثناء إنشاء صورة البطاقة");
     } finally {
       setIsPreviewingCard(false);
+    }
+  }
+
+  async function sendCardToGuardianViaWhatsApp() {
+    if (isSendingModalImage) return;
+    if (!guardianPhone) {
+      setModalNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً بالملف الشخصي.");
+      return;
+    }
+    const cleanPhone = formatWhatsAppPhone(guardianPhone);
+    if (!cleanPhone) {
+      setModalNotice("⚠️ رقم هاتف ولي الأمر المسجل غير صالح.");
+      return;
+    }
+
+    setIsSendingModalImage(true);
+    setModalNotice("⏳ جاري نسخ الصورة للحافظة وتوجيهك لواتساب...");
+
+    try {
+      let copySuccess = false;
+      if (modalImageBlob && navigator.clipboard?.write) {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": modalImageBlob }),
+          ]);
+          copySuccess = true;
+          setImageCopied(true);
+          setTimeout(() => setImageCopied(false), 4000);
+        } catch (clipErr) {
+          console.warn("Clipboard write failed:", clipErr);
+        }
+      }
+
+      setModalNotice(
+        copySuccess
+          ? "✓ تم نسخ صورة البطاقة للحافظة! جاري فتح الشات... فقط اضغط لصق (Ctrl+V) ثم إرسال."
+          : "جاري فتح محادثة ولي الأمر..."
+      );
+
+      // Open WhatsApp chat directly with guardian
+      openWhatsAppNative(cleanPhone);
+    } catch (err) {
+      console.error(err);
+      setModalNotice("❌ حدث خطأ، يرجى المحاولة مرة أخرى.");
+    } finally {
+      setTimeout(() => setIsSendingModalImage(false), 2500);
     }
   }
 
@@ -752,15 +801,18 @@ export default function Profile({
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
       dir="rtl"
     >
-      <aside className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl sm:rounded-3xl">
-        {/* شريط أحمر جمالي أعلى المودال يتناغم مع لوحة التحكم */}
-        <div className="sticky top-0 z-30 h-1 w-full bg-gradient-to-r from-red-600 via-rose-500 to-red-700" />
+      <aside className="relative max-h-[92vh] sm:max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl sm:rounded-3xl">
+        {/* مؤشر سحب لطيف على شاشات الموبايل */}
+        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-slate-300 sm:hidden" />
 
-        <div className="p-5 sm:p-7">
+        {/* شريط أحمر جمالي أعلى المودال يتناغم مع لوحة التحكم */}
+        <div className="sticky top-0 z-30 h-1 w-full bg-gradient-to-r from-red-600 via-rose-500 to-red-700 mt-1 sm:mt-0" />
+
+        <div className="p-3.5 sm:p-6 pb-8 sm:pb-6">
           {/* رسالة التنبيه الإشعارية السريعة */}
           {profileNotice && (
             <div
-              className={`mb-4 flex items-center justify-between gap-2 rounded-xl border p-3 text-xs font-bold shadow-xs animate-slide-up ${
+              className={`mb-3 sm:mb-4 flex items-center justify-between gap-2 rounded-xl border p-2.5 sm:p-3 text-xs font-bold shadow-xs animate-slide-up ${
                 profileNotice.startsWith("تعذر") || profileNotice.startsWith("❌")
                   ? "border-rose-200 bg-rose-50 text-rose-800"
                   : profileNotice.startsWith("⚠️")
@@ -781,7 +833,7 @@ export default function Profile({
           )}
 
           {/* ترويسة ملف اللاعب وزر الإغلاق */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <span className="section-eyebrow">ملف اللاعب</span>
             <button
               className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition cursor-pointer"
@@ -794,16 +846,16 @@ export default function Profile({
 
           {/* ════════════ وضع تعديل البيانات ════════════ */}
           {isEditing ? (
-            <form onSubmit={saveInfo} className="w-full space-y-4">
-              <div className="mb-4 border-b border-slate-100 pb-3">
-                <h2 className="font-cairo text-lg font-black text-slate-900">تعديل بيانات اللاعب</h2>
-                <p className="text-xs text-slate-400 mt-0.5">قم بتحديث معلومات اللاعب ثم اضغط حفظ التعديلات</p>
+            <form onSubmit={saveInfo} className="w-full space-y-3.5 sm:space-y-4">
+              <div className="mb-3 border-b border-slate-100 pb-2.5">
+                <h2 className="font-cairo text-base sm:text-lg font-black text-slate-900">تعديل بيانات اللاعب</h2>
+                <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">قم بتحديث معلومات اللاعب ثم اضغط حفظ التعديلات</p>
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">اسم اللاعب</label>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1">اسم اللاعب</label>
                 <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   required
@@ -818,7 +870,7 @@ export default function Profile({
                   </label>
                   <div className="grid grid-cols-3 gap-1.5">
                     <input
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
@@ -829,7 +881,7 @@ export default function Profile({
                       required={!player.dateOfBirth}
                     />
                     <input
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
@@ -840,7 +892,7 @@ export default function Profile({
                       required={!player.dateOfBirth}
                     />
                     <input
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
@@ -864,7 +916,7 @@ export default function Profile({
                     الفرع / الصالة
                   </label>
                   <select
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                     value={editBranch}
                     onChange={(e) => setEditBranch(e.target.value)}
                   >
@@ -882,7 +934,7 @@ export default function Profile({
                   رقم ولي الأمر
                 </label>
                 <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                   type="tel"
                   inputMode="tel"
                   value={editGuardianPhone}
@@ -895,9 +947,9 @@ export default function Profile({
                 <label className="block text-xs font-extrabold text-slate-700 mb-1">
                   صورة اللاعب الشخصية
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3">
                   <input
-                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-700 file:mr-2 file:rounded-lg file:border-0 file:bg-red-100 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-red-700 hover:file:bg-red-200 cursor-pointer"
+                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs text-slate-700 file:mr-2 file:rounded-lg file:border-0 file:bg-red-100 file:px-2.5 file:py-1 file:text-xs file:font-black file:text-red-700 hover:file:bg-red-200 cursor-pointer"
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoChange}
@@ -907,7 +959,7 @@ export default function Profile({
                       <img
                         src={editPhoto}
                         alt="Preview"
-                        className="h-10 w-10 rounded-xl object-cover ring-1 ring-red-200"
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl object-cover ring-1 ring-red-200"
                       />
                       <button
                         type="button"
@@ -921,9 +973,9 @@ export default function Profile({
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <button
-                  className="rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer transition"
+                  className="rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-2.5 sm:py-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer transition"
                   type="submit"
                   disabled={profileSaving}
                 >
@@ -937,7 +989,7 @@ export default function Profile({
                   )}
                 </button>
                 <button
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 sm:py-3 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition"
                   type="button"
                   onClick={() => setIsEditing(false)}
                 >
@@ -948,11 +1000,11 @@ export default function Profile({
           ) : (
             /* ════════════ العرض الأساسي البسيط المريح ════════════ */
             <>
-              {/* بطاقة بيانات وهوية اللاعب الهادئة */}
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 sm:p-5 mb-4">
-                <div className="flex items-start gap-4">
-                  {/* الصورة الشخصية */}
-                  <div className="relative flex h-18 w-18 sm:h-20 sm:w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-2xl font-black text-white shadow-xs ring-2 ring-white">
+              {/* بطاقة بيانات وهوية اللاعب الهادئة المتجاوبة */}
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 sm:p-5 mb-3.5 sm:mb-4">
+                {/* الصف العلوي: الصورة الشخصية والاسم والفرع والسن */}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-xl sm:text-2xl font-black text-white shadow-xs ring-2 ring-white">
                     {player.photo ? (
                       <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
                     ) : (
@@ -960,146 +1012,145 @@ export default function Profile({
                     )}
                   </div>
 
-                  {/* التفاصيل الأساسية */}
                   <div className="min-w-0 flex-1">
-                    <h2 className="truncate font-cairo text-xl sm:text-2xl font-black text-slate-900">
+                    <h2 className="truncate font-cairo text-base sm:text-2xl font-black text-slate-900">
                       {player.name}
                     </h2>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2.5 py-1 text-xs font-bold text-slate-700">
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold text-slate-700">
                         🏢 {player.branch}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2.5 py-1 text-xs font-bold text-slate-700">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold text-slate-700">
                         🎂 {player.age} سنة
                       </span>
                     </div>
 
-                    {/* قسم بيانات وتواصل ولي الأمر */}
-                    <div className="mt-3 rounded-xl border border-slate-200/80 bg-white p-3">
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                          <Phone className="h-3.5 w-3.5 text-red-600" />
-                          هاتف ولي الأمر:
-                        </span>
-                        {guardianPhone ? (
-                          <span className="font-cairo text-xs font-black text-slate-900 tracking-wider" dir="ltr">
-                            {guardianPhone}
-                          </span>
-                        ) : (
-                          <span className="text-[11px] font-medium text-slate-400">غير مسجل</span>
-                        )}
-                      </div>
-
-                      {guardianPhone ? (
-                        <div className="grid grid-cols-2 gap-2">
-                          <a
-                            href={`tel:${guardianPhone}`}
-                            onClick={handlePhoneCallClick}
-                            className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 px-3 py-2 text-xs font-bold text-blue-800 transition active:scale-95 text-center"
-                            title="إجراء اتصال هاتفي مباشر بولي الأمر"
-                          >
-                            {isCallingGuardian ? (
-                              <>
-                                <span className="h-3.5 w-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
-                                <span>جاري...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Phone className="h-3.5 w-3.5 text-blue-600" />
-                                <span>اتصال بولي الأمر</span>
-                              </>
-                            )}
-                          </a>
-
-                          <button
-                            type="button"
-                            onClick={openGuardianChat}
-                            disabled={isOpeningChat}
-                            className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-xs font-bold text-white transition active:scale-95 disabled:opacity-60 cursor-pointer text-center"
-                            title="فتح محادثة واتساب مباشرة مع ولي الأمر"
-                          >
-                            {isOpeningChat ? (
-                              <>
-                                <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                                <span>جاري...</span>
-                              </>
-                            ) : (
-                              <>
-                                <MessageCircle className="h-3.5 w-3.5" />
-                                <span>محادثة واتساب</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditName(player.name);
-                            const _d = (player.dateOfBirth || "").split("-");
-                            setEditDobYear(_d[0] || "");
-                            setEditDobMonth(_d[1] || "");
-                            setEditDobDay(_d[2] || "");
-                            setEditGuardianPhone("");
-                            setEditBranch(player.branch);
-                            setEditPhoto(player.photo || "");
-                            setIsEditing(true);
-                          }}
-                          className="w-full text-center text-xs font-bold text-red-600 hover:underline py-1 cursor-pointer"
-                        >
-                          + اضغط هنا لإضافة رقم هاتف ولي الأمر
-                        </button>
-                      )}
-                    </div>
-
-                    <span className="mt-2 block text-[11px] font-semibold text-slate-400">
+                    <span className="mt-1 block text-[10px] sm:text-[11px] font-semibold text-slate-400">
                       تاريخ التسجيل: {registrationDate}
                     </span>
                   </div>
                 </div>
 
+                {/* قسم بيانات وتواصل ولي الأمر - بعرض كامل مريح ومثالي للموبايل والكمبيوتر */}
+                <div className="mt-3 rounded-xl border border-slate-200/80 bg-white p-2.5 sm:p-3">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-slate-600">
+                      <Phone className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                      هاتف ولي الأمر:
+                    </span>
+                    {guardianPhone ? (
+                      <span className="font-cairo text-xs sm:text-sm font-black text-slate-900 tracking-wider" dir="ltr">
+                        {guardianPhone}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-medium text-slate-400">غير مسجل</span>
+                    )}
+                  </div>
+
+                  {guardianPhone ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <a
+                        href={`tel:${guardianPhone}`}
+                        onClick={handlePhoneCallClick}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 px-2 sm:px-3 py-2 text-[11px] sm:text-xs font-bold text-blue-800 transition active:scale-95 text-center"
+                        title="إجراء اتصال هاتفي مباشر بولي الأمر"
+                      >
+                        {isCallingGuardian ? (
+                          <>
+                            <span className="h-3.5 w-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin shrink-0" />
+                            <span className="truncate">جاري...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                            <span className="truncate">اتصال بولي الأمر</span>
+                          </>
+                        )}
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={openGuardianChat}
+                        disabled={isOpeningChat}
+                        className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2 sm:px-3 py-2 text-[11px] sm:text-xs font-bold text-white transition active:scale-95 disabled:opacity-60 cursor-pointer text-center"
+                        title="فتح محادثة واتساب مباشرة مع ولي الأمر"
+                      >
+                        {isOpeningChat ? (
+                          <>
+                            <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                            <span className="truncate">جاري...</span>
+                          </>
+                        ) : (
+                          <>
+                            <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">محادثة واتساب</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditName(player.name);
+                        const _d = (player.dateOfBirth || "").split("-");
+                        setEditDobYear(_d[0] || "");
+                        setEditDobMonth(_d[1] || "");
+                        setEditDobDay(_d[2] || "");
+                        setEditGuardianPhone("");
+                        setEditBranch(player.branch);
+                        setEditPhoto(player.photo || "");
+                        setIsEditing(true);
+                      }}
+                      className="w-full text-center text-xs font-bold text-red-600 hover:underline py-1 cursor-pointer"
+                    >
+                      + اضغط هنا لإضافة رقم هاتف ولي الأمر
+                    </button>
+                  )}
+                </div>
+
                 {/* أزرار الإجراءات الأساسية المريحة والواضحة */}
-                <div className="mt-4 border-t border-slate-200/60 pt-3">
+                <div className="mt-3 border-t border-slate-200/60 pt-3">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {/* زر 1: إرسال تقرير نصي على واتساب */}
                     <button
                       type="button"
                       disabled={isSendingText || isDownloadingCard}
                       onClick={shareOnWhatsApp}
-                      className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2.5 text-xs font-bold text-white transition active:scale-95 disabled:opacity-60 cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-white transition active:scale-95 disabled:opacity-60 cursor-pointer"
                       title="إرسال تقرير نصي بالحضور والاشتراكات لولي الأمر عبر واتساب"
                     >
                       {isSendingText ? (
                         <>
-                          <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                          <span>جاري الفتح...</span>
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                          <span className="truncate">جاري الفتح...</span>
                         </>
                       ) : (
                         <>
-                          <Send className="h-3.5 w-3.5" />
-                          <span>إرسال تقرير نصي</span>
+                          <Send className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">إرسال تقرير نصي</span>
                         </>
                       )}
                     </button>
 
-                    {/* زر 2: حفظ البطاقة كصورة بجهازك */}
+                    {/* زر 2: حفظ صورة البطاقة */}
                     <button
                       type="button"
                       disabled={isSendingText || isDownloadingCard}
                       onClick={downloadProfileCard}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 p-2.5 text-xs font-bold text-slate-800 transition active:scale-95 disabled:opacity-60 cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-slate-800 transition active:scale-95 disabled:opacity-60 cursor-pointer"
                       title="حفظ وتحميل صورة بطاقة اللاعب الرسمية مباشرة على جهازك"
                     >
                       {isDownloadingCard ? (
                         <>
-                          <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-600 border-t-transparent animate-spin" />
-                          <span>جاري التحميل...</span>
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-600 border-t-transparent animate-spin shrink-0" />
+                          <span className="truncate">جاري التحميل...</span>
                         </>
                       ) : (
                         <>
-                          <Download className="h-3.5 w-3.5 text-slate-600" />
-                          <span>حفظ كصورة بجهازك</span>
+                          <Download className="h-3.5 w-3.5 text-slate-600 shrink-0" />
+                          <span className="truncate">حفظ صورة البطاقة</span>
                         </>
                       )}
                     </button>
@@ -1109,18 +1160,18 @@ export default function Profile({
                       type="button"
                       disabled={isPreviewingCard}
                       onClick={openImageModal}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 p-2.5 text-xs font-bold text-slate-700 transition active:scale-95 disabled:opacity-60 cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-slate-700 transition active:scale-95 disabled:opacity-60 cursor-pointer"
                       title="معاينة شكل البطاقة بالحجم الكامل"
                     >
                       {isPreviewingCard ? (
                         <>
-                          <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
-                          <span>جاري التجهيز...</span>
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-400 border-t-transparent animate-spin shrink-0" />
+                          <span className="truncate">جاري...</span>
                         </>
                       ) : (
                         <>
-                          <Eye className="h-3.5 w-3.5 text-slate-500" />
-                          <span>معاينة البطاقة</span>
+                          <Eye className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                          <span className="truncate">معاينة البطاقة</span>
                         </>
                       )}
                     </button>
@@ -1139,63 +1190,63 @@ export default function Profile({
                         setEditPhoto(player.photo || "");
                         setIsEditing(true);
                       }}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 p-2.5 text-xs font-bold text-slate-700 transition active:scale-95 cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-slate-700 transition active:scale-95 cursor-pointer"
                       title="تعديل بيانات اللاعب"
                     >
-                      <Pencil className="h-3.5 w-3.5 text-slate-500" />
-                      <span>تعديل البيانات</span>
+                      <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                      <span className="truncate">تعديل البيانات</span>
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* بطاقات الإحصائيات البسيطة المتناسقة */}
-              <div className="grid grid-cols-3 gap-2.5 pb-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-center">
-                  <strong className="block font-cairo text-2xl font-black text-slate-900">
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 pb-3.5 sm:pb-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 sm:p-3 text-center">
+                  <strong className="block font-cairo text-lg sm:text-2xl font-black text-slate-900">
                     {attendanceRate}%
                   </strong>
-                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">نسبة الالتزام</span>
+                  <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate">نسبة الالتزام</span>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-center">
-                  <strong className="block font-cairo text-2xl font-black text-slate-900">
-                    {attended} <span className="text-xs text-slate-400 font-normal">/ {totalAttendanceCount}</span>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 sm:p-3 text-center">
+                  <strong className="block font-cairo text-lg sm:text-2xl font-black text-slate-900">
+                    {attended} <span className="text-[10px] sm:text-xs text-slate-400 font-normal">/ {totalAttendanceCount}</span>
                   </strong>
-                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">حصة حضور</span>
+                  <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate">حصة حضور</span>
                 </div>
 
                 <div
-                  className={`rounded-xl border p-3 text-center ${
+                  className={`rounded-xl border p-2 sm:p-3 text-center ${
                     monthlyStatus === "paid"
                       ? "border-emerald-200 bg-emerald-50/60"
                       : "border-rose-200 bg-rose-50/60"
                   }`}
                 >
                   <strong
-                    className={`block font-cairo text-lg font-black ${
+                    className={`block font-cairo text-xs sm:text-lg font-black truncate ${
                       monthlyStatus === "paid" ? "text-emerald-700" : "text-rose-700"
                     }`}
                   >
                     {monthlyStatus === "paid" ? "✓ مدفوع" : "لم يدفع"}
                   </strong>
-                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-400">
+                  <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">
                     شهر {paymentMonth}
                   </span>
                 </div>
               </div>
 
               {/* صندوق اشتراك الشهر الحالي مع زر التبديل المباشر */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4 mb-4 flex items-center justify-between gap-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 mb-3.5 sm:mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
                 <div>
-                  <h3 className="font-cairo text-sm font-extrabold text-slate-900">
+                  <h3 className="font-cairo text-xs sm:text-sm font-extrabold text-slate-900">
                     اشتراك شهر {paymentMonth}
                   </h3>
-                  <p className="text-[11px] font-medium text-slate-400 mt-0.5">حالة سداد اشتراك الشهر الحالي</p>
+                  <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5">حالة سداد اشتراك الشهر الحالي</p>
                 </div>
                 <button
                   disabled={isTogglingPayment}
-                  className={`rounded-xl px-4 py-2.5 text-xs font-black transition active:scale-95 disabled:opacity-60 cursor-pointer ${
+                  className={`w-full sm:w-auto rounded-xl px-4 py-2.5 text-xs font-black transition active:scale-95 disabled:opacity-60 cursor-pointer text-center ${
                     monthlyStatus === "paid"
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                       : "bg-rose-600 hover:bg-rose-700 text-white"
@@ -1203,7 +1254,7 @@ export default function Profile({
                   onClick={handleToggleMonthlyPayment}
                 >
                   {isTogglingPayment ? (
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center justify-center gap-1.5">
                       <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
                       <span>جاري التحديث...</span>
                     </span>
@@ -1482,9 +1533,9 @@ export default function Profile({
             }
           }}
         >
-          <div className="relative max-h-[95vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
-            <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
-              <h3 className="font-cairo text-sm font-bold text-slate-900">
+          <div className="relative max-h-[92vh] w-full max-w-sm sm:max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-2xl">
+            <div className="flex items-center justify-between mb-2.5 border-b border-slate-100 pb-2.5">
+              <h3 className="font-cairo text-xs sm:text-sm font-bold text-slate-900 truncate">
                 بطاقة اللاعب: {player.name}
               </h3>
               <button
@@ -1495,63 +1546,105 @@ export default function Profile({
                   setModalImageBlob(null);
                   setImageCopied(false);
                 }}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 cursor-pointer"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 cursor-pointer shrink-0"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* الصورة الناتجة */}
-            <div className="mb-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex justify-center p-2">
+            <div className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex justify-center p-2">
               <img
                 src={modalImageDataUrl}
                 alt={`بطاقة ${player.name}`}
-                className="max-h-72 w-auto rounded-lg shadow-sm object-contain"
+                className="max-h-52 sm:max-h-72 w-auto rounded-lg shadow-sm object-contain"
               />
             </div>
 
-            {/* أزرار التحميل والنسخ */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                disabled={imageCopied}
-                onClick={async () => {
-                  if (modalImageBlob && navigator.clipboard?.write) {
-                    try {
-                      await navigator.clipboard.write([
-                        new ClipboardItem({ "image/png": modalImageBlob }),
-                      ]);
-                      setImageCopied(true);
-                      setTimeout(() => setImageCopied(false), 3000);
-                    } catch (e) {
-                      console.warn(e);
-                    }
-                  }
-                }}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 cursor-pointer"
+            {/* رسالة توجيهية أو إشعار داخل المودال */}
+            {modalNotice ? (
+              <div
+                className={`mb-2.5 rounded-xl p-2 sm:p-2.5 text-center text-[11px] sm:text-xs font-bold transition ${
+                  modalNotice.startsWith("⚠️")
+                    ? "bg-amber-50 text-amber-800 border border-amber-200"
+                    : modalNotice.startsWith("❌")
+                    ? "bg-rose-50 text-rose-800 border border-rose-200"
+                    : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                }`}
               >
-                <ClipboardCopy className="h-3.5 w-3.5" />
-                <span>{imageCopied ? "✓ تم النسخ!" : "نسخ للحافظة"}</span>
-              </button>
+                {modalNotice}
+              </div>
+            ) : (
+              <div className="mb-2.5 rounded-xl bg-slate-50 border border-slate-200/80 p-2 text-center text-[10px] sm:text-[11px] font-medium text-slate-500">
+                💡 اضغط <strong className="text-emerald-700 font-bold">إرسال لولي الأمر</strong> ليتم نسخ الصورة وفتح الشات فوراً لتلصقها وتضغط إرسال
+              </div>
+            )}
 
+            {/* أزرار التحميل والنسخ والإرسال */}
+            <div className="space-y-2">
               <button
                 type="button"
-                disabled={isDownloadingCard}
-                onClick={downloadProfileCard}
-                className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-bold text-white hover:bg-slate-800 active:scale-95 cursor-pointer"
+                disabled={isSendingModalImage}
+                onClick={sendCardToGuardianViaWhatsApp}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2.5 sm:p-3 text-xs font-black text-white shadow-xs transition active:scale-95 disabled:opacity-60 cursor-pointer"
+                title="نسخ الصورة للحافظة وفتح محادثة واتساب مع ولي الأمر فوراً"
               >
-                {isDownloadingCard ? (
+                {isSendingModalImage ? (
                   <>
-                    <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                    <span>جاري...</span>
+                    <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                    <span>جاري النسخ وفتح الشات...</span>
                   </>
                 ) : (
                   <>
-                    <Download className="h-3.5 w-3.5" />
-                    <span>تحميل للجهاز</span>
+                    <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span>إرسال لولي الأمر (واتساب)</span>
                   </>
                 )}
               </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={imageCopied}
+                  onClick={async () => {
+                    if (modalImageBlob && navigator.clipboard?.write) {
+                      try {
+                        await navigator.clipboard.write([
+                          new ClipboardItem({ "image/png": modalImageBlob }),
+                        ]);
+                        setImageCopied(true);
+                        setModalNotice("✓ تم نسخ صورة البطاقة للحافظة بنجاح!");
+                        setTimeout(() => setImageCopied(false), 3000);
+                      } catch (e) {
+                        console.warn(e);
+                      }
+                    }
+                  }}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 cursor-pointer"
+                >
+                  <ClipboardCopy className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{imageCopied ? "✓ تم النسخ!" : "نسخ للحافظة"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isDownloadingCard}
+                  onClick={downloadProfileCard}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold text-white hover:bg-slate-800 active:scale-95 cursor-pointer"
+                >
+                  {isDownloadingCard ? (
+                    <>
+                      <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                      <span className="truncate">جاري...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">تحميل للجهاز</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
