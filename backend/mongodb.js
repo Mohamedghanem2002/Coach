@@ -3,9 +3,15 @@ import { getLocalDbClient } from "./localdb";
 
 const uri = process.env.MONGODB_URI;
 
-let clientPromise;
+function getConnectedClient() {
+  if (!uri || !uri.startsWith("mongodb")) {
+    return Promise.resolve(getLocalDbClient());
+  }
 
-if (uri && uri.startsWith("mongodb")) {
+  if (global._mongoClientPromise) {
+    return global._mongoClientPromise;
+  }
+
   const options = {
     appName: "cap-yasser",
     tls: true,
@@ -15,37 +21,53 @@ if (uri && uri.startsWith("mongodb")) {
 
   const client = new MongoClient(uri, options);
 
-  if (global._mongoClientPromise) {
-    clientPromise = global._mongoClientPromise;
-  } else {
-    clientPromise = client.connect().then(async (connectedClient) => {
-      if (process.env.MONGODB_DB) {
-        const db = connectedClient.db(process.env.MONGODB_DB);
+  global._mongoClientPromise = client
+    .connect()
+    .then(async (connectedClient) => {
+      try {
+        if (process.env.MONGODB_DB) {
+          const db = connectedClient.db(process.env.MONGODB_DB);
 
-        await Promise.all([
-          db.collection("players").createIndex({
-            ownerId: 1,
-            createdAt: -1,
-          }),
-          db.collection("players").createIndex({
-            ownerId: 1,
-            branch: 1,
-          }),
-          db.collection("branches").createIndex({
-            ownerId: 1,
-            createdAt: 1,
-          }),
-        ]);
+          await Promise.allSettled([
+            db.collection("players").createIndex({
+              ownerId: 1,
+              createdAt: -1,
+            }),
+            db.collection("players").createIndex({
+              ownerId: 1,
+              branch: 1,
+            }),
+            db.collection("branches").createIndex({
+              ownerId: 1,
+              createdAt: 1,
+            }),
+          ]);
+        }
+      } catch (err) {
+        console.warn("MongoDB index creation non-critical error:", err?.message);
       }
 
       return connectedClient;
+    })
+    .catch((err) => {
+      global._mongoClientPromise = null;
+      throw err;
     });
 
-    global._mongoClientPromise = clientPromise;
-  }
-} else {
-  // Local persistent JSON storage fallback
-  clientPromise = Promise.resolve(getLocalDbClient());
+  return global._mongoClientPromise;
 }
+
+// Lazy thenable: Does not initiate network connections at module evaluation time
+const clientPromise = {
+  then(onFulfilled, onRejected) {
+    return getConnectedClient().then(onFulfilled, onRejected);
+  },
+  catch(onRejected) {
+    return getConnectedClient().catch(onRejected);
+  },
+  finally(onFinally) {
+    return getConnectedClient().finally(onFinally);
+  },
+};
 
 export default clientPromise;
