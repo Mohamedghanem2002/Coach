@@ -8,7 +8,12 @@ export default function AddPlayerModal({
   onManageBranches,
 }) {
   const [name, setName] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [dobDay, setDobDay] = useState("");
+  const [dobMonth, setDobMonth] = useState("");
+  const [dobYear, setDobYear] = useState("");
+  const dateOfBirth = dobYear && dobMonth && dobDay
+    ? `${dobYear}-${dobMonth.padStart(2, "0")}-${dobDay.padStart(2, "0")}`
+    : "";
   const [guardianPhone, setGuardianPhone] = useState("");
   const [branch, setBranch] = useState(initialBranch || "");
   const [photo, setPhoto] = useState("");
@@ -134,14 +139,41 @@ export default function AddPlayerModal({
                 <label className="block text-xs font-extrabold text-slate-700 mb-1">
                   تاريخ الميلاد <span className="text-red-500">*</span>
                 </label>
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                  type="date"
-                  max={new Date().toISOString().slice(0, 10)}
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  required
-                />
+<div className="grid grid-cols-3 gap-1.5">
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="اليوم"
+                    maxLength={2}
+                    value={dobDay}
+                    onChange={(e) => setDobDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    required
+                  />
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="الشهر"
+                    maxLength={2}
+                    value={dobMonth}
+                    onChange={(e) => setDobMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    required
+                  />
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="السنة"
+                    maxLength={4}
+                    value={dobYear}
+                    onChange={(e) => setDobYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    required
+                  />
+                </div>
               </div>
 
               <div>

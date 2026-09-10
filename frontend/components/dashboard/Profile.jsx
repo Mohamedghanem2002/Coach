@@ -21,9 +21,14 @@ export default function Profile({
     "";
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(player.name);
-  const [editDateOfBirth, setEditDateOfBirth] = useState(
-    player.dateOfBirth || "",
-  );
+  // Split DOB into day/month/year for easy numeric entry on mobile
+  const _dob = (player.dateOfBirth || "").split("-");
+  const [editDobYear, setEditDobYear] = useState(_dob[0] || "");
+  const [editDobMonth, setEditDobMonth] = useState(_dob[1] || "");
+  const [editDobDay, setEditDobDay] = useState(_dob[2] || "");
+  const editDateOfBirth = editDobYear && editDobMonth && editDobDay
+    ? `${editDobYear}-${editDobMonth.padStart(2, "0")}-${editDobDay.padStart(2, "0")}`
+    : "";
   const [editGuardianPhone, setEditGuardianPhone] = useState(guardianPhone);
   const [editBranch, setEditBranch] = useState(player.branch);
   const [editPhoto, setEditPhoto] = useState(player.photo || "");
@@ -557,14 +562,41 @@ export default function Profile({
                 <label className="block text-xs font-extrabold text-slate-700 mb-1">
                   تاريخ الميلاد
                 </label>
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                  type="date"
-                  max={new Date().toISOString().slice(0, 10)}
-                  value={editDateOfBirth}
-                  onChange={(e) => setEditDateOfBirth(e.target.value)}
-                  required={!player.dateOfBirth}
-                />
+                <div className="grid grid-cols-3 gap-1.5">
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="اليوم"
+                    maxLength={2}
+                    value={editDobDay}
+                    onChange={(e) => setEditDobDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    required={!player.dateOfBirth}
+                  />
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="الشهر"
+                    maxLength={2}
+                    value={editDobMonth}
+                    onChange={(e) => setEditDobMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    required={!player.dateOfBirth}
+                  />
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="السنة"
+                    maxLength={4}
+                    value={editDobYear}
+                    onChange={(e) => setEditDobYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    required={!player.dateOfBirth}
+                  />
+                </div>
               </div>
 
               <div>
@@ -700,7 +732,10 @@ export default function Profile({
                         type="button"
                         onClick={() => {
                           setEditName(player.name);
-                          setEditDateOfBirth(player.dateOfBirth || "");
+                          const _d = (player.dateOfBirth || "").split("-");
+                          setEditDobYear(_d[0] || "");
+                          setEditDobMonth(_d[1] || "");
+                          setEditDobDay(_d[2] || "");
                           setEditGuardianPhone("");
                           setEditBranch(player.branch);
                           setEditPhoto(player.photo || "");
@@ -751,7 +786,10 @@ export default function Profile({
                   className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 cursor-pointer"
                   onClick={() => {
                     setEditName(player.name);
-                    setEditDateOfBirth(player.dateOfBirth || "");
+                    const _d = (player.dateOfBirth || "").split("-");
+                    setEditDobYear(_d[0] || "");
+                    setEditDobMonth(_d[1] || "");
+                    setEditDobDay(_d[2] || "");
                     setEditGuardianPhone(guardianPhone);
                     setEditBranch(player.branch);
                     setEditPhoto(player.photo || "");
