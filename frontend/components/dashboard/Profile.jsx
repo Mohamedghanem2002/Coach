@@ -114,6 +114,33 @@ export default function Profile({
     return cleaned;
   }
 
+  function openWhatsAppNative(cleanPhone, text = "") {
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent,
+      );
+
+    const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
+    const appUrl = cleanPhone
+      ? `whatsapp://send?phone=${cleanPhone}${encodedText}`
+      : `whatsapp://send?text=${encodedText.replace(/^&/, "")}`;
+
+    if (isMobile) {
+      window.location.href = appUrl;
+    } else {
+      window.location.href = appUrl;
+      setTimeout(() => {
+        if (document.hasFocus()) {
+          const webUrl = cleanPhone
+            ? `https://web.whatsapp.com/send?phone=${cleanPhone}${text ? `&text=${encodeURIComponent(text)}` : ""}`
+            : `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+          window.open(webUrl, "_blank", "noopener,noreferrer");
+        }
+      }, 1200);
+    }
+  }
+
   function openGuardianChat() {
     if (!guardianPhone) {
       setProfileNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً ليتم فتح المحادثة معه.");
@@ -124,8 +151,8 @@ export default function Profile({
       setProfileNotice("⚠️ رقم هاتف ولي الأمر المسجل غير صالح.");
       return;
     }
-    window.open(`https://wa.me/${cleanPhone}`, "_blank", "noopener,noreferrer");
-    setProfileNotice(`✓ تم فتح شات واتساب لولي الأمر (${guardianPhone})`);
+    openWhatsAppNative(cleanPhone);
+    setProfileNotice(`✓ جاري فتح تطبيق واتساب لولي الأمر (${guardianPhone})`);
   }
 
   function shareOnWhatsApp() {
@@ -174,11 +201,8 @@ export default function Profile({
       paymentText,
     ].join("\n");
 
-    const waUrl = cleanPhone
-      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
-      : `https://wa.me/?text=${encodeURIComponent(message)}`;
-
-    window.open(waUrl, "_blank", "noopener,noreferrer");
+    openWhatsAppNative(cleanPhone, message);
+    setProfileNotice("✓ جاري فتح تطبيق واتساب وإرسال التقرير");
   }
 
   async function generateProfileCanvas() {
@@ -479,17 +503,20 @@ export default function Profile({
         navigator.userAgent,
       );
 
-    // 1. Mobile flow: Native share with image file directly
-    if (isMobile && navigator.share) {
-      let blob = cachedCardBlob;
-      if (!blob) {
-        setProfileNotice("⏳ جاري تجهيز صورة بطاقة اللاعب...");
-        const canvas = await generateProfileCanvas();
-        if (canvas) {
-          blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-        }
+    // Prepare card image blob (from pre-cache or generate)
+    let blob = cachedCardBlob;
+    if (!blob) {
+      const canvas = await generateProfileCanvas();
+      if (canvas) {
+        blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+        if (blob) setCachedCardBlob(blob);
       }
-      if (blob) {
+    }
+
+    // 1. Mobile flow:
+    if (isMobile) {
+      // First: try Web Share API with image file if supported
+      if (blob && navigator.share) {
         const fileName = `بطاقة_${player.name.replace(/\s+/g, "_")}.png`;
         const file = new File([blob], fileName, { type: "image/png" });
         if (navigator.canShare?.({ files: [file] })) {
@@ -499,68 +526,65 @@ export default function Profile({
               title: `بطاقة اللاعب ${player.name}`,
               text: `بطاقة بيانات اللاعب ${player.name} - أكاديمية الكاراتيه`,
             });
-            setProfileNotice("✓ تم فتح المشاركة بنجاح");
+            setProfileNotice("✓ تم فتح تطبيق واتساب لمشاركة الصورة بنجاح");
             return;
           } catch (err) {
             if (err.name === "AbortError") return;
-            console.warn("Mobile share aborted or failed:", err);
           }
         }
       }
-    }
 
-    // 2. Desktop flow:
-    // Open WhatsApp chat IMMEDIATELY in a new tab synchronously (exact same as openGuardianChat)
-    const waUrl = `https://wa.me/${cleanPhone}`;
-    window.open(waUrl, "_blank", "noopener,noreferrer");
-
-    // 3. Prepare card image blob
-    let blob = cachedCardBlob;
-    if (!blob) {
-      setProfileNotice("⏳ فُتح شات ولي الأمر وجاري نسخ صورة البطاقة...");
-      const canvas = await generateProfileCanvas();
-      if (canvas) {
-        blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-        if (blob) setCachedCardBlob(blob);
+      // If share cancelled or not available, directly trigger mobile WhatsApp app deep link!
+      if (blob) {
+        try {
+          const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
+          const downloadLink = document.createElement("a");
+          downloadLink.href = URL.createObjectURL(blob);
+          downloadLink.download = fileName;
+          downloadLink.click();
+          setTimeout(() => URL.revokeObjectURL(downloadLink.href), 3000);
+        } catch (dlErr) {
+          console.warn("Download error:", dlErr);
+        }
       }
-    }
-
-    if (!blob) {
-      setProfileNotice(`✓ تم فتح شات واتساب لولي الأمر (${guardianPhone})`);
+      window.location.href = `whatsapp://send?phone=${cleanPhone}`;
+      setProfileNotice("✓ تم فتح تطبيق واتساب لولي الأمر وتم حفظ صورة البطاقة بجهازك — أرفقها من 📎");
       return;
     }
 
-    // 4. Automatically copy the image to the clipboard so the coach can just press Ctrl + V
+    // 2. Desktop flow:
     let copied = false;
-    try {
-      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+    if (blob && typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      try {
         await navigator.clipboard.write([
           new ClipboardItem({ "image/png": blob }),
         ]);
         copied = true;
         setImageCopied(true);
+      } catch (clipErr) {
+        console.warn("Clipboard copy failed:", clipErr);
       }
-    } catch (clipErr) {
-      console.warn("Clipboard copy failed:", clipErr);
     }
 
-    // 5. Automatically download the card image file so it is ready on the computer
-    try {
-      const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
-      const downloadLink = document.createElement("a");
-      downloadLink.href = URL.createObjectURL(blob);
-      downloadLink.download = fileName;
-      downloadLink.click();
-      setTimeout(() => URL.revokeObjectURL(downloadLink.href), 3000);
-    } catch (dlErr) {
-      console.warn("Download error:", dlErr);
+    if (blob) {
+      try {
+        const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
+        const downloadLink = document.createElement("a");
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = fileName;
+        downloadLink.click();
+        setTimeout(() => URL.revokeObjectURL(downloadLink.href), 3000);
+      } catch (dlErr) {
+        console.warn("Download error:", dlErr);
+      }
     }
 
-    // 6. Give the coach clear and prominent instruction
+    openWhatsAppNative(cleanPhone);
+
     setProfileNotice(
       copied
-        ? "✓ تم فتح شات ولي الأمر ونُسخت صورة البطاقة للحافظة! اضغط (Ctrl + V) في واتساب للإرسال فوراً 🚀 (تم حفظ نسخة بجهازك)"
-        : "✓ تم فتح شات ولي الأمر وتم تنزيل صورة البطاقة لجهازك! اسحب الصورة إلى الشات أو أرفقها من 📎 للإرسال.",
+        ? "✓ تم فتح تطبيق واتساب ونُسخت صورة البطاقة للحافظة! اضغط (Ctrl + V) في الشات للإرسال فوراً 🚀 (تم حفظ نسخة بجهازك)"
+        : "✓ تم فتح تطبيق واتساب وتم تنزيل صورة البطاقة لجهازك! اسحب الصورة إلى الشات أو أرفقها من 📎 للإرسال.",
     );
   }
   function handlePhotoChange(event) {

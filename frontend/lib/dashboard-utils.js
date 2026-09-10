@@ -151,6 +151,18 @@ export function generateBirthdayWishUrl(
   const text = encodeURIComponent(
     generateBirthdayWishText(player, captainName)
   );
+  const isMobile =
+    typeof navigator !== "undefined" &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
+
+  if (isMobile) {
+    return cleanPhone
+      ? `whatsapp://send?phone=${cleanPhone}&text=${text}`
+      : `whatsapp://send?text=${text}`;
+  }
+
   if (cleanPhone) {
     return `https://wa.me/${cleanPhone}?text=${text}`;
   }
