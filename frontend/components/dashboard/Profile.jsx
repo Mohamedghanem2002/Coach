@@ -76,6 +76,18 @@ export default function Profile({
   const [cachedCardBlob, setCachedCardBlob] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingPlayer, setIsDeletingPlayer] = useState(false);
+  const [isSharingImage, setIsSharingImage] = useState(false);
+  const [isSendingText, setIsSendingText] = useState(false);
+  const [isDownloadingCard, setIsDownloadingCard] = useState(false);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
+  const [isCallingGuardian, setIsCallingGuardian] = useState(false);
+  const [isPreviewingCard, setIsPreviewingCard] = useState(false);
+  const [isTogglingPayment, setIsTogglingPayment] = useState(false);
+  const [isSavingAttendance, setIsSavingAttendance] = useState(false);
+  const [updatingPaymentMonth, setUpdatingPaymentMonth] = useState(null);
+  const [deletingPaymentMonth, setDeletingPaymentMonth] = useState(null);
+  const [updatingAttendanceDate, setUpdatingAttendanceDate] = useState(null);
+  const [deletingAttendanceDate, setDeletingAttendanceDate] = useState(null);
 
   const calculatedEditAge = useMemo(() => {
     if (!editDobYear || !editDobMonth || !editDobDay) return null;
@@ -176,6 +188,7 @@ export default function Profile({
   }
 
   function openGuardianChat() {
+    if (isOpeningChat) return;
     if (!guardianPhone) {
       setProfileNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً ليتم فتح المحادثة معه.");
       return;
@@ -185,11 +198,15 @@ export default function Profile({
       setProfileNotice("⚠️ رقم هاتف ولي الأمر المسجل غير صالح.");
       return;
     }
-    openWhatsAppNative(cleanPhone);
+    setIsOpeningChat(true);
     setProfileNotice(`✓ جاري فتح تطبيق واتساب لولي الأمر (${guardianPhone})`);
+    openWhatsAppNative(cleanPhone);
+    setTimeout(() => setIsOpeningChat(false), 2000);
   }
 
   function shareOnWhatsApp() {
+    if (isSendingText) return;
+    setIsSendingText(true);
     const cleanPhone = formatWhatsAppPhone(guardianPhone);
     const attendanceHistory = Array.isArray(player.attendance)
       ? [...player.attendance].reverse()
@@ -237,6 +254,7 @@ export default function Profile({
 
     openWhatsAppNative(cleanPhone, message);
     setProfileNotice("✓ جاري فتح تطبيق واتساب وإرسال التقرير");
+    setTimeout(() => setIsSendingText(false), 2500);
   }
 
   async function generateProfileCanvas() {
@@ -475,6 +493,8 @@ export default function Profile({
   }
 
   async function downloadProfileCard() {
+    if (isDownloadingCard) return;
+    setIsDownloadingCard(true);
     setProfileNotice("⏳ جاري إنشاء وتحميل صورة بطاقة اللاعب...");
     try {
       let blob = cachedCardBlob;
@@ -504,10 +524,14 @@ export default function Profile({
     } catch (error) {
       console.error("Failed to download profile card:", error);
       setProfileNotice("❌ حدث خطأ أثناء تحميل صورة البطاقة");
+    } finally {
+      setTimeout(() => setIsDownloadingCard(false), 2000);
     }
   }
 
   async function openImageModal() {
+    if (isPreviewingCard) return;
+    setIsPreviewingCard(true);
     try {
       setProfileNotice("⏳ جاري إنشاء صورة بطاقة اللاعب...");
 
@@ -532,10 +556,13 @@ export default function Profile({
     } catch (error) {
       console.error("Failed to open image modal:", error);
       setProfileNotice("❌ حدث خطأ أثناء إنشاء صورة البطاقة");
+    } finally {
+      setIsPreviewingCard(false);
     }
   }
 
   async function shareProfileImageToWhatsApp() {
+    if (isSharingImage) return;
     if (!guardianPhone) {
       setProfileNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً ليتم مشاركة البطاقة معه عبر واتساب.");
       return;
@@ -547,44 +574,35 @@ export default function Profile({
       return;
     }
 
-    const isMobile =
-      typeof navigator !== "undefined" &&
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent,
-      );
+    setIsSharingImage(true);
+    setProfileNotice("⏳ جاري تجهيز صورة البطاقة وفتح محادثة واتساب...");
 
-    // Prepare card image blob (from pre-cache or generate)
-    let blob = cachedCardBlob;
-    if (!blob) {
-      const canvas = await generateProfileCanvas();
-      if (canvas) {
-        blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-        if (blob) setCachedCardBlob(blob);
-      }
-    }
-
-    // 1. Mobile flow:
-    if (isMobile) {
-      // First: try Web Share API with image file if supported
-      if (blob && navigator.share) {
-        const fileName = `بطاقة_${player.name.replace(/\s+/g, "_")}.png`;
-        const file = new File([blob], fileName, { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: `بطاقة اللاعب ${player.name}`,
-              text: `بطاقة بيانات اللاعب ${player.name} - أكاديمية الكاراتيه`,
-            });
-            setProfileNotice("✓ تم فتح تطبيق واتساب لمشاركة الصورة بنجاح");
-            return;
-          } catch (err) {
-            if (err.name === "AbortError") return;
-          }
+    try {
+      // 1. Prepare card image blob (from pre-cache or generate)
+      let blob = cachedCardBlob;
+      if (!blob) {
+        const canvas = await generateProfileCanvas();
+        if (canvas) {
+          blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+          if (blob) setCachedCardBlob(blob);
         }
       }
 
-      // If share cancelled or not available, directly trigger mobile WhatsApp app deep link!
+      // 2. Copy image to clipboard so coach can immediately paste in WhatsApp
+      let copied = false;
+      if (blob && typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob }),
+          ]);
+          copied = true;
+          setImageCopied(true);
+        } catch (clipErr) {
+          console.warn("Clipboard copy failed:", clipErr);
+        }
+      }
+
+      // 3. Automatically download/save image to device as backup
       if (blob) {
         try {
           const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
@@ -597,45 +615,112 @@ export default function Profile({
           console.warn("Download error:", dlErr);
         }
       }
-      window.location.href = `whatsapp://send?phone=${cleanPhone}`;
-      setProfileNotice("✓ تم فتح تطبيق واتساب لولي الأمر وتم حفظ صورة البطاقة بجهازك — أرفقها من 📎");
-      return;
+
+      // 4. Open guardian's chat DIRECTLY on WhatsApp with summary message (just like shareOnWhatsApp)!
+      const cardMessage = [
+        `🥋 بطاقة بيانات وإحصائيات اللاعب: ${player.name}`,
+        `🏢 الصالة: ${player.branch} | 🎂 السن: ${player.age} سنة`,
+        `📊 نسبة الالتزام: ${attendanceRate}% (${attended} من ${totalAttendanceCount} حصة)`,
+        `💳 اشتراك شهر ${paymentMonth}: ${monthlyStatus === "paid" ? "مدفوع ✓" : "غير مدفوع ⚠️"}`,
+        "",
+        "📸 تم نسخ صورة البطاقة الرسمية وحفظها بجهازك — اضغط (لصق / Paste) في الشات أو أرفقها من 📎",
+      ].join("\n");
+
+      openWhatsAppNative(cleanPhone, cardMessage);
+
+      setProfileNotice(
+        copied
+          ? "✓ تم فتح شات ولي الأمر في واتساب ونُسخت الصورة للحافظة! اضغط (Ctrl + V / Paste) في الشات للإرسال فوراً 🚀 (تم حفظ نسخة بجهازك)"
+          : "✓ تم فتح شات ولي الأمر في واتساب وتم تنزيل صورة البطاقة لجهازك! أرفق الصورة من 📎 للإرسال.",
+      );
+    } catch (err) {
+      console.error("Failed to share profile image to WhatsApp:", err);
+      setProfileNotice("❌ تعذر مشاركة صورة البطاقة. حاول مرة أخرى.");
+    } finally {
+      setTimeout(() => setIsSharingImage(false), 2500);
     }
+  }
 
-    // 2. Desktop flow:
-    let copied = false;
-    if (blob && typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob }),
-        ]);
-        copied = true;
-        setImageCopied(true);
-      } catch (clipErr) {
-        console.warn("Clipboard copy failed:", clipErr);
-      }
+  async function handleToggleMonthlyPayment() {
+    if (isTogglingPayment) return;
+    setIsTogglingPayment(true);
+    try {
+      const updated = await onUpdate(player._id, {
+        paymentStatus: monthlyStatus === "paid" ? "unpaid" : "paid",
+        paymentMonth,
+      });
+      setProfileNotice(
+        updated
+          ? (monthlyStatus === "paid"
+              ? `تم تحويل اشتراك شهر ${paymentMonth} إلى غير مدفوع`
+              : `✓ تم تسجيل دفع اشتراك شهر ${paymentMonth} بنجاح`)
+          : "تعذر تحديث الاشتراك. حاول مرة أخرى."
+      );
+    } catch (err) {
+      console.error(err);
+      setProfileNotice("تعذر تحديث الاشتراك. حاول مرة أخرى.");
+    } finally {
+      setIsTogglingPayment(false);
     }
+  }
 
-    if (blob) {
-      try {
-        const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
-        const downloadLink = document.createElement("a");
-        downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = fileName;
-        downloadLink.click();
-        setTimeout(() => URL.revokeObjectURL(downloadLink.href), 3000);
-      } catch (dlErr) {
-        console.warn("Download error:", dlErr);
-      }
+  async function handleTogglePastPayment(month, currentStatus) {
+    if (updatingPaymentMonth) return;
+    setUpdatingPaymentMonth(month);
+    try {
+      await onUpdate(player._id, {
+        paymentStatus: currentStatus === "paid" ? "unpaid" : "paid",
+        paymentMonth: month,
+      });
+    } finally {
+      setUpdatingPaymentMonth(null);
     }
+  }
 
-    openWhatsAppNative(cleanPhone);
+  async function handleDeletePastPayment(month) {
+    if (deletingPaymentMonth) return;
+    setDeletingPaymentMonth(month);
+    try {
+      await onUpdate(player._id, {
+        paymentStatus: "clear",
+        paymentMonth: month,
+      });
+      setProfileNotice(`تم حذف سجل اشتراك شهر ${month}`);
+    } finally {
+      setDeletingPaymentMonth(null);
+    }
+  }
 
-    setProfileNotice(
-      copied
-        ? "✓ تم فتح تطبيق واتساب ونُسخت صورة البطاقة للحافظة! اضغط (Ctrl + V) في الشات للإرسال فوراً 🚀 (تم حفظ نسخة بجهازك)"
-        : "✓ تم فتح تطبيق واتساب وتم تنزيل صورة البطاقة لجهازك! اسحب الصورة إلى الشات أو أرفقها من 📎 للإرسال.",
-    );
+  async function handleTogglePastAttendance(date, currentStatus) {
+    if (updatingAttendanceDate) return;
+    setUpdatingAttendanceDate(date);
+    try {
+      await onUpdate(player._id, {
+        attendanceStatus: currentStatus === "present" ? "absent" : "present",
+        date,
+      });
+    } finally {
+      setUpdatingAttendanceDate(null);
+    }
+  }
+
+  async function handleDeletePastAttendance(date) {
+    if (deletingAttendanceDate) return;
+    setDeletingAttendanceDate(date);
+    try {
+      await onUpdate(player._id, {
+        attendanceStatus: "clear",
+        date,
+      });
+      setProfileNotice(`تم حذف سجل حضور تاريخ ${date}`);
+    } finally {
+      setDeletingAttendanceDate(null);
+    }
+  }
+
+  function handlePhoneCallClick() {
+    setIsCallingGuardian(true);
+    setTimeout(() => setIsCallingGuardian(false), 2000);
   }
   function handlePhotoChange(event) {
     var _a;
@@ -680,13 +765,20 @@ export default function Profile({
     if (updatedPlayer) setIsEditing(false);
     setProfileSaving(false);
   }
-  function addCustomAttendance(e) {
+  async function addCustomAttendance(e) {
     e.preventDefault();
+    if (isSavingAttendance) return;
     if (customAttendanceDate > today) return;
-    onUpdate(player._id, {
-      attendanceStatus: customAttendanceStatus,
-      date: customAttendanceDate,
-    });
+    setIsSavingAttendance(true);
+    try {
+      await onUpdate(player._id, {
+        attendanceStatus: customAttendanceStatus,
+        date: customAttendanceDate,
+      });
+      setProfileNotice(`✓ تم تسجيل حضور تاريخ ${customAttendanceDate}`);
+    } finally {
+      setIsSavingAttendance(false);
+    }
   }
   async function addCustomPayment(e) {
     e.preventDefault();
@@ -938,20 +1030,40 @@ export default function Profile({
                       <div className="grid grid-cols-2 gap-2">
                         <a
                           href={`tel:${guardianPhone}`}
+                          onClick={handlePhoneCallClick}
                           className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50 transition active:scale-95 shadow-2xs"
                           title="إجراء اتصال هاتفي مباشر بولي الأمر"
                         >
-                          <Phone className="h-3.5 w-3.5 text-blue-600" />
-                          <span>اتصال بولي الأمر</span>
+                          {isCallingGuardian ? (
+                            <>
+                              <span className="h-3.5 w-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin inline-block" />
+                              <span>جاري الاتصال...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Phone className="h-3.5 w-3.5 text-blue-600" />
+                              <span>اتصال بولي الأمر</span>
+                            </>
+                          )}
                         </a>
                         <button
                           type="button"
                           onClick={openGuardianChat}
-                          className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700 transition active:scale-95 shadow-2xs cursor-pointer"
+                          disabled={isOpeningChat}
+                          className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
                           title="فتح محادثة واتساب مباشرة مع ولي الأمر"
                         >
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          <span>محادثة واتساب</span>
+                          {isOpeningChat ? (
+                            <>
+                              <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                              <span>جاري الفتح...</span>
+                            </>
+                          ) : (
+                            <>
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              <span>محادثة واتساب</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     ) : (
@@ -1031,43 +1143,83 @@ export default function Profile({
                 <p className="text-[11px] font-extrabold text-slate-400 mb-2">إجراءات بطاقة اللاعب والتقارير:</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <button
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 p-2.5 text-xs font-black text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 p-2.5 text-xs font-black text-white shadow-xs transition hover:brightness-110 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none cursor-pointer"
                     type="button"
+                    disabled={isSharingImage || isSendingText || isDownloadingCard}
                     onClick={shareProfileImageToWhatsApp}
                     title="مشاركة صورة بطاقة اللاعب مباشرة لرقم ولي الأمر المسجل على واتساب"
                   >
-                    <Share2 className="h-3.5 w-3.5" />
-                    <span>مشاركة كصورة (واتساب)</span>
+                    {isSharingImage ? (
+                      <>
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                        <span>جاري فتح الشات...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>مشاركة كصورة (واتساب)</span>
+                      </>
+                    )}
                   </button>
 
                   <button
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/80 p-2.5 text-xs font-black text-sky-800 hover:bg-sky-100 transition active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/80 p-2.5 text-xs font-black text-sky-800 hover:bg-sky-100 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none cursor-pointer"
                     type="button"
+                    disabled={isSharingImage || isSendingText || isDownloadingCard}
                     onClick={shareOnWhatsApp}
                     title="إرسال تقرير نصي مفصل بالحضور والاشتراكات لولي الأمر عبر واتساب"
                   >
-                    <Send className="h-3.5 w-3.5 text-sky-600" />
-                    <span>إرسال تقرير نصي</span>
+                    {isSendingText ? (
+                      <>
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-sky-600/40 border-t-sky-600 animate-spin inline-block" />
+                        <span>جاري فتح واتساب...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3.5 w-3.5 text-sky-600" />
+                        <span>إرسال تقرير نصي</span>
+                      </>
+                    )}
                   </button>
 
                   <button
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 p-2.5 text-xs font-black text-indigo-800 hover:bg-indigo-100 transition active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 p-2.5 text-xs font-black text-indigo-800 hover:bg-indigo-100 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none cursor-pointer"
                     type="button"
+                    disabled={isSharingImage || isSendingText || isDownloadingCard}
                     onClick={downloadProfileCard}
                     title="حفظ وتحميل صورة بطاقة اللاعب الرسمية مباشرة على جهازك"
                   >
-                    <Download className="h-3.5 w-3.5 text-indigo-600" />
-                    <span>حفظ كصورة بجهازك</span>
+                    {isDownloadingCard ? (
+                      <>
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-indigo-600/40 border-t-indigo-600 animate-spin inline-block" />
+                        <span>جاري التحميل...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-3.5 w-3.5 text-indigo-600" />
+                        <span>حفظ كصورة بجهازك</span>
+                      </>
+                    )}
                   </button>
 
                   <button
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none cursor-pointer"
                     type="button"
+                    disabled={isPreviewingCard}
                     onClick={openImageModal}
                     title="معاينة شكل البطاقة بالحجم الكامل"
                   >
-                    <Eye className="h-3.5 w-3.5 text-slate-500" />
-                    <span>معاينة البطاقة</span>
+                    {isPreviewingCard ? (
+                      <>
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-400 border-t-transparent animate-spin inline-block" />
+                        <span>جاري التجهيز...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-3.5 w-3.5 text-slate-500" />
+                        <span>معاينة البطاقة</span>
+                      </>
+                    )}
                   </button>
 
                   <button
@@ -1093,12 +1245,22 @@ export default function Profile({
                   {guardianPhone && (
                     <button
                       type="button"
+                      disabled={isOpeningChat}
                       onClick={openGuardianChat}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition active:scale-95 cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none cursor-pointer"
                       title="فتح شات واتساب مباشرة مع ولي الأمر"
                     >
-                      <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
-                      <span>شات واتساب</span>
+                      {isOpeningChat ? (
+                        <>
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-emerald-600/40 border-t-emerald-600 animate-spin inline-block" />
+                          <span>جاري الفتح...</span>
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                          <span>شات واتساب</span>
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -1144,19 +1306,22 @@ export default function Profile({
                 <p className="text-[11px] font-medium text-slate-400 mt-0.5">حالة اشتراك هذا الشهر</p>
               </div>
               <button
-                className={`rounded-xl px-4 py-2.5 text-xs font-black transition-all active:scale-95 cursor-pointer shadow-sm ${
+                disabled={isTogglingPayment}
+                className={`rounded-xl px-4 py-2.5 text-xs font-black transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none cursor-pointer shadow-sm ${
                   monthlyStatus === "paid"
                     ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-500/20"
                     : "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-rose-500/20"
                 }`}
-                onClick={() =>
-                  onUpdate(player._id, {
-                    paymentStatus: monthlyStatus === "paid" ? "unpaid" : "paid",
-                    paymentMonth,
-                  })
-                }
+                onClick={handleToggleMonthlyPayment}
               >
-                {monthlyStatus === "paid" ? "✓ مدفوع (تبديل)" : "تسجيل دفع الاشتراك"}
+                {isTogglingPayment ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                    <span>جاري التحديث...</span>
+                  </span>
+                ) : (
+                  monthlyStatus === "paid" ? "✓ مدفوع (تبديل)" : "تسجيل دفع الاشتراك"
+                )}
               </button>
             </div>
           </>
@@ -1190,35 +1355,33 @@ export default function Profile({
                   <span className="font-bold text-slate-800">{item.month}</span>
                   <div className="flex items-center gap-2">
                     <button
-                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer ${item.status === "paid"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-rose-100 text-rose-700"
-                        }`}
-                      onClick={() =>
-                        onUpdate(player._id, {
-                          paymentStatus: item.status === "paid" ? "unpaid" : "paid",
-                          paymentMonth: item.month,
-                        })
-                      }
+                      disabled={Boolean(updatingPaymentMonth || deletingPaymentMonth)}
+                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer ${
+                        item.status === "paid"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-rose-100 text-rose-700"
+                      }`}
+                      onClick={() => handleTogglePastPayment(item.month, item.status)}
                     >
-                      {item.status === "paid" ? (
+                      {updatingPaymentMonth === item.month ? (
+                        <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                      ) : item.status === "paid" ? (
                         <><Check className="h-3 w-3" strokeWidth={2.5} /> مدفوع</>
                       ) : (
                         <><X className="h-3 w-3" strokeWidth={2.5} /> لم يدفع</>
                       )}
                     </button>
                     <button
-                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
-                      onClick={() => {
-                        onUpdate(player._id, {
-                          paymentStatus: "clear",
-                          paymentMonth: item.month,
-                        });
-                        setProfileNotice(`تم حذف سجل اشتراك شهر ${item.month}`);
-                      }}
+                      disabled={Boolean(updatingPaymentMonth || deletingPaymentMonth)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                      onClick={() => handleDeletePastPayment(item.month)}
                       title="حذف من السجل"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {deletingPaymentMonth === item.month ? (
+                        <span className="h-3 w-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin inline-block" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1250,11 +1413,16 @@ export default function Profile({
               <option value="unpaid">لم يدفع</option>
             </select>
             <button
-              className="min-h-9 rounded-xl bg-slate-900 px-3.5 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-60 active:scale-95 cursor-pointer"
+              className="min-h-9 rounded-xl bg-slate-900 px-3.5 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
               type="submit"
               disabled={paymentSaving}
             >
-              {paymentSaving ? "جاري..." : "حفظ"}
+              {paymentSaving ? (
+                <span className="flex items-center gap-1">
+                  <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                  <span>جاري...</span>
+                </span>
+              ) : "حفظ"}
             </button>
           </form>
           {paymentNotice && (
@@ -1294,35 +1462,33 @@ export default function Profile({
                   <span className="font-bold text-slate-800">{item.date}</span>
                   <div className="flex items-center gap-2">
                     <button
-                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer ${item.status === "present"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-rose-600 text-white"
-                        }`}
-                      onClick={() =>
-                        onUpdate(player._id, {
-                          attendanceStatus: item.status === "present" ? "absent" : "present",
-                          date: item.date,
-                        })
-                      }
+                      disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
+                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer ${
+                        item.status === "present"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-rose-600 text-white"
+                      }`}
+                      onClick={() => handleTogglePastAttendance(item.date, item.status)}
                     >
-                      {item.status === "present" ? (
+                      {updatingAttendanceDate === item.date ? (
+                        <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                      ) : item.status === "present" ? (
                         <><Check className="h-3 w-3" strokeWidth={2.5} /> حاضر</>
                       ) : (
                         <><X className="h-3 w-3" strokeWidth={2.5} /> غائب</>
                       )}
                     </button>
                     <button
-                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
-                      onClick={() => {
-                        onUpdate(player._id, {
-                          attendanceStatus: "clear",
-                          date: item.date,
-                        });
-                        setProfileNotice(`تم حذف سجل حضور تاريخ ${item.date}`);
-                      }}
+                      disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                      onClick={() => handleDeletePastAttendance(item.date)}
                       title="حذف من السجل"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {deletingAttendanceDate === item.date ? (
+                        <span className="h-3 w-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin inline-block" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1355,10 +1521,16 @@ export default function Profile({
               <option value="absent">غائب</option>
             </select>
             <button
-              className="min-h-9 rounded-xl bg-slate-900 px-3.5 text-xs font-black text-white hover:bg-slate-800 active:scale-95 cursor-pointer"
+              className="min-h-9 rounded-xl bg-slate-900 px-3.5 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
               type="submit"
+              disabled={isSavingAttendance}
             >
-              إضافة
+              {isSavingAttendance ? (
+                <span className="flex items-center gap-1">
+                  <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                  <span>جاري...</span>
+                </span>
+              ) : "إضافة"}
             </button>
           </form>
         </div>
@@ -1448,15 +1620,26 @@ export default function Profile({
             <div className="grid gap-2 sm:grid-cols-2">
               <button
                 type="button"
+                disabled={isSharingImage}
                 onClick={shareProfileImageToWhatsApp}
-                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition sm:col-span-2 text-center cursor-pointer"
+                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition disabled:opacity-60 disabled:cursor-not-allowed sm:col-span-2 text-center cursor-pointer"
               >
-                <Share2 className="h-3.5 w-3.5" />
-                <span>مشاركة البطاقة عبر واتساب لولي الأمر</span>
+                {isSharingImage ? (
+                  <>
+                    <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                    <span>جاري فتح الشات في واتساب...</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-3.5 w-3.5" />
+                    <span>مشاركة البطاقة عبر واتساب لولي الأمر</span>
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
+                disabled={imageCopied}
                 onClick={async () => {
                   if (modalImageBlob && navigator.clipboard?.write) {
                     try {
@@ -1470,7 +1653,7 @@ export default function Profile({
                     }
                   }
                 }}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 cursor-pointer"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-80 active:scale-95 cursor-pointer"
               >
                 <ClipboardCopy className="h-3.5 w-3.5" />
                 <span>{imageCopied ? "✓ تم نسخ الصورة!" : "نسخ للحافظة"}</span>
@@ -1478,11 +1661,21 @@ export default function Profile({
 
               <button
                 type="button"
+                disabled={isDownloadingCard}
                 onClick={downloadProfileCard}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-xs font-black text-indigo-800 hover:bg-indigo-100 active:scale-95 cursor-pointer"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-xs font-black text-indigo-800 hover:bg-indigo-100 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
               >
-                <Download className="h-3.5 w-3.5" />
-                <span>تحميل للجهاز</span>
+                {isDownloadingCard ? (
+                  <>
+                    <span className="h-3.5 w-3.5 rounded-full border-2 border-indigo-600/40 border-t-indigo-600 animate-spin inline-block" />
+                    <span>جاري التحميل...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-3.5 w-3.5" />
+                    <span>تحميل للجهاز</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
