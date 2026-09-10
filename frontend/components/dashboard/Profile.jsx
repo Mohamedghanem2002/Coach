@@ -6,6 +6,22 @@ import {
   getBirthdayInfo,
   generateBirthdayWishUrl,
 } from "../../lib/dashboard-utils";
+import {
+  Send,
+  Download,
+  MessageCircle,
+  Pencil,
+  Trash2,
+  Phone,
+  Cake,
+  CreditCard,
+  Calendar,
+  Check,
+  X,
+  ClipboardCopy,
+  UserRound,
+  Info,
+} from "lucide-react";
 export default function Profile({
   player,
   branches,
@@ -539,51 +555,50 @@ export default function Profile({
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
       dir="rtl"
     >
-      <aside className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl border border-slate-200/90 bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-7">
-        {profileNotice && (
-          <div
-            className={`sticky top-0 z-20 mb-3 flex items-center justify-between gap-2 rounded-2xl border p-3 text-xs font-bold shadow-xs animate-slide-up ${profileNotice.startsWith("تعذر")
-              ? "border-rose-200 bg-rose-50 text-rose-800"
-              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+      <aside className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl sm:rounded-3xl">
+        {/* Gradient top accent */}
+        <div className="sticky top-0 z-30 h-[3px] w-full rounded-t-3xl bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
+
+        <div className="p-5 sm:p-7">
+          {profileNotice && (
+            <div
+              className={`mb-4 flex items-center justify-between gap-2 rounded-2xl border p-3 text-xs font-bold shadow-sm animate-slide-up ${
+                profileNotice.startsWith("تعذر") || profileNotice.startsWith("❌")
+                  ? "border-rose-200 bg-rose-50 text-rose-800"
+                  : profileNotice.startsWith("⚠️")
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
               }`}
-            role="status"
-          >
-            <span>{profileNotice}</span>
-            <button type="button" onClick={() => setProfileNotice("")} className="text-sm font-bold">
+              role="status"
+            >
+              <span>{profileNotice}</span>
+              <button type="button" onClick={() => setProfileNotice("")} className="flex h-5 w-5 items-center justify-center rounded-full bg-current/10 text-sm font-bold hover:bg-current/20">
+                ✕
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mb-4">
+            <p className="section-eyebrow">ملف اللاعب</p>
+            <button
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-all cursor-pointer"
+              onClick={onClose}
+            >
               ✕
             </button>
           </div>
-        )}
-
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-red-600"></span>
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-red-600">
-              ملف اللاعب
-            </span>
-          </div>
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer"
-            onClick={onClose}
-          >
-            ✕
-          </button>
-        </div>
 
         {isEditing ? (
-          <form onSubmit={saveInfo} className="w-full space-y-3.5">
+            <form onSubmit={saveInfo} className="w-full space-y-4">
             <div className="mb-4 border-b border-slate-100 pb-3">
-              <h2 className="font-cairo text-lg font-black text-slate-900">
-                تعديل بيانات اللاعب
-              </h2>
+              <h2 className="font-cairo text-lg font-black text-slate-900">تعديل بيانات اللاعب</h2>
+              <p className="text-xs text-slate-400 mt-0.5">قم بتحديث معلومات اللاعب ثم اضغط حفظ</p>
             </div>
 
             <div>
-              <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                اسم اللاعب
-              </label>
+              <label className="block text-xs font-extrabold text-slate-600 mb-1.5">اسم اللاعب</label>
               <input
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                className="w-full rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5 text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 required
@@ -695,16 +710,21 @@ export default function Profile({
               </div>
             </div>
 
-            <div className="mt-5 grid gap-2.5 sm:grid-cols-2 pt-2">
+            <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
               <button
-                className="rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-2.5 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-3 text-xs font-black text-white shadow-sm shadow-red-500/20 hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer transition-all"
                 type="submit"
                 disabled={profileSaving}
               >
-                {profileSaving ? "جاري الحفظ..." : "✓ حفظ التعديلات"}
+                {profileSaving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                    جاري الحفظ...
+                  </span>
+                ) : "✓ حفظ التعديلات"}
               </button>
               <button
-                className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition-colors"
                 type="button"
                 onClick={() => setIsEditing(false)}
               >
@@ -805,7 +825,7 @@ export default function Profile({
                         className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all text-center"
                         title="إرسال تهنئة عبر واتساب لولي الأمر"
                       >
-                        <span>📲</span>
+                        <Send className="h-3.5 w-3.5" />
                         <span>تهنئة عيد الميلاد واتساب</span>
                       </a>
                     </div>
@@ -840,7 +860,7 @@ export default function Profile({
                   onClick={openImageModal}
                   title="مشاركة صورة البطاقة على واتساب لرقم ولي الأمر المسجل"
                 >
-                  <span className="text-sm">📲</span>
+                  <Send className="h-3.5 w-3.5" />
                   <span>إرسال البطاقة واتساب</span>
                 </button>
                 <button
@@ -849,7 +869,7 @@ export default function Profile({
                   onClick={shareProfileImage}
                   title="تحميل صورة البطاقة على جهازك"
                 >
-                  <span className="text-sm">📸</span>
+                  <Download className="h-3.5 w-3.5" />
                   <span>حفظ كصورة</span>
                 </button>
                 <button
@@ -881,52 +901,50 @@ export default function Profile({
               </div>
             </div>
 
-            {/* بطاقات الإحصائيات المصغرة */}
+            {/* Mini KPI cards */}
             <div className="grid grid-cols-3 gap-2.5 pb-4">
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3 text-center">
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5 text-center shadow-xs">
                 <strong className="block font-cairo text-2xl font-black text-emerald-700">
                   {attended}
                 </strong>
-                <span className="mt-0.5 block text-[10px] font-bold text-emerald-800">
-                  حصة حضور
-                </span>
+                <span className="mt-0.5 block text-[11px] font-semibold text-emerald-800">حصة حضور</span>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 text-center">
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3.5 text-center shadow-xs">
                 <strong className="block font-cairo text-2xl font-black text-slate-800">
                   {(player.attendance || []).length}
                 </strong>
-                <span className="mt-0.5 block text-[10px] font-bold text-slate-500">
-                  حصة مسجلة
-                </span>
+                <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">حصة مسجلة</span>
               </div>
-              <div className={`rounded-2xl border p-3 text-center ${monthlyStatus === "paid" ? "border-emerald-200 bg-emerald-50/50" : "border-rose-200 bg-rose-50/50"}`}>
-                <strong
-                  className={`block font-cairo text-lg font-black ${monthlyStatus === "paid" ? "text-emerald-700" : "text-rose-700"
-                    }`}
-                >
-                  {monthlyStatus === "paid" ? "مدفوع ✓" : "لم يدفع"}
+              <div className={`rounded-2xl border p-3.5 text-center shadow-xs ${
+                monthlyStatus === "paid"
+                  ? "border-emerald-200 bg-emerald-50/60"
+                  : "border-rose-200 bg-rose-50/60"
+              }`}>
+                <strong className={`block font-cairo text-lg font-black ${
+                  monthlyStatus === "paid" ? "text-emerald-700" : "text-rose-700"
+                }`}>
+                  {monthlyStatus === "paid" ? "✓ مدفوع" : "لم يدفع"}
                 </strong>
-                <span className="mt-0.5 block text-[10px] font-bold text-slate-400">
+                <span className="mt-0.5 block text-[11px] font-semibold text-slate-400">
                   شهر {paymentMonth}
                 </span>
               </div>
             </div>
 
-            {/* صف اشتراك الشهر الحالي */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs mb-5 flex items-center justify-between gap-3">
+            {/* Current month payment toggle */}
+            <div className="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-md mb-5 flex items-center justify-between gap-3">
               <div>
                 <h3 className="font-cairo text-sm font-extrabold text-slate-900">
                   اشتراك شهر {paymentMonth}
                 </h3>
-                <p className="text-[11px] font-semibold text-slate-400">
-                  حالة اشتراك هذا الشهر
-                </p>
+                <p className="text-[11px] font-medium text-slate-400 mt-0.5">حالة اشتراك هذا الشهر</p>
               </div>
               <button
-                className={`rounded-xl px-4 py-2 text-xs font-black transition-all active:scale-95 cursor-pointer ${monthlyStatus === "paid"
-                  ? "bg-emerald-600 text-white shadow-xs shadow-emerald-500/20"
-                  : "bg-rose-600 text-white shadow-xs shadow-rose-500/20"
-                  }`}
+                className={`rounded-xl px-4 py-2.5 text-xs font-black transition-all active:scale-95 cursor-pointer shadow-sm ${
+                  monthlyStatus === "paid"
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-500/20"
+                    : "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-rose-500/20"
+                }`}
                 onClick={() =>
                   onUpdate(player._id, {
                     paymentStatus: monthlyStatus === "paid" ? "unpaid" : "paid",
@@ -934,7 +952,7 @@ export default function Profile({
                   })
                 }
               >
-                {monthlyStatus === "paid" ? "✓ تم الدفع (تبديل)" : "تسجيل دفع الاشتراك"}
+                {monthlyStatus === "paid" ? "✓ مدفوع (تبديل)" : "تسجيل دفع الاشتراك"}
               </button>
             </div>
           </>
@@ -944,7 +962,9 @@ export default function Profile({
         <div className="border-t border-slate-100 pt-4 pb-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm">💳</span>
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50 border border-sky-100">
+                <CreditCard className="h-3.5 w-3.5 text-sky-600" />
+              </div>
               <h3 className="font-cairo text-sm font-extrabold text-slate-900">
                 سجل الاشتراكات السابقة
               </h3>
@@ -966,7 +986,7 @@ export default function Profile({
                   <span className="font-bold text-slate-800">{item.month}</span>
                   <div className="flex items-center gap-2">
                     <button
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer ${item.status === "paid"
+                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer ${item.status === "paid"
                         ? "bg-emerald-600 text-white"
                         : "bg-rose-100 text-rose-700"
                         }`}
@@ -977,10 +997,14 @@ export default function Profile({
                         })
                       }
                     >
-                      {item.status === "paid" ? "✓ مدفوع" : "لم يدفع"}
+                      {item.status === "paid" ? (
+                        <><Check className="h-3 w-3" strokeWidth={2.5} /> مدفوع</>
+                      ) : (
+                        <><X className="h-3 w-3" strokeWidth={2.5} /> لم يدفع</>
+                      )}
                     </button>
                     <button
-                      className="rounded-lg bg-rose-50 px-2 py-1 text-xs text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
                       onClick={() => {
                         if (confirm(`هل تريد حذف اشتراك شهر ${item.month}؟`)) {
                           onUpdate(player._id, {
@@ -991,7 +1015,7 @@ export default function Profile({
                       }}
                       title="حذف من السجل"
                     >
-                      🗑️
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -1041,7 +1065,9 @@ export default function Profile({
         <div className="border-t border-slate-100 pt-4 pb-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm">🥋</span>
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-100">
+                <Calendar className="h-3.5 w-3.5 text-emerald-600" />
+              </div>
               <h3 className="font-cairo text-sm font-extrabold text-slate-900">
                 سجل الحضور والغياب
               </h3>
@@ -1065,7 +1091,7 @@ export default function Profile({
                   <span className="font-bold text-slate-800">{item.date}</span>
                   <div className="flex items-center gap-2">
                     <button
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer ${item.status === "present"
+                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer ${item.status === "present"
                         ? "bg-emerald-600 text-white"
                         : "bg-rose-600 text-white"
                         }`}
@@ -1076,10 +1102,14 @@ export default function Profile({
                         })
                       }
                     >
-                      {item.status === "present" ? "✓ حاضر" : "× غائب"}
+                      {item.status === "present" ? (
+                        <><Check className="h-3 w-3" strokeWidth={2.5} /> حاضر</>
+                      ) : (
+                        <><X className="h-3 w-3" strokeWidth={2.5} /> غائب</>
+                      )}
                     </button>
                     <button
-                      className="rounded-lg bg-rose-50 px-2 py-1 text-xs text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
                       onClick={() => {
                         if (confirm(`هل تريد حذف حضور تاريخ ${item.date}؟`)) {
                           onUpdate(player._id, {
@@ -1090,7 +1120,7 @@ export default function Profile({
                       }}
                       title="حذف من السجل"
                     >
-                      🗑️
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -1132,16 +1162,19 @@ export default function Profile({
         </div>
 
         {/* زر حذف اللاعب النهائي */}
-        <button
-          type="button"
-          className="mt-3 w-full rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-xs font-extrabold text-rose-700 transition hover:bg-rose-100 active:scale-98 cursor-pointer"
-          onClick={() => {
-            if (window.confirm("هل أنت متأكد من رغبتك في حذف هذا اللاعب نهائيًا من الأكاديمية؟"))
-              onDelete(player._id);
-          }}
-        >
-          🗑️ حذف اللاعب نهائيًا من الأكاديمية
-        </button>
+          {/* Delete player */}
+          <button
+            type="button"
+            className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl border border-rose-200/80 bg-rose-50/60 px-4 py-3 text-xs font-extrabold text-rose-700 transition-all hover:bg-rose-100 hover:border-rose-300 active:scale-98 cursor-pointer"
+            onClick={() => {
+              if (window.confirm("هل أنت متأكد من رغبتك في حذف هذا اللاعب نهائيًا من الأكاديمية؟"))
+                onDelete(player._id);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span>حذف اللاعب نهائيًا من الأكاديمية</span>
+          </button>
+        </div>
       </aside>
 
       {/* نافذة إرسال صورة البطاقة لولي الأمر */}
@@ -1155,12 +1188,17 @@ export default function Profile({
             }
           }}
         >
-          <div className="relative max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
-            <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
+          <div className="relative max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-slate-200/80 bg-white p-5 shadow-2xl sm:p-6">
+            {/* Gradient top accent */}
+            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500" />
+
+            <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-3 mt-2">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🥋</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-xs">
+                  <Send className="h-4 w-4 text-white" />
+                </div>
                 <h3 className="font-cairo text-base font-black text-slate-900">
-                  صورة بطاقة اللاعب: {player.name}
+                  بطاقة اللاعب: {player.name}
                 </h3>
               </div>
               <button
@@ -1171,9 +1209,9 @@ export default function Profile({
                   setModalImageBlob(null);
                   setImageCopied(false);
                 }}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-500 hover:bg-slate-200 cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 cursor-pointer"
               >
-                ✕
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -1193,7 +1231,7 @@ export default function Profile({
                 onClick={shareProfileImageToWhatsApp}
                 className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition sm:col-span-2 text-center cursor-pointer"
               >
-                <span>💬</span>
+                <Send className="h-3.5 w-3.5" />
                 <span>إرسال الصورة عبر واتساب لولي الأمر</span>
               </button>
 
@@ -1214,8 +1252,8 @@ export default function Profile({
                 }}
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 cursor-pointer"
               >
-                <span>📋</span>
-                <span>{imageCopied ? "✓ تم نسخ الصورة للحافظة!" : "نسخ الصورة للحافظة"}</span>
+                <ClipboardCopy className="h-3.5 w-3.5" />
+                <span>{imageCopied ? "✓ تم نسخ الصورة!" : "نسخ للحافظة"}</span>
               </button>
 
               <button
@@ -1223,8 +1261,8 @@ export default function Profile({
                 onClick={shareProfileImage}
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-black text-amber-800 hover:bg-amber-100 active:scale-95 cursor-pointer"
               >
-                <span>📥</span>
-                <span>تحميل الصورة للجهاز</span>
+                <Download className="h-3.5 w-3.5" />
+                <span>تحميل للجهاز</span>
               </button>
             </div>
           </div>

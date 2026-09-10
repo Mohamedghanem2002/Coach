@@ -1,6 +1,76 @@
-import { memo } from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import {
+  Users,
+  CheckCircle2,
+  XCircle,
+  CreditCard,
+  Clock,
+  Building2,
+  TrendingUp,
+  CalendarDays,
+} from "lucide-react";
 import { localDate, paymentStatusFor } from "../../lib/dashboard-utils";
 
+/* ── Animated counter hook ─────────────────────────────────────────────── */
+function useCountUp(target, duration = 700) {
+  const [value, setValue] = useState(0);
+  const prevTarget = useRef(target);
+  useEffect(() => {
+    if (target === prevTarget.current && value !== 0) return;
+    prevTarget.current = target;
+    if (target === 0) { setValue(0); return; }
+    const start = Date.now();
+    function tick() {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(target * ease));
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target]);
+  return value;
+}
+
+/* ── Stat Card ─────────────────────────────────────────────────────────── */
+function StatCard({ label, value, note, Icon, gradient, accentColor, delay }) {
+  const animated = useCountUp(value);
+  return (
+    <div
+      className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300/80 animate-card-entrance"
+      style={{ animationDelay: delay }}
+    >
+      {/* Colored right-border accent */}
+      <div
+        className="absolute right-0 top-3 bottom-3 w-[3px] rounded-full transition-all duration-300 group-hover:top-0 group-hover:bottom-0"
+        style={{ background: accentColor }}
+      />
+
+      {/* Icon */}
+      <div className="flex items-center justify-between gap-2">
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg bg-gradient-to-br ${gradient}`}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+        <span className="text-[10px] font-semibold text-slate-400 text-left leading-tight max-w-[70px]">
+          {note}
+        </span>
+      </div>
+
+      {/* Value */}
+      <div className="mt-3.5">
+        <span className="block text-xs font-semibold text-slate-500 mb-1">{label}</span>
+        <strong className="font-cairo text-3xl font-black tracking-tight text-slate-900">
+          {animated}
+        </strong>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main StatsGrid ────────────────────────────────────────────────────── */
 function StatsGrid({
   players,
   branches,
@@ -39,14 +109,10 @@ function StatsGrid({
     date.setDate(date.getDate() - (6 - index));
     const day = localDate(date);
     const present = dashboardPlayers.filter((player) =>
-      player.attendance.some(
-        (item) => item.date === day && item.status === "present",
-      ),
+      player.attendance.some((item) => item.date === day && item.status === "present"),
     ).length;
     const absent = dashboardPlayers.filter((player) =>
-      player.attendance.some(
-        (item) => item.date === day && item.status === "absent",
-      ),
+      player.attendance.some((item) => item.date === day && item.status === "absent"),
     ).length;
     return {
       date: day,
@@ -67,173 +133,123 @@ function StatsGrid({
       label: "إجمالي اللاعبين",
       value: dashboardPlayers.length,
       note: "لاعب مسجل",
-      icon: "👥",
-      gradient: "from-red-500 to-rose-600 shadow-red-500/25",
-      border: "hover:border-red-200",
-      bgLight: "bg-red-50/50",
+      Icon: Users,
+      gradient: "from-red-500 to-rose-600",
+      accentColor: "#ef4444",
     },
     {
       label: "حاضرون اليوم",
       value: presentToday,
       note: `بتاريخ ${sessionDate}`,
-      icon: "✓",
-      gradient: "from-emerald-500 to-teal-600 shadow-emerald-500/25",
-      border: "hover:border-emerald-200",
-      bgLight: "bg-emerald-50/50",
+      Icon: CheckCircle2,
+      gradient: "from-emerald-500 to-teal-600",
+      accentColor: "#10b981",
     },
     {
       label: "غائبون اليوم",
       value: absentToday,
       note: `بتاريخ ${sessionDate}`,
-      icon: "×",
-      gradient: "from-rose-500 to-pink-600 shadow-rose-500/25",
-      border: "hover:border-rose-200",
-      bgLight: "bg-rose-50/50",
+      Icon: XCircle,
+      gradient: "from-rose-500 to-pink-600",
+      accentColor: "#f43f5e",
     },
     {
       label: "دفعوا الاشتراك",
       value: paidCount,
       note: paymentMonthLabel,
-      icon: "💳",
-      gradient: "from-sky-500 to-blue-600 shadow-sky-500/25",
-      border: "hover:border-sky-200",
-      bgLight: "bg-sky-50/50",
+      Icon: CreditCard,
+      gradient: "from-sky-500 to-blue-600",
+      accentColor: "#0ea5e9",
     },
     {
       label: "لم يدفعوا بعد",
       value: unpaidCount,
       note: "مستحقات معلقة",
-      icon: "⏳",
-      gradient: "from-amber-500 to-orange-600 shadow-amber-500/25",
-      border: "hover:border-amber-200",
-      bgLight: "bg-amber-50/50",
+      Icon: Clock,
+      gradient: "from-amber-500 to-orange-600",
+      accentColor: "#f59e0b",
     },
     {
       label: "الصالات النشطة",
       value: branches.length,
       note: "فروع الأكاديمية",
-      icon: "🥋",
-      gradient: "from-slate-700 to-slate-900 shadow-slate-700/25",
-      border: "hover:border-slate-300",
-      bgLight: "bg-slate-50/70",
+      Icon: Building2,
+      gradient: "from-slate-600 to-slate-800",
+      accentColor: "#475569",
     },
   ];
 
+  const maxBarVal = Math.max(...attendanceDays.map((d) => Math.max(d.present, d.absent)), 1);
+
   return (
     <>
-      {/* شبكة الإحصائيات العلوية */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-6 mt-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-4 ${stat.border}`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br text-base font-bold text-white shadow-md transition-transform duration-200 group-hover:scale-110 sm:h-10 sm:w-10 sm:text-lg ${stat.gradient}`}
-              >
-                {stat.icon}
-              </div>
-              <span className="text-[10px] font-bold text-slate-400">
-                {stat.note}
-              </span>
-            </div>
-
-            <div className="mt-3">
-              <span className="block text-xs font-bold text-slate-500">
-                {stat.label}
-              </span>
-              <strong className="mt-1 block font-cairo text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-                {stat.value}
-              </strong>
-            </div>
-          </div>
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mt-5">
+        {stats.map((stat, i) => (
+          <StatCard key={stat.label} {...stat} delay={`${i * 60}ms`} />
         ))}
       </div>
 
-      {/* الرسوم البيانية وملخص الحضور */}
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        {/* مخطط الحضور الأسبوعي */}
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-2xs sm:p-6 transition-shadow hover:shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+      {/* Charts row */}
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+
+        {/* Weekly bar chart */}
+        <section className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-red-600"></span>
-                <p className="text-[11px] font-extrabold tracking-wider text-red-600">
-                  تحليل الأداء الأسبوعي
-                </p>
-              </div>
-              <h3 className="mt-1 font-cairo text-base font-extrabold text-slate-900">
+              <p className="section-eyebrow">
+                <TrendingUp className="h-3 w-3" />
+                تحليل الأداء الأسبوعي
+              </p>
+              <h3 className="mt-1.5 font-cairo text-base font-extrabold text-slate-900">
                 متابعة الحضور والغياب (7 أيام)
               </h3>
             </div>
-            <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-600 border border-slate-200/60">
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-600 border border-slate-200/60">
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/50" /> حاضر
+                <CheckCircle2 className="h-3 w-3 text-emerald-500" /> حاضر
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shadow-xs shadow-rose-500/50" /> غائب
+                <XCircle className="h-3 w-3 text-rose-500" /> غائب
               </span>
             </div>
           </div>
 
-          <div
-            className="mt-6 grid grid-cols-7 items-end gap-1.5 sm:gap-3"
-            aria-label="مخطط الحضور والغياب خلال الأسبوع"
-          >
+          <div className="mt-6 grid grid-cols-7 items-end gap-1.5 sm:gap-2.5">
             {attendanceDays.map((day) => {
-              const max = Math.max(...attendanceDays.map((d) => Math.max(d.present, d.absent)), 1);
-              const presentHeight = (day.present / max) * 100;
-              const absentHeight = (day.absent / max) * 100;
-
+              const presentH = (day.present / maxBarVal) * 100;
+              const absentH = (day.absent / maxBarVal) * 100;
               return (
                 <div
                   key={day.date}
                   className={`group flex flex-col items-center rounded-xl p-1.5 transition-all duration-200 ${
-                    day.isToday ? "bg-red-50/60 ring-1 ring-red-200" : "hover:bg-slate-50"
+                    day.isToday ? "bg-red-50/70 ring-1 ring-red-200" : "hover:bg-slate-50"
                   }`}
                 >
-                  {/* الأرقام أعلى الأعمدة */}
-                  <div className="mb-2 flex items-center justify-center gap-1 text-[10px] font-extrabold">
+                  <div className="mb-2 flex items-center justify-center gap-0.5 text-[10px] font-extrabold">
                     <span className="text-emerald-600">{day.present}</span>
                     <span className="text-slate-300">/</span>
                     <span className="text-rose-600">{day.absent}</span>
                   </div>
-
-                  {/* الأعمدة البيانية */}
-                  <div className="flex h-32 w-full items-end justify-center gap-1 rounded-lg border-b border-slate-200/80 bg-slate-50/50 px-1 py-1">
-                    {/* عمود حاضر */}
+                  <div className="flex h-28 w-full items-end justify-center gap-1 rounded-lg border-b border-slate-100 bg-slate-50/60 px-1 pb-1">
                     <div className="flex h-full w-3 sm:w-4 flex-col justify-end">
                       <div
-                        className="w-full rounded-t-md bg-gradient-to-t from-emerald-600 to-teal-400 transition-all duration-500 group-hover:brightness-110 shadow-xs"
-                        style={{
-                          height: `${Math.max(presentHeight, day.present ? 12 : 0)}%`,
-                        }}
-                        title={`حاضر: ${day.present}`}
+                        className="w-full rounded-t-md bg-gradient-to-t from-emerald-600 to-teal-400 shadow-xs animate-bar-grow transition-all duration-700 group-hover:brightness-110"
+                        style={{ height: `${Math.max(presentH, day.present ? 10 : 0)}%`, animationDelay: "200ms" }}
                       />
                     </div>
-                    {/* عمود غائب */}
                     <div className="flex h-full w-3 sm:w-4 flex-col justify-end">
                       <div
-                        className="w-full rounded-t-md bg-gradient-to-t from-rose-600 to-red-400 transition-all duration-500 group-hover:brightness-110 shadow-xs"
-                        style={{
-                          height: `${Math.max(absentHeight, day.absent ? 12 : 0)}%`,
-                        }}
-                        title={`غائب: ${day.absent}`}
+                        className="w-full rounded-t-md bg-gradient-to-t from-rose-600 to-red-400 shadow-xs animate-bar-grow transition-all duration-700 group-hover:brightness-110"
+                        style={{ height: `${Math.max(absentH, day.absent ? 10 : 0)}%`, animationDelay: "300ms" }}
                       />
                     </div>
                   </div>
-
-                  {/* تسمية اليوم */}
-                  <div className="mt-2 text-center">
-                    <span
-                      className={`block text-[11px] font-bold ${
-                        day.isToday ? "text-red-600 font-extrabold" : "text-slate-500"
-                      }`}
-                    >
+                  <div className="mt-1.5 text-center">
+                    <span className={`block text-[11px] font-bold ${day.isToday ? "text-red-600 font-extrabold" : "text-slate-500"}`}>
                       {day.label}
                     </span>
-                    <span className="block text-[9px] font-semibold text-slate-400">
+                    <span className="block text-[9px] font-medium text-slate-400">
                       {day.date.slice(8, 10)}/{day.date.slice(5, 7)}
                     </span>
                   </div>
@@ -243,37 +259,38 @@ function StatsGrid({
           </div>
         </section>
 
-        {/* مؤشر نسبة حضور اليوم */}
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-2xs sm:p-6 transition-shadow hover:shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        {/* Attendance ring */}
+        <section className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6 flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3.5">
             <div>
-              <p className="text-[11px] font-extrabold tracking-wider text-red-600">
+              <p className="section-eyebrow">
+                <CalendarDays className="h-3 w-3" />
                 مؤشر اليوم
               </p>
-              <h3 className="mt-0.5 font-cairo text-base font-extrabold text-slate-900">
+              <h3 className="mt-1.5 font-cairo text-base font-extrabold text-slate-900">
                 نسبة الحضور بالصالة
               </h3>
             </div>
-            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">
+            <span className="rounded-lg bg-slate-50 border border-slate-200/60 px-2.5 py-1 text-[11px] font-bold text-slate-600">
               {sessionDate}
             </span>
           </div>
 
-          <div className="my-auto flex flex-col sm:flex-row items-center justify-center gap-6 py-4">
-            {/* الحلقة التفاعلية */}
+          <div className="my-auto flex flex-col sm:flex-row items-center justify-center gap-6 py-5">
+            {/* Ring */}
             <div className="relative flex h-32 w-32 items-center justify-center shrink-0">
               <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
                 <path
                   className="text-slate-100"
-                  strokeWidth="3.5"
+                  strokeWidth="3"
                   stroke="currentColor"
                   fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-emerald-500 transition-all duration-1000 ease-out"
+                  className="text-emerald-500 animate-ring-draw transition-all duration-1000 ease-out"
                   strokeDasharray={`${attendanceRate}, 100`}
-                  strokeWidth="3.5"
+                  strokeWidth="3"
                   strokeLinecap="round"
                   stroke="currentColor"
                   fill="none"
@@ -281,39 +298,33 @@ function StatsGrid({
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <strong className="font-cairo text-3xl font-black text-slate-900 tracking-tight">
+                <strong className="font-cairo text-3xl font-black text-slate-900 tracking-tight leading-none">
                   {attendanceRate}%
                 </strong>
-                <span className="text-[10px] font-bold text-slate-400">حضور اليوم</span>
+                <span className="text-[10px] font-semibold text-slate-400 mt-0.5">حضور</span>
               </div>
             </div>
 
-            {/* تفاصيل الحاضرين والغائبين */}
+            {/* Details */}
             <div className="grid w-full sm:w-auto min-w-[140px] gap-2.5">
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-2.5">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
-                  <span className="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   <span>حاضرون</span>
                 </div>
-                <strong className="font-cairo text-lg font-black text-emerald-700">
-                  {presentToday}
-                </strong>
+                <strong className="font-cairo text-xl font-black text-emerald-700">{presentToday}</strong>
               </div>
-
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-100 bg-rose-50/50 p-2.5">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-rose-100 bg-rose-50/60 p-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-rose-800">
-                  <span className="flex h-2 w-2 rounded-full bg-rose-500"></span>
+                  <XCircle className="h-3.5 w-3.5 text-rose-500" />
                   <span>غائبون</span>
                 </div>
-                <strong className="font-cairo text-lg font-black text-rose-700">
-                  {absentToday}
-                </strong>
+                <strong className="font-cairo text-xl font-black text-rose-700">{absentToday}</strong>
               </div>
-
-              <div className="rounded-lg bg-slate-50 p-2 text-center text-[10px] font-bold text-slate-400 border border-slate-100">
+              <div className="rounded-xl bg-slate-50 border border-slate-100 p-2 text-center text-[10px] font-semibold text-slate-400">
                 {attendanceTotal
-                  ? `تم تسجيل ${attendanceTotal} من أصل ${dashboardPlayers.length} لاعب`
-                  : "لا توجد تسجيلات حضور لهذا اليوم بعد"}
+                  ? `${attendanceTotal} من ${dashboardPlayers.length} لاعب`
+                  : "لا توجد تسجيلات لهذا اليوم"}
               </div>
             </div>
           </div>
@@ -324,4 +335,3 @@ function StatsGrid({
 }
 
 export default memo(StatsGrid);
-

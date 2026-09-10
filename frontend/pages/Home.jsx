@@ -9,6 +9,25 @@ import {
   getBirthdayInfo,
   getTodayBirthdays,
 } from "../lib/dashboard-utils";
+import {
+  Plus,
+  Users,
+  Building2,
+  CalendarDays,
+  CreditCard,
+  Check,
+  X,
+  Search,
+  Bell,
+  UserPlus,
+  Trash2,
+  MessageSquare,
+  Filter,
+  ChevronDown,
+  SlidersHorizontal,
+  Cake,
+  Clock,
+} from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
 import PlayerRow from "../components/dashboard/PlayerRow";
@@ -357,48 +376,63 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-red-500 selection:text-white pb-16" dir="rtl">
+    <main className="min-h-screen text-slate-900 selection:bg-red-500 selection:text-white pb-20" dir="rtl">
       <Header
         players={players}
         onOpenPlayer={(player) => setSelected(player)}
       />
 
-      <section className="mx-auto w-full max-w-7xl px-3.5 py-4 sm:px-6 sm:py-6 lg:px-8">
-        {/* البانر الترحيبي الرئيسي */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-l from-white via-white to-red-50/40 p-5 shadow-2xs sm:p-7">
-          <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-red-600">
-                  لوحة تحكم الأكاديمية
-                </p>
-              </div>
-              <h2 className="mt-1 font-cairo text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-                صباح الخير يا كابتن {captainName} 🥋
+      <section className="mx-auto w-full max-w-7xl px-3.5 py-5 sm:px-6 sm:py-7 lg:px-8">
+        {/* ━━━ Hero Banner ━━━ */}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white p-5 shadow-md sm:p-7">
+          {/* Decorative gradient blobs */}
+          <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-red-500/6 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-8 left-1/2 h-32 w-64 -translate-x-1/2 rounded-full bg-slate-200/40 blur-2xl" />
+          {/* Top gradient accent line */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
+
+          <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="section-eyebrow mb-2">لوحة تحكم الأكاديمية</p>
+              <h2 className="font-cairo text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                أهلاً يا كابتن{" "}
+                <span className="gradient-text-brand">{captainName}</span>
+                {" "}🥋
               </h2>
-              <p className="mt-1.5 text-xs sm:text-sm font-medium text-slate-500 max-w-xl">
-                إدارة فورية ودقيقة لحضور واشتراكات اللاعبين في مختلف الصالات بكل سهولة وسرعة.
+              <p className="mt-2 text-sm font-medium text-slate-500 max-w-lg leading-relaxed">
+                إدارة فورية ودقيقة لحضور واشتراكات اللاعبين في مختلف الصالات.
               </p>
+
+              {/* Micro-stat pills */}
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-600 shadow-xs">
+                  <span className="h-2 w-2 rounded-full bg-red-500" />
+                  {players.length} لاعب مسجل
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 shadow-xs">
+                  <Building2 className="h-3 w-3" />
+                  {branches.length} صالة نشطة
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-500 shadow-xs">
+                  الصالة: <strong className="font-black text-slate-900">{branch}</strong>
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-2.5 shadow-2xs backdrop-blur-md sm:min-w-[280px]">
-              <div className="min-w-0 flex-1 px-1">
-                <span className="block text-[10px] font-bold text-slate-400">
-                  الصالة المحددة حالياً
-                </span>
-                <strong className="mt-0.5 block truncate font-cairo text-sm font-extrabold text-slate-900">
-                  {branch}
-                </strong>
-              </div>
+            {/* CTA */}
+            <div className="flex shrink-0 flex-col gap-2.5 sm:items-end">
               <button
                 type="button"
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-2.5 text-xs font-black text-white shadow-xs shadow-red-500/20 transition-all hover:brightness-110 active:scale-95"
+                id="add-player-hero-btn"
+                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-red-500/25 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-red-500/30 active:scale-95"
                 onClick={() => setShowForm(true)}
               >
-                <span>＋</span>
-                <span>لاعب جديد</span>
+                <Plus className="h-4 w-4" />
+                <span>تسجيل لاعب جديد</span>
               </button>
+              <span className="text-[10px] font-medium text-slate-400 text-center">
+                {sessionDate}
+              </span>
             </div>
           </div>
         </div>
@@ -431,25 +465,20 @@ export default function Home() {
           onMarkPresent={markBranchPresent}
         />
 
-        {/* ترويسة قائمة اللاعبين */}
+        {/* ━━━ Player List Header ━━━ */}
         <div
           ref={playerListRef}
-          className="mt-8 flex flex-wrap items-center justify-between gap-3 scroll-mt-20 border-b border-slate-200/70 pb-3"
+          className="mt-8 flex flex-wrap items-center justify-between gap-3 scroll-mt-20"
         >
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-100 text-red-600 text-sm font-black">
-              🥋
-            </div>
-            <h2 className="font-cairo text-lg font-black text-slate-900 sm:text-xl">
-              قائمة لاعبي الأكاديمية
-            </h2>
+            <p className="section-eyebrow">قائمة لاعبي الأكاديمية</p>
             <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-black text-red-600 ring-1 ring-red-200/60">
               {filteredPlayers.length} لاعب
             </span>
             {filteredPlayers.length > 0 && (
               <button
                 type="button"
-                className="rounded-xl border border-slate-200/80 bg-white px-3 py-1 text-xs font-bold text-slate-600 shadow-2xs transition-all hover:border-red-200 hover:text-red-600 active:scale-95 cursor-pointer"
+                className="rounded-xl border border-slate-200/80 bg-white px-3 py-1 text-xs font-bold text-slate-600 shadow-xs transition-all hover:border-red-200 hover:text-red-600 active:scale-95 cursor-pointer"
                 onClick={toggleFilteredSelection}
               >
                 تحديد الكل
@@ -459,19 +488,20 @@ export default function Home() {
 
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/70 px-3.5 py-2 text-xs font-extrabold text-red-600 transition-all hover:bg-red-600 hover:text-white hover:shadow-sm active:scale-95 cursor-pointer"
+            id="add-player-list-btn"
+            className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-extrabold text-red-600 transition-all hover:bg-red-600 hover:text-white hover:shadow-sm active:scale-95 cursor-pointer"
             onClick={() => setShowForm(true)}
           >
-            <span>＋</span>
+            <Plus className="h-3.5 w-3.5" />
             <span>تسجيل لاعب جديد</span>
           </button>
         </div>
 
-        {/* شريط البحث والفلترة حسب الصالة */}
-        <div className="mt-3.5 flex flex-col gap-2.5 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-2xs lg:flex-row lg:items-center lg:gap-3">
+        {/* ━━━ Control Panel ━━━ */}
+        <div className="mt-3.5 flex flex-col gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md lg:flex-row lg:items-center lg:gap-3">
           {/* حقل البحث */}
           <div className="relative flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 transition-all focus-within:border-red-500 focus-within:bg-white focus-within:ring-3 focus-within:ring-red-100 lg:w-80">
-            <span className="text-base text-slate-400">⌕</span>
+            <Search className="h-4 w-4 shrink-0 text-slate-400" />
             <input
               className="min-w-0 flex-1 bg-transparent px-1 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 font-medium"
               value={search}
@@ -571,12 +601,15 @@ export default function Home() {
           </div>
         </div>
 
-        {/* محددات تاريخ الحصة وشهر الدفع */}
-        <div className="mt-2.5 grid gap-2.5 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-2xs sm:grid-cols-2">
-          <label className="flex items-center gap-2 text-xs font-extrabold text-slate-600">
-            <span className="shrink-0 text-red-600">📅 تاريخ الحصة:</span>
+        {/* ━━━ Date Controls ━━━ */}
+        <div className="mt-2.5 grid gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5">
+            <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500">
+              <CalendarDays className="h-3.5 w-3.5 text-red-500" />
+              تاريخ الحصة
+            </span>
             <input
-              className="min-h-10 w-full rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+              className="min-h-10 w-full rounded-xl border border-slate-200/70 bg-slate-50/60 px-3.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
               type="date"
               max={today}
               value={sessionDate}
@@ -586,10 +619,13 @@ export default function Home() {
               }}
             />
           </label>
-          <label className="flex items-center gap-2 text-xs font-extrabold text-slate-600">
-            <span className="shrink-0 text-red-600">🗓️ شهر الدفع:</span>
+          <label className="flex flex-col gap-1.5">
+            <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500">
+              <CreditCard className="h-3.5 w-3.5 text-red-500" />
+              شهر الاشتراك
+            </span>
             <input
-              className="min-h-10 w-full rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+              className="min-h-10 w-full rounded-xl border border-slate-200/70 bg-slate-50/60 px-3.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
               type="month"
               value={paymentMonth}
               onChange={(event) => setPaymentMonth(event.target.value)}
@@ -597,8 +633,8 @@ export default function Home() {
           </label>
         </div>
 
-        {/* فلاتر الحالة (حاضر / غائب / مدفوع / لم يدفع) */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-2xs sm:gap-2">
+        {/* ━━━ Status Filters ━━━ */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200/60 bg-white p-2.5 shadow-md sm:gap-2">
           <span className="px-2 text-xs font-extrabold text-slate-400">
             فلترة سريعة:
           </span>
@@ -622,10 +658,9 @@ export default function Home() {
             }`}
             onClick={() => setStatusFilter("present")}
           >
-            <span>✓ حاضر</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">
-              {presentToday}
-            </span>
+            <Check className="h-3 w-3" strokeWidth={2.5} />
+            <span>حاضر</span>
+            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{presentToday}</span>
           </button>
           <button
             type="button"
@@ -636,10 +671,9 @@ export default function Home() {
             }`}
             onClick={() => setStatusFilter("absent")}
           >
-            <span>× غائب</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">
-              {absentToday}
-            </span>
+            <X className="h-3 w-3" strokeWidth={2.5} />
+            <span>غائب</span>
+            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{absentToday}</span>
           </button>
           <button
             type="button"
@@ -650,10 +684,9 @@ export default function Home() {
             }`}
             onClick={() => setStatusFilter("paid")}
           >
-            <span>💳 مدفوع</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">
-              {paidCount}
-            </span>
+            <CreditCard className="h-3 w-3" />
+            <span>مدفوع</span>
+            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{paidCount}</span>
           </button>
           <button
             type="button"
@@ -664,10 +697,9 @@ export default function Home() {
             }`}
             onClick={() => setStatusFilter("unpaid")}
           >
-            <span>⏳ لم يدفع</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">
-              {unpaidCount}
-            </span>
+            <Clock className="h-3 w-3" />
+            <span>لم يدفع</span>
+            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{unpaidCount}</span>
           </button>
 
           {todayBirthdaysCount > 0 && (
@@ -680,25 +712,28 @@ export default function Home() {
               }`}
               onClick={() => setStatusFilter("birthday")}
             >
-              <span>🎂 أعياد ميلاد اليوم</span>
-              <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">
-                {todayBirthdaysCount}
-              </span>
+              <Cake className="h-3 w-3" />
+              <span>أعياد ميلاد اليوم</span>
+              <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{todayBirthdaysCount}</span>
             </button>
           )}
         </div>
 
-        {/* إشعار التنبيه المؤقت */}
+        {/* ━━━ Toast Notice ━━━ */}
         {notice && (
           <div
-            className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-xs font-bold text-sky-800 shadow-xs animate-slide-up"
+            className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl border border-red-200/80 bg-gradient-to-r from-red-50 to-rose-50 px-4 py-3 text-xs font-bold text-red-800 shadow-sm animate-slide-up"
             onClick={() => setNotice("")}
           >
             <div className="flex items-center gap-2">
-              <span className="text-base">🔔</span>
-              <span>{notice}</span>
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100">
+                <Bell className="h-3.5 w-3.5 text-red-600" />
+              </span>
+              <span className="font-semibold text-slate-800">{notice}</span>
             </div>
-            <span className="text-base text-sky-500 hover:text-sky-800">✕</span>
+            <button type="button" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition-colors">
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
         )}
 
@@ -722,27 +757,30 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="min-h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1.5 min-h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedAttendance("present")}
               >
-                ✓ تسجيل حضور
+                <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                <span>حضور</span>
               </button>
               <button
                 type="button"
-                className="min-h-9 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1.5 min-h-9 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedAttendance("absent")}
               >
-                × تسجيل غياب
+                <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+                <span>غياب</span>
               </button>
               <button
                 type="button"
-                className="min-h-9 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1.5 min-h-9 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedPayment("paid")}
               >
-                💳 تسجيل دفع
+                <CreditCard className="h-3.5 w-3.5" />
+                <span>دفع</span>
               </button>
               <button
                 type="button"
@@ -757,15 +795,15 @@ export default function Home() {
                 className="min-h-9 rounded-xl border border-white/20 px-3 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all cursor-pointer"
                 onClick={() => setSelectedPlayerIds([])}
               >
-                إلغاء
+                <X className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
         )}
 
-        {/* جدول وبطاقات اللاعبين */}
-        <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none lg:overflow-hidden lg:border lg:border-slate-200/80 lg:bg-white lg:shadow-2xs">
-          <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-200/80 bg-slate-50/80 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-500 lg:grid">
+        {/* ━━━ Player Table ━━━ */}
+        <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none lg:overflow-hidden lg:border lg:border-slate-200/60 lg:bg-white lg:shadow-md">
+          <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 lg:grid">
             <span>اللاعب</span>
             <span>العمر</span>
             <span>الفرع</span>
@@ -775,12 +813,19 @@ export default function Home() {
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center gap-3 px-6 py-20 text-center text-slate-400 bg-white rounded-2xl">
-              <span className="text-4xl animate-bounce">⏳</span>
-              <strong className="font-cairo text-lg font-black text-slate-800">
-                جاري تحميل بيانات اللاعبين...
-              </strong>
-              <span className="text-xs">يرجى الانتظار لحظة.</span>
+            <div className="flex flex-col gap-3 px-6 py-6 bg-white rounded-2xl">
+              {[1,2,3,4].map((i) => (
+                <div key={i} className="flex items-center gap-4 py-2">
+                  <div className="skeleton h-11 w-11 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="skeleton h-4 w-36 rounded-lg" />
+                    <div className="skeleton h-3 w-24 rounded-lg" />
+                  </div>
+                  <div className="skeleton h-9 w-20 rounded-xl" />
+                  <div className="skeleton h-9 w-20 rounded-xl" />
+                  <div className="skeleton h-9 w-20 rounded-xl" />
+                </div>
+              ))}
             </div>
           ) : filteredPlayers.length === 0 ? (
             <div className="flex flex-col items-center gap-3.5 px-6 py-20 text-center text-slate-400 bg-white rounded-2xl">
