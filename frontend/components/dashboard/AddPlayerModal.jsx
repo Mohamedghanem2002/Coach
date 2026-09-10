@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useMemo } from "react";
 
 export default function AddPlayerModal({
   branches,
@@ -11,14 +11,62 @@ export default function AddPlayerModal({
   const [dobDay, setDobDay] = useState("");
   const [dobMonth, setDobMonth] = useState("");
   const [dobYear, setDobYear] = useState("");
-  const dateOfBirth = dobYear && dobMonth && dobDay
-    ? `${dobYear}-${dobMonth.padStart(2, "0")}-${dobDay.padStart(2, "0")}`
-    : "";
+
+  const monthInputRef = useRef(null);
+  const yearInputRef = useRef(null);
+
+  const dateOfBirth =
+    dobYear && dobMonth && dobDay
+      ? `${dobYear}-${dobMonth.padStart(2, "0")}-${dobDay.padStart(2, "0")}`
+      : "";
+
   const [guardianPhone, setGuardianPhone] = useState("");
   const [branch, setBranch] = useState(initialBranch || "");
   const [photo, setPhoto] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const calculatedAge = useMemo(() => {
+    if (!dobYear || !dobMonth || !dobDay) return null;
+    const y = parseInt(dobYear, 10);
+    const m = parseInt(dobMonth, 10);
+    const d = parseInt(dobDay, 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d) || y < 1950 || m < 1 || m > 12 || d < 1 || d > 31) {
+      return null;
+    }
+    const birthDate = new Date(y, m - 1, d);
+    if (
+      birthDate.getFullYear() !== y ||
+      birthDate.getMonth() !== m - 1 ||
+      birthDate.getDate() !== d
+    ) {
+      return null;
+    }
+    const today = new Date();
+    let age = today.getFullYear() - y;
+    const currentMonth = today.getMonth() + 1;
+    const currentDay = today.getDate();
+    if (currentMonth < m || (currentMonth === m && currentDay < d)) {
+      age -= 1;
+    }
+    return age >= 0 && age <= 100 ? age : null;
+  }, [dobYear, dobMonth, dobDay]);
+
+  function handleDayChange(val) {
+    const cleaned = val.replace(/\D/g, "").slice(0, 2);
+    setDobDay(cleaned);
+    if (cleaned.length === 2) {
+      monthInputRef.current?.focus();
+    }
+  }
+
+  function handleMonthChange(val) {
+    const cleaned = val.replace(/\D/g, "").slice(0, 2);
+    setDobMonth(cleaned);
+    if (cleaned.length === 2) {
+      yearInputRef.current?.focus();
+    }
+  }
 
   function handlePhotoChange(event) {
     var _a;
@@ -45,15 +93,37 @@ export default function AddPlayerModal({
 
   async function submit(event) {
     event.preventDefault();
-    if (!name.trim() || !dateOfBirth || !branch) {
-      setError("يرجى ملء اسم اللاعب، تاريخ الميلاد، وتحديد الصالة.");
+    const trimmedName = name.trim();
+    if (!trimmedName || trimmedName.length < 3) {
+      setError("يرجى إدخال اسم ثلاثي أو رباعي للاعب (3 أحرف على الأقل).");
       return;
     }
+    if (!dateOfBirth || calculatedAge === null) {
+      setError("يرجى إدخال تاريخ ميلاد صحيح وصالح.");
+      return;
+    }
+    if (calculatedAge < 4 || calculatedAge > 80) {
+      setError("يجب أن يكون عمر اللاعب بين 4 و 80 سنة.");
+      return;
+    }
+    if (!branch) {
+      setError("يرجى اختيار صالة أو فرع التدريب.");
+      return;
+    }
+
+    const cleanPhone = guardianPhone.trim().replace(/[^0-9]/g, "");
+    if (cleanPhone && cleanPhone.length > 0) {
+      if (cleanPhone.length < 8 || cleanPhone.length > 15) {
+        setError("يرجى التأكد من كتابة رقم هاتف ولي الأمر بشكل صحيح.");
+        return;
+      }
+    }
+
     setError("");
     setSubmitting(true);
     try {
       await onAdd({
-        name: name.trim(),
+        name: trimmedName,
         dateOfBirth,
         guardianPhone: guardianPhone.trim(),
         branch,
@@ -144,29 +214,28 @@ export default function AddPlayerModal({
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                     type="text"
                     inputMode="numeric"
-                    pattern="[0-9]*"
                     placeholder="اليوم"
                     maxLength={2}
                     value={dobDay}
-                    onChange={(e) => setDobDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    onChange={(e) => handleDayChange(e.target.value)}
                     required
                   />
                   <input
+                    ref={monthInputRef}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                     type="text"
                     inputMode="numeric"
-                    pattern="[0-9]*"
                     placeholder="الشهر"
                     maxLength={2}
                     value={dobMonth}
-                    onChange={(e) => setDobMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    onChange={(e) => handleMonthChange(e.target.value)}
                     required
                   />
                   <input
+                    ref={yearInputRef}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                     type="text"
                     inputMode="numeric"
-                    pattern="[0-9]*"
                     placeholder="السنة"
                     maxLength={4}
                     value={dobYear}
@@ -174,6 +243,12 @@ export default function AddPlayerModal({
                     required
                   />
                 </div>
+                {calculatedAge !== null && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg px-2 py-0.5 animate-slide-up">
+                    <span>✓</span>
+                    <span>العمر المحسوب: {calculatedAge} سنة</span>
+                  </div>
+                )}
               </div>
 
               <div>

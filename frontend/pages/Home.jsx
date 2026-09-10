@@ -27,6 +27,11 @@ import {
   SlidersHorizontal,
   Cake,
   Clock,
+  ArrowUpDown,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -37,6 +42,8 @@ import StatsGrid from "../components/dashboard/StatsGrid";
 import AddPlayerModal from "../components/dashboard/AddPlayerModal";
 import BranchOverview from "../components/dashboard/BranchOverview";
 import BirthdayReminder from "../components/dashboard/BirthdayReminder";
+import Pagination from "../components/dashboard/Pagination";
+import { exportPlayersToCSV } from "../lib/export-utils";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 
@@ -51,9 +58,12 @@ export default function Home() {
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState("");
+  const [toast, setToast] = useState(null);
   const [showBranches, setShowBranches] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [sessionDate, setSessionDate] = useState(today);
   const [paymentMonth, setPaymentMonth] = useState(currentMonth);
   const [quickBranchName, setQuickBranchName] = useState("");
@@ -104,14 +114,39 @@ export default function Home() {
       cancelled = true;
     };
   }, [router, sessionStatus]);
+  function showToast(message, type = "success") {
+    if (!message) {
+      setToast(null);
+      return;
+    }
+    setToast({ message, type });
+  }
+
+  function setNotice(message) {
+    if (!message) {
+      setToast(null);
+      return;
+    }
+    const isError =
+      message.includes("تعذر") ||
+      message.includes("خطأ") ||
+      message.includes("لا يمكن") ||
+      message.includes("راجع بيانات");
+    showToast(message, isError ? "error" : "success");
+  }
+
   useEffect(() => {
-    if (notice) {
+    if (toast) {
       const timer = setTimeout(() => {
-        setNotice("");
-      }, 4000);
+        setToast(null);
+      }, 4500);
       return () => clearTimeout(timer);
     }
-  }, [notice]);
+  }, [toast]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [branch, deferredSearch, statusFilter, sortBy]);
   const filteredPlayers = useMemo(
     () =>
       players.filter((player) => {
@@ -142,6 +177,79 @@ export default function Home() {
       }),
     [players, branch, deferredSearch, statusFilter, sessionDate, paymentMonth],
   );
+
+  const sortedFilteredPlayers = useMemo(() => {
+    const list = [...filteredPlayers];
+    switch (sortBy) {
+      case "alphabetical":
+        return list.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+      case "oldest":
+        return list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      case "age-asc":
+        return list.sort((a, b) => (a.age || 0) - (b.age || 0));
+      case "age-desc":
+        return list.sort((a, b) => (b.age || 0) - (a.age || 0));
+      case "unpaid-first":
+        return list.sort((a, b) => {
+          const aPaid = paymentStatusFor(a, paymentMonth) === "paid" ? 1 : 0;
+          const bPaid = paymentStatusFor(b, paymentMonth) === "paid" ? 1 : 0;
+          return aPaid - bPaid;
+        });
+      case "attendance-desc":
+        return list.sort((a, b) => {
+          const aPresent = (a.attendance || []).filter((x) => x.status === "present").length;
+          const aTotal = (a.attendance || []).length;
+          const aRate = aTotal ? aPresent / aTotal : 0;
+
+          const bPresent = (b.attendance || []).filter((x) => x.status === "present").length;
+          const bTotal = (b.attendance || []).length;
+          const bRate = bTotal ? bPresent / bTotal : 0;
+
+          return bRate - aRate;
+        });
+      case "newest":
+      default:
+        return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+  }, [filteredPlayers, sortBy, paymentMonth]);
+
+  const totalPages = pageSize === 0 ? 1 : Math.ceil(sortedFilteredPlayers.length / pageSize);
+
+  const paginatedPlayers = useMemo(() => {
+    if (pageSize === 0) return sortedFilteredPlayers;
+    const start = (currentPage - 1) * pageSize;
+    return sortedFilteredPlayers.slice(start, start + pageSize);
+  }, [sortedFilteredPlayers, currentPage, pageSize]);
+
+  function handleExportAll() {
+    if (!sortedFilteredPlayers.length) {
+      showToast("لا توجد بيانات لتصديرها وفق الفرز والتصفية الحالية.", "info");
+      return;
+    }
+    const branchLabel = branch === "كل الصالات" ? "الكل" : branch;
+    const success = exportPlayersToCSV(
+      sortedFilteredPlayers,
+      paymentMonth,
+      `كشف_لاعبي_الأكاديمية_${branchLabel}_${paymentMonth}.csv`
+    );
+    if (success) {
+      showToast(`تم تصدير (${sortedFilteredPlayers.length}) لاعب بنجاح إلى ملف Excel / CSV.`);
+    }
+  }
+
+  function handleExportSelected() {
+    const selectedList = players.filter((p) => selectedPlayerIds.includes(p._id));
+    if (!selectedList.length) return;
+    const success = exportPlayersToCSV(
+      selectedList,
+      paymentMonth,
+      `كشف_اللاعبين_المحددين_${paymentMonth}.csv`
+    );
+    if (success) {
+      showToast(`تم تصدير (${selectedList.length}) لاعب محدد بنجاح إلى ملف Excel / CSV.`);
+    }
+  }
+
   const dashboardPlayers =
     branch === "كل الصالات"
       ? players
@@ -243,6 +351,30 @@ export default function Home() {
     }
     setBranches((current) => [...current, data]);
     setNotice("تمت إضافة الفرع بنجاح.");
+  }
+  async function renameBranch(oldName, newName) {
+    try {
+      const response = await fetch("/api/branches", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldName, newName }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        showToast(data.error || "تعذر تعديل اسم الفرع.", "error");
+        return;
+      }
+      setBranches((current) =>
+        current.map((b) => (b.name === oldName ? { ...b, name: newName } : b))
+      );
+      setPlayers((current) =>
+        current.map((p) => (p.branch === oldName ? { ...p, branch: newName } : p))
+      );
+      if (branch === oldName) setBranch(newName);
+      showToast(`تم تعديل اسم الفرع إلى "${newName}" وتحديث جميع بيانات اللاعبين.`);
+    } catch {
+      showToast("تعذر الاتصال بالخادم لتعديل اسم الفرع.", "error");
+    }
   }
   async function deleteBranch(name) {
     const response = await fetch("/api/branches", {
@@ -486,15 +618,27 @@ export default function Home() {
             )}
           </div>
 
-          <button
-            type="button"
-            id="add-player-list-btn"
-            className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-extrabold text-red-600 transition-all hover:bg-red-600 hover:text-white hover:shadow-sm active:scale-95 cursor-pointer"
-            onClick={() => setShowForm(true)}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>تسجيل لاعب جديد</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportAll}
+              title="تصدير كشف اللاعبين الحالي إلى Excel / CSV"
+              className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all active:scale-95 cursor-pointer shadow-xs"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">تصدير Excel</span>
+            </button>
+
+            <button
+              type="button"
+              id="add-player-list-btn"
+              className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-extrabold text-red-600 transition-all hover:bg-red-600 hover:text-white hover:shadow-sm active:scale-95 cursor-pointer"
+              onClick={() => setShowForm(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>تسجيل لاعب جديد</span>
+            </button>
+          </div>
         </div>
 
         {/* ━━━ Control Panel ━━━ */}
@@ -601,8 +745,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ━━━ Date Controls ━━━ */}
-        <div className="mt-2.5 grid gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md sm:grid-cols-2">
+        {/* ━━━ Date Controls & Sort Strip ━━━ */}
+        <div className="mt-2.5 grid gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md sm:grid-cols-3">
           <label className="flex flex-col gap-1.5">
             <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500">
               <CalendarDays className="h-3.5 w-3.5 text-red-500" />
@@ -630,6 +774,25 @@ export default function Home() {
               value={paymentMonth}
               onChange={(event) => setPaymentMonth(event.target.value)}
             />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500">
+              <ArrowUpDown className="h-3.5 w-3.5 text-red-500" />
+              ترتيب القائمة
+            </span>
+            <select
+              className="min-h-10 w-full rounded-xl border border-slate-200/70 bg-slate-50/60 px-3.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100 cursor-pointer"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="newest">الأحدث تسجيلاً (افتراضي)</option>
+              <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
+              <option value="oldest">الأقدم تسجيلاً</option>
+              <option value="age-asc">السن: الأصغر أولاً</option>
+              <option value="age-desc">السن: الأكبر أولاً</option>
+              <option value="unpaid-first">غير المسددين أولاً</option>
+              <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
+            </select>
           </label>
         </div>
 
@@ -720,18 +883,41 @@ export default function Home() {
         </div>
 
         {/* ━━━ Toast Notice ━━━ */}
-        {notice && (
+        {toast && (
           <div
-            className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl border border-red-200/80 bg-gradient-to-r from-red-50 to-rose-50 px-4 py-3 text-xs font-bold text-red-800 shadow-sm animate-slide-up"
-            onClick={() => setNotice("")}
+            className={`mt-3 flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-xs font-bold shadow-sm animate-slide-up ${
+              toast.type === "error"
+                ? "border-rose-200 bg-rose-50 text-rose-800"
+                : toast.type === "info"
+                ? "border-sky-200 bg-sky-50 text-sky-800"
+                : "border-emerald-200 bg-emerald-50 text-emerald-800"
+            }`}
+            onClick={() => setToast(null)}
           >
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100">
-                <Bell className="h-3.5 w-3.5 text-red-600" />
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                  toast.type === "error"
+                    ? "bg-rose-100 text-rose-600"
+                    : toast.type === "info"
+                    ? "bg-sky-100 text-sky-600"
+                    : "bg-emerald-100 text-emerald-600"
+                }`}
+              >
+                {toast.type === "error" ? (
+                  <AlertCircle className="h-4 w-4" />
+                ) : toast.type === "info" ? (
+                  <Info className="h-4 w-4" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4" />
+                )}
               </span>
-              <span className="font-semibold text-slate-800">{notice}</span>
+              <span className="font-extrabold">{toast.message}</span>
             </div>
-            <button type="button" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition-colors">
+            <button
+              type="button"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-black/5 transition-colors"
+            >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -792,6 +978,15 @@ export default function Home() {
               </button>
               <button
                 type="button"
+                onClick={handleExportSelected}
+                className="flex items-center gap-1.5 min-h-9 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 px-3 text-xs font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="تصدير اللاعبين المحددين كملف Excel"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                <span>تصدير Excel</span>
+              </button>
+              <button
+                type="button"
                 className="min-h-9 rounded-xl border border-white/20 px-3 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all cursor-pointer"
                 onClick={() => setSelectedPlayerIds([])}
               >
@@ -848,7 +1043,7 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            filteredPlayers.map((player) => (
+            paginatedPlayers.map((player) => (
               <PlayerRow
                 key={player._id}
                 player={player}
@@ -862,6 +1057,25 @@ export default function Home() {
             ))
           )}
         </div>
+
+        {/* ترقيم الصفحات (Pagination) */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={sortedFilteredPlayers.length}
+          pageSize={pageSize}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            playerListRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
+        />
       </section>
 
 
@@ -883,9 +1097,10 @@ export default function Home() {
           branches={branches}
           players={players}
           onAdd={addBranch}
+          onRename={renameBranch}
           onDelete={deleteBranch}
           onDeleteBlocked={handleBlockedBranchDelete}
-          notice={notice}
+          notice={toast?.type === "error" ? toast.message : ""}
           onClose={() => setShowBranches(false)}
         />
       )}

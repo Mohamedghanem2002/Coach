@@ -110,3 +110,73 @@ export async function DELETE(request) {
     return NextResponse.json({ error: "تعذر حذف الفرع" }, { status: 500 });
   }
 }
+
+export async function PATCH(request) {
+  try {
+    const ownerId = await currentUserId();
+    if (!ownerId) {
+      return NextResponse.json(
+        { error: "يجب تسجيل الدخول أولًا" },
+        { status: 401 }
+      );
+    }
+    const body = await request.json();
+    const oldName = typeof body.oldName === "string" ? body.oldName.trim() : "";
+    const newName = typeof body.newName === "string" ? body.newName.trim() : "";
+
+    if (!oldName || !newName || newName.length > 80) {
+      return NextResponse.json(
+        { error: "يرجى تحديد الاسم القديم والاسم الجديد بشكل صحيح" },
+        { status: 400 }
+      );
+    }
+    if (oldName === newName) {
+      return NextResponse.json({ success: true, name: newName });
+    }
+
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+    const branchesCollection = db.collection("branches");
+    const playersCollection = db.collection("players");
+
+    // Check if new name already exists
+    const duplicate = await branchesCollection.findOne({ name: newName, ownerId });
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "يوجد فرع آخر بنفس هذا الاسم بالفعل" },
+        { status: 409 }
+      );
+    }
+
+    // Update branch or create if it was a legacy branch
+    const branchUpdateResult = await branchesCollection.updateOne(
+      { name: oldName, ownerId },
+      { $set: { name: newName } }
+    );
+
+    if (branchUpdateResult.matchedCount === 0) {
+      // It was a legacy branch from player records; create the new branch record
+      await branchesCollection.insertOne({
+        ownerId,
+        name: newName,
+        createdAt: new Date(),
+      });
+    }
+
+    // Synchronize all players belonging to this branch
+    await playersCollection.updateMany(
+      { branch: oldName, ownerId },
+      { $set: { branch: newName } }
+    );
+
+    return NextResponse.json({
+      success: true,
+      oldName,
+      newName,
+    });
+  } catch (error) {
+    console.error("PATCH /api/branches failed:", error);
+    return NextResponse.json({ error: "تعذر تعديل اسم الفرع" }, { status: 500 });
+  }
+}
+

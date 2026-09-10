@@ -29,6 +29,12 @@ function PlayerRow({
   const paymentStatus = paymentStatusFor(player, paymentMonth);
   const birthdayInfo = getBirthdayInfo(player);
 
+  const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
+  const attendedSessions = Array.isArray(player.attendance)
+    ? player.attendance.filter((item) => item.status === "present").length
+    : 0;
+  const attendanceRate = totalSessions ? Math.round((attendedSessions / totalSessions) * 100) : 0;
+
   async function updateAttendance(status) {
     if (attendanceBusy) return;
     setAttendanceBusy(status);
@@ -115,9 +121,25 @@ function PlayerRow({
                 </span>
               )}
             </div>
-            <small className="mt-0.5 block text-[11px] font-medium text-slate-400">
-              تسجيل {new Date(player.createdAt).toLocaleDateString("ar-EG")}
-            </small>
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-400">
+              <span>تسجيل {new Date(player.createdAt).toLocaleDateString("ar-EG")}</span>
+              {totalSessions > 0 && (
+                <>
+                  <span>•</span>
+                  <span
+                    className={`font-bold ${
+                      attendanceRate >= 75
+                        ? "text-emerald-600"
+                        : attendanceRate >= 50
+                        ? "text-amber-600"
+                        : "text-rose-600"
+                    }`}
+                  >
+                    التزام {attendanceRate}%
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </button>
       </div>

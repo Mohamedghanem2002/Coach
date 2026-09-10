@@ -36,11 +36,22 @@ function ageFromDateOfBirth(dateOfBirth) {
   return age;
 }
 function serializePlayer(player) {
+  const currentMonth = appDate().slice(0, 7);
+  const monthlyPayment = Array.isArray(player.paymentHistory)
+    ? player.paymentHistory.find((payment) => payment.month === currentMonth)
+    : undefined;
+
   return Object.assign(Object.assign({}, player), {
     attendance: Array.isArray(player.attendance) ? player.attendance : [],
     paymentHistory: Array.isArray(player.paymentHistory)
       ? player.paymentHistory
       : [],
+    paymentStatus:
+      (monthlyPayment === null || monthlyPayment === void 0
+        ? void 0
+        : monthlyPayment.status) !== undefined
+        ? monthlyPayment.status
+        : player.paymentStatus || "unpaid",
     _id: player._id.toString(),
   });
 }
@@ -338,25 +349,21 @@ export async function PATCH(request) {
       month,
       status: body.paymentStatus,
     });
+    const currentMonth = appDate().slice(0, 7);
+    const updateSet = {
+      paymentHistory: history,
+    };
+    if (month === currentMonth) {
+      updateSet.paymentStatus = body.paymentStatus;
+    }
     const player = await collection.findOneAndUpdate(
       { _id: new ObjectId(body.id), ownerId },
       {
-        $set: {
-          paymentHistory: history,
-          paymentStatus: body.paymentStatus,
-        },
+        $set: updateSet,
       },
       { returnDocument: "after" },
     );
-    return NextResponse.json(
-      player
-        ? Object.assign(Object.assign({}, player), {
-            _id: player._id.toString(),
-            paymentHistory:
-              (_c = player.paymentHistory) !== null && _c !== void 0 ? _c : [],
-          })
-        : null,
-    );
+    return NextResponse.json(player ? serializePlayer(player) : null);
   } catch (error) {
     console.error("PATCH /api/players failed:", error);
     return NextResponse.json(

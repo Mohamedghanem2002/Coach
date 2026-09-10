@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import ConfirmDialog from "./ConfirmDialog";
 import { useSession } from "next-auth/react";
 import {
   localDate,
@@ -72,6 +73,34 @@ export default function Profile({
   const [modalImageBlob, setModalImageBlob] = useState(null);
   const [imageCopied, setImageCopied] = useState(false);
   const [cachedCardBlob, setCachedCardBlob] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeletingPlayer, setIsDeletingPlayer] = useState(false);
+
+  const calculatedEditAge = useMemo(() => {
+    if (!editDobYear || !editDobMonth || !editDobDay) return null;
+    const y = parseInt(editDobYear, 10);
+    const m = parseInt(editDobMonth, 10);
+    const d = parseInt(editDobDay, 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d) || y < 1950 || m < 1 || m > 12 || d < 1 || d > 31) {
+      return null;
+    }
+    const birthDate = new Date(y, m - 1, d);
+    if (
+      birthDate.getFullYear() !== y ||
+      birthDate.getMonth() !== m - 1 ||
+      birthDate.getDate() !== d
+    ) {
+      return null;
+    }
+    const todayDate = new Date();
+    let age = todayDate.getFullYear() - y;
+    const currentMonth = todayDate.getMonth() + 1;
+    const currentDay = todayDate.getDate();
+    if (currentMonth < m || (currentMonth === m && currentDay < d)) {
+      age -= 1;
+    }
+    return age >= 0 && age <= 100 ? age : null;
+  }, [editDobYear, editDobMonth, editDobDay]);
   const attended = (
     Array.isArray(player.attendance) ? player.attendance : []
   ).filter((item) => item.status === "present").length;
@@ -750,6 +779,12 @@ export default function Profile({
                     required={!player.dateOfBirth}
                   />
                 </div>
+                {calculatedEditAge !== null && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg px-2 py-0.5 animate-slide-up">
+                    <span>✓</span>
+                    <span>العمر المحسوب: {calculatedEditAge} سنة</span>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1280,16 +1315,34 @@ export default function Profile({
           <button
             type="button"
             className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl border border-rose-200/80 bg-rose-50/60 px-4 py-3 text-xs font-extrabold text-rose-700 transition-all hover:bg-rose-100 hover:border-rose-300 active:scale-98 cursor-pointer"
-            onClick={() => {
-              if (window.confirm("هل أنت متأكد من رغبتك في حذف هذا اللاعب نهائيًا من الأكاديمية؟"))
-                onDelete(player._id);
-            }}
+            onClick={() => setShowDeleteConfirm(true)}
           >
             <Trash2 className="h-4 w-4" />
             <span>حذف اللاعب نهائيًا من الأكاديمية</span>
           </button>
         </div>
       </aside>
+
+      {/* مودال تأكيد حذف اللاعب */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="حذف اللاعب نهائيًا"
+        message={`هل أنت متأكد من رغبتك في حذف اللاعب "${player.name}" نهائيًا من الأكاديمية؟ سيتم مسح كافة سجلات الحضور والاشتراكات المتعلقة به.`}
+        confirmText="نعم، احذف اللاعب"
+        cancelText="تراجع"
+        confirmVariant="danger"
+        isBusy={isDeletingPlayer}
+        onConfirm={async () => {
+          setIsDeletingPlayer(true);
+          try {
+            await onDelete(player._id);
+          } finally {
+            setIsDeletingPlayer(false);
+            setShowDeleteConfirm(false);
+          }
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
 
       {/* نافذة إرسال صورة البطاقة لولي الأمر */}
       {imageModalOpen && (

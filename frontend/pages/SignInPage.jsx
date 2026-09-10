@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function SignInPage() {
   const router = useRouter();
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(event) {
     var _a, _b, _c;
@@ -210,17 +212,27 @@ export default function SignInPage() {
                 <label className="block text-xs font-extrabold text-slate-700 mb-1">
                   كلمة المرور
                 </label>
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                  name="password"
-                  type="password"
-                  minLength={8}
-                  required
-                  placeholder="••••••••"
-                  autoComplete={
-                    isRegistering ? "new-password" : "current-password"
-                  }
-                />
+                <div className="relative flex items-center">
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 pl-11 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    minLength={8}
+                    required
+                    placeholder="••••••••"
+                    autoComplete={
+                      isRegistering ? "new-password" : "current-password"
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                    title={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               {error && (
