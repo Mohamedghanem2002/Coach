@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { localDate, paymentStatusFor } from "../../lib/dashboard-utils";
+import {
+  localDate,
+  paymentStatusFor,
+  getBirthdayInfo,
+  generateBirthdayWishUrl,
+} from "../../lib/dashboard-utils";
 export default function Profile({
   player,
   branches,
@@ -52,6 +57,7 @@ export default function Profile({
     Array.isArray(player.attendance) ? player.attendance : []
   ).filter((item) => item.status === "present").length;
   const monthlyStatus = paymentStatusFor(player, paymentMonth);
+  const birthdayInfo = getBirthdayInfo(player);
   const registrationDate = new Date(player.createdAt).toLocaleDateString(
     "ar-EG",
   );
@@ -376,6 +382,34 @@ export default function Profile({
     downloadLink.click();
     setTimeout(() => URL.revokeObjectURL(downloadLink.href), 2000);
     setProfileNotice("✓ تم تحميل صورة بطاقة اللاعب بنجاح");
+  }
+
+  async function openImageModal() {
+    try {
+      setProfileNotice("⏳ جاري إنشاء صورة بطاقة اللاعب...");
+
+      const canvas = await generateProfileCanvas();
+      if (!canvas) return;
+
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/png"),
+      );
+
+      if (!blob) {
+        setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
+        return;
+      }
+
+      const dataUrl = canvas.toDataURL("image/png");
+      setModalImageDataUrl(dataUrl);
+      setModalImageBlob(blob);
+      setImageCopied(false);
+      setImageModalOpen(true);
+      setProfileNotice("");
+    } catch (error) {
+      console.error("Failed to open image modal:", error);
+      setProfileNotice("❌ حدث خطأ أثناء إنشاء صورة البطاقة");
+    }
   }
 
   async function shareProfileImageToWhatsApp() {
@@ -750,6 +784,51 @@ export default function Profile({
                   <span className="mt-1.5 block text-[10px] font-semibold text-slate-400">
                     تاريخ التسجيل: {registrationDate}
                   </span>
+
+                  {birthdayInfo?.isToday && (
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3 shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl animate-bounce">🎂</span>
+                        <div>
+                          <strong className="block font-cairo text-xs font-black text-rose-800">
+                            اليوم عيد ميلاد {player.name}! 🎉
+                          </strong>
+                          <span className="block text-[11px] font-bold text-slate-600">
+                            أتم اليوم {birthdayInfo.turningAge} سنة بارك الله فيه! 🥋
+                          </span>
+                        </div>
+                      </div>
+                      <a
+                        href={generateBirthdayWishUrl(player, captainName)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all text-center"
+                        title="إرسال تهنئة عبر واتساب لولي الأمر"
+                      >
+                        <span>📲</span>
+                        <span>تهنئة عيد الميلاد واتساب</span>
+                      </a>
+                    </div>
+                  )}
+
+                  {!birthdayInfo?.isToday && birthdayInfo?.isUpcoming && (
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">🎂</span>
+                        <span className="font-bold text-amber-900">
+                          عيد ميلاده القادم {birthdayInfo.daysLeft === 1 ? "غداً" : `بعد ${birthdayInfo.daysLeft} أيام`} (يوافق {birthdayInfo.dateFormatted}) — سيُتم {birthdayInfo.turningAge} سنة!
+                        </span>
+                      </div>
+                      <a
+                        href={generateBirthdayWishUrl(player, captainName)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-extrabold text-emerald-700 hover:underline"
+                      >
+                        تجهيز تهنئة واتساب 📲
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -758,7 +837,7 @@ export default function Profile({
                 <button
                   className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500 bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 py-2.5 text-xs font-black text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer col-span-2 sm:col-span-1"
                   type="button"
-                  onClick={shareProfileImageToWhatsApp}
+                  onClick={openImageModal}
                   title="مشاركة صورة البطاقة على واتساب لرقم ولي الأمر المسجل"
                 >
                   <span className="text-sm">📲</span>
@@ -1068,8 +1147,13 @@ export default function Profile({
       {/* نافذة إرسال صورة البطاقة لولي الأمر */}
       {imageModalOpen && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md animate-fade-in-scale"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md animate-fade-in-scale"
           dir="rtl"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setImageModalOpen(false);
+            }
+          }}
         >
           <div className="relative max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
             <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
@@ -1081,7 +1165,12 @@ export default function Profile({
               </div>
               <button
                 type="button"
-                onClick={() => setImageModalOpen(false)}
+                onClick={() => {
+                  setImageModalOpen(false);
+                  setModalImageDataUrl("");
+                  setModalImageBlob(null);
+                  setImageCopied(false);
+                }}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-500 hover:bg-slate-200 cursor-pointer"
               >
                 ✕
@@ -1099,15 +1188,14 @@ export default function Profile({
 
             {/* أزرار الإجراءات السريعة */}
             <div className="grid gap-2 sm:grid-cols-2">
-              <a
-                href={`https://wa.me/${formatWhatsAppPhone(guardianPhone)}`}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={shareProfileImageToWhatsApp}
                 className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition sm:col-span-2 text-center cursor-pointer"
               >
                 <span>💬</span>
-                <span>فتح محادثة واتساب لولي الأمر ({guardianPhone})</span>
-              </a>
+                <span>إرسال الصورة عبر واتساب لولي الأمر</span>
+              </button>
 
               <button
                 type="button"

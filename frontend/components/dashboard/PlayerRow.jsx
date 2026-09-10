@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { paymentStatusFor } from "../../lib/dashboard-utils";
+import { paymentStatusFor, getBirthdayInfo } from "../../lib/dashboard-utils";
 
 function PlayerRow({
   player,
@@ -17,6 +17,7 @@ function PlayerRow({
   const present = record?.status === "present";
   const absent = record?.status === "absent";
   const paymentStatus = paymentStatusFor(player, paymentMonth);
+  const birthdayInfo = getBirthdayInfo(player);
 
   async function updateAttendance(status) {
     if (attendanceBusy) return;
@@ -48,6 +49,8 @@ function PlayerRow({
       className={`group mb-2.5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-2xl border p-3.5 transition-all duration-200 lg:mb-0 lg:grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:border-b lg:border-slate-100 lg:px-6 lg:py-3.5 ${
         isSelected
           ? "border-red-200 bg-red-50/40 lg:bg-red-50/30"
+          : birthdayInfo?.isToday
+          ? "border-rose-200/90 bg-rose-50/20 shadow-2xs hover:border-rose-300 hover:shadow-xs lg:shadow-none"
           : "border-slate-200/80 bg-white shadow-2xs hover:border-slate-300 hover:shadow-xs lg:shadow-none"
       }`}
     >
@@ -75,11 +78,32 @@ function PlayerRow({
             ) : (
               <span>{player.name.charAt(0)}</span>
             )}
+
+            {birthdayInfo?.isToday && (
+              <span className="absolute -bottom-1 -right-1 text-xs" title="عيد ميلاده اليوم!">
+                🎂
+              </span>
+            )}
           </div>
           <div className="min-w-0 flex-1">
-            <strong className="block truncate font-cairo text-sm font-extrabold text-slate-900 group-hover:text-red-600 transition-colors">
-              {player.name}
-            </strong>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <strong className="truncate font-cairo text-sm font-extrabold text-slate-900 group-hover:text-red-600 transition-colors">
+                {player.name}
+              </strong>
+
+              {birthdayInfo?.isToday && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-600 to-amber-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs animate-pulse">
+                  🎂 اليوم ({birthdayInfo.turningAge} سنة)
+                </span>
+              )}
+
+              {!birthdayInfo?.isToday && birthdayInfo?.isUpcoming && birthdayInfo?.daysLeft <= 3 && (
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.2 text-[9px] font-bold text-amber-800">
+                  🎂 {birthdayInfo.daysLeft === 1 ? "غداً" : `بعد ${birthdayInfo.daysLeft} أيام`}
+                </span>
+              )}
+            </div>
+
             <small className="mt-0.5 block text-[11px] font-semibold text-slate-400">
               تسجيل {new Date(player.createdAt).toLocaleDateString("ar-EG")}
             </small>
@@ -90,8 +114,10 @@ function PlayerRow({
       {/* العمر والفرع */}
       <div className="col-span-2 flex items-center gap-3 border-t border-slate-100 pt-2.5 text-xs lg:col-auto lg:contents lg:border-0 lg:pt-0">
         <div className="shrink-0 lg:col-start-2">
-          <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-1 font-bold text-slate-700 text-[11px]">
-            {player.age} سنة
+          <span className={`inline-flex items-center rounded-lg px-2 py-1 font-bold text-[11px] ${
+            birthdayInfo?.isToday ? "bg-rose-100 text-rose-800 font-black" : "bg-slate-100 text-slate-700"
+          }`}>
+            {player.age} سنة {birthdayInfo?.isToday && "🎂"}
           </span>
         </div>
         <div className="max-w-[55%] truncate border-r border-slate-200 pr-3 lg:col-start-3 lg:max-w-none lg:border-0 lg:pr-0">

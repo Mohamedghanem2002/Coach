@@ -6,6 +6,8 @@ import {
   localDate,
   normalizePlayer,
   paymentStatusFor,
+  getBirthdayInfo,
+  getTodayBirthdays,
 } from "../lib/dashboard-utils";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -15,6 +17,7 @@ import Header from "../components/dashboard/Header";
 import StatsGrid from "../components/dashboard/StatsGrid";
 import AddPlayerModal from "../components/dashboard/AddPlayerModal";
 import BranchOverview from "../components/dashboard/BranchOverview";
+import BirthdayReminder from "../components/dashboard/BirthdayReminder";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 
@@ -109,7 +112,9 @@ export default function Home() {
           (statusFilter === "paid" &&
             paymentStatusFor(player, paymentMonth) === "paid") ||
           (statusFilter === "unpaid" &&
-            paymentStatusFor(player, paymentMonth) === "unpaid");
+            paymentStatusFor(player, paymentMonth) === "unpaid") ||
+          (statusFilter === "birthday" &&
+            Boolean(getBirthdayInfo(player)?.isToday));
         return (
           matchesBranch &&
           matchesStatus &&
@@ -136,6 +141,9 @@ export default function Home() {
     ),
   ).length;
   const unpaidCount = dashboardPlayers.length - paidCount;
+  const todayBirthdaysCount = dashboardPlayers.filter((player) =>
+    Boolean(getBirthdayInfo(player)?.isToday),
+  ).length;
   async function updatePlayer(id, data) {
     if (data.attendanceStatus && data.date > today) {
       setNotice("لا يمكن تسجيل حضور أو غياب في تاريخ مستقبلي.");
@@ -350,7 +358,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-red-500 selection:text-white pb-16" dir="rtl">
-      <Header />
+      <Header
+        players={players}
+        onOpenPlayer={(player) => setSelected(player)}
+      />
 
       <section className="mx-auto w-full max-w-7xl px-3.5 py-4 sm:px-6 sm:py-6 lg:px-8">
         {/* البانر الترحيبي الرئيسي */}
@@ -391,6 +402,13 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* تذكار أعياد ميلاد أبطال الأكاديمية للكابتن */}
+        <BirthdayReminder
+          players={dashboardPlayers}
+          captainName={captainName}
+          onOpenPlayer={(player) => setSelected(player)}
+        />
 
         {/* شبكة الإحصائيات ورسوم الحضور البيانية */}
         <StatsGrid
@@ -651,6 +669,23 @@ export default function Home() {
               {unpaidCount}
             </span>
           </button>
+
+          {todayBirthdaysCount > 0 && (
+            <button
+              type="button"
+              className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-black transition-all cursor-pointer ${
+                statusFilter === "birthday"
+                  ? "bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-xs shadow-rose-500/20"
+                  : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
+              }`}
+              onClick={() => setStatusFilter("birthday")}
+            >
+              <span>🎂 أعياد ميلاد اليوم</span>
+              <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">
+                {todayBirthdaysCount}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* إشعار التنبيه المؤقت */}

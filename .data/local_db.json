@@ -22,5 +22,30 @@
       "createdAt": "2026-09-10T10:46:15.057Z"
     }
   ],
-  "players": []
+  "players": [
+    {
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "rrrrr",
+      "age": 25,
+      "dateOfBirth": "2001-04-04",
+      "guardianPhone": "01552488179",
+      "branch": "صالة الكاتا الرئيسية",
+      "photo": "",
+      "paymentStatus": "paid",
+      "paymentHistory": [
+        {
+          "month": "2026-09",
+          "status": "paid"
+        }
+      ],
+      "attendance": [
+        {
+          "date": "2026-09-10",
+          "status": "present"
+        }
+      ],
+      "createdAt": "2026-09-10T11:14:13.116Z",
+      "_id": "6aa29105131cd6a66b5f1aeb"
+    }
+  ]
 }
