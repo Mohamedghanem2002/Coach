@@ -383,37 +383,30 @@ export default function Profile({
     const canvas = await generateProfileCanvas();
     if (!canvas) return;
 
-    const dataUrl = canvas.toDataURL("image/png");
-    setModalImageDataUrl(dataUrl);
-
     const blob = await new Promise((resolve) =>
       canvas.toBlob(resolve, "image/png"),
     );
     if (!blob) return;
-    setModalImageBlob(blob);
 
     const fileName = `بطاقة_${player.name.replace(/\s+/g, "_")}.png`;
     const file = new File([blob], fileName, { type: "image/png" });
 
-    // 1. Try native Web Share API with ONLY the image file (no text so WhatsApp opens in photo mode)
+    // 1. Try native Web Share API (mobile) — opens WhatsApp directly with the image
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({
-          files: [file],
-        });
+        await navigator.share({ files: [file] });
         setProfileNotice("✓ تم فتح إرسال صورة البطاقة بنجاح");
         return;
       } catch (err) {
-        if (err.name !== "AbortError") {
-          console.warn("Native share failed, showing image modal", err);
-        }
+        if (err.name === "AbortError") return;
+        console.warn("Native share failed, falling back", err);
       }
     }
 
-    // 2. Copy image directly to clipboard
+    // 2. Copy image to clipboard silently (desktop)
     let copiedToClipboard = false;
     try {
-      if (typeof window !== "undefined" && typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
         await navigator.clipboard.write([
           new ClipboardItem({ "image/png": blob }),
         ]);
@@ -424,19 +417,15 @@ export default function Profile({
       console.warn("Clipboard copy not supported", e);
     }
 
-    // 3. Download image to device
-    const downloadLink = document.createElement("a");
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = fileName;
-    downloadLink.click();
-    setTimeout(() => URL.revokeObjectURL(downloadLink.href), 2000);
+    // 3. Open WhatsApp directly on the guardian's chat (desktop: wa.me deeplink)
+    const cleanPhone = formatWhatsAppPhone(guardianPhone);
+    const waUrl = `https://wa.me/${cleanPhone}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
 
-    // 4. Open the image preview and WhatsApp send modal
-    setImageModalOpen(true);
     setProfileNotice(
       copiedToClipboard
-        ? "✓ تم نسخ صورة البطاقة وتحميلها لجهازك بنجاح!"
-        : "✓ تم تحميل صورة بطاقة اللاعب لجهازك بنجاح!",
+        ? "✓ تم نسخ الصورة للحافظة وفُتح واتساب — اضغط Ctrl+V لإرفاقها!"
+        : "✓ تم فتح واتساب — أرفق الصورة يدوياً من زر المشبك 📎",
     );
   }
   function handlePhotoChange(event) {
@@ -1070,20 +1059,6 @@ export default function Profile({
               />
             </div>
 
-            {/* إرشادات الإرسال كصورة لولي الأمر */}
-            <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs text-emerald-950 space-y-2">
-              <div className="flex items-center gap-2 font-black text-emerald-800 text-sm">
-                <span>💡</span>
-                <span>طريقة إرسال الصورة كملف لولي الأمر ({guardianPhone}):</span>
-              </div>
-              <p className="font-bold leading-relaxed text-slate-700">
-                • <strong>على الكمبيوتر (WhatsApp Web)</strong>: تم نسخ الصورة للحافظة تلقائياً! اضغط على زر فتح واتساب أدناه ثم اضغط <kbd className="rounded bg-white px-1.5 py-0.5 border border-slate-300 font-mono text-[11px] font-bold">Ctrl + V</kbd> (أو كليك يمين ثم لصق) لتظهر الصورة فوراً.
-              </p>
-              <p className="font-bold leading-relaxed text-slate-700">
-                • <strong>على الموبايل</strong>: اضغط مطولاً بأصبعك على الصورة أعلاه واختر <strong>"مشاركة الصورة"</strong> ثم <strong>"WhatsApp"</strong>، أو أرسلها من علامة المشبك 📎 في واتساب لأنها حُفظت في جهازك.
-              </p>
-            </div>
-
             {/* أزرار الإجراءات السريعة */}
             <div className="grid gap-2 sm:grid-cols-2">
               <a
@@ -1132,4 +1107,3 @@ export default function Profile({
     </div>
   );
 }
-
