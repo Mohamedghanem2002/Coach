@@ -21,6 +21,8 @@ import {
   ClipboardCopy,
   UserRound,
   Info,
+  Share2,
+  Eye,
 } from "lucide-react";
 export default function Profile({
   player,
@@ -93,6 +95,20 @@ export default function Profile({
       cleaned = "20" + cleaned;
     }
     return cleaned;
+  }
+
+  function openGuardianChat() {
+    if (!guardianPhone) {
+      setProfileNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً ليتم فتح المحادثة معه.");
+      return;
+    }
+    const cleanPhone = formatWhatsAppPhone(guardianPhone);
+    if (!cleanPhone) {
+      setProfileNotice("⚠️ رقم هاتف ولي الأمر المسجل غير صالح.");
+      return;
+    }
+    window.open(`https://wa.me/${cleanPhone}`, "_blank", "noopener,noreferrer");
+    setProfileNotice(`✓ تم فتح شات واتساب لولي الأمر (${guardianPhone})`);
   }
 
   function shareOnWhatsApp() {
@@ -430,27 +446,48 @@ export default function Profile({
 
   async function shareProfileImageToWhatsApp() {
     if (!guardianPhone) {
-      setProfileNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً ليتم توجيه البطاقة له عبر واتساب.");
+      setProfileNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً ليتم مشاركة البطاقة معه عبر واتساب.");
+      return;
+    }
+
+    const cleanPhone = formatWhatsAppPhone(guardianPhone);
+    if (!cleanPhone) {
+      setProfileNotice("⚠️ رقم هاتف ولي الأمر المسجل غير صالح.");
       return;
     }
 
     setProfileNotice("⏳ جاري إنشاء صورة بطاقة اللاعب...");
     const canvas = await generateProfileCanvas();
-    if (!canvas) return;
+    if (!canvas) {
+      setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
+      return;
+    }
 
     const blob = await new Promise((resolve) =>
       canvas.toBlob(resolve, "image/png"),
     );
-    if (!blob) return;
+    if (!blob) {
+      setProfileNotice("❌ تعذر إنشاء ملف الصورة");
+      return;
+    }
 
     const fileName = `بطاقة_${player.name.replace(/\s+/g, "_")}.png`;
     const file = new File([blob], fileName, { type: "image/png" });
 
-    // 1. Try native Web Share API (mobile) — opens WhatsApp directly with the image
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    // 1. Try native Web Share API on mobile devices (opens WhatsApp directly with image file)
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent,
+      );
+    if (isMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ files: [file] });
-        setProfileNotice("✓ تم فتح إرسال صورة البطاقة بنجاح");
+        await navigator.share({
+          files: [file],
+          title: `بطاقة اللاعب ${player.name}`,
+          text: `بطاقة بيانات اللاعب ${player.name} - أكاديمية الكاراتيه`,
+        });
+        setProfileNotice("✓ تم فتح المشاركة بنجاح");
         return;
       } catch (err) {
         if (err.name === "AbortError") return;
@@ -458,7 +495,7 @@ export default function Profile({
       }
     }
 
-    // 2. Copy image to clipboard silently (desktop)
+    // 2. Desktop fallback: Copy image to clipboard silently
     let copiedToClipboard = false;
     try {
       if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
@@ -472,15 +509,17 @@ export default function Profile({
       console.warn("Clipboard copy not supported", e);
     }
 
-    // 3. Open WhatsApp directly on the guardian's chat (desktop: wa.me deeplink)
-    const cleanPhone = formatWhatsAppPhone(guardianPhone);
-    const waUrl = `https://wa.me/${cleanPhone}`;
+    // 3. Open WhatsApp directly on the guardian's chat
+    const caption = encodeURIComponent(
+      `🥋 بطاقة بيانات اللاعب: ${player.name} - أكاديمية الكاراتيه (إشراف الكابتن: ${captainName})`,
+    );
+    const waUrl = `https://wa.me/${cleanPhone}?text=${caption}`;
     window.open(waUrl, "_blank", "noopener,noreferrer");
 
     setProfileNotice(
       copiedToClipboard
-        ? "✓ تم نسخ الصورة للحافظة وفُتح واتساب — اضغط Ctrl+V لإرفاقها!"
-        : "✓ تم فتح واتساب — أرفق الصورة يدوياً من زر المشبك 📎",
+        ? "✓ تم نسخ صورة البطاقة للحافظة وفُتح شات ولي الأمر — اضغط لصق (Ctrl+V) للإرسال فوراً!"
+        : "✓ تم فتح شات واتساب لولي الأمر — أرفق الصورة يدوياً من زر المشبك 📎",
     );
   }
   function handlePhotoChange(event) {
@@ -762,19 +801,20 @@ export default function Profile({
                     <div className="mt-2.5 flex flex-wrap items-center gap-2">
                       <a
                         href={`tel:${guardianPhone}`}
-                        className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-200"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-200 transition"
                         title="اتصال هاتفي بولي الأمر"
                       >
-                        📞 {guardianPhone}
+                        <Phone className="h-3 w-3 text-slate-500" />
+                        <span>{guardianPhone}</span>
                       </a>
                       <button
                         type="button"
-                        onClick={shareProfileImageToWhatsApp}
+                        onClick={openGuardianChat}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-300 px-3 py-1 text-[11px] font-black text-emerald-700 hover:bg-emerald-100 active:scale-95 cursor-pointer transition shadow-2xs"
-                        title="إرسال صورة البطاقة عبر واتساب لرقم ولي الأمر"
+                        title="فتح شات واتساب مع ولي الأمر مباشرة"
                       >
-                        <span>📲</span>
-                        <span>إرسال صورة البطاقة لولي الأمر</span>
+                        <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                        <span>إرسال لولي الأمر (فتح الشات)</span>
                       </button>
                     </div>
                   ) : (
@@ -853,24 +893,33 @@ export default function Profile({
               </div>
 
               {/* أزرار الإجراءات والمشاركة */}
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 border-t border-slate-200/60 pt-3">
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2 border-t border-slate-200/60 pt-3">
                 <button
                   className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500 bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 py-2.5 text-xs font-black text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer col-span-2 sm:col-span-1"
                   type="button"
-                  onClick={openImageModal}
-                  title="مشاركة صورة البطاقة على واتساب لرقم ولي الأمر المسجل"
+                  onClick={shareProfileImageToWhatsApp}
+                  title="مشاركة صورة بطاقة اللاعب مباشرة لرقم ولي الأمر المسجل على واتساب"
                 >
-                  <Send className="h-3.5 w-3.5" />
-                  <span>إرسال البطاقة واتساب</span>
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span>مشاركة البطاقة</span>
                 </button>
                 <button
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50/80 px-2 py-2.5 text-xs font-black text-amber-800 transition hover:bg-amber-100 active:scale-95 cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 px-2 py-2.5 text-xs font-black text-emerald-800 transition hover:bg-emerald-100 active:scale-95 cursor-pointer"
                   type="button"
-                  onClick={shareProfileImage}
-                  title="تحميل صورة البطاقة على جهازك"
+                  onClick={openGuardianChat}
+                  title="فتح محادثة واتساب لولي الأمر مباشرة"
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>حفظ كصورة</span>
+                  <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>إرسال لولي الأمر</span>
+                </button>
+                <button
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50/80 px-2 py-2.5 text-xs font-black text-teal-800 transition hover:bg-teal-100 active:scale-95 cursor-pointer"
+                  type="button"
+                  onClick={openImageModal}
+                  title="معاينة وتحميل صورة بطاقة اللاعب"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>معاينة البطاقة</span>
                 </button>
                 <button
                   className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2.5 text-xs font-black text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
@@ -878,7 +927,7 @@ export default function Profile({
                   onClick={shareOnWhatsApp}
                   title="إرسال تقرير نصي مفصل عبر واتساب"
                 >
-                  <span className="text-sm">💬</span>
+                  <Send className="h-3.5 w-3.5" />
                   <span>تقرير نصي</span>
                 </button>
                 <button
@@ -895,7 +944,7 @@ export default function Profile({
                     setIsEditing(true);
                   }}
                 >
-                  <span className="text-sm">✏️</span>
+                  <Pencil className="h-3.5 w-3.5" />
                   <span>تعديل</span>
                 </button>
               </div>
@@ -1231,8 +1280,8 @@ export default function Profile({
                 onClick={shareProfileImageToWhatsApp}
                 className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition sm:col-span-2 text-center cursor-pointer"
               >
-                <Send className="h-3.5 w-3.5" />
-                <span>إرسال الصورة عبر واتساب لولي الأمر</span>
+                <Share2 className="h-3.5 w-3.5" />
+                <span>مشاركة البطاقة عبر واتساب لولي الأمر</span>
               </button>
 
               <button
