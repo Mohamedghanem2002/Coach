@@ -24,6 +24,7 @@ import {
   Info,
   Share2,
   Eye,
+  FileText,
 } from "lucide-react";
 export default function Profile({
   player,
@@ -104,6 +105,10 @@ export default function Profile({
   const attended = (
     Array.isArray(player.attendance) ? player.attendance : []
   ).filter((item) => item.status === "present").length;
+  const totalAttendanceCount = (player.attendance || []).length;
+  const attendanceRate = totalAttendanceCount
+    ? Math.round((attended / totalAttendanceCount) * 100)
+    : 0;
   const monthlyStatus = paymentStatusFor(player, paymentMonth);
   const birthdayInfo = getBirthdayInfo(player);
   const registrationDate = new Date(player.createdAt).toLocaleDateString(
@@ -469,21 +474,37 @@ export default function Profile({
     return canvas;
   }
 
-  async function shareProfileImage() {
-    setProfileNotice("⏳ جاري توليد وتحميل صورة البطاقة...");
-    const canvas = await generateProfileCanvas();
-    if (!canvas) return;
-    const blob = await new Promise((resolve) =>
-      canvas.toBlob(resolve, "image/png"),
-    );
-    if (!blob) return;
-    const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
-    const downloadLink = document.createElement("a");
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = fileName;
-    downloadLink.click();
-    setTimeout(() => URL.revokeObjectURL(downloadLink.href), 2000);
-    setProfileNotice("✓ تم تحميل صورة بطاقة اللاعب بنجاح");
+  async function downloadProfileCard() {
+    setProfileNotice("⏳ جاري إنشاء وتحميل صورة بطاقة اللاعب...");
+    try {
+      let blob = cachedCardBlob;
+      if (!blob) {
+        const canvas = await generateProfileCanvas();
+        if (!canvas) {
+          setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
+          return;
+        }
+        blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+        if (blob) setCachedCardBlob(blob);
+      }
+      if (!blob) {
+        setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
+        return;
+      }
+      const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
+      const downloadLink = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      downloadLink.href = url;
+      downloadLink.download = fileName;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      setTimeout(() => URL.revokeObjectURL(url), 2500);
+      setProfileNotice("✓ تم تحميل وحفظ صورة بطاقة اللاعب بجهازك بنجاح!");
+    } catch (error) {
+      console.error("Failed to download profile card:", error);
+      setProfileNotice("❌ حدث خطأ أثناء تحميل صورة البطاقة");
+    }
   }
 
   async function openImageModal() {
@@ -897,31 +918,43 @@ export default function Profile({
                     </span>
                   </div>
 
-                  {guardianPhone ? (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                      <a
-                        href={`tel:${guardianPhone}`}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-200 transition"
-                        title="اتصال هاتفي بولي الأمر"
-                      >
-                        <Phone className="h-3 w-3 text-slate-500" />
-                        <span>{guardianPhone}</span>
-                      </a>
-                      <button
-                        type="button"
-                        onClick={openGuardianChat}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-300 px-3 py-1 text-[11px] font-black text-emerald-700 hover:bg-emerald-100 active:scale-95 cursor-pointer transition shadow-2xs"
-                        title="فتح شات واتساب مع ولي الأمر مباشرة"
-                      >
-                        <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
-                        <span>إرسال لولي الأمر (فتح الشات)</span>
-                      </button>
+                  {/* قسم بيانات وتواصل ولي الأمر */}
+                  <div className="mt-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="flex items-center gap-1.5 text-xs font-extrabold text-slate-700">
+                        <Phone className="h-3.5 w-3.5 text-red-600" />
+                        رقم هاتف ولي الأمر:
+                      </span>
+                      {guardianPhone ? (
+                        <span className="font-cairo text-xs font-black text-slate-900 tracking-wider" dir="ltr">
+                          {guardianPhone}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-slate-400">غير مسجل</span>
+                      )}
                     </div>
-                  ) : (
-                    <div className="mt-2 flex items-center gap-2">
-                      <p className="text-xs font-semibold text-slate-400">
-                        📞 هاتف ولي الأمر: غير مسجل
-                      </p>
+
+                    {guardianPhone ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <a
+                          href={`tel:${guardianPhone}`}
+                          className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50 transition active:scale-95 shadow-2xs"
+                          title="إجراء اتصال هاتفي مباشر بولي الأمر"
+                        >
+                          <Phone className="h-3.5 w-3.5 text-blue-600" />
+                          <span>اتصال بولي الأمر</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={openGuardianChat}
+                          className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700 transition active:scale-95 shadow-2xs cursor-pointer"
+                          title="فتح محادثة واتساب مباشرة مع ولي الأمر"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>محادثة واتساب</span>
+                        </button>
+                      </div>
+                    ) : (
                       <button
                         type="button"
                         onClick={() => {
@@ -935,13 +968,14 @@ export default function Profile({
                           setEditPhoto(player.photo || "");
                           setIsEditing(true);
                         }}
-                        className="text-[11px] font-extrabold text-red-600 hover:underline cursor-pointer"
+                        className="w-full text-center text-xs font-extrabold text-red-600 hover:underline py-1"
                       >
-                        + إضافة رقم الآن
+                        + اضغط هنا لإضافة رقم هاتف ولي الأمر
                       </button>
-                    </div>
-                  )}
-                  <span className="mt-1.5 block text-[10px] font-semibold text-slate-400">
+                    )}
+                  </div>
+
+                  <span className="mt-2 block text-[10px] font-semibold text-slate-400">
                     تاريخ التسجيل: {registrationDate}
                   </span>
 
@@ -966,7 +1000,7 @@ export default function Profile({
                         title="إرسال تهنئة عبر واتساب لولي الأمر"
                       >
                         <Send className="h-3.5 w-3.5" />
-                        <span>تهنئة عيد الميلاد واتساب</span>
+                        <span>تهنئة واتساب</span>
                       </a>
                     </div>
                   )}
@@ -985,84 +1019,105 @@ export default function Profile({
                         rel="noopener noreferrer"
                         className="text-[11px] font-extrabold text-emerald-700 hover:underline"
                       >
-                        تجهيز تهنئة واتساب 📲
+                        تهنئة واتساب 📲
                       </a>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* أزرار الإجراءات والمشاركة */}
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2 border-t border-slate-200/60 pt-3">
-                <button
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500 bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 py-2.5 text-xs font-black text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer col-span-2 sm:col-span-1"
-                  type="button"
-                  onClick={shareProfileImageToWhatsApp}
-                  title="مشاركة صورة بطاقة اللاعب مباشرة لرقم ولي الأمر المسجل على واتساب"
-                >
-                  <Share2 className="h-3.5 w-3.5" />
-                  <span>مشاركة البطاقة</span>
-                </button>
-                <button
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 px-2 py-2.5 text-xs font-black text-emerald-800 transition hover:bg-emerald-100 active:scale-95 cursor-pointer"
-                  type="button"
-                  onClick={openGuardianChat}
-                  title="فتح محادثة واتساب لولي الأمر مباشرة"
-                >
-                  <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>إرسال لولي الأمر</span>
-                </button>
-                <button
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50/80 px-2 py-2.5 text-xs font-black text-teal-800 transition hover:bg-teal-100 active:scale-95 cursor-pointer"
-                  type="button"
-                  onClick={openImageModal}
-                  title="معاينة وتحميل صورة بطاقة اللاعب"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>معاينة البطاقة</span>
-                </button>
-                <button
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2.5 text-xs font-black text-slate-700 transition hover:bg-slate-100 active:scale-95 cursor-pointer"
-                  type="button"
-                  onClick={shareOnWhatsApp}
-                  title="إرسال تقرير نصي مفصل عبر واتساب"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  <span>تقرير نصي</span>
-                </button>
-                <button
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 cursor-pointer"
-                  onClick={() => {
-                    setEditName(player.name);
-                    const _d = (player.dateOfBirth || "").split("-");
-                    setEditDobYear(_d[0] || "");
-                    setEditDobMonth(_d[1] || "");
-                    setEditDobDay(_d[2] || "");
-                    setEditGuardianPhone(guardianPhone);
-                    setEditBranch(player.branch);
-                    setEditPhoto(player.photo || "");
-                    setIsEditing(true);
-                  }}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  <span>تعديل</span>
-                </button>
+              {/* شريط الإجراءات والتقارير والبطاقة الفاخر */}
+              <div className="mt-4 border-t border-slate-200/60 pt-3.5">
+                <p className="text-[11px] font-extrabold text-slate-400 mb-2">إجراءات بطاقة اللاعب والتقارير:</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <button
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 p-2.5 text-xs font-black text-white shadow-xs transition hover:brightness-110 active:scale-95 cursor-pointer"
+                    type="button"
+                    onClick={shareProfileImageToWhatsApp}
+                    title="مشاركة صورة بطاقة اللاعب مباشرة لرقم ولي الأمر المسجل على واتساب"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    <span>مشاركة كصورة (واتساب)</span>
+                  </button>
+
+                  <button
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/80 p-2.5 text-xs font-black text-sky-800 hover:bg-sky-100 transition active:scale-95 cursor-pointer"
+                    type="button"
+                    onClick={shareOnWhatsApp}
+                    title="إرسال تقرير نصي مفصل بالحضور والاشتراكات لولي الأمر عبر واتساب"
+                  >
+                    <Send className="h-3.5 w-3.5 text-sky-600" />
+                    <span>إرسال تقرير نصي</span>
+                  </button>
+
+                  <button
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 p-2.5 text-xs font-black text-indigo-800 hover:bg-indigo-100 transition active:scale-95 cursor-pointer"
+                    type="button"
+                    onClick={downloadProfileCard}
+                    title="حفظ وتحميل صورة بطاقة اللاعب الرسمية مباشرة على جهازك"
+                  >
+                    <Download className="h-3.5 w-3.5 text-indigo-600" />
+                    <span>حفظ كصورة بجهازك</span>
+                  </button>
+
+                  <button
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 cursor-pointer"
+                    type="button"
+                    onClick={openImageModal}
+                    title="معاينة شكل البطاقة بالحجم الكامل"
+                  >
+                    <Eye className="h-3.5 w-3.5 text-slate-500" />
+                    <span>معاينة البطاقة</span>
+                  </button>
+
+                  <button
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 cursor-pointer"
+                    type="button"
+                    onClick={() => {
+                      setEditName(player.name);
+                      const _d = (player.dateOfBirth || "").split("-");
+                      setEditDobYear(_d[0] || "");
+                      setEditDobMonth(_d[1] || "");
+                      setEditDobDay(_d[2] || "");
+                      setEditGuardianPhone(guardianPhone);
+                      setEditBranch(player.branch);
+                      setEditPhoto(player.photo || "");
+                      setIsEditing(true);
+                    }}
+                    title="تعديل بيانات اللاعب"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                    <span>تعديل البيانات</span>
+                  </button>
+
+                  {guardianPhone && (
+                    <button
+                      type="button"
+                      onClick={openGuardianChat}
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition active:scale-95 cursor-pointer"
+                      title="فتح شات واتساب مباشرة مع ولي الأمر"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>شات واتساب</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Mini KPI cards */}
+            {/* بطاقات الإحصائيات المصغرة (Mini KPI cards) */}
             <div className="grid grid-cols-3 gap-2.5 pb-4">
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5 text-center shadow-xs">
                 <strong className="block font-cairo text-2xl font-black text-emerald-700">
-                  {attended}
+                  {attendanceRate}%
                 </strong>
-                <span className="mt-0.5 block text-[11px] font-semibold text-emerald-800">حصة حضور</span>
+                <span className="mt-0.5 block text-[11px] font-semibold text-emerald-800">نسبة الالتزام</span>
               </div>
               <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3.5 text-center shadow-xs">
                 <strong className="block font-cairo text-2xl font-black text-slate-800">
-                  {(player.attendance || []).length}
+                  {attended} <span className="text-xs text-slate-400 font-normal">/ {totalAttendanceCount}</span>
                 </strong>
-                <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">حصة مسجلة</span>
+                <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">حصة حضور</span>
               </div>
               <div className={`rounded-2xl border p-3.5 text-center shadow-xs ${
                 monthlyStatus === "paid"
@@ -1155,12 +1210,11 @@ export default function Profile({
                     <button
                       className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
                       onClick={() => {
-                        if (confirm(`هل تريد حذف اشتراك شهر ${item.month}؟`)) {
-                          onUpdate(player._id, {
-                            paymentStatus: "clear",
-                            paymentMonth: item.month,
-                          });
-                        }
+                        onUpdate(player._id, {
+                          paymentStatus: "clear",
+                          paymentMonth: item.month,
+                        });
+                        setProfileNotice(`تم حذف سجل اشتراك شهر ${item.month}`);
                       }}
                       title="حذف من السجل"
                     >
@@ -1260,12 +1314,11 @@ export default function Profile({
                     <button
                       className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
                       onClick={() => {
-                        if (confirm(`هل تريد حذف حضور تاريخ ${item.date}؟`)) {
-                          onUpdate(player._id, {
-                            attendanceStatus: "clear",
-                            date: item.date,
-                          });
-                        }
+                        onUpdate(player._id, {
+                          attendanceStatus: "clear",
+                          date: item.date,
+                        });
+                        setProfileNotice(`تم حذف سجل حضور تاريخ ${item.date}`);
                       }}
                       title="حذف من السجل"
                     >
@@ -1425,8 +1478,8 @@ export default function Profile({
 
               <button
                 type="button"
-                onClick={shareProfileImage}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-black text-amber-800 hover:bg-amber-100 active:scale-95 cursor-pointer"
+                onClick={downloadProfileCard}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-xs font-black text-indigo-800 hover:bg-indigo-100 active:scale-95 cursor-pointer"
               >
                 <Download className="h-3.5 w-3.5" />
                 <span>تحميل للجهاز</span>
