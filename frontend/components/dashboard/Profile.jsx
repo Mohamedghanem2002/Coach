@@ -71,6 +71,7 @@ export default function Profile({
   const [modalImageDataUrl, setModalImageDataUrl] = useState("");
   const [modalImageBlob, setModalImageBlob] = useState(null);
   const [imageCopied, setImageCopied] = useState(false);
+  const [cachedCardBlob, setCachedCardBlob] = useState(null);
   const attended = (
     Array.isArray(player.attendance) ? player.attendance : []
   ).filter((item) => item.status === "present").length;
@@ -81,9 +82,25 @@ export default function Profile({
   );
   useEffect(() => {
     if (!profileNotice) return undefined;
-    const timer = setTimeout(() => setProfileNotice(""), 3500);
+    const duration = profileNotice.includes("Ctrl + V") ? 12000 : 4000;
+    const timer = setTimeout(() => setProfileNotice(""), duration);
     return () => clearTimeout(timer);
   }, [profileNotice]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    generateProfileCanvas().then((canvas) => {
+      if (!canvas || isCancelled) return;
+      canvas.toBlob((blob) => {
+        if (!isCancelled && blob) {
+          setCachedCardBlob(blob);
+        }
+      }, "image/png");
+    });
+    return () => {
+      isCancelled = true;
+    };
+  }, [player, attended, monthlyStatus, paymentMonth]);
   function formatWhatsAppPhone(phone) {
     if (!phone) return "";
     let cleaned = String(phone).replace(/[^0-9]/g, "");
@@ -456,70 +473,94 @@ export default function Profile({
       return;
     }
 
-    setProfileNotice("⏳ جاري إنشاء صورة بطاقة اللاعب...");
-    const canvas = await generateProfileCanvas();
-    if (!canvas) {
-      setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
-      return;
-    }
-
-    const blob = await new Promise((resolve) =>
-      canvas.toBlob(resolve, "image/png"),
-    );
-    if (!blob) {
-      setProfileNotice("❌ تعذر إنشاء ملف الصورة");
-      return;
-    }
-
-    const fileName = `بطاقة_${player.name.replace(/\s+/g, "_")}.png`;
-    const file = new File([blob], fileName, { type: "image/png" });
-
-    // 1. Try native Web Share API on mobile devices (opens WhatsApp directly with image file)
     const isMobile =
       typeof navigator !== "undefined" &&
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent,
       );
-    if (isMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: `بطاقة اللاعب ${player.name}`,
-          text: `بطاقة بيانات اللاعب ${player.name} - أكاديمية الكاراتيه`,
-        });
-        setProfileNotice("✓ تم فتح المشاركة بنجاح");
-        return;
-      } catch (err) {
-        if (err.name === "AbortError") return;
-        console.warn("Native share failed, falling back", err);
+
+    // 1. Mobile flow: Native share with image file directly
+    if (isMobile && navigator.share) {
+      let blob = cachedCardBlob;
+      if (!blob) {
+        setProfileNotice("⏳ جاري تجهيز صورة بطاقة اللاعب...");
+        const canvas = await generateProfileCanvas();
+        if (canvas) {
+          blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+        }
+      }
+      if (blob) {
+        const fileName = `بطاقة_${player.name.replace(/\s+/g, "_")}.png`;
+        const file = new File([blob], fileName, { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `بطاقة اللاعب ${player.name}`,
+              text: `بطاقة بيانات اللاعب ${player.name} - أكاديمية الكاراتيه`,
+            });
+            setProfileNotice("✓ تم فتح المشاركة بنجاح");
+            return;
+          } catch (err) {
+            if (err.name === "AbortError") return;
+            console.warn("Mobile share aborted or failed:", err);
+          }
+        }
       }
     }
 
-    // 2. Desktop fallback: Copy image to clipboard silently
-    let copiedToClipboard = false;
+    // 2. Desktop flow:
+    // Open WhatsApp chat IMMEDIATELY in a new tab synchronously (exact same as openGuardianChat)
+    const waUrl = `https://wa.me/${cleanPhone}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+
+    // 3. Prepare card image blob
+    let blob = cachedCardBlob;
+    if (!blob) {
+      setProfileNotice("⏳ فُتح شات ولي الأمر وجاري نسخ صورة البطاقة...");
+      const canvas = await generateProfileCanvas();
+      if (canvas) {
+        blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+        if (blob) setCachedCardBlob(blob);
+      }
+    }
+
+    if (!blob) {
+      setProfileNotice(`✓ تم فتح شات واتساب لولي الأمر (${guardianPhone})`);
+      return;
+    }
+
+    // 4. Automatically copy the image to the clipboard so the coach can just press Ctrl + V
+    let copied = false;
     try {
       if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
         await navigator.clipboard.write([
           new ClipboardItem({ "image/png": blob }),
         ]);
-        copiedToClipboard = true;
+        copied = true;
         setImageCopied(true);
       }
-    } catch (e) {
-      console.warn("Clipboard copy not supported", e);
+    } catch (clipErr) {
+      console.warn("Clipboard copy failed:", clipErr);
     }
 
-    // 3. Open WhatsApp directly on the guardian's chat
-    const caption = encodeURIComponent(
-      `🥋 بطاقة بيانات اللاعب: ${player.name} - أكاديمية الكاراتيه (إشراف الكابتن: ${captainName})`,
-    );
-    const waUrl = `https://wa.me/${cleanPhone}?text=${caption}`;
-    window.open(waUrl, "_blank", "noopener,noreferrer");
+    // 5. Automatically download the card image file so it is ready on the computer
+    try {
+      const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
+      const downloadLink = document.createElement("a");
+      downloadLink.href = URL.createObjectURL(blob);
+      downloadLink.download = fileName;
+      downloadLink.click();
+      setTimeout(() => URL.revokeObjectURL(downloadLink.href), 3000);
+    } catch (dlErr) {
+      console.warn("Download error:", dlErr);
+    }
 
+    // 6. Give the coach clear and prominent instruction
     setProfileNotice(
-      copiedToClipboard
-        ? "✓ تم نسخ صورة البطاقة للحافظة وفُتح شات ولي الأمر — اضغط لصق (Ctrl+V) للإرسال فوراً!"
-        : "✓ تم فتح شات واتساب لولي الأمر — أرفق الصورة يدوياً من زر المشبك 📎",
+      copied
+        ? "✓ تم فتح شات ولي الأمر ونُسخت صورة البطاقة للحافظة! اضغط (Ctrl + V) في واتساب للإرسال فوراً 🚀 (تم حفظ نسخة بجهازك)"
+        : "✓ تم فتح شات ولي الأمر وتم تنزيل صورة البطاقة لجهازك! اسحب الصورة إلى الشات أو أرفقها من 📎 للإرسال.",
     );
   }
   function handlePhotoChange(event) {
