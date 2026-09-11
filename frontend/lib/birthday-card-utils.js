@@ -1,4 +1,9 @@
-import { getBirthdayInfo, getBeltStyle, formatWhatsAppPhone } from "./dashboard-utils";
+import {
+  getBirthdayInfo,
+  getBeltStyle,
+  formatWhatsAppPhone,
+  markBirthdayCongratulated,
+} from "./dashboard-utils";
 
 /**
  * Open WhatsApp using native protocol or WhatsApp Web
@@ -537,6 +542,9 @@ export async function sendBirthdayCardViaWhatsApp(
 
     const fileName = `كارت_عيد_ميلاد_${player.name.replace(/\s+/g, "_")}.png`;
     const file = new File([blob], fileName, { type: "image/png" });
+
+    // Mark player's birthday as congratulated so it is removed from the site immediately
+    markBirthdayCongratulated(player._id);
 
     // 1. Native Web Share API attaches the image file directly so user just taps Send!
     if (

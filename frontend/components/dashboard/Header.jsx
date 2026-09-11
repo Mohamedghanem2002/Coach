@@ -33,13 +33,23 @@ export default function Header({ players = [], onOpenPlayer }) {
   const fullName = session?.user?.name || "حساب الأكاديمية";
   const firstName = fullName.split(" ")[0] || "كابتن";
   const email = session?.user?.email || "";
-  const initials = firstName.charAt(0);
+  const [congratulateTick, setCongratulateTick] = useState(0);
 
-  const todayBirthdays = useMemo(() => getTodayBirthdays(players), [players]);
-  const upcomingBirthdays = useMemo(
-    () => getUpcomingBirthdays(players, 7),
-    [players]
-  );
+  useEffect(() => {
+    const handleCongratulated = () => setCongratulateTick((t) => t + 1);
+    window.addEventListener("birthday_congratulated", handleCongratulated);
+    return () =>
+      window.removeEventListener("birthday_congratulated", handleCongratulated);
+  }, []);
+
+  const todayBirthdays = useMemo(() => {
+    void congratulateTick;
+    return getTodayBirthdays(players);
+  }, [players, congratulateTick]);
+  const upcomingBirthdays = useMemo(() => {
+    void congratulateTick;
+    return getUpcomingBirthdays(players, 1);
+  }, [players, congratulateTick]);
   const totalBirthdayCount = todayBirthdays.length + upcomingBirthdays.length;
 
   useEffect(() => {
@@ -219,7 +229,7 @@ export default function Header({ players = [], onOpenPlayer }) {
                     <div className={todayBirthdays.length > 0 ? "border-t border-slate-100 pt-2.5 mt-1" : ""}>
                       <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-700 mb-2">
                         <CalendarDays className="h-3 w-3" />
-                        <span>قادمة خلال 7 أيام ({upcomingBirthdays.length}):</span>
+                        <span>قادمة غداً ({upcomingBirthdays.length}):</span>
                       </div>
                       <div className="space-y-1.5">
                         {upcomingBirthdays.map((player) => (
@@ -236,10 +246,7 @@ export default function Header({ players = [], onOpenPlayer }) {
                                   {player.name}
                                 </strong>
                                 <span className="block text-[10px] font-medium text-slate-500">
-                                  {player.birthdayInfo?.daysLeft === 1
-                                    ? "غداً"
-                                    : `بعد ${player.birthdayInfo?.daysLeft} أيام`}{" "}
-                                  · {player.birthdayInfo?.turningAge} سنة
+                                  غداً · {player.birthdayInfo?.turningAge} سنة
                                 </span>
                               </div>
                             </div>

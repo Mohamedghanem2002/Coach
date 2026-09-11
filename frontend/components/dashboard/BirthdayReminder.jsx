@@ -1,11 +1,10 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getTodayBirthdays,
   getUpcomingBirthdays,
 } from "../../lib/dashboard-utils";
 import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
-import BirthdayCardModal from "./BirthdayCardModal";
 
 export default function BirthdayReminder({
   players = [],
@@ -14,19 +13,26 @@ export default function BirthdayReminder({
 }) {
   const [activeTab, setActiveTab] = useState("today"); // 'today' | 'upcoming'
   const [isDismissed, setIsDismissed] = useState(false);
-  const [selectedPlayerForCard, setSelectedPlayerForCard] = useState(null);
   const [sendingPlayerId, setSendingPlayerId] = useState(null);
   const [reminderNotice, setReminderNotice] = useState("");
+  const [congratulateTick, setCongratulateTick] = useState(0);
 
-  const todayBirthdays = useMemo(
-    () => getTodayBirthdays(players),
-    [players]
-  );
+  useEffect(() => {
+    const handleCongratulated = () => setCongratulateTick((t) => t + 1);
+    window.addEventListener("birthday_congratulated", handleCongratulated);
+    return () =>
+      window.removeEventListener("birthday_congratulated", handleCongratulated);
+  }, []);
 
-  const upcomingBirthdays = useMemo(
-    () => getUpcomingBirthdays(players, 7),
-    [players]
-  );
+  const todayBirthdays = useMemo(() => {
+    void congratulateTick;
+    return getTodayBirthdays(players);
+  }, [players, congratulateTick]);
+
+  const upcomingBirthdays = useMemo(() => {
+    void congratulateTick;
+    return getUpcomingBirthdays(players, 1);
+  }, [players, congratulateTick]);
 
   // If dismissed or no birthdays at all, render nothing
   if (isDismissed) return null;
@@ -122,7 +128,7 @@ export default function BirthdayReminder({
               }`}
               onClick={() => setActiveTab("upcoming")}
             >
-              <span>🗓️ خلال 7 أيام</span>
+              <span>🗓️ غداً</span>
               <span className="rounded-full bg-white/30 px-1.5 py-0.2 text-[10px] font-black">
                 {upcomingBirthdays.length}
               </span>
@@ -196,9 +202,7 @@ export default function BirthdayReminder({
                   </span>
                 ) : (
                   <span className="shrink-0 rounded-lg bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
-                    {info?.daysLeft === 1
-                      ? "غداً"
-                      : `بعد ${info?.daysLeft} أيام`}
+                    غداً
                   </span>
                 )}
               </div>
@@ -217,7 +221,7 @@ export default function BirthdayReminder({
               </div>
 
               {/* أزرار الإجراءات السريعة للكارت والملف */}
-              <div className="mt-3 flex items-center gap-1.5">
+              <div className="mt-3 flex items-center gap-2">
                 <button
                   type="button"
                   disabled={sendingPlayerId === player._id}
@@ -228,7 +232,7 @@ export default function BirthdayReminder({
                       onNotice: setReminderNotice,
                     });
                   }}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 py-2 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all text-center cursor-pointer disabled:opacity-60"
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all text-center cursor-pointer disabled:opacity-60"
                   title={
                     phone
                       ? `إرسال كارت التهنئة الرسمي لواتساب ولي الأمر (${phone})`
@@ -238,47 +242,30 @@ export default function BirthdayReminder({
                   {sendingPlayerId === player._id ? (
                     <>
                       <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                      <span className="truncate">جاري الكارت...</span>
+                      <span className="truncate">جاري إرسال الكارت...</span>
                     </>
                   ) : (
                     <>
                       <span className="text-sm">🎂</span>
-                      <span className="truncate">إرسال الكارت</span>
+                      <span className="truncate font-cairo">إرسال كارت التهنئة</span>
                     </>
                   )}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setSelectedPlayerForCard(player)}
-                  className="flex items-center justify-center gap-1 rounded-xl border border-amber-300 bg-amber-50/90 hover:bg-amber-100 px-2 py-2 text-xs font-bold text-amber-900 active:scale-95 transition-all cursor-pointer shrink-0"
-                  title="معاينة كارت التهنئة المصمم فخماً أو تحميله بجهازك"
-                >
-                  <span>🖼️</span>
-                  <span>معاينة</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shrink-0"
+                  className="flex items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all cursor-pointer shrink-0"
                   onClick={() => onOpenPlayer?.(player)}
                   title="فتح الملف الشخصي للاعب"
                 >
                   <span>👤</span>
+                  <span>الملف</span>
                 </button>
               </div>
             </div>
           );
         })}
       </div>
-
-      {/* مودال معاينة وتحميل كارت عيد الميلاد */}
-      <BirthdayCardModal
-        player={selectedPlayerForCard}
-        captainName={captainName}
-        isOpen={!!selectedPlayerForCard}
-        onClose={() => setSelectedPlayerForCard(null)}
-      />
     </div>
   );
 }

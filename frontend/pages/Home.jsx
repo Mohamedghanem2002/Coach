@@ -8,6 +8,7 @@ import {
   paymentStatusFor,
   getBirthdayInfo,
   getTodayBirthdays,
+  isBirthdayCongratulated,
 } from "../lib/dashboard-utils";
 import {
   Plus,
@@ -71,6 +72,15 @@ export default function Home() {
   const [busyBranch, setBusyBranch] = useState("");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState([]);
   const [bulkAttendanceBusy, setBulkAttendanceBusy] = useState(false);
+  const [congratulatedTick, setCongratulatedTick] = useState(0);
+
+  useEffect(() => {
+    const handleCongratulated = () => setCongratulatedTick((t) => t + 1);
+    window.addEventListener("birthday_congratulated", handleCongratulated);
+    return () =>
+      window.removeEventListener("birthday_congratulated", handleCongratulated);
+  }, []);
+
   const playerListRef = useRef(null);
   const deferredSearch = useDeferredValue(search);
   const paymentMonthLabel = new Intl.DateTimeFormat("ar-EG", {
@@ -145,11 +155,13 @@ export default function Home() {
   }, [toast]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [branch, deferredSearch, statusFilter, sortBy]);
   const filteredPlayers = useMemo(
-    () =>
-      players.filter((player) => {
+    () => {
+      void congratulatedTick;
+      return players.filter((player) => {
         const matchesBranch =
           branch === "كل الصالات" || player.branch === branch;
         const record = player.attendance.find(
@@ -168,14 +180,24 @@ export default function Home() {
           (statusFilter === "unpaid" &&
             paymentStatusFor(player, paymentMonth) === "unpaid") ||
           (statusFilter === "birthday" &&
-            Boolean(getBirthdayInfo(player)?.isToday));
+            Boolean(getBirthdayInfo(player)?.isToday) &&
+            !isBirthdayCongratulated(player._id));
         return (
           matchesBranch &&
           matchesStatus &&
           player.name.includes(deferredSearch.trim())
         );
-      }),
-    [players, branch, deferredSearch, statusFilter, sessionDate, paymentMonth],
+      });
+    },
+    [
+      players,
+      branch,
+      deferredSearch,
+      statusFilter,
+      sessionDate,
+      paymentMonth,
+      congratulatedTick,
+    ],
   );
 
   const sortedFilteredPlayers = useMemo(() => {
@@ -268,8 +290,10 @@ export default function Home() {
     ),
   ).length;
   const unpaidCount = dashboardPlayers.length - paidCount;
-  const todayBirthdaysCount = dashboardPlayers.filter((player) =>
-    Boolean(getBirthdayInfo(player)?.isToday),
+  const todayBirthdaysCount = dashboardPlayers.filter(
+    (player) =>
+      Boolean(getBirthdayInfo(player)?.isToday) &&
+      !isBirthdayCongratulated(player._id),
   ).length;
   async function updatePlayer(id, data) {
     if (data.attendanceStatus && data.date > today) {

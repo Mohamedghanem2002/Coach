@@ -61,6 +61,7 @@ function serializePlayer(player) {
         : player.paymentStatus || "unpaid",
     belt: player.belt || "أبيض",
     level: player.level || "A",
+    lastBirthdayWishedYear: player.lastBirthdayWishedYear || null,
     _id: player._id.toString(),
   });
 }
@@ -103,6 +104,7 @@ export async function GET() {
           paymentHistory: Array.isArray(player.paymentHistory)
             ? player.paymentHistory
             : [],
+          lastBirthdayWishedYear: player.lastBirthdayWishedYear || null,
           _id: player._id.toString(),
         });
       }),
@@ -241,6 +243,15 @@ export async function PATCH(request) {
       const player = await collection.findOneAndUpdate(
         { _id: new ObjectId(body.id), ownerId },
         { $set: updateData },
+        { returnDocument: "after" },
+      );
+      return NextResponse.json(player ? serializePlayer(player) : null);
+    }
+    if (body.lastBirthdayWishedYear !== undefined) {
+      const year = Number(body.lastBirthdayWishedYear);
+      const player = await collection.findOneAndUpdate(
+        { _id: new ObjectId(body.id), ownerId },
+        { $set: { lastBirthdayWishedYear: year } },
         { returnDocument: "after" },
       );
       return NextResponse.json(player ? serializePlayer(player) : null);
