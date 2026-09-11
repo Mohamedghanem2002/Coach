@@ -196,14 +196,14 @@ function PlayerRow({
             <div className="flex items-center gap-1.5 shrink-0">
               <a
                 href={`tel:${phone}`}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 border border-blue-200/70 text-blue-700 hover:bg-blue-100 active:scale-90 transition-all touch-manipulation"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 hover:bg-blue-100 active-press transition-all touch-manipulation"
                 title={`اتصال بولي الأمر (${phone})`}
               >
                 <Phone className="h-3.5 w-3.5" />
               </a>
               <a
                 href={cleanPhone ? `whatsapp://send?phone=${cleanPhone}` : `whatsapp://send`}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200/70 text-emerald-700 hover:bg-emerald-100 active:scale-90 transition-all touch-manipulation"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 hover:bg-emerald-100 active-press transition-all touch-manipulation"
                 title={`واتساب ولي الأمر (${phone})`}
               >
                 <MessageCircle className="h-3.5 w-3.5" />
@@ -219,7 +219,7 @@ function PlayerRow({
             type="button"
             disabled={Boolean(attendanceBusy)}
             onClick={() => updateAttendance("present")}
-            className={`min-h-[46px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-2 active:scale-95 touch-manipulation cursor-pointer ${
+            className={`min-h-[46px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-2 active-press touch-manipulation cursor-pointer ${
               present
                 ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-500/25 ring-2 ring-emerald-300"
                 : "bg-slate-50 text-slate-700 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50"
@@ -240,7 +240,7 @@ function PlayerRow({
             type="button"
             disabled={Boolean(attendanceBusy)}
             onClick={() => updateAttendance("absent")}
-            className={`min-h-[46px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-2 active:scale-95 touch-manipulation cursor-pointer ${
+            className={`min-h-[46px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-2 active-press touch-manipulation cursor-pointer ${
               absent
                 ? "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-sm shadow-rose-500/25 ring-2 ring-rose-300"
                 : "bg-slate-50 text-slate-700 border border-slate-200 hover:border-rose-300 hover:bg-rose-50/50"
@@ -261,7 +261,7 @@ function PlayerRow({
         <button
           type="button"
           onClick={() => setShowPaymentModal(true)}
-          className={`mt-2 w-full max-w-full min-h-[42px] rounded-xl px-3 py-2 text-xs transition-all duration-150 flex items-center justify-between gap-2 active:scale-[0.98] touch-manipulation cursor-pointer overflow-hidden ${
+          className={`mt-2 w-full max-w-full min-h-[44px] rounded-xl px-3 py-2 text-xs transition-all duration-150 flex items-center justify-between gap-2 active-press touch-manipulation cursor-pointer overflow-hidden ${
             paymentStatus === "paid"
               ? "border border-emerald-200 bg-emerald-50/90 text-emerald-800"
               : paymentStatus === "partially_paid"
@@ -295,7 +295,7 @@ function PlayerRow({
             )}
           </div>
 
-          <span className="text-[11px] font-extrabold text-slate-500 bg-white/80 border border-current/15 rounded-lg px-2 py-0.5 shrink-0">
+          <span className="text-[11px] font-extrabold text-slate-500 bg-white/80 border border-current/15 rounded-lg px-2.5 py-1 shrink-0">
             تحصيل 💳
           </span>
         </button>

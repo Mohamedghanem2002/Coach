@@ -2,19 +2,19 @@ import { Building2, ChevronLeft, MapPin, Users } from "lucide-react";
 import { paymentStatusFor } from "../../lib/dashboard-utils";
 
 const BRANCH_GRADIENTS = [
-  "from-red-500 to-rose-600",
-  "from-blue-500 to-indigo-600",
-  "from-emerald-500 to-teal-600",
-  "from-purple-500 to-violet-600",
-  "from-amber-500 to-orange-600",
-  "from-cyan-500 to-sky-600",
-  "from-pink-500 to-rose-600",
-  "from-slate-600 to-slate-800",
+  "from-red-600 to-rose-700",
+  "from-slate-700 to-slate-900",
+  "from-emerald-600 to-teal-700",
+  "from-blue-600 to-indigo-700",
+  "from-amber-600 to-orange-700",
+  "from-sky-600 to-blue-700",
+  "from-zinc-700 to-slate-800",
+  "from-red-700 to-slate-900",
 ];
 
 const BRANCH_ICON_COLORS = [
-  "#ef4444", "#3b82f6", "#10b981", "#8b5cf6",
-  "#f59e0b", "#06b6d4", "#ec4899", "#475569",
+  "#dc2626", "#334155", "#059669", "#2563eb",
+  "#d97706", "#0284c7", "#3f3f46", "#b91c1c",
 ];
 
 export default function BranchOverview({

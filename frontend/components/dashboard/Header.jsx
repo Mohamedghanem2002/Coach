@@ -99,8 +99,13 @@ export default function Header({
                 PRO
               </span>
             </div>
+            {/* Show captain greeting on mobile, subtitle on desktop */}
             <p className="hidden sm:block text-[10px] font-semibold text-slate-400 leading-tight">
               إدارة أكاديمية الكاراتيه
+            </p>
+            <p className="sm:hidden text-[11px] font-bold text-slate-500 leading-tight truncate">
+              أهلاً يا كابتن{" "}
+              <span className="font-black text-red-600">{firstName}</span>
             </p>
           </div>
         </div>

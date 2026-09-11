@@ -803,57 +803,81 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 4 شرائح سريعة لفلترة القائمة بلمسة واحدة */}
+            {/* 4 شرائح سريعة تفاعلية لفلترة القائمة بلمسة واحدة مباشرة من نبض اليوم */}
             <div className="grid grid-cols-4 gap-1.5 pt-1">
               <button
                 type="button"
-                onClick={() => { setStatusFilter(statusFilter === "present" ? "all" : "present"); setMobileTab("players"); }}
-                className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition active:scale-95 min-h-[50px] cursor-pointer ${
+                onClick={() => {
+                  setStatusFilter(statusFilter === "present" ? "all" : "present");
+                  setMobileTab("players");
+                }}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
                   statusFilter === "present"
-                    ? "bg-emerald-600 text-white shadow-xs"
-                    : "bg-emerald-50/80 border border-emerald-200/60 text-emerald-800"
+                    ? "bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300"
+                    : "bg-emerald-50/70 border border-emerald-200/60 text-emerald-800 hover:bg-emerald-100/60"
                 }`}
               >
-                <span className="text-base font-black leading-none">{presentToday}</span>
+                <div className="flex items-center gap-1">
+                  <Check className={`h-3 w-3 ${statusFilter === "present" ? "text-white" : "text-emerald-600"}`} strokeWidth={3} />
+                  <span className="text-base font-black leading-none">{presentToday}</span>
+                </div>
                 <span className="text-[10px] font-bold mt-1">حاضر</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => { setStatusFilter(statusFilter === "absent" ? "all" : "absent"); setMobileTab("players"); }}
-                className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition active:scale-95 min-h-[50px] cursor-pointer ${
+                onClick={() => {
+                  setStatusFilter(statusFilter === "absent" ? "all" : "absent");
+                  setMobileTab("players");
+                }}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
                   statusFilter === "absent"
-                    ? "bg-rose-600 text-white shadow-xs"
-                    : "bg-rose-50/80 border border-rose-200/60 text-rose-800"
+                    ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300"
+                    : "bg-rose-50/70 border border-rose-200/60 text-rose-800 hover:bg-rose-100/60"
                 }`}
               >
-                <span className="text-base font-black leading-none">{absentToday}</span>
+                <div className="flex items-center gap-1">
+                  <X className={`h-3 w-3 ${statusFilter === "absent" ? "text-white" : "text-rose-600"}`} strokeWidth={3} />
+                  <span className="text-base font-black leading-none">{absentToday}</span>
+                </div>
                 <span className="text-[10px] font-bold mt-1">غائب</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => { setStatusFilter(statusFilter === "paid" ? "all" : "paid"); setMobileTab("players"); }}
-                className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition active:scale-95 min-h-[50px] cursor-pointer ${
+                onClick={() => {
+                  setStatusFilter(statusFilter === "paid" ? "all" : "paid");
+                  setMobileTab("players");
+                }}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
                   statusFilter === "paid"
-                    ? "bg-sky-600 text-white shadow-xs"
-                    : "bg-sky-50/80 border border-sky-200/60 text-sky-800"
+                    ? "bg-sky-600 text-white shadow-sm ring-2 ring-sky-300"
+                    : "bg-sky-50/70 border border-sky-200/60 text-sky-800 hover:bg-sky-100/60"
                 }`}
               >
-                <span className="text-base font-black leading-none">{paidCount}</span>
+                <div className="flex items-center gap-1">
+                  <CreditCard className={`h-3 w-3 ${statusFilter === "paid" ? "text-white" : "text-sky-600"}`} />
+                  <span className="text-base font-black leading-none">{paidCount}</span>
+                </div>
                 <span className="text-[10px] font-bold mt-1">مدفوع</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => { setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid"); setMobileTab("players"); }}
-                className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition active:scale-95 min-h-[50px] cursor-pointer ${
+                onClick={() => {
+                  setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid");
+                  setMobileTab("players");
+                }}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
                   statusFilter === "unpaid"
-                    ? "bg-amber-600 text-white shadow-xs"
-                    : "bg-amber-50/80 border border-amber-200/60 text-amber-800"
+                    ? "bg-amber-600 text-white shadow-sm ring-2 ring-amber-300"
+                    : "bg-amber-50/70 border border-amber-200/60 text-amber-800 hover:bg-amber-100/60"
                 }`}
               >
-                <span className="text-base font-black leading-none">{totalPendingPaymentCount}</span>
+                <div className="flex items-center gap-1">
+                  <Clock className={`h-3 w-3 ${statusFilter === "unpaid" ? "text-white" : "text-amber-600"}`} />
+                  <span className="text-base font-black leading-none">{totalPendingPaymentCount}</span>
+                </div>
                 <span className="text-[10px] font-bold mt-1">
                   {partialCount > 0 ? "باقي/معلق" : "لم يدفع"}
                 </span>
@@ -863,8 +887,8 @@ export default function Home() {
 
           {/* محتوى تبويب اللاعبين على الموبايل */}
           {mobileTab === "players" && (
-            <div className="space-y-2.5 mb-2">
-              {/* حقل البحث وزر الفلاتر الإضافية */}
+            <div className="space-y-2 mb-2">
+              {/* شريط البحث مع زر الخيارات المتقدمة ومؤشرات الفلاتر الإضافية */}
               <div className="flex items-center gap-2">
                 <div className="relative flex-1 flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-3.5 shadow-2xs focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 transition-all">
                   <Search className="h-4 w-4 shrink-0 text-slate-400" />
@@ -878,17 +902,18 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setSearch("")}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs text-slate-500 hover:bg-slate-200 transition-colors"
+                      className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer"
                     >
                       ✕
                     </button>
                   )}
                 </div>
+
                 <button
                   type="button"
                   onClick={() => setShowMobileFilters(true)}
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition active:scale-95 cursor-pointer touch-manipulation ${
-                    sortBy !== "newest" || sessionDate !== today
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition active-press cursor-pointer touch-manipulation ${
+                    sortBy !== "newest" || sessionDate !== today || paymentMonth !== currentMonth
                       ? "border-red-300 bg-red-50 text-red-600 shadow-xs ring-2 ring-red-200/50"
                       : "border-slate-200/90 bg-white text-slate-600 shadow-2xs hover:bg-slate-50"
                   }`}
@@ -896,6 +921,62 @@ export default function Home() {
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                 </button>
+              </div>
+
+              {/* شريط الفلاتر السريع المدمج (عرض الفلتر النشط وخيارات إضافية ذكية دون تكرار) */}
+              <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
+                <button
+                  type="button"
+                  className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                    statusFilter === "all"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+                  }`}
+                  onClick={() => setStatusFilter("all")}
+                >
+                  عرض الكل ({dashboardPlayers.length})
+                </button>
+
+                {statusFilter !== "all" && (
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter("all")}
+                    className="shrink-0 flex items-center gap-1 rounded-xl bg-red-50 border border-red-200 px-2.5 py-1 text-xs font-black text-red-700 active-press cursor-pointer"
+                  >
+                    <span>إلغاء الفلتر</span>
+                    <span className="text-[10px] bg-red-200/60 rounded-full h-4 w-4 flex items-center justify-center">✕</span>
+                  </button>
+                )}
+
+                {partialCount > 0 && (
+                  <button
+                    type="button"
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                      statusFilter === "partially_paid"
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "bg-white text-amber-800 border border-amber-300 hover:bg-amber-50"
+                    }`}
+                    onClick={() => setStatusFilter(statusFilter === "partially_paid" ? "all" : "partially_paid")}
+                  >
+                    <Clock className="h-3 w-3 text-amber-600" />
+                    <span>دفع جزئي ({partialCount})</span>
+                  </button>
+                )}
+
+                {todayBirthdaysCount > 0 && (
+                  <button
+                    type="button"
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                      statusFilter === "birthday"
+                        ? "bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-xs"
+                        : "bg-white text-rose-700 border border-rose-200/80 hover:bg-rose-50"
+                    }`}
+                    onClick={() => setStatusFilter(statusFilter === "birthday" ? "all" : "birthday")}
+                  >
+                    <Cake className="h-3 w-3" />
+                    <span>أعياد الميلاد ({todayBirthdaysCount})</span>
+                  </button>
+                )}
               </div>
 
               {/* نافذة الفلاتر السفلية المنبثقة للموبايل (Mobile Bottom Sheet) */}
@@ -1000,105 +1081,15 @@ export default function Home() {
                         onClick={() => setShowMobileFilters(false)}
                         className="w-full h-11 rounded-xl bg-slate-900 font-cairo text-xs font-black text-white active:scale-98 transition cursor-pointer"
                       >
-                        تطبيق الفلاتر
+                        تطبيق وإغلاق
                       </button>
                     </div>
                   </div>
                 </div>
               )}
-
-              {/* شرائح الفلترة السريعة الأفقية القابلة للسحب */}
-              <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 touch-scroll">
-                <button
-                  type="button"
-                  className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
-                    statusFilter === "all"
-                      ? "bg-slate-900 text-white shadow-xs"
-                      : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
-                  }`}
-                  onClick={() => setStatusFilter("all")}
-                >
-                  الكل ({filteredPlayers.length})
-                </button>
-                <button
-                  type="button"
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
-                    statusFilter === "present"
-                      ? "bg-emerald-600 text-white shadow-xs"
-                      : "bg-white text-emerald-700 border border-emerald-200/70 hover:bg-emerald-50"
-                  }`}
-                  onClick={() => setStatusFilter("present")}
-                >
-                  <Check className="h-3 w-3" strokeWidth={2.5} />
-                  <span>حاضر ({presentToday})</span>
-                </button>
-                <button
-                  type="button"
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
-                    statusFilter === "absent"
-                      ? "bg-rose-600 text-white shadow-xs"
-                      : "bg-white text-rose-700 border border-rose-200/70 hover:bg-rose-50"
-                  }`}
-                  onClick={() => setStatusFilter("absent")}
-                >
-                  <X className="h-3 w-3" strokeWidth={2.5} />
-                  <span>غائب ({absentToday})</span>
-                </button>
-                <button
-                  type="button"
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
-                    statusFilter === "paid"
-                      ? "bg-sky-600 text-white shadow-xs"
-                      : "bg-white text-sky-700 border border-sky-200/70 hover:bg-sky-50"
-                  }`}
-                  onClick={() => setStatusFilter("paid")}
-                >
-                  <CreditCard className="h-3 w-3" />
-                  <span>مدفوع بالكامل ({paidCount})</span>
-                </button>
-                {partialCount > 0 && (
-                  <button
-                    type="button"
-                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
-                      statusFilter === "partially_paid"
-                        ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-white text-amber-800 border border-amber-300 hover:bg-amber-50"
-                    }`}
-                    onClick={() => setStatusFilter("partially_paid")}
-                  >
-                    <Clock className="h-3 w-3 text-amber-600" />
-                    <span>دفع جزئي ({partialCount})</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
-                    statusFilter === "unpaid"
-                      ? "bg-rose-600 text-white shadow-xs"
-                      : "bg-white text-rose-700 border border-rose-200/70 hover:bg-rose-50"
-                  }`}
-                  onClick={() => setStatusFilter("unpaid")}
-                >
-                  <Clock className="h-3 w-3" />
-                  <span>لم يدفع / متبقي ({totalPendingPaymentCount})</span>
-                </button>
-                {todayBirthdaysCount > 0 && (
-                  <button
-                    type="button"
-                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active:scale-95 min-h-[36px] cursor-pointer ${
-                      statusFilter === "birthday"
-                        ? "bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-xs"
-                        : "bg-white text-rose-700 border border-rose-200/80 hover:bg-rose-50"
-                    }`}
-                    onClick={() => setStatusFilter("birthday")}
-                  >
-                    <Cake className="h-3 w-3" />
-                    <span>أعياد الميلاد ({todayBirthdaysCount})</span>
-                  </button>
-                )}
-              </div>
             </div>
           )}
+
 
           {/* محتوى تبويب الإحصائيات على الموبايل */}
           {mobileTab === "stats" && (
@@ -1638,50 +1629,11 @@ export default function Home() {
           )}
         </div>
 
-        {/* ━━━ Toast Notice ━━━ */}
-        {toast && (
-          <div
-            className={`mt-3 flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-xs font-bold shadow-sm animate-slide-up ${
-              toast.type === "error"
-                ? "border-rose-200 bg-rose-50 text-rose-800"
-                : toast.type === "info"
-                ? "border-sky-200 bg-sky-50 text-sky-800"
-                : "border-emerald-200 bg-emerald-50 text-emerald-800"
-            }`}
-            onClick={() => setToast(null)}
-          >
-            <div className="flex items-center gap-2.5">
-              <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                  toast.type === "error"
-                    ? "bg-rose-100 text-rose-600"
-                    : toast.type === "info"
-                    ? "bg-sky-100 text-sky-600"
-                    : "bg-emerald-100 text-emerald-600"
-                }`}
-              >
-                {toast.type === "error" ? (
-                  <AlertCircle className="h-4 w-4" />
-                ) : toast.type === "info" ? (
-                  <Info className="h-4 w-4" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4" />
-                )}
-              </span>
-              <span className="font-extrabold">{toast.message}</span>
-            </div>
-            <button
-              type="button"
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-black/5 transition-colors"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
+        {/* Toast placeholder removed — now rendered as fixed overlay near </main> */}
 
         {/* شريط الإجراءات الجماعية العائم الفاخر (Floating Bulk Dock) */}
         {selectedPlayerIds.length > 0 && (
-          <div className="fixed bottom-20 md:bottom-5 left-1/2 -translate-x-1/2 z-40 md:z-50 glass-dock text-white rounded-2xl shadow-2xl border border-white/15 p-2.5 sm:px-5 flex items-center justify-between gap-2.5 animate-slide-up max-w-4xl w-[96%] sm:w-[94%] mb-safe">
+          <div className="fixed bottom-22 md:bottom-6 left-1/2 -translate-x-1/2 z-40 md:z-50 glass-dock text-white rounded-2xl shadow-2xl border border-white/15 p-2.5 sm:px-5 flex items-center justify-between gap-2.5 animate-slide-up max-w-4xl w-[96%] sm:w-[94%] mb-safe">
             <div className="flex items-center gap-1.5 text-xs font-extrabold text-white shrink-0">
               <span className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-red-600 font-cairo text-xs sm:text-sm font-black text-white shadow-xs">
                 {selectedPlayerIds.length}
@@ -1692,14 +1644,14 @@ export default function Home() {
             <div className="min-w-0 flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
               <button
                 type="button"
-                className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-200 hover:bg-white/20 transition-all cursor-pointer active:scale-95"
+                className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-200 hover:bg-white/20 transition-all cursor-pointer active-press"
                 onClick={toggleFilteredSelection}
               >
                 الكل
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active-press disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedAttendance("present")}
               >
@@ -1708,7 +1660,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active-press disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedAttendance("absent")}
               >
@@ -1717,7 +1669,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active-press disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedPayment("paid")}
               >
@@ -1726,7 +1678,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-300 hover:bg-white/20 transition-all disabled:opacity-60 cursor-pointer active:scale-95"
+                className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-300 hover:bg-white/20 transition-all disabled:opacity-60 cursor-pointer active-press"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedPayment("unpaid")}
               >
@@ -1735,7 +1687,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleExportSelected}
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 px-2.5 text-xs font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 px-2.5 text-xs font-bold text-white shadow-xs transition-all active-press cursor-pointer"
                 title="تصدير كشف Excel"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5" />
@@ -1743,7 +1695,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="min-h-9 rounded-xl border border-white/20 px-2.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95 shrink-0"
+                className="min-h-9 rounded-xl border border-white/20 px-2.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all cursor-pointer active-press shrink-0"
                 onClick={() => setSelectedPlayerIds([])}
                 title="إلغاء التحديد"
               >
@@ -1756,6 +1708,29 @@ export default function Home() {
 
         {/* ━━━ Player Table & Pagination Container ━━━ */}
         <div className={activeView === "events" ? (mobileTab === "players" ? "block md:hidden" : "hidden") : (mobileTab === "players" ? "block" : "hidden md:block")}>
+          {/* شريط موجز عدد اللاعبين السريع للموبايل */}
+          <div className="md:hidden flex items-center justify-between px-1 py-1.5 mb-1 text-xs font-bold text-slate-500">
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-slate-700">قائمة اللاعبين</span>
+              <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-black text-slate-700">
+                {filteredPlayers.length}
+              </span>
+              {statusFilter !== "all" && (
+                <span className="text-[10px] font-black text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                  مفلتر
+                </span>
+              )}
+            </div>
+            {filteredPlayers.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleFilteredSelection}
+                className="text-[11px] font-black text-slate-600 hover:text-red-600 bg-white border border-slate-200 rounded-lg px-2.5 py-1 active-press cursor-pointer"
+              >
+                {selectedPlayerIds.length === filteredPlayers.length ? "إلغاء التحديد" : "تحديد المعروض"}
+              </button>
+            )}
+          </div>
           <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/60 md:bg-white md:shadow-md">
             <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 md:grid">
               <span>اللاعب</span>
@@ -1767,20 +1742,45 @@ export default function Home() {
             </div>
 
             {loading ? (
-              <div className="flex flex-col gap-3 px-6 py-6 bg-white rounded-2xl">
-                {[1,2,3,4].map((i) => (
-                  <div key={i} className="flex items-center gap-4 py-2">
-                    <div className="skeleton h-11 w-11 rounded-xl shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="skeleton h-4 w-36 rounded-lg" />
-                      <div className="skeleton h-3 w-24 rounded-lg" />
+              <>
+                {/* Mobile loading skeleton – matches the PlayerRow mobile card layout */}
+                <div className="md:hidden space-y-2.5">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs">
+                      <div className="flex items-start gap-2.5">
+                        <div className="skeleton h-5 w-5 rounded-md shrink-0 mt-1" />
+                        <div className="skeleton h-11 w-11 rounded-xl shrink-0" />
+                        <div className="flex-1 space-y-1.5 mt-0.5">
+                          <div className="skeleton h-4 w-32 rounded-lg" />
+                          <div className="skeleton h-3 w-20 rounded-md" />
+                        </div>
+                        <div className="skeleton h-9 w-9 rounded-xl shrink-0" />
+                      </div>
+                      <div className="mt-2.5 skeleton h-2.5 w-full rounded-full" />
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div className="skeleton h-11 rounded-xl" />
+                        <div className="skeleton h-11 rounded-xl" />
+                      </div>
+                      <div className="mt-2 skeleton h-10 rounded-xl" />
                     </div>
-                    <div className="skeleton h-9 w-20 rounded-xl" />
-                    <div className="skeleton h-9 w-20 rounded-xl" />
-                    <div className="skeleton h-9 w-20 rounded-xl" />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                {/* Desktop loading skeleton */}
+                <div className="hidden md:flex flex-col gap-3 px-6 py-6 bg-white rounded-2xl">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center gap-4 py-2">
+                      <div className="skeleton h-11 w-11 rounded-xl shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="skeleton h-4 w-36 rounded-lg" />
+                        <div className="skeleton h-3 w-24 rounded-lg" />
+                      </div>
+                      <div className="skeleton h-9 w-20 rounded-xl" />
+                      <div className="skeleton h-9 w-20 rounded-xl" />
+                      <div className="skeleton h-9 w-20 rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : filteredPlayers.length === 0 ? (
               <div className="flex flex-col items-center gap-3.5 px-6 py-14 sm:py-20 text-center text-slate-400 bg-white rounded-2xl">
                 <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-red-50 text-2xl sm:text-3xl text-red-600 shadow-xs">
@@ -1929,6 +1929,56 @@ export default function Home() {
           onSavePayment={handleSaveParticipantPayment}
           isSubmitting={eventActionBusy}
         />
+      )}
+      {/* ━━━ Global Fixed Toast Notification Overlay ━━━
+           Always visible on every tab and scroll position.
+           Positioned below the sticky header, above all content.
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {toast && (
+        <div
+          className={`fixed top-[66px] md:top-[80px] left-1/2 -translate-x-1/2 z-[70]
+            w-[calc(100%-32px)] max-w-md
+            flex cursor-pointer items-center justify-between gap-2.5
+            rounded-2xl border px-4 py-3 text-xs font-bold
+            shadow-xl backdrop-blur-sm animate-slide-up ${
+            toast.type === "error"
+              ? "border-rose-200 bg-rose-50/97 text-rose-800"
+              : toast.type === "info"
+              ? "border-sky-200 bg-sky-50/97 text-sky-800"
+              : "border-emerald-200 bg-emerald-50/97 text-emerald-800"
+          }`}
+          onClick={() => setToast(null)}
+          role="alert"
+          aria-live="polite"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                toast.type === "error"
+                  ? "bg-rose-100 text-rose-600"
+                  : toast.type === "info"
+                  ? "bg-sky-100 text-sky-600"
+                  : "bg-emerald-100 text-emerald-600"
+              }`}
+            >
+              {toast.type === "error" ? (
+                <AlertCircle className="h-4 w-4" />
+              ) : toast.type === "info" ? (
+                <Info className="h-4 w-4" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+            </span>
+            <span className="font-extrabold min-w-0 leading-snug">{toast.message}</span>
+          </div>
+          <button
+            type="button"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-black/5 transition-colors"
+            aria-label="إغلاق الإشعار"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       )}
     </main>
   );

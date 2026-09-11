@@ -153,21 +153,21 @@ export default function QuickPaymentModal({
               <button
                 type="button"
                 onClick={handleSetFull}
-                className="h-9 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-black hover:bg-emerald-100 active:scale-95 transition cursor-pointer"
+                className="h-10 rounded-xl border border-emerald-200 bg-emerald-50/80 text-emerald-800 text-xs font-black hover:bg-emerald-100 active-press transition cursor-pointer touch-manipulation"
               >
                 كامل ({numTotal})
               </button>
               <button
                 type="button"
                 onClick={handleSetHalf}
-                className="h-9 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs font-black hover:bg-amber-100 active:scale-95 transition cursor-pointer"
+                className="h-10 rounded-xl border border-amber-200 bg-amber-50/80 text-amber-800 text-xs font-black hover:bg-amber-100 active-press transition cursor-pointer touch-manipulation"
               >
                 النصف ({Math.round(numTotal / 2)})
               </button>
               <button
                 type="button"
                 onClick={handleSetZero}
-                className="h-9 rounded-lg border border-rose-200 bg-rose-50 text-rose-800 text-xs font-black hover:bg-rose-100 active:scale-95 transition cursor-pointer"
+                className="h-10 rounded-xl border border-rose-200 bg-rose-50/80 text-rose-800 text-xs font-black hover:bg-rose-100 active-press transition cursor-pointer touch-manipulation"
               >
                 لم يدفع (0)
               </button>

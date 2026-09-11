@@ -1269,11 +1269,11 @@ export default function Profile({
             /* ════════════ العرض الأساسي البسيط المريح ════════════ */
             <>
               {/* شريط تبويبات الموبايل لتقسيم محتوى الملف الشخصي براحة وبدون تمرير لا نهائي */}
-              <div className="sm:hidden flex items-center gap-1 p-1 bg-slate-100 rounded-2xl mb-3.5 border border-slate-200/80 sticky top-2 z-20 backdrop-blur-md shadow-2xs w-full max-w-full overflow-hidden">
+              <div className="sm:hidden flex items-center gap-1 p-1 bg-slate-100/90 rounded-2xl mb-4 border border-slate-200/80 sticky top-0 z-20 backdrop-blur-md shadow-2xs w-full max-w-full overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("overview")}
-                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press ${
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation ${
                     mobileProfileTab === "overview"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
@@ -1284,7 +1284,7 @@ export default function Profile({
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("attendance")}
-                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${
                     mobileProfileTab === "attendance"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
@@ -1300,7 +1300,7 @@ export default function Profile({
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("payments")}
-                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${
                     mobileProfileTab === "payments"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
@@ -1317,7 +1317,7 @@ export default function Profile({
                   <button
                     type="button"
                     onClick={() => setMobileProfileTab("events")}
-                    className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                    className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${
                       mobileProfileTab === "events"
                         ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                         : "text-slate-600 hover:text-slate-900"
