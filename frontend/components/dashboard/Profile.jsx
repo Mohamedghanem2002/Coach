@@ -1005,11 +1005,11 @@ export default function Profile({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4 animate-fade-in-scale"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4 animate-fade-in-scale overflow-x-hidden max-w-full"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
       dir="rtl"
     >
-      <aside className="relative max-h-[92vh] sm:max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl sm:rounded-3xl animate-bottom-sheet sm:animate-none pb-safe">
+      <aside className="relative max-h-[92vh] sm:max-h-[88vh] w-full max-w-full sm:max-w-2xl overflow-x-hidden overflow-y-auto rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl sm:rounded-3xl animate-bottom-sheet sm:animate-none pb-safe">
         {/* مؤشر سحب لطيف على شاشات الموبايل */}
         <div className="sheet-drag-handle sm:hidden" />
 
@@ -1269,28 +1269,28 @@ export default function Profile({
             /* ════════════ العرض الأساسي البسيط المريح ════════════ */
             <>
               {/* شريط تبويبات الموبايل لتقسيم محتوى الملف الشخصي براحة وبدون تمرير لا نهائي */}
-              <div className="sm:hidden flex items-center gap-1 p-1 bg-slate-100 rounded-2xl mb-3.5 border border-slate-200/80 sticky top-2 z-20 backdrop-blur-md shadow-2xs">
+              <div className="sm:hidden flex items-center gap-1 p-1 bg-slate-100 rounded-2xl mb-3.5 border border-slate-200/80 sticky top-2 z-20 backdrop-blur-md shadow-2xs w-full max-w-full overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("overview")}
-                  className={`flex-1 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press ${
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press ${
                     mobileProfileTab === "overview"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  الرئيسية
+                  <span className="truncate block">الرئيسية</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("attendance")}
-                  className={`flex-1 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
                     mobileProfileTab === "attendance"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  الحضور
+                  <span className="truncate inline-block">الحضور</span>
                   {(player.attendance || []).length > 0 && (
                     <span className="mr-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black rounded-full bg-slate-200 text-slate-700">
                       {(player.attendance || []).length}
@@ -1300,13 +1300,13 @@ export default function Profile({
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("payments")}
-                  className={`flex-1 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
                     mobileProfileTab === "payments"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  الاشتراكات
+                  <span className="truncate inline-block">الاشتراكات</span>
                   {(player.paymentHistory || []).length > 0 && (
                     <span className="mr-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black rounded-full bg-slate-200 text-slate-700">
                       {(player.paymentHistory || []).length}
@@ -1317,13 +1317,13 @@ export default function Profile({
                   <button
                     type="button"
                     onClick={() => setMobileProfileTab("events")}
-                    className={`flex-1 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                    className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
                       mobileProfileTab === "events"
                         ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
-                    الفعاليات
+                    <span className="truncate inline-block">الفعاليات</span>
                     <span className="mr-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black rounded-full bg-amber-200 text-amber-900">
                       {playerEvents.length}
                     </span>

@@ -235,7 +235,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
   }
 
   return (
-    <div className="space-y-6 animate-fade-in" dir="rtl">
+    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-x-hidden" dir="rtl">
       {/* ━━━ Header & Summary Cards ━━━ */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
         <div>
@@ -302,7 +302,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
             <span className="text-xs font-black text-slate-700">اختر الفعالية:</span>
             <span className="text-[10px] font-bold text-slate-400">{events.length} فعالية</span>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          <div className="w-full max-w-full min-w-0 flex items-center gap-2 overflow-x-auto no-scrollbar py-1 touch-scroll">
             {events.map((event) => {
               const isSelected = selectedEvent?._id === event._id;
               const typeInfo = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
@@ -538,7 +538,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                 </div>
 
                 {/* Filter Pills for Participants */}
-                <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-1">
+                <div className="w-full max-w-full min-w-0 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-1 touch-scroll">
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"

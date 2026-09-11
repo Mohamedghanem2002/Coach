@@ -724,7 +724,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen text-slate-900 selection:bg-red-500 selection:text-white pb-28 md:pb-20" dir="rtl">
+    <main className="min-h-screen text-slate-900 selection:bg-red-500 selection:text-white pb-28 md:pb-20 w-full max-w-full overflow-x-hidden" dir="rtl">
       <Header
         players={players}
         onOpenPlayer={(player) => setSelected(player)}
@@ -737,11 +737,11 @@ export default function Home() {
         eventsCount={events.length}
       />
 
-      <section className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8">
+      <section className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
         {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
         <div className="md:hidden">
           {/* شريط اختيار الصالة الأفقي السريع */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 mb-2.5 touch-scroll">
+          <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 mb-2.5 touch-scroll">
             <button
               type="button"
               className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-black transition-all active:scale-95 min-h-[38px] cursor-pointer ${
@@ -1008,7 +1008,7 @@ export default function Home() {
               )}
 
               {/* شرائح الفلترة السريعة الأفقية القابلة للسحب */}
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 touch-scroll">
+              <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 touch-scroll">
                 <button
                   type="button"
                   className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
@@ -1689,7 +1689,7 @@ export default function Home() {
               <span className="hidden xs:inline text-[11px] sm:text-xs">محدد</span>
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
+            <div className="min-w-0 flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
               <button
                 type="button"
                 className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-200 hover:bg-white/20 transition-all cursor-pointer active:scale-95"
@@ -1756,8 +1756,8 @@ export default function Home() {
 
         {/* ━━━ Player Table & Pagination Container ━━━ */}
         <div className={activeView === "events" ? (mobileTab === "players" ? "block md:hidden" : "hidden") : (mobileTab === "players" ? "block" : "hidden md:block")}>
-          <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none lg:overflow-hidden lg:border lg:border-slate-200/60 lg:bg-white lg:shadow-md">
-            <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 lg:grid">
+          <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/60 md:bg-white md:shadow-md">
+            <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 md:grid">
               <span>اللاعب</span>
               <span>العمر</span>
               <span>الفرع</span>

@@ -39,11 +39,11 @@ export default function MobileBottomNav({
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 mobile-bottom-bar px-2 pt-1.5 pb-safe"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 mobile-bottom-bar px-2 pt-1.5 pb-safe w-full max-w-full overflow-hidden"
       dir="rtl"
       aria-label="شريط التنقل الرئيسي للهاتف"
     >
-      <div className="mx-auto flex max-w-md items-center justify-between gap-1">
+      <div className="mx-auto flex max-w-md w-full items-center justify-between gap-1 overflow-hidden">
         {/* Tab 1: Players */}
         {(() => {
           const tab = tabs[0];

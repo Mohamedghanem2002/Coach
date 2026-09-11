@@ -70,9 +70,9 @@ function PlayerRow({
 
   return (
     <>
-      {/* ═══════════ MOBILE CARD LAYOUT (< lg) ═══════════ */}
+      {/* ═══════════ MOBILE CARD LAYOUT (< md) ═══════════ */}
       <div
-        className={`lg:hidden relative mb-3 rounded-2xl border p-3.5 transition-all duration-200 ${
+        className={`md:hidden relative mb-2.5 rounded-2xl border p-3 sm:p-3.5 transition-all duration-200 w-full max-w-full min-w-0 overflow-hidden box-border ${
           isSelected
             ? "border-red-300 bg-red-50/50 shadow-sm"
             : birthdayInfo?.isToday
@@ -169,16 +169,16 @@ function PlayerRow({
 
         {/* Meta Row: Branch & Age & Attendance & Quick Contact */}
         <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] font-bold text-slate-500">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700">
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 max-w-[130px] truncate">
               🏢 {player.branch}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700">
+            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 shrink-0">
               🎂 {player.age} سنة
             </span>
             {totalSessions > 0 && (
               <span
-                className={`rounded-md px-1.5 py-0.5 font-extrabold ${
+                className={`rounded-md px-1.5 py-0.5 font-extrabold shrink-0 ${
                   attendanceRate >= 75
                     ? "bg-emerald-50 text-emerald-700"
                     : attendanceRate >= 50
@@ -193,7 +193,7 @@ function PlayerRow({
 
           {/* Guardian Phone quick actions */}
           {phone && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <a
                 href={`tel:${phone}`}
                 className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 border border-blue-200/70 text-blue-700 hover:bg-blue-100 active:scale-90 transition-all touch-manipulation"
@@ -261,7 +261,7 @@ function PlayerRow({
         <button
           type="button"
           onClick={() => setShowPaymentModal(true)}
-          className={`mt-2 w-full min-h-[42px] rounded-xl px-3.5 py-2 text-xs transition-all duration-150 flex items-center justify-between active:scale-[0.98] touch-manipulation cursor-pointer ${
+          className={`mt-2 w-full max-w-full min-h-[42px] rounded-xl px-3 py-2 text-xs transition-all duration-150 flex items-center justify-between gap-2 active:scale-[0.98] touch-manipulation cursor-pointer overflow-hidden ${
             paymentStatus === "paid"
               ? "border border-emerald-200 bg-emerald-50/90 text-emerald-800"
               : paymentStatus === "partially_paid"
@@ -301,11 +301,11 @@ function PlayerRow({
         </button>
       </div>
 
-      {/* ═══════════ DESKTOP TABLE ROW (>= lg) ═══════════ */}
+      {/* ═══════════ DESKTOP TABLE ROW (>= md) ═══════════ */}
       <div
-        className={`group relative hidden min-w-0 lg:grid lg:grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] lg:items-center lg:gap-4 lg:border-b lg:border-slate-100/90 lg:px-6 lg:py-3.5 lg:hover:bg-slate-50/60 transition-all duration-200 ${
+        className={`group relative hidden min-w-0 md:grid md:grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3.5 md:hover:bg-slate-50/60 transition-all duration-200 ${
           isSelected
-            ? "lg:bg-red-50/30"
+            ? "md:bg-red-50/30"
             : birthdayInfo?.isToday
             ? "bg-rose-50/15"
             : "bg-white"
@@ -313,7 +313,7 @@ function PlayerRow({
       >
         {/* Accent left-border */}
         <div
-          className={`absolute right-0 top-0 bottom-0 hidden w-[3px] rounded-l-full lg:block transition-all duration-200 ${
+          className={`absolute right-0 top-0 bottom-0 hidden w-[3px] rounded-l-full md:block transition-all duration-200 ${
             isSelected ? "bg-red-500 opacity-100" : "bg-red-400 opacity-0 group-hover:opacity-100"
           }`}
         />

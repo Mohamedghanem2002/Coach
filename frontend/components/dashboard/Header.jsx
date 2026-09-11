@@ -79,59 +79,46 @@ export default function Header({
       {/* Animated accent line */}
       <div className="nav-accent-bottom" />
 
-      <div className="mx-auto flex min-h-[64px] w-full max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:min-h-[72px] sm:gap-6 sm:px-8">
+      <div className="mx-auto flex min-h-[58px] sm:min-h-[72px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-8 py-2 overflow-hidden">
 
         {/* Brand */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-lg shadow-red-500/25 ring-2 ring-red-100 sm:h-11 sm:w-11 transition-transform hover:scale-105">
-            <Zap className="h-5 w-5 fill-white stroke-white" />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
+          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-md ring-1 ring-red-100">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-white stroke-white" />
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+              <span className="relative inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
             </span>
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <strong className="font-cairo text-lg font-black tracking-tight text-slate-900 sm:text-xl">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1">
+              <strong className="font-cairo text-base sm:text-xl font-black tracking-tight text-slate-900 truncate">
                 Re_action
               </strong>
-              <span className="rounded-md bg-gradient-to-r from-red-600 to-rose-600 px-1.5 py-0.5 text-[9px] font-black text-white shadow-xs shadow-red-500/30">
+              <span className="rounded bg-red-600 px-1 py-0.5 text-[8px] sm:text-[9px] font-black text-white shrink-0">
                 PRO
               </span>
             </div>
-            <p className="text-[10px] font-semibold text-slate-400 leading-tight">
+            <p className="hidden sm:block text-[10px] font-semibold text-slate-400 leading-tight">
               إدارة أكاديمية الكاراتيه
             </p>
           </div>
         </div>
 
-        {/* Date & Captain pill — center on desktop, compact coach badge on mobile */}
-        <div className="flex items-center gap-2">
-          {/* Mobile Captain Badge */}
-          <div className="flex sm:hidden items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-2 py-1 shadow-2xs">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-[10px] font-black text-white">
-              {initials}
-            </div>
-            <span className="text-[11px] font-extrabold text-slate-800 max-w-[80px] truncate">
-              {firstName}
-            </span>
+        {/* Date & Captain pill — center on desktop */}
+        <div className="hidden sm:flex flex-col items-center">
+          <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-xs">
+            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {todayFormatted}
           </div>
-
-          {/* Desktop full greeting */}
-          <div className="hidden flex-col items-center sm:flex">
-            <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-xs">
-              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {todayFormatted}
-            </div>
-            <h1 className="mt-1 text-xs font-bold text-slate-700">
-              أهلاً يا كابتن{" "}
-              <span className="font-black text-red-600">{firstName}</span>
-            </h1>
-          </div>
+          <h1 className="mt-1 text-xs font-bold text-slate-700">
+            أهلاً يا كابتن{" "}
+            <span className="font-black text-red-600">{firstName}</span>
+          </h1>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
 
           {/* Events navigation button on desktop */}
           <button

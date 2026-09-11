@@ -70,11 +70,11 @@ export default function QuickPaymentModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 p-0 sm:p-4 backdrop-blur-sm animate-fade-in-scale"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 p-0 sm:p-4 backdrop-blur-sm animate-fade-in-scale overflow-x-hidden max-w-full"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       dir="rtl"
     >
-      <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-2xl flex flex-col overflow-hidden animate-bottom-sheet sm:animate-fade-in-scale">
+      <div className="relative w-full max-w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-2xl flex flex-col overflow-hidden animate-bottom-sheet sm:animate-fade-in-scale">
         {/* مقبض سحب الموبايل */}
         <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-slate-300 sm:hidden" />
 

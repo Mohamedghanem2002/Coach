@@ -29,7 +29,7 @@ export default function BranchOverview({
   if (!branches.length) return null;
 
   return (
-    <section className="mt-7">
+    <section className="mt-7 w-full max-w-full overflow-hidden">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <p className="section-eyebrow">
@@ -46,7 +46,7 @@ export default function BranchOverview({
         </span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 w-full max-w-full">
         {branches.map((branch, idx) => {
           const gradient = BRANCH_GRADIENTS[idx % BRANCH_GRADIENTS.length];
           const accentColor = BRANCH_ICON_COLORS[idx % BRANCH_ICON_COLORS.length];

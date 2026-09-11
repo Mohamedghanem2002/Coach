@@ -31,9 +31,9 @@ export default function RootLayout({ children }) {
       lang="ar"
       dir="rtl"
       data-scroll-behavior="smooth"
-      className={`${cairo.variable} h-full antialiased`}
+      className={`${cairo.variable} h-full antialiased overflow-x-hidden`}
     >
-      <body className="min-h-full flex flex-col font-cairo bg-[#f8fafc] text-slate-900 selection:bg-red-500 selection:text-white">
+      <body className="min-h-full flex flex-col font-cairo bg-[#f8fafc] text-slate-900 selection:bg-red-500 selection:text-white overflow-x-hidden w-full max-w-full">
         <Providers>{children}</Providers>
       </body>
     </html>
