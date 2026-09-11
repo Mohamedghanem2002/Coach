@@ -702,8 +702,8 @@ export default function Profile({
           navigator.userAgent,
         );
 
-      // On mobile without a registered phone, native Web Share API attaches the image file directly
-      if (!cleanPhone && isMobile && typeof navigator !== "undefined" && navigator.canShare) {
+      // Native Web Share API attaches the image file directly into WhatsApp so the user just taps Send without pasting!
+      if (typeof navigator !== "undefined" && navigator.canShare) {
         try {
           const file = new File(
             [blob],
@@ -714,8 +714,9 @@ export default function Profile({
             await navigator.share({
               files: [file],
               title: `بطاقة اللاعب ${player.name}`,
+              text: cleanPhone ? `بطاقة اللاعب: ${player.name} (${guardianPhone})` : `بطاقة اللاعب: ${player.name}`,
             });
-            setProfileNotice("✓ تم فتح المشاركة لإرسال البطاقة إلى محادثة ولي الأمر!");
+            setProfileNotice("✓ تم فتح المشاركة وجاهزة للإرسال مباشرة في واتساب!");
             return;
           }
         } catch (shareErr) {
