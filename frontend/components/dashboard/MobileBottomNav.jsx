@@ -1,5 +1,5 @@
 "use client";
-import { Users, BarChart3, Building2, Cake, Plus } from "lucide-react";
+import { Users, BarChart3, Building2, Compass, Plus, Cake } from "lucide-react";
 
 export default function MobileBottomNav({
   activeTab = "players",
@@ -8,6 +8,7 @@ export default function MobileBottomNav({
   birthdayCount = 0,
   playersCount = 0,
   branchesCount = 0,
+  eventsCount = 0,
 }) {
   const tabs = [
     {
@@ -17,9 +18,10 @@ export default function MobileBottomNav({
       badge: playersCount > 0 ? playersCount : null,
     },
     {
-      id: "stats",
-      label: "الإحصائيات",
-      icon: BarChart3,
+      id: "events",
+      label: "الفعاليات",
+      icon: Compass,
+      badge: eventsCount > 0 ? eventsCount : null,
     },
     // Center is Add Player FAB
     {
@@ -29,9 +31,9 @@ export default function MobileBottomNav({
       badge: branchesCount > 0 ? branchesCount : null,
     },
     {
-      id: "birthdays",
-      label: "أعياد الميلاد",
-      icon: Cake,
+      id: birthdayCount > 0 ? "birthdays" : "stats",
+      label: birthdayCount > 0 ? "أعياد الميلاد" : "الإحصائيات",
+      icon: birthdayCount > 0 ? Cake : BarChart3,
       badge: birthdayCount > 0 ? birthdayCount : null,
       highlight: birthdayCount > 0,
     },

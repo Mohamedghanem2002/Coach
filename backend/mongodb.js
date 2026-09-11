@@ -41,6 +41,10 @@ function getConnectedClient() {
               ownerId: 1,
               createdAt: 1,
             }),
+            db.collection("events").createIndex({
+              ownerId: 1,
+              date: -1,
+            }),
           ]);
         }
       } catch (err) {

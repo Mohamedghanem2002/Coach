@@ -26,6 +26,7 @@ import {
   Check,
   X,
   BookUser,
+  Compass,
 } from "lucide-react";
 
 export default function Profile({
@@ -35,6 +36,7 @@ export default function Profile({
   onClose,
   onUpdate,
   onDelete,
+  events = [],
 }) {
   const { data: session } = useSession();
   const captainName = session?.user?.name || "كابتن الأكاديمية";
@@ -45,6 +47,26 @@ export default function Profile({
     player.mobile ||
     player.phone ||
     "";
+
+  const playerEvents = useMemo(() => {
+    return (events || []).filter((ev) =>
+      (ev.participants || []).some((p) => p.playerId?.toString() === player._id?.toString()),
+    ).map((ev) => {
+      const part = (ev.participants || []).find((p) => p.playerId?.toString() === player._id?.toString());
+      return {
+        _id: ev._id,
+        title: ev.title,
+        type: ev.type,
+        date: ev.date,
+        location: ev.location,
+        fee: part?.totalAmount ?? ev.fee ?? 100,
+        paid: part?.paidAmount ?? 0,
+        remaining: part?.remainingAmount ?? Math.max(0, (part?.totalAmount ?? ev.fee ?? 100) - (part?.paidAmount ?? 0)),
+        paymentStatus: part?.paymentStatus || "unpaid",
+        attended: part?.attended,
+      };
+    });
+  }, [events, player._id]);
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -1795,6 +1817,59 @@ export default function Profile({
                   </div>
                 </form>
               </div>
+
+              {/* ━━━ سجل الفعاليات والرحلات المشترك بها ━━━ */}
+              {playerEvents.length > 0 && (
+                <div className="border-t border-slate-100 pt-4 pb-2">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                        <Compass className="h-3.5 w-3.5" />
+                      </div>
+                      <h3 className="font-cairo text-sm font-extrabold text-slate-900">
+                        الفعاليات والرحلات المشترك بها
+                      </h3>
+                    </div>
+                    <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                      {playerEvents.length} فعالية
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {playerEvents.map((ev) => (
+                      <div
+                        key={ev._id}
+                        className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 p-2.5 text-xs gap-2"
+                      >
+                        <div>
+                          <strong className="font-bold text-slate-900 block">{ev.title}</strong>
+                          <span className="text-[10px] font-semibold text-slate-500">
+                            {ev.date} {ev.location ? `• ${ev.location}` : ""}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black border ${
+                              ev.paymentStatus === "paid"
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                : ev.paymentStatus === "partially_paid"
+                                ? "bg-amber-50 text-amber-800 border-amber-300"
+                                : "bg-rose-50 text-rose-800 border-rose-200"
+                            }`}
+                          >
+                            {ev.paymentStatus === "paid"
+                              ? `✓ مدفوع (${ev.fee} ج.م)`
+                              : ev.paymentStatus === "partially_paid"
+                              ? `دفع ${ev.paid} • باقي ${ev.remaining} ج.م`
+                              : `لم يدفع (باقي ${ev.fee} ج.م)`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* سجل الحضور والغياب */}
               <div className="border-t border-slate-100 pt-4 pb-4">

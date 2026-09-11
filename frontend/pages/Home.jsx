@@ -34,6 +34,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Info,
+  Compass,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -46,6 +47,10 @@ import BranchOverview from "../components/dashboard/BranchOverview";
 import BirthdayReminder from "../components/dashboard/BirthdayReminder";
 import Pagination from "../components/dashboard/Pagination";
 import MobileBottomNav from "../components/dashboard/MobileBottomNav";
+import EventsView from "../components/dashboard/EventsView";
+import AddEventModal from "../components/dashboard/AddEventModal";
+import AddParticipantsModal from "../components/dashboard/AddParticipantsModal";
+import EventPaymentModal from "../components/dashboard/EventPaymentModal";
 import { exportPlayersToCSV } from "../lib/export-utils";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
@@ -78,6 +83,15 @@ export default function Home() {
   const [mobileTab, setMobileTab] = useState("players");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  // Events management state
+  const [events, setEvents] = useState([]);
+  const [activeView, setActiveView] = useState("players"); // "players" | "events"
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [addParticipantsEvent, setAddParticipantsEvent] = useState(null);
+  const [paymentParticipantData, setPaymentParticipantData] = useState(null);
+  const [eventActionBusy, setEventActionBusy] = useState(false);
+
   useEffect(() => {
     const handleCongratulated = () => setCongratulatedTick((t) => t + 1);
     window.addEventListener("birthday_congratulated", handleCongratulated);
@@ -101,20 +115,23 @@ export default function Home() {
     Promise.all([
       fetch("/api/players", { cache: "no-store" }),
       fetch("/api/branches", { cache: "no-store" }),
+      fetch("/api/events", { cache: "no-store" }),
     ])
-      .then(async ([playersResponse, branchesResponse]) => {
+      .then(async ([playersResponse, branchesResponse, eventsResponse]) => {
         if (playersResponse.status === 401 || branchesResponse.status === 401) {
           router.push("/auth/signin");
           return;
         }
         if (!playersResponse.ok || !branchesResponse.ok) throw new Error();
-        const [playersData, branchesData] = await Promise.all([
+        const [playersData, branchesData, eventsData] = await Promise.all([
           playersResponse.json(),
           branchesResponse.json(),
+          eventsResponse.ok ? eventsResponse.json() : [],
         ]);
         if (!cancelled) {
           setPlayers(playersData.map(normalizePlayer));
           setBranches(branchesData);
+          setEvents(Array.isArray(eventsData) ? eventsData : []);
         }
       })
       .catch(() => {
@@ -553,11 +570,171 @@ export default function Home() {
     }
   }
 
+  // Event handlers
+  async function handleSaveEvent(data) {
+    setEventActionBusy(true);
+    try {
+      const isEditing = Boolean(data.id);
+      const res = await fetch("/api/events", {
+        method: isEditing ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      if (isEditing) {
+        setEvents((prev) => prev.map((e) => (e._id === saved._id ? saved : e)));
+        showToast("تم تحديث بيانات الفعالية بنجاح");
+      } else {
+        setEvents((prev) => [saved, ...prev]);
+        showToast("تم إنشاء الفعالية بنجاح");
+      }
+      setShowAddEventModal(false);
+      setEditingEvent(null);
+    } catch {
+      showToast("تعذر حفظ الفعالية، يرجى المحاولة ثانية", "error");
+    } finally {
+      setEventActionBusy(false);
+    }
+  }
+
+  async function handleDeleteEvent(eventId) {
+    try {
+      const res = await fetch(`/api/events?id=${eventId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setEvents((prev) => prev.filter((e) => e._id !== eventId));
+      showToast("تم حذف الفعالية بنجاح");
+    } catch {
+      showToast("تعذر حذف الفعالية", "error");
+    }
+  }
+
+  async function handleAddParticipants({ eventId, playerIds, fee }) {
+    setEventActionBusy(true);
+    try {
+      const res = await fetch("/api/events", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId,
+          action: "add_participants",
+          playerIds,
+          fee,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      showToast(`تمت إضافة (${playerIds.length}) لاعبين إلى الفعالية بنجاح`);
+      setAddParticipantsEvent(null);
+    } catch {
+      showToast("تعذر إضافة اللاعبين للفعالية", "error");
+    } finally {
+      setEventActionBusy(false);
+    }
+  }
+
+  async function handleSaveParticipantPayment({ playerId, paidAmount, totalAmount, notes }) {
+    if (!paymentParticipantData?.event?._id) return;
+    setEventActionBusy(true);
+    try {
+      const res = await fetch("/api/events", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: paymentParticipantData.event._id,
+          action: "update_payment",
+          playerId,
+          paidAmount,
+          totalAmount,
+          notes,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      showToast("تم تسجيل دفعة الفعالية بنجاح");
+      setPaymentParticipantData(null);
+    } catch {
+      showToast("تعذر حفظ دفعة الفعالية", "error");
+    } finally {
+      setEventActionBusy(false);
+    }
+  }
+
+  async function handleUpdateParticipantAttendance(eventId, playerId, attended) {
+    try {
+      const res = await fetch("/api/events", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId,
+          action: "update_attendance",
+          playerId,
+          attended,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+    } catch {
+      showToast("تعذر تحديث الحضور", "error");
+    }
+  }
+
+  async function handleRemoveParticipant(eventId, playerId) {
+    try {
+      const res = await fetch("/api/events", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId,
+          action: "remove_participant",
+          playerId,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      showToast("تمت إزالة اللاعب من الفعالية");
+    } catch {
+      showToast("تعذر إزالة اللاعب", "error");
+    }
+  }
+
+  async function handleBulkParticipantPayment({ eventId, playerIds, status }) {
+    try {
+      const res = await fetch("/api/events", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId,
+          action: "bulk_payment",
+          playerIds,
+          status,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      showToast("تم تحديث السداد الجماعي بنجاح");
+    } catch {
+      showToast("تعذر تحديث السداد الجماعي", "error");
+    }
+  }
+
   return (
     <main className="min-h-screen text-slate-900 selection:bg-red-500 selection:text-white pb-28 md:pb-20" dir="rtl">
       <Header
         players={players}
         onOpenPlayer={(player) => setSelected(player)}
+        currentView={activeView}
+        onToggleEventsView={() => {
+          const next = activeView === "events" ? "players" : "events";
+          setActiveView(next);
+          setMobileTab(next === "events" ? "events" : "players");
+        }}
+        eventsCount={events.length}
       />
 
       <section className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8">
@@ -949,10 +1126,94 @@ export default function Home() {
               />
             </div>
           )}
+
+          {/* محتوى تبويب الفعاليات على الموبايل */}
+          {mobileTab === "events" && (
+            <div className="mb-6">
+              <EventsView
+                events={events}
+                players={players}
+                branches={branches}
+                onOpenCreateEvent={() => {
+                  setEditingEvent(null);
+                  setShowAddEventModal(true);
+                }}
+                onOpenEditEvent={(event) => {
+                  setEditingEvent(event);
+                  setShowAddEventModal(true);
+                }}
+                onDeleteEvent={handleDeleteEvent}
+                onOpenAddParticipants={(event) => setAddParticipantsEvent(event)}
+                onOpenPaymentModal={(participant, event) =>
+                  setPaymentParticipantData({ participant, event })
+                }
+                onUpdateAttendance={handleUpdateParticipantAttendance}
+                onRemoveParticipant={handleRemoveParticipant}
+                onBulkPayment={handleBulkParticipantPayment}
+                showToast={showToast}
+              />
+            </div>
+          )}
         </div>
 
+        {/* ━━━ شريط التبديل العلوي على الديسكتوب بين اللاعبين والفعاليات ━━━ */}
+        <div className="hidden md:flex items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => setActiveView("players")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+              activeView === "players"
+                ? "bg-slate-900 text-white shadow-md"
+                : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            <span>اللاعبين والاشتراكات الشهرية ({players.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView("events")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+              activeView === "events"
+                ? "bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-500/20"
+                : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+            }`}
+          >
+            <Compass className="h-4 w-4" />
+            <span>الفعاليات والرحلات ({events.length})</span>
+          </button>
+        </div>
+
+        {/* عرض الفعاليات على الديسكتوب */}
+        {activeView === "events" && (
+          <div className="hidden md:block mb-8">
+            <EventsView
+              events={events}
+              players={players}
+              branches={branches}
+              onOpenCreateEvent={() => {
+                setEditingEvent(null);
+                setShowAddEventModal(true);
+              }}
+              onOpenEditEvent={(event) => {
+                setEditingEvent(event);
+                setShowAddEventModal(true);
+              }}
+              onDeleteEvent={handleDeleteEvent}
+              onOpenAddParticipants={(event) => setAddParticipantsEvent(event)}
+              onOpenPaymentModal={(participant, event) =>
+                setPaymentParticipantData({ participant, event })
+              }
+              onUpdateAttendance={handleUpdateParticipantAttendance}
+              onRemoveParticipant={handleRemoveParticipant}
+              onBulkPayment={handleBulkParticipantPayment}
+              showToast={showToast}
+            />
+          </div>
+        )}
+
         {/* ━━━ Hero Banner (على الديسكتوب فقط) ━━━ */}
-        <div className="hidden md:block relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white p-5 shadow-md sm:p-7">
+        <div className={activeView === "players" ? "hidden md:block relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white p-5 shadow-md sm:p-7" : "hidden"}>
           {/* Decorative gradient blobs */}
           <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-red-500/6 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-8 left-1/2 h-32 w-64 -translate-x-1/2 rounded-full bg-slate-200/40 blur-2xl" />
@@ -1005,8 +1266,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* تذكار أعياد ميلاد أبطال الأكاديمية للكابتن (على الديسكتوب فقط) */}
-        <div className="hidden md:block">
+        {/* ━━━ لوحات اللاعبين والتحضير (على الديسكتوب) ━━━ */}
+        <div className={activeView === "players" ? "contents" : "hidden"}>
+          {/* تذكار أعياد ميلاد أبطال الأكاديمية للكابتن (على الديسكتوب فقط) */}
+          <div className="hidden md:block">
           <BirthdayReminder
             players={dashboardPlayers}
             captainName={captainName}
@@ -1452,9 +1715,10 @@ export default function Home() {
             </div>
           </div>
         )}
+        </div>
 
         {/* ━━━ Player Table & Pagination Container ━━━ */}
-        <div className={mobileTab === "players" ? "block" : "hidden md:block"}>
+        <div className={activeView === "events" ? (mobileTab === "players" ? "block md:hidden" : "hidden") : (mobileTab === "players" ? "block" : "hidden md:block")}>
           <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none lg:overflow-hidden lg:border lg:border-slate-200/60 lg:bg-white lg:shadow-md">
             <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 lg:grid">
               <span>اللاعب</span>
@@ -1542,12 +1806,19 @@ export default function Home() {
         activeTab={mobileTab}
         onChangeTab={(tab) => {
           setMobileTab(tab);
+          if (tab === "events") {
+            setActiveView("events");
+          } else if (tab === "players") {
+            setActiveView("players");
+          }
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         onOpenAddPlayer={() => setShowForm(true)}
-        todayBirthdaysCount={todayBirthdaysCount}
+        birthdayCount={todayBirthdaysCount}
+        playersCount={players.length}
+        branchesCount={branches.length}
+        eventsCount={events.length}
       />
-
 
       {showForm && (
         <AddPlayerModal
@@ -1583,6 +1854,43 @@ export default function Home() {
           onUpdate={updatePlayer}
           onDelete={deletePlayer}
           paymentMonth={paymentMonth}
+          events={events}
+        />
+      )}
+
+      {showAddEventModal && (
+        <AddEventModal
+          isOpen={showAddEventModal}
+          initialEvent={editingEvent}
+          onClose={() => {
+            setShowAddEventModal(false);
+            setEditingEvent(null);
+          }}
+          onSave={handleSaveEvent}
+          isSubmitting={eventActionBusy}
+        />
+      )}
+
+      {addParticipantsEvent && (
+        <AddParticipantsModal
+          isOpen={Boolean(addParticipantsEvent)}
+          event={addParticipantsEvent}
+          players={players}
+          branches={branches}
+          onClose={() => setAddParticipantsEvent(null)}
+          onAddParticipants={handleAddParticipants}
+          isSubmitting={eventActionBusy}
+        />
+      )}
+
+      {paymentParticipantData && (
+        <EventPaymentModal
+          isOpen={Boolean(paymentParticipantData)}
+          participant={paymentParticipantData.participant}
+          eventTitle={paymentParticipantData.event?.title}
+          onClose={() => setPaymentParticipantData(null)}
+          onSavePayment={handleSaveParticipantPayment}
+          isSubmitting={eventActionBusy}
         />
       )}
     </main>

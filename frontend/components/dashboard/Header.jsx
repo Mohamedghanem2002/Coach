@@ -6,6 +6,7 @@ import {
   Cake,
   CalendarDays,
   ChevronRight,
+  Compass,
   LogOut,
   MessageCircle,
   User,
@@ -17,7 +18,13 @@ import {
 } from "../../lib/dashboard-utils";
 import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
 
-export default function Header({ players = [], onOpenPlayer }) {
+export default function Header({
+  players = [],
+  onOpenPlayer,
+  currentView = "players",
+  onToggleEventsView,
+  eventsCount = 0,
+}) {
   const { data: session } = useSession();
   const router = useRouter();
   const [showBirthdayMenu, setShowBirthdayMenu] = useState(false);
@@ -112,6 +119,28 @@ export default function Header({ players = [], onOpenPlayer }) {
 
         {/* Actions */}
         <div className="flex items-center gap-2 sm:gap-2.5">
+
+          {/* Events navigation button on desktop */}
+          <button
+            type="button"
+            onClick={onToggleEventsView}
+            className={`hidden sm:flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer ${
+              currentView === "events"
+                ? "border-red-500 bg-red-600 text-white shadow-sm shadow-red-500/20"
+                : "border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white shadow-xs"
+            }`}
+            title="إدارة الفعاليات والرحلات"
+          >
+            <Compass className="h-4 w-4" />
+            <span className="font-cairo">الفعاليات والرحلات</span>
+            {eventsCount > 0 && (
+              <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-black ${
+                currentView === "events" ? "bg-white text-red-600" : "bg-amber-100 text-amber-800"
+              }`}>
+                {eventsCount}
+              </span>
+            )}
+          </button>
 
           {/* Birthday button */}
           <div className="relative" ref={menuRef}>

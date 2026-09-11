@@ -14,6 +14,7 @@ function ensureDbFile() {
       users: [],
       branches: [],
       players: [],
+      events: [],
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), "utf-8");
   }
@@ -27,6 +28,7 @@ function loadData() {
     if (!Array.isArray(data.users)) data.users = [];
     if (!Array.isArray(data.branches)) data.branches = [];
     if (!Array.isArray(data.players)) data.players = [];
+    if (!Array.isArray(data.events)) data.events = [];
 
     // Ensure _id are ObjectId instances
     data.users.forEach((u) => {
@@ -38,11 +40,14 @@ function loadData() {
     data.players.forEach((p) => {
       if (p._id && typeof p._id === "string") p._id = new ObjectId(p._id);
     });
+    data.events.forEach((e) => {
+      if (e._id && typeof e._id === "string") e._id = new ObjectId(e._id);
+    });
 
     return data;
   } catch (err) {
     console.error("Failed to read local_db.json, using in-memory store", err);
-    return { users: [], branches: [], players: [] };
+    return { users: [], branches: [], players: [], events: [] };
   }
 }
 
@@ -65,6 +70,10 @@ function getStore() {
 
 function matchId(a, b) {
   if (!a || !b) return false;
+  if (typeof b === "object" && Array.isArray(b.$in)) {
+    const aStr = a.toString();
+    return b.$in.some((item) => item && item.toString() === aStr);
+  }
   return a.toString() === b.toString();
 }
 
@@ -85,6 +94,12 @@ export function getLocalDbClient() {
                 return currentData.players.filter((p) => {
                   if (filter.ownerId && p.ownerId !== filter.ownerId) return false;
                   if (filter.branch && p.branch !== filter.branch) return false;
+                  return true;
+                }).length;
+              }
+              if (collectionName === "events") {
+                return (currentData.events || []).filter((e) => {
+                  if (filter.ownerId && e.ownerId !== filter.ownerId) return false;
                   return true;
                 }).length;
               }
@@ -138,6 +153,13 @@ export function getLocalDbClient() {
               } else if (collectionName === "players") {
                 items = currentData.players.filter((p) => {
                   if (filter.ownerId && p.ownerId !== filter.ownerId) return false;
+                  if (filter._id && !matchId(p._id, filter._id)) return false;
+                  return true;
+                });
+              } else if (collectionName === "events") {
+                items = (currentData.events || []).filter((e) => {
+                  if (filter.ownerId && e.ownerId !== filter.ownerId) return false;
+                  if (filter._id && !matchId(e._id, filter._id)) return false;
                   return true;
                 });
               }
@@ -147,7 +169,9 @@ export function getLocalDbClient() {
                   return {
                     async toArray() {
                       const copy = [...items];
-                      if (sortCriteria?.createdAt === -1) {
+                      if (sortCriteria?.date === -1) {
+                        copy.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+                      } else if (sortCriteria?.createdAt === -1) {
                         copy.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                       } else if (sortCriteria?.createdAt === 1) {
                         copy.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -196,6 +220,16 @@ export function getLocalDbClient() {
                 );
               }
 
+              if (collectionName === "events") {
+                return (
+                  (currentData.events || []).find((e) => {
+                    if (filter.ownerId && e.ownerId !== filter.ownerId) return false;
+                    if (filter._id && !matchId(e._id, filter._id)) return false;
+                    return true;
+                  }) || null
+                );
+              }
+
               return null;
             },
 
@@ -209,6 +243,9 @@ export function getLocalDbClient() {
                 currentData.branches.push(newDoc);
               } else if (collectionName === "players") {
                 currentData.players.push(newDoc);
+              } else if (collectionName === "events") {
+                if (!Array.isArray(currentData.events)) currentData.events = [];
+                currentData.events.push(newDoc);
               }
 
               saveData(currentData);
@@ -229,6 +266,32 @@ export function getLocalDbClient() {
                   }
                   if (update.$set) {
                     Object.assign(player, update.$set);
+                  }
+                  saveData(currentData);
+                  return { modifiedCount: 1 };
+                }
+              }
+              if (collectionName === "events") {
+                const ev = (currentData.events || []).find(
+                  (e) => filter.ownerId === e.ownerId && matchId(e._id, filter._id)
+                );
+                if (ev) {
+                  if (update.$set) {
+                    Object.assign(ev, update.$set);
+                  }
+                  if (update.$push?.participants) {
+                    if (!Array.isArray(ev.participants)) ev.participants = [];
+                    if (update.$push.participants.$each) {
+                      ev.participants.push(...update.$push.participants.$each);
+                    } else {
+                      ev.participants.push(update.$push.participants);
+                    }
+                  }
+                  if (update.$pull?.participants) {
+                    const removeId = update.$pull.participants.playerId;
+                    ev.participants = (ev.participants || []).filter(
+                      (p) => p.playerId?.toString() !== removeId?.toString()
+                    );
                   }
                   saveData(currentData);
                   return { modifiedCount: 1 };
@@ -267,6 +330,7 @@ export function getLocalDbClient() {
               let list = [];
               if (collectionName === "branches") list = currentData.branches;
               if (collectionName === "players") list = currentData.players;
+              if (collectionName === "events") list = currentData.events || [];
 
               const idx = list.findIndex((item) => {
                 if (filter.ownerId && item.ownerId !== filter.ownerId) return false;

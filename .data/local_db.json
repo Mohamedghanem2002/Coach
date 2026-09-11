@@ -91,5 +91,55 @@
       "paidAmount": 100,
       "remainingAmount": 0
     }
+  ],
+  "events": [
+    {
+      "_id": "6aa42baa15e16b5a77c01ee0",
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "title": "حمام سباحه",
+      "type": "trip",
+      "date": "2026-09-12",
+      "time": "08:00 ص",
+      "location": "",
+      "fee": 100,
+      "description": "",
+      "status": "upcoming",
+      "participants": [
+        {
+          "playerId": "6aa29105131cd6a66b5f1aeb",
+          "name": "rrrrr",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 100,
+          "paidAmount": 0,
+          "remainingAmount": 100,
+          "paymentStatus": "unpaid",
+          "paymentDate": "",
+          "notes": "",
+          "attended": false
+        },
+        {
+          "playerId": "6aa3f720ec0323d6dd6fe90b",
+          "name": "mahmoud",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "أزرق 3",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 100,
+          "paidAmount": 0,
+          "remainingAmount": 100,
+          "paymentStatus": "unpaid",
+          "paymentDate": "",
+          "notes": "",
+          "attended": false
+        }
+      ],
+      "createdAt": "2026-09-11T16:26:18.055Z",
+      "updatedAt": "2026-09-11T16:26:30.822Z"
+    }
   ]
 }
