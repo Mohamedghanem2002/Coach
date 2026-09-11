@@ -122,7 +122,8 @@
       "_id": "6aa42d4c15e16b5a77c01ee1",
       "totalAmount": 100,
       "paidAmount": 100,
-      "remainingAmount": 0
+      "remainingAmount": 0,
+      "lastBirthdayWishedYear": 2026
     }
   ],
   "events": [
