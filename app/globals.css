@@ -327,3 +327,63 @@ img {
   background: linear-gradient(90deg, transparent, #dc2626 30%, #f97316 70%, transparent);
   opacity: 0.7;
 }
+
+/* ─── Mobile-First Product Experience Utilities ──────────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes bottomSheetSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-bottom-sheet {
+  animation: bottomSheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Safe area padding for notches and home bars */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.mb-safe {
+  margin-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
+}
+
+/* Fast touch response */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Smooth mobile scrolling */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Hide scrollbars elegantly */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Mobile glass bottom nav */
+.mobile-bottom-bar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.05);
+}

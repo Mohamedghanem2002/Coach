@@ -228,25 +228,28 @@ export default function AddPlayerModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md animate-fade-in-scale"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 p-0 sm:p-4 backdrop-blur-md animate-fade-in-scale"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
       dir="rtl"
     >
       <form
-        className="relative w-full max-w-lg rounded-3xl border border-slate-200/90 bg-white p-6 shadow-2xl sm:p-8"
+        className="relative w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-slate-200/90 bg-white max-h-[92vh] flex flex-col shadow-2xl animate-bottom-sheet sm:animate-fade-in-scale"
         onSubmit={submit}
       >
+        {/* مؤشر السحب على الموبايل */}
+        <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-slate-300 sm:hidden" />
+
         {/* رأس النافذة */}
-        <div className="mb-5 flex items-start justify-between border-b border-slate-100 pb-4">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 sm:px-7 sm:py-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-rose-600 text-white shadow-xs text-lg font-bold">
               🥋
             </div>
             <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-red-600">
+              <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-red-600">
                 تسجيل لاعب جديد
               </p>
-              <h2 className="font-cairo text-lg font-black text-slate-900 sm:text-xl">
+              <h2 className="font-cairo text-base sm:text-xl font-black text-slate-900">
                 إضافة بطل للأكاديمية
               </h2>
             </div>
@@ -261,227 +264,238 @@ export default function AddPlayerModal({
         </div>
 
         {branches.length === 0 ? (
-          <div className="grid gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-7 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-2xl text-amber-600">
-              🏢
-            </div>
-            <strong className="font-cairo text-base font-extrabold text-slate-800">
-              يرجى إضافة صالة أو فرع أولاً
-            </strong>
-            <p className="text-xs text-slate-500">
-              لا يمكن تسجيل أي لاعب دون تحديد الصالة التابع لها.
-            </p>
-            <button
-              type="button"
-              className="mx-auto mt-2 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-red-700 active:scale-95 cursor-pointer"
-              onClick={onManageBranches}
-            >
-              إدارة صالات الأكاديمية
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3.5">
-            {/* اسم اللاعب */}
-            <div>
-              <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                اسم اللاعب الرباعي <span className="text-red-500">*</span>
-              </label>
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                placeholder="مثال: يوسف أحمد محمد علي"
-              />
-            </div>
-
-            {/* تاريخ الميلاد والفرع */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                  تاريخ الميلاد <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <input
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="اليوم"
-                    maxLength={2}
-                    value={dobDay}
-                    onChange={(e) => handleDayChange(e.target.value)}
-                    onPaste={handleDatePaste}
-                    required
-                  />
-                  <input
-                    ref={monthInputRef}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="الشهر"
-                    maxLength={2}
-                    value={dobMonth}
-                    onChange={(e) => handleMonthChange(e.target.value)}
-                    onPaste={handleDatePaste}
-                    required
-                  />
-                  <input
-                    ref={yearInputRef}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="السنة"
-                    maxLength={4}
-                    value={dobYear}
-                    onChange={(e) => handleYearChange(e.target.value)}
-                    onPaste={handleDatePaste}
-                    required
-                  />
-                </div>
-                {calculatedAge !== null && (
-                  <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg px-2 py-0.5 animate-slide-up">
-                    <span>✓</span>
-                    <span>العمر المحسوب: {calculatedAge} سنة</span>
-                  </div>
-                )}
+          <div className="p-6">
+            <div className="grid gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-7 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-2xl text-amber-600">
+                🏢
               </div>
-
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                  الصالة / الفرع <span className="text-red-500">*</span>
-                </label>
-                <select
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                  value={branch}
-                  onChange={(e) => setBranch(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>
-                    اختر صالة التدريب
-                  </option>
-                  {branches.map((item) => (
-                    <option key={item._id} value={item.name}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* الحزام والمستوى */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                  حزام الكاراتيه <span className="text-red-500">*</span>
-                </label>
-                <select
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100 cursor-pointer"
-                  value={belt}
-                  onChange={(e) => setBelt(e.target.value)}
-                  required
-                >
-                  {BELTS.map((b) => (
-                    <option key={b.name} value={b.name}>
-                      🥋 حزام {b.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                  المستوى (Level) <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {LEVELS.map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => setLevel(lvl)}
-                      className={`rounded-xl py-2 text-xs font-black transition cursor-pointer active:scale-95 ${
-                        level === lvl
-                          ? "bg-red-600 text-white shadow-xs shadow-red-500/30 ring-2 ring-red-200"
-                          : "border border-slate-200 bg-slate-50/60 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* رقم ولي الأمر مع خيار استيراد جهات الاتصال */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-extrabold text-slate-700">
-                  رقم هاتف ولي الأمر <span className="text-slate-400 font-normal">(اختياري لمراسلات الواتساب)</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={handlePickContact}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 hover:bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-700 border border-red-200/60 transition active:scale-95 cursor-pointer"
-                  title="اختيار رقم ولي الأمر مباشرة من سجل الأسماء بالهاتف"
-                >
-                  <BookUser className="h-3.5 w-3.5 text-red-600" />
-                  <span>جهات الاتصال 📱</span>
-                </button>
-              </div>
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                type="tel"
-                inputMode="tel"
-                value={guardianPhone}
-                onChange={(e) => setGuardianPhone(toEnglishDigits(e.target.value))}
-                placeholder="01xxxxxxxxx"
-              />
-              {contactNotice && (
-                <p className="mt-1.5 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1 animate-slide-up">
-                  {contactNotice}
-                </p>
-              )}
-            </div>
-
-            {/* صورة اللاعب */}
-            <div>
-              <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                صورة اللاعب الشخصية
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  className="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-700 file:mr-2 file:rounded-lg file:border-0 file:bg-red-100 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-red-700 hover:file:bg-red-200 cursor-pointer"
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                />
-                {photo && (
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 ring-2 ring-red-100 shadow-xs">
-                    <img
-                      src={photo}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {error && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-center text-xs font-bold text-rose-700">
-                {error}
-              </div>
-            )}
-
-            <div className="pt-2">
+              <strong className="font-cairo text-base font-extrabold text-slate-800">
+                يرجى إضافة صالة أو فرع أولاً
+              </strong>
+              <p className="text-xs text-slate-500">
+                لا يمكن تسجيل أي لاعب دون تحديد الصالة التابع لها.
+              </p>
               <button
-                className="w-full rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-3 font-cairo text-sm font-black text-white shadow-md shadow-red-500/25 transition-all hover:brightness-110 active:scale-98 disabled:opacity-60 cursor-pointer"
-                type="submit"
-                disabled={submitting}
+                type="button"
+                className="mx-auto mt-2 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-red-700 active:scale-95 cursor-pointer"
+                onClick={onManageBranches}
               >
-                {submitting ? "جاري تسجيل اللاعب..." : "✓ حفظ بيانات اللاعب"}
+                إدارة صالات الأكاديمية
               </button>
             </div>
           </div>
+        ) : (
+          <>
+            <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 space-y-4 touch-scroll">
+              {/* اسم اللاعب */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                  اسم اللاعب الرباعي <span className="text-red-500">*</span>
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 sm:py-2.5 text-base sm:text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder="مثال: يوسف أحمد محمد علي"
+                />
+              </div>
+
+              {/* تاريخ الميلاد والفرع */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                    تاريخ الميلاد <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <input
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-3 sm:py-2.5 text-center text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="اليوم"
+                      maxLength={2}
+                      value={dobDay}
+                      onChange={(e) => handleDayChange(e.target.value)}
+                      onPaste={handleDatePaste}
+                      required
+                    />
+                    <input
+                      ref={monthInputRef}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-3 sm:py-2.5 text-center text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="الشهر"
+                      maxLength={2}
+                      value={dobMonth}
+                      onChange={(e) => handleMonthChange(e.target.value)}
+                      onPaste={handleDatePaste}
+                      required
+                    />
+                    <input
+                      ref={yearInputRef}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-3 sm:py-2.5 text-center text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="السنة"
+                      maxLength={4}
+                      value={dobYear}
+                      onChange={(e) => handleYearChange(e.target.value)}
+                      onPaste={handleDatePaste}
+                      required
+                    />
+                  </div>
+                  {calculatedAge !== null && (
+                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg px-2.5 py-1 animate-slide-up">
+                      <span>✓</span>
+                      <span>العمر المحسوب: {calculatedAge} سنة</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                    الصالة / الفرع <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 sm:py-2.5 text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100 cursor-pointer min-h-[44px]"
+                    value={branch}
+                    onChange={(e) => setBranch(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>
+                      اختر صالة التدريب
+                    </option>
+                    {branches.map((item) => (
+                      <option key={item._id} value={item.name}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* الحزام والمستوى */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                    حزام الكاراتيه <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 sm:py-2.5 text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100 cursor-pointer min-h-[44px]"
+                    value={belt}
+                    onChange={(e) => setBelt(e.target.value)}
+                    required
+                  >
+                    {BELTS.map((b) => (
+                      <option key={b.name} value={b.name}>
+                        🥋 حزام {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                    المستوى (Level) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {LEVELS.map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setLevel(lvl)}
+                        className={`h-11 rounded-xl text-xs font-black transition cursor-pointer active:scale-95 flex items-center justify-center ${
+                          level === lvl
+                            ? "bg-red-600 text-white shadow-xs shadow-red-500/30 ring-2 ring-red-200"
+                            : "border border-slate-200 bg-slate-50/60 text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* رقم ولي الأمر مع خيار استيراد جهات الاتصال */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-extrabold text-slate-700">
+                    رقم هاتف ولي الأمر <span className="text-slate-400 font-normal text-[11px]">(للواتساب)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handlePickContact}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 hover:bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 border border-red-200/60 transition active:scale-95 cursor-pointer min-h-[32px]"
+                    title="اختيار رقم ولي الأمر مباشرة من سجل الأسماء بالهاتف"
+                  >
+                    <BookUser className="h-4 w-4 text-red-600" />
+                    <span>سجل الهاتف 📱</span>
+                  </button>
+                </div>
+                <input
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 sm:py-2.5 text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                  type="tel"
+                  inputMode="tel"
+                  value={guardianPhone}
+                  onChange={(e) => setGuardianPhone(toEnglishDigits(e.target.value))}
+                  placeholder="01xxxxxxxxx"
+                />
+                {contactNotice && (
+                  <p className="mt-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 animate-slide-up">
+                    {contactNotice}
+                  </p>
+                )}
+              </div>
+
+              {/* صورة اللاعب */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                  صورة اللاعب الشخصية
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-700 file:mr-2 file:rounded-lg file:border-0 file:bg-red-100 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-red-700 hover:file:bg-red-200 cursor-pointer"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                  />
+                  {photo && (
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 ring-2 ring-red-100 shadow-xs">
+                      <img
+                        src={photo}
+                        alt="Preview"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {error && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-xs font-bold text-rose-700">
+                  {error}
+                </div>
+              )}
+            </div>
+
+            {/* زر الحفظ الثابت بالأسفل لتجربة استخدام سهلة بيد واحدة */}
+            <div className="border-t border-slate-100 bg-white/95 backdrop-blur px-5 py-3 sm:px-7 sm:py-4 shrink-0 pb-safe">
+              <button
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 font-cairo text-sm font-black text-white shadow-md shadow-red-500/25 transition-all hover:brightness-110 active:scale-98 disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+                type="submit"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <span>جاري تسجيل اللاعب...</span>
+                ) : (
+                  <>
+                    <span>✓ حفظ بيانات اللاعب</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </>
         )}
       </form>
     </div>

@@ -44,6 +44,7 @@ import AddPlayerModal from "../components/dashboard/AddPlayerModal";
 import BranchOverview from "../components/dashboard/BranchOverview";
 import BirthdayReminder from "../components/dashboard/BirthdayReminder";
 import Pagination from "../components/dashboard/Pagination";
+import MobileBottomNav from "../components/dashboard/MobileBottomNav";
 import { exportPlayersToCSV } from "../lib/export-utils";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
@@ -73,6 +74,8 @@ export default function Home() {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState([]);
   const [bulkAttendanceBusy, setBulkAttendanceBusy] = useState(false);
   const [congratulatedTick, setCongratulatedTick] = useState(0);
+  const [mobileTab, setMobileTab] = useState("players");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     const handleCongratulated = () => setCongratulatedTick((t) => t + 1);
@@ -290,6 +293,10 @@ export default function Home() {
     ),
   ).length;
   const unpaidCount = dashboardPlayers.length - paidCount;
+  const attendanceRateToday =
+    dashboardPlayers.length > 0
+      ? Math.round((presentToday / dashboardPlayers.length) * 100)
+      : 0;
   const todayBirthdaysCount = dashboardPlayers.filter(
     (player) =>
       Boolean(getBirthdayInfo(player)?.isToday) &&
@@ -532,15 +539,389 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen text-slate-900 selection:bg-red-500 selection:text-white pb-20" dir="rtl">
+    <main className="min-h-screen text-slate-900 selection:bg-red-500 selection:text-white pb-28 md:pb-20" dir="rtl">
       <Header
         players={players}
         onOpenPlayer={(player) => setSelected(player)}
       />
 
-      <section className="mx-auto w-full max-w-7xl px-3.5 py-5 sm:px-6 sm:py-7 lg:px-8">
-        {/* ━━━ Hero Banner ━━━ */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white p-5 shadow-md sm:p-7">
+      <section className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8">
+        {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
+        <div className="md:hidden">
+          {/* شريط اختيار الصالة الأفقي السريع */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 mb-2.5 touch-scroll">
+            <button
+              type="button"
+              className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-black transition-all active:scale-95 min-h-[38px] cursor-pointer ${
+                branch === "كل الصالات"
+                  ? "bg-red-600 text-white shadow-xs shadow-red-500/30"
+                  : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
+              }`}
+              onClick={() => setBranch("كل الصالات")}
+            >
+              كل الصالات ({players.length})
+            </button>
+            {branches.map((b) => {
+              const bCount = players.filter((p) => p.branch === b.name).length;
+              return (
+                <button
+                  key={b._id}
+                  type="button"
+                  className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-black transition-all active:scale-95 min-h-[38px] cursor-pointer ${
+                    branch === b.name
+                      ? "bg-red-600 text-white shadow-xs shadow-red-500/30"
+                      : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
+                  }`}
+                  onClick={() => setBranch(b.name)}
+                >
+                  {b.name} ({bCount})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* بطاقة النبض اليومي السريع (Daily Pulse Card) */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm relative overflow-hidden mb-3.5">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">
+                  نبض اليوم • {sessionDate}
+                </p>
+                <h3 className="font-cairo text-sm font-black text-slate-900">
+                  {branch === "كل الصالات" ? "جميع صالات الأكاديمية" : `صالة ${branch}`}
+                </h3>
+              </div>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-700">
+                {dashboardPlayers.length} لاعب
+              </span>
+            </div>
+
+            {/* شريط نسبة حضور اليوم */}
+            <div className="space-y-1 mb-2.5">
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="text-slate-600">نسبة حضور اليوم:</span>
+                <span className="font-black text-emerald-700">{attendanceRateToday}% ({presentToday} لاعب)</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+                  style={{ width: `${attendanceRateToday}%` }}
+                />
+              </div>
+            </div>
+
+            {/* 4 شرائح سريعة لفلترة القائمة بلمسة واحدة */}
+            <div className="grid grid-cols-4 gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => { setStatusFilter(statusFilter === "present" ? "all" : "present"); setMobileTab("players"); }}
+                className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition active:scale-95 min-h-[50px] cursor-pointer ${
+                  statusFilter === "present"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-emerald-50/80 border border-emerald-200/60 text-emerald-800"
+                }`}
+              >
+                <span className="text-base font-black leading-none">{presentToday}</span>
+                <span className="text-[10px] font-bold mt-1">حاضر</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setStatusFilter(statusFilter === "absent" ? "all" : "absent"); setMobileTab("players"); }}
+                className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition active:scale-95 min-h-[50px] cursor-pointer ${
+                  statusFilter === "absent"
+                    ? "bg-rose-600 text-white shadow-xs"
+                    : "bg-rose-50/80 border border-rose-200/60 text-rose-800"
+                }`}
+              >
+                <span className="text-base font-black leading-none">{absentToday}</span>
+                <span className="text-[10px] font-bold mt-1">غائب</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setStatusFilter(statusFilter === "paid" ? "all" : "paid"); setMobileTab("players"); }}
+                className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition active:scale-95 min-h-[50px] cursor-pointer ${
+                  statusFilter === "paid"
+                    ? "bg-sky-600 text-white shadow-xs"
+                    : "bg-sky-50/80 border border-sky-200/60 text-sky-800"
+                }`}
+              >
+                <span className="text-base font-black leading-none">{paidCount}</span>
+                <span className="text-[10px] font-bold mt-1">مدفوع</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid"); setMobileTab("players"); }}
+                className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition active:scale-95 min-h-[50px] cursor-pointer ${
+                  statusFilter === "unpaid"
+                    ? "bg-amber-600 text-white shadow-xs"
+                    : "bg-amber-50/80 border border-amber-200/60 text-amber-800"
+                }`}
+              >
+                <span className="text-base font-black leading-none">{unpaidCount}</span>
+                <span className="text-[10px] font-bold mt-1">لم يدفع</span>
+              </button>
+            </div>
+          </div>
+
+          {/* محتوى تبويب اللاعبين على الموبايل */}
+          {mobileTab === "players" && (
+            <div className="space-y-2.5 mb-2">
+              {/* حقل البحث وزر الفلاتر الإضافية */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 flex min-h-11 items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-3 shadow-xs">
+                  <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                  <input
+                    className="min-w-0 flex-1 bg-transparent py-2 text-base sm:text-sm text-slate-900 outline-none placeholder:text-slate-400 font-semibold"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="ابحث باسم اللاعب..."
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="text-xs text-slate-400 p-1"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileFilters((prev) => !prev)}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition active:scale-95 cursor-pointer ${
+                    showMobileFilters || sortBy !== "newest" || sessionDate !== today
+                      ? "border-red-300 bg-red-50 text-red-600 shadow-xs"
+                      : "border-slate-200/90 bg-white text-slate-600 shadow-xs"
+                  }`}
+                  title="تخصيص الفلاتر والتاريخ"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* درج الفلاتر المنسدل للموبايل */}
+              {showMobileFilters && (
+                <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-md space-y-3 animate-slide-up">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-xs font-black text-slate-800">خيارات متقدمة وفلاتر</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileFilters(false)}
+                      className="text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
+                    >
+                      ✕ إغلاق
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500">تاريخ الحصة</span>
+                      <input
+                        type="date"
+                        max={today}
+                        value={sessionDate}
+                        onChange={(e) => { if (e.target.value <= today) setSessionDate(e.target.value); }}
+                        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-2 text-xs font-bold"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500">شهر الاشتراك</span>
+                      <input
+                        type="month"
+                        value={paymentMonth}
+                        onChange={(e) => setPaymentMonth(e.target.value)}
+                        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-2 text-xs font-bold"
+                      />
+                    </label>
+                  </div>
+                  <div>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500">ترتيب القائمة</span>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold"
+                      >
+                        <option value="newest">الأحدث تسجيلاً (افتراضي)</option>
+                        <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
+                        <option value="oldest">الأقدم تسجيلاً</option>
+                        <option value="age-asc">السن: الأصغر أولاً</option>
+                        <option value="age-desc">السن: الأكبر أولاً</option>
+                        <option value="unpaid-first">غير المسددين أولاً</option>
+                        <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleExportAll}
+                      className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-bold text-emerald-700 active:scale-95 cursor-pointer"
+                    >
+                      <FileSpreadsheet className="h-4 w-4" />
+                      <span>تصدير Excel</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleFilteredSelection}
+                      className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 active:scale-95 cursor-pointer"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>تحديد الكل</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* شرائح الفلترة السريعة الأفقية القابلة للسحب */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 touch-scroll">
+                <button
+                  type="button"
+                  className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
+                    statusFilter === "all"
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+                  }`}
+                  onClick={() => setStatusFilter("all")}
+                >
+                  الكل ({filteredPlayers.length})
+                </button>
+                <button
+                  type="button"
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
+                    statusFilter === "present"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-white text-emerald-700 border border-emerald-200/70 hover:bg-emerald-50"
+                  }`}
+                  onClick={() => setStatusFilter("present")}
+                >
+                  <Check className="h-3 w-3" strokeWidth={2.5} />
+                  <span>حاضر ({presentToday})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
+                    statusFilter === "absent"
+                      ? "bg-rose-600 text-white shadow-xs"
+                      : "bg-white text-rose-700 border border-rose-200/70 hover:bg-rose-50"
+                  }`}
+                  onClick={() => setStatusFilter("absent")}
+                >
+                  <X className="h-3 w-3" strokeWidth={2.5} />
+                  <span>غائب ({absentToday})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
+                    statusFilter === "paid"
+                      ? "bg-sky-600 text-white shadow-xs"
+                      : "bg-white text-sky-700 border border-sky-200/70 hover:bg-sky-50"
+                  }`}
+                  onClick={() => setStatusFilter("paid")}
+                >
+                  <CreditCard className="h-3 w-3" />
+                  <span>مدفوع ({paidCount})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
+                    statusFilter === "unpaid"
+                      ? "bg-amber-600 text-white shadow-xs"
+                      : "bg-white text-amber-700 border border-amber-200/70 hover:bg-amber-50"
+                  }`}
+                  onClick={() => setStatusFilter("unpaid")}
+                >
+                  <Clock className="h-3 w-3" />
+                  <span>لم يدفع ({unpaidCount})</span>
+                </button>
+                {todayBirthdaysCount > 0 && (
+                  <button
+                    type="button"
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active:scale-95 min-h-[36px] cursor-pointer ${
+                      statusFilter === "birthday"
+                        ? "bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-xs"
+                        : "bg-white text-rose-700 border border-rose-200/80 hover:bg-rose-50"
+                    }`}
+                    onClick={() => setStatusFilter("birthday")}
+                  >
+                    <Cake className="h-3 w-3" />
+                    <span>أعياد الميلاد ({todayBirthdaysCount})</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* محتوى تبويب الإحصائيات على الموبايل */}
+          {mobileTab === "stats" && (
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-cairo text-base font-black text-slate-900">إحصائيات الأكاديمية والالتزام</h2>
+                <span className="text-xs font-bold text-slate-500">{branch}</span>
+              </div>
+              <StatsGrid
+                players={players}
+                branches={branches}
+                branch={branch}
+                sessionDate={sessionDate}
+                paymentMonth={paymentMonth}
+                paymentMonthLabel={paymentMonthLabel}
+              />
+            </div>
+          )}
+
+          {/* محتوى تبويب الصالات على الموبايل */}
+          {mobileTab === "branches" && (
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-cairo text-base font-black text-slate-900">صالات وفروع الأكاديمية ({branches.length})</h2>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-xs font-extrabold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl active:scale-95 cursor-pointer"
+                  onClick={() => setShowBranches(true)}
+                >
+                  <span>⚙️ إدارة الصالات</span>
+                </button>
+              </div>
+              <BranchOverview
+                branches={branches}
+                players={players}
+                sessionDate={sessionDate}
+                paymentMonth={paymentMonth}
+                busyBranch={busyBranch}
+                onSelectBranch={(bName) => {
+                  handleSelectBranch(bName);
+                  setMobileTab("players");
+                }}
+                onMarkPresent={markBranchPresent}
+              />
+            </div>
+          )}
+
+          {/* محتوى تبويب أعياد الميلاد على الموبايل */}
+          {mobileTab === "birthdays" && (
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-cairo text-base font-black text-slate-900">أعياد ميلاد الأبطال</h2>
+                <span className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 rounded-full px-2.5 py-0.5">
+                  {todayBirthdaysCount} مناسبة
+                </span>
+              </div>
+              <BirthdayReminder
+                players={dashboardPlayers}
+                captainName={captainName}
+                onOpenPlayer={(player) => setSelected(player)}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* ━━━ Hero Banner (على الديسكتوب فقط) ━━━ */}
+        <div className="hidden md:block relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white p-5 shadow-md sm:p-7">
           {/* Decorative gradient blobs */}
           <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-red-500/6 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-8 left-1/2 h-32 w-64 -translate-x-1/2 rounded-full bg-slate-200/40 blur-2xl" />
@@ -593,38 +974,44 @@ export default function Home() {
           </div>
         </div>
 
-        {/* تذكار أعياد ميلاد أبطال الأكاديمية للكابتن */}
-        <BirthdayReminder
-          players={dashboardPlayers}
-          captainName={captainName}
-          onOpenPlayer={(player) => setSelected(player)}
-        />
+        {/* تذكار أعياد ميلاد أبطال الأكاديمية للكابتن (على الديسكتوب فقط) */}
+        <div className="hidden md:block">
+          <BirthdayReminder
+            players={dashboardPlayers}
+            captainName={captainName}
+            onOpenPlayer={(player) => setSelected(player)}
+          />
+        </div>
 
-        {/* شبكة الإحصائيات ورسوم الحضور البيانية */}
-        <StatsGrid
-          players={players}
-          branches={branches}
-          branch={branch}
-          sessionDate={sessionDate}
-          paymentMonth={paymentMonth}
-          paymentMonthLabel={paymentMonthLabel}
-        />
+        {/* شبكة الإحصائيات ورسوم الحضور البيانية (على الديسكتوب فقط) */}
+        <div className="hidden md:block">
+          <StatsGrid
+            players={players}
+            branches={branches}
+            branch={branch}
+            sessionDate={sessionDate}
+            paymentMonth={paymentMonth}
+            paymentMonthLabel={paymentMonthLabel}
+          />
+        </div>
 
-        {/* استعراض الصالات والفروع */}
-        <BranchOverview
-          branches={branches}
-          players={players}
-          sessionDate={sessionDate}
-          paymentMonth={paymentMonth}
-          busyBranch={busyBranch}
-          onSelectBranch={handleSelectBranch}
-          onMarkPresent={markBranchPresent}
-        />
+        {/* استعراض الصالات والفروع (على الديسكتوب فقط) */}
+        <div className="hidden md:block">
+          <BranchOverview
+            branches={branches}
+            players={players}
+            sessionDate={sessionDate}
+            paymentMonth={paymentMonth}
+            busyBranch={busyBranch}
+            onSelectBranch={handleSelectBranch}
+            onMarkPresent={markBranchPresent}
+          />
+        </div>
 
         {/* ━━━ Player List Header ━━━ */}
         <div
           ref={playerListRef}
-          className="mt-8 flex flex-wrap items-center justify-between gap-3 scroll-mt-20"
+          className="hidden md:flex mt-8 flex-wrap items-center justify-between gap-3 scroll-mt-20"
         >
           <div className="flex items-center gap-2.5">
             <p className="section-eyebrow">قائمة لاعبي الأكاديمية</p>
@@ -665,8 +1052,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ━━━ Control Panel ━━━ */}
-        <div className="mt-3.5 flex flex-col gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md lg:flex-row lg:items-center lg:gap-3">
+        {/* ━━━ Control Panel (على الديسكتوب فقط) ━━━ */}
+        <div className="hidden md:flex mt-3.5 flex-col gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md lg:flex-row lg:items-center lg:gap-3">
           {/* حقل البحث */}
           <div className="relative flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 transition-all focus-within:border-red-500 focus-within:bg-white focus-within:ring-3 focus-within:ring-red-100 lg:w-80">
             <Search className="h-4 w-4 shrink-0 text-slate-400" />
@@ -769,8 +1156,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ━━━ Date Controls & Sort Strip ━━━ */}
-        <div className="mt-2.5 grid gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md sm:grid-cols-3">
+        {/* ━━━ Date Controls & Sort Strip (على الديسكتوب فقط) ━━━ */}
+        <div className="hidden md:grid mt-2.5 gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md sm:grid-cols-3">
           <label className="flex flex-col gap-1.5">
             <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500">
               <CalendarDays className="h-3.5 w-3.5 text-red-500" />
@@ -820,8 +1207,8 @@ export default function Home() {
           </label>
         </div>
 
-        {/* ━━━ Status Filters ━━━ */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200/60 bg-white p-2.5 shadow-md sm:gap-2">
+        {/* ━━━ Status Filters (على الديسكتوب فقط) ━━━ */}
+        <div className="hidden md:flex mt-2.5 flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200/60 bg-white p-2.5 shadow-md sm:gap-2">
           <span className="px-2 text-xs font-extrabold text-slate-400">
             فلترة سريعة:
           </span>
@@ -949,7 +1336,7 @@ export default function Home() {
 
         {/* شريط الإجراءات الجماعية العائم الفاخر (Floating Bulk Dock) */}
         {selectedPlayerIds.length > 0 && (
-          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 glass-dock text-white rounded-2xl shadow-2xl border border-white/15 p-3 sm:px-5 flex flex-wrap items-center justify-between gap-3 animate-slide-up max-w-4xl w-[94%]">
+          <div className="fixed bottom-20 md:bottom-5 left-1/2 -translate-x-1/2 z-40 md:z-50 glass-dock text-white rounded-2xl shadow-2xl border border-white/15 p-3 sm:px-5 flex flex-wrap items-center justify-between gap-2.5 animate-slide-up max-w-4xl w-[94%] mb-safe">
             <div className="flex items-center gap-2 text-xs font-extrabold text-white">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 font-cairo text-sm font-black text-white shadow-xs">
                 {selectedPlayerIds.length}
@@ -1020,87 +1407,100 @@ export default function Home() {
           </div>
         )}
 
-        {/* ━━━ Player Table ━━━ */}
-        <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none lg:overflow-hidden lg:border lg:border-slate-200/60 lg:bg-white lg:shadow-md">
-          <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 lg:grid">
-            <span>اللاعب</span>
-            <span>العمر</span>
-            <span>الفرع</span>
-            <span>تسجيل الحضور</span>
-            <span>حالة الاشتراك</span>
-            <span></span>
+        {/* ━━━ Player Table & Pagination Container ━━━ */}
+        <div className={mobileTab === "players" ? "block" : "hidden md:block"}>
+          <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none lg:overflow-hidden lg:border lg:border-slate-200/60 lg:bg-white lg:shadow-md">
+            <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 lg:grid">
+              <span>اللاعب</span>
+              <span>العمر</span>
+              <span>الفرع</span>
+              <span>تسجيل الحضور</span>
+              <span>حالة الاشتراك</span>
+              <span></span>
+            </div>
+
+            {loading ? (
+              <div className="flex flex-col gap-3 px-6 py-6 bg-white rounded-2xl">
+                {[1,2,3,4].map((i) => (
+                  <div key={i} className="flex items-center gap-4 py-2">
+                    <div className="skeleton h-11 w-11 rounded-xl shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-4 w-36 rounded-lg" />
+                      <div className="skeleton h-3 w-24 rounded-lg" />
+                    </div>
+                    <div className="skeleton h-9 w-20 rounded-xl" />
+                    <div className="skeleton h-9 w-20 rounded-xl" />
+                    <div className="skeleton h-9 w-20 rounded-xl" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredPlayers.length === 0 ? (
+              <div className="flex flex-col items-center gap-3.5 px-6 py-14 sm:py-20 text-center text-slate-400 bg-white rounded-2xl">
+                <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-red-50 text-2xl sm:text-3xl text-red-600 shadow-xs">
+                  🥋
+                </div>
+                <strong className="font-cairo text-base sm:text-lg font-black text-slate-800">
+                  لا توجد نتائج مطابقة
+                </strong>
+                <span className="text-xs text-slate-500 max-w-sm">
+                  لم نجد أي لاعبين وفقاً للبحث أو الفلترة المحددة.
+                </span>
+                <button
+                  type="button"
+                  className="mt-1 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-2.5 text-xs font-black text-white shadow-xs shadow-red-500/20 hover:brightness-110 active:scale-95 cursor-pointer"
+                  onClick={() => setShowForm(true)}
+                >
+                  <span>＋</span>
+                  <span>إضافة لاعب جديد</span>
+                </button>
+              </div>
+            ) : (
+              paginatedPlayers.map((player) => (
+                <PlayerRow
+                  key={player._id}
+                  player={player}
+                  sessionDate={sessionDate}
+                  paymentMonth={paymentMonth}
+                  onOpen={() => setSelected(player)}
+                  onUpdate={updatePlayer}
+                  isSelected={selectedPlayerIds.includes(player._id)}
+                  onToggleSelection={togglePlayerSelection}
+                />
+              ))
+            )}
           </div>
 
-          {loading ? (
-            <div className="flex flex-col gap-3 px-6 py-6 bg-white rounded-2xl">
-              {[1,2,3,4].map((i) => (
-                <div key={i} className="flex items-center gap-4 py-2">
-                  <div className="skeleton h-11 w-11 rounded-xl shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="skeleton h-4 w-36 rounded-lg" />
-                    <div className="skeleton h-3 w-24 rounded-lg" />
-                  </div>
-                  <div className="skeleton h-9 w-20 rounded-xl" />
-                  <div className="skeleton h-9 w-20 rounded-xl" />
-                  <div className="skeleton h-9 w-20 rounded-xl" />
-                </div>
-              ))}
-            </div>
-          ) : filteredPlayers.length === 0 ? (
-            <div className="flex flex-col items-center gap-3.5 px-6 py-20 text-center text-slate-400 bg-white rounded-2xl">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-3xl text-red-600 shadow-xs">
-                🥋
-              </div>
-              <strong className="font-cairo text-lg font-black text-slate-800">
-                لا توجد نتائج مطابقة
-              </strong>
-              <span className="text-xs text-slate-500 max-w-sm">
-                لم نجد أي لاعبين وفقاً للبحث أو الفلترة المحددة.
-              </span>
-              <button
-                type="button"
-                className="mt-2 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-2.5 text-xs font-black text-white shadow-xs shadow-red-500/20 hover:brightness-110 active:scale-95 cursor-pointer"
-                onClick={() => setShowForm(true)}
-              >
-                <span>＋</span>
-                <span>إضافة لاعب جديد</span>
-              </button>
-            </div>
-          ) : (
-            paginatedPlayers.map((player) => (
-              <PlayerRow
-                key={player._id}
-                player={player}
-                sessionDate={sessionDate}
-                paymentMonth={paymentMonth}
-                onOpen={() => setSelected(player)}
-                onUpdate={updatePlayer}
-                isSelected={selectedPlayerIds.includes(player._id)}
-                onToggleSelection={togglePlayerSelection}
-              />
-            ))
-          )}
+          {/* ترقيم الصفحات (Pagination) */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={sortedFilteredPlayers.length}
+            pageSize={pageSize}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              playerListRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
         </div>
-
-        {/* ترقيم الصفحات (Pagination) */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={sortedFilteredPlayers.length}
-          pageSize={pageSize}
-          onPageChange={(page) => {
-            setCurrentPage(page);
-            playerListRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          }}
-          onPageSizeChange={(size) => {
-            setPageSize(size);
-            setCurrentPage(1);
-          }}
-        />
       </section>
+
+      {/* شريط الملاحة السفلي الثابت على الموبايل */}
+      <MobileBottomNav
+        activeTab={mobileTab}
+        onChangeTab={(tab) => {
+          setMobileTab(tab);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onOpenAddPlayer={() => setShowForm(true)}
+        todayBirthdaysCount={todayBirthdaysCount}
+      />
 
 
       {showForm && (

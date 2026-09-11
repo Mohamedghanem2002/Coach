@@ -149,7 +149,7 @@ export default function Header({ players = [], onOpenPlayer }) {
             {/* Birthday dropdown */}
             {showBirthdayMenu && (
               <div
-                className="absolute left-0 mt-2.5 w-80 sm:w-96 rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xl z-50 animate-slide-up"
+                className="fixed sm:absolute left-4 right-4 sm:right-auto sm:left-0 top-16 sm:top-auto sm:mt-2.5 max-w-sm sm:w-96 rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xl z-50 animate-slide-up mx-auto sm:mx-0"
                 dir="rtl"
               >
                 {/* Decorative top bar */}
