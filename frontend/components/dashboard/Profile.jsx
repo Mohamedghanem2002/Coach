@@ -279,7 +279,9 @@ export default function Profile({
     const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
     const appUrl = cleanPhone
       ? `whatsapp://send?phone=${cleanPhone}${encodedText}`
-      : `whatsapp://send?text=${encodedText.replace(/^&/, "")}`;
+      : text
+      ? `whatsapp://send?text=${encodeURIComponent(text)}`
+      : `whatsapp://send`;
 
     if (isMobile) {
       window.location.href = appUrl;
@@ -289,7 +291,9 @@ export default function Profile({
         if (document.hasFocus()) {
           const webUrl = cleanPhone
             ? `https://web.whatsapp.com/send?phone=${cleanPhone}${text ? `&text=${encodeURIComponent(text)}` : ""}`
-            : `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            : text
+            ? `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`
+            : `https://web.whatsapp.com/`;
           window.open(webUrl, "_blank", "noopener,noreferrer");
         }
       }, 1200);
@@ -666,18 +670,8 @@ export default function Profile({
   async function handleSendCardDirectly() {
     if (isSendingCard || isDownloadingCard || isSendingText) return;
 
-    if (!guardianPhone) {
-      setProfileNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً في ملف اللاعب لإرسال البطاقة له.");
-      return;
-    }
-    const cleanPhone = formatWhatsAppPhone(guardianPhone);
-    if (!cleanPhone) {
-      setProfileNotice("⚠️ رقم هاتف ولي الأمر المسجل غير صالح لإرسال واتساب.");
-      return;
-    }
-
     setIsSendingCard(true);
-    setProfileNotice("⏳ جاري تجهيز ونسخ صورة البطاقة للحافظة...");
+    setProfileNotice("⏳ جاري تجهيز ونسخ صورة البطاقة تلقائياً...");
 
     try {
       let blob = cachedCardBlob;
@@ -700,6 +694,39 @@ export default function Profile({
         return;
       }
 
+      const cleanPhone = guardianPhone ? formatWhatsAppPhone(guardianPhone) : "";
+
+      const isMobile =
+        typeof navigator !== "undefined" &&
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
+
+      // On mobile without a registered phone, native Web Share API attaches the image file directly
+      if (!cleanPhone && isMobile && typeof navigator !== "undefined" && navigator.canShare) {
+        try {
+          const file = new File(
+            [blob],
+            `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`,
+            { type: "image/png" },
+          );
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: `بطاقة اللاعب ${player.name}`,
+            });
+            setProfileNotice("✓ تم فتح المشاركة لإرسال البطاقة إلى محادثة ولي الأمر!");
+            return;
+          }
+        } catch (shareErr) {
+          if (shareErr.name === "AbortError") {
+            return;
+          }
+          console.warn("Share fallback:", shareErr);
+        }
+      }
+
+      // Copy image directly to clipboard
       let copySuccess = false;
       if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
         try {
@@ -712,15 +739,21 @@ export default function Profile({
         }
       }
 
-      // Open WhatsApp chat directly with guardian
+      // Open WhatsApp (either guardian chat directly, or contact chooser if no number)
       openWhatsAppNative(cleanPhone);
 
-      if (copySuccess) {
+      if (cleanPhone) {
         setProfileNotice(
-          "✓ تم نسخ صورة البطاقة للحافظة وفتح محادثة ولي الأمر! قم بلصق الصورة (Ctrl+V) ثم اضغط إرسال.",
+          copySuccess
+            ? "✓ تم نسخ صورة البطاقة تلقائياً وفتح شات ولي الأمر! الصق الصورة (Ctrl+V أو لصق) ثم اضغط إرسال."
+            : "جاري فتح محادثة ولي الأمر على واتساب...",
         );
       } else {
-        setProfileNotice("جاري فتح محادثة ولي الأمر على واتساب...");
+        setProfileNotice(
+          copySuccess
+            ? "✓ تم نسخ صورة البطاقة تلقائياً وفتح واتساب! اختر محادثة ولي الأمر ثم الصق الصورة واضغط إرسال."
+            : "جاري فتح واتساب لاختيار محادثة ولي الأمر...",
+        );
       }
     } catch (err) {
       console.error("Failed to send card to guardian:", err);
