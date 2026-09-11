@@ -116,9 +116,16 @@ export function getUpcomingBirthdays(
     .sort((a, b) => a.birthdayInfo.daysLeft - b.birthdayInfo.daysLeft);
 }
 
+export function toEnglishDigits(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 1632))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 1776));
+}
+
 export function formatWhatsAppPhone(phone) {
   if (!phone) return "";
-  let clean = phone.replace(/[^0-9]/g, "");
+  let clean = toEnglishDigits(phone).replace(/[^0-9]/g, "");
   if (clean.startsWith("01") && clean.length === 11) {
     clean = "2" + clean;
   }

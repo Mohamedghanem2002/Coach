@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import ConfirmDialog from "./ConfirmDialog";
 import { useSession } from "next-auth/react";
 import {
@@ -6,6 +6,7 @@ import {
   paymentStatusFor,
   getBirthdayInfo,
   generateBirthdayWishUrl,
+  toEnglishDigits,
 } from "../../lib/dashboard-utils";
 import {
   Send,
@@ -55,6 +56,90 @@ export default function Profile({
   const [editGuardianPhone, setEditGuardianPhone] = useState(guardianPhone);
   const [editBranch, setEditBranch] = useState(player.branch);
   const [editPhoto, setEditPhoto] = useState(player.photo || "");
+
+  const editMonthInputRef = useRef(null);
+  const editYearInputRef = useRef(null);
+
+  function handleEditDayChange(val) {
+    const normalized = toEnglishDigits(val);
+    const parts = normalized.split(/[-/.]/);
+    if (parts.length === 3) {
+      let d, m, y;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts;
+      } else {
+        [d, m, y] = parts;
+      }
+      setEditDobDay(d.replace(/\D/g, "").slice(0, 2));
+      setEditDobMonth(m.replace(/\D/g, "").slice(0, 2));
+      setEditDobYear(y.replace(/\D/g, "").slice(0, 4));
+      return;
+    }
+    const cleaned = normalized.replace(/\D/g, "").slice(0, 2);
+    setEditDobDay(cleaned);
+    if (cleaned.length === 2) {
+      editMonthInputRef.current?.focus();
+    }
+  }
+
+  function handleEditMonthChange(val) {
+    const normalized = toEnglishDigits(val);
+    const parts = normalized.split(/[-/.]/);
+    if (parts.length === 3) {
+      let d, m, y;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts;
+      } else {
+        [d, m, y] = parts;
+      }
+      setEditDobDay(d.replace(/\D/g, "").slice(0, 2));
+      setEditDobMonth(m.replace(/\D/g, "").slice(0, 2));
+      setEditDobYear(y.replace(/\D/g, "").slice(0, 4));
+      return;
+    }
+    const cleaned = normalized.replace(/\D/g, "").slice(0, 2);
+    setEditDobMonth(cleaned);
+    if (cleaned.length === 2) {
+      editYearInputRef.current?.focus();
+    }
+  }
+
+  function handleEditYearChange(val) {
+    const normalized = toEnglishDigits(val);
+    const parts = normalized.split(/[-/.]/);
+    if (parts.length === 3) {
+      let d, m, y;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts;
+      } else {
+        [d, m, y] = parts;
+      }
+      setEditDobDay(d.replace(/\D/g, "").slice(0, 2));
+      setEditDobMonth(m.replace(/\D/g, "").slice(0, 2));
+      setEditDobYear(y.replace(/\D/g, "").slice(0, 4));
+      return;
+    }
+    const cleaned = normalized.replace(/\D/g, "").slice(0, 4);
+    setEditDobYear(cleaned);
+  }
+
+  function handleEditDatePaste(e) {
+    const text = e.clipboardData?.getData("text") || "";
+    const normalized = toEnglishDigits(text).trim();
+    const parts = normalized.split(/[-/.]/);
+    if (parts.length === 3) {
+      e.preventDefault();
+      let d, m, y;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts;
+      } else {
+        [d, m, y] = parts;
+      }
+      setEditDobDay(d.replace(/\D/g, "").slice(0, 2));
+      setEditDobMonth(m.replace(/\D/g, "").slice(0, 2));
+      setEditDobYear(y.replace(/\D/g, "").slice(0, 4));
+    }
+  }
 
   // Custom Attendance & Payment
   const today = localDate();
@@ -155,7 +240,7 @@ export default function Profile({
 
   function formatWhatsAppPhone(phone) {
     if (!phone) return "";
-    let cleaned = String(phone).replace(/[^0-9]/g, "");
+    let cleaned = toEnglishDigits(String(phone)).replace(/[^0-9]/g, "");
     if (cleaned.startsWith("00")) cleaned = cleaned.slice(2);
     if (cleaned.startsWith("01") && cleaned.length === 11) {
       cleaned = "2" + cleaned;
@@ -750,7 +835,7 @@ export default function Profile({
       updateInfo: "true",
       name: editName.trim(),
       dateOfBirth: editDateOfBirth,
-      guardianPhone: editGuardianPhone.trim(),
+      guardianPhone: toEnglishDigits(editGuardianPhone).trim(),
       age: String(player.age),
       branch: editBranch,
       photo: editPhoto,
@@ -873,33 +958,35 @@ export default function Profile({
                       className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]*"
                       placeholder="اليوم"
                       maxLength={2}
                       value={editDobDay}
-                      onChange={(e) => setEditDobDay(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                      onChange={(e) => handleEditDayChange(e.target.value)}
+                      onPaste={handleEditDatePaste}
                       required={!player.dateOfBirth}
                     />
                     <input
+                      ref={editMonthInputRef}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]*"
                       placeholder="الشهر"
                       maxLength={2}
                       value={editDobMonth}
-                      onChange={(e) => setEditDobMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                      onChange={(e) => handleEditMonthChange(e.target.value)}
+                      onPaste={handleEditDatePaste}
                       required={!player.dateOfBirth}
                     />
                     <input
+                      ref={editYearInputRef}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-1 py-2 sm:px-2 sm:py-2.5 text-center text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]*"
                       placeholder="السنة"
                       maxLength={4}
                       value={editDobYear}
-                      onChange={(e) => setEditDobYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      onChange={(e) => handleEditYearChange(e.target.value)}
+                      onPaste={handleEditDatePaste}
                       required={!player.dateOfBirth}
                     />
                   </div>
@@ -938,7 +1025,7 @@ export default function Profile({
                   type="tel"
                   inputMode="tel"
                   value={editGuardianPhone}
-                  onChange={(e) => setEditGuardianPhone(e.target.value)}
+                  onChange={(e) => setEditGuardianPhone(toEnglishDigits(e.target.value))}
                   placeholder="01xxxxxxxxx"
                 />
               </div>

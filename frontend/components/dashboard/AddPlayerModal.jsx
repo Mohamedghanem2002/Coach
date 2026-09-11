@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from "react";
+import { toEnglishDigits } from "../../lib/dashboard-utils";
 
 export default function AddPlayerModal({
   branches,
@@ -53,7 +54,21 @@ export default function AddPlayerModal({
   }, [dobYear, dobMonth, dobDay]);
 
   function handleDayChange(val) {
-    const cleaned = val.replace(/\D/g, "").slice(0, 2);
+    const normalized = toEnglishDigits(val);
+    const parts = normalized.split(/[-/.]/);
+    if (parts.length === 3) {
+      let d, m, y;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts;
+      } else {
+        [d, m, y] = parts;
+      }
+      setDobDay(d.replace(/\D/g, "").slice(0, 2));
+      setDobMonth(m.replace(/\D/g, "").slice(0, 2));
+      setDobYear(y.replace(/\D/g, "").slice(0, 4));
+      return;
+    }
+    const cleaned = normalized.replace(/\D/g, "").slice(0, 2);
     setDobDay(cleaned);
     if (cleaned.length === 2) {
       monthInputRef.current?.focus();
@@ -61,10 +76,61 @@ export default function AddPlayerModal({
   }
 
   function handleMonthChange(val) {
-    const cleaned = val.replace(/\D/g, "").slice(0, 2);
+    const normalized = toEnglishDigits(val);
+    const parts = normalized.split(/[-/.]/);
+    if (parts.length === 3) {
+      let d, m, y;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts;
+      } else {
+        [d, m, y] = parts;
+      }
+      setDobDay(d.replace(/\D/g, "").slice(0, 2));
+      setDobMonth(m.replace(/\D/g, "").slice(0, 2));
+      setDobYear(y.replace(/\D/g, "").slice(0, 4));
+      return;
+    }
+    const cleaned = normalized.replace(/\D/g, "").slice(0, 2);
     setDobMonth(cleaned);
     if (cleaned.length === 2) {
       yearInputRef.current?.focus();
+    }
+  }
+
+  function handleYearChange(val) {
+    const normalized = toEnglishDigits(val);
+    const parts = normalized.split(/[-/.]/);
+    if (parts.length === 3) {
+      let d, m, y;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts;
+      } else {
+        [d, m, y] = parts;
+      }
+      setDobDay(d.replace(/\D/g, "").slice(0, 2));
+      setDobMonth(m.replace(/\D/g, "").slice(0, 2));
+      setDobYear(y.replace(/\D/g, "").slice(0, 4));
+      return;
+    }
+    const cleaned = normalized.replace(/\D/g, "").slice(0, 4);
+    setDobYear(cleaned);
+  }
+
+  function handleDatePaste(e) {
+    const text = e.clipboardData?.getData("text") || "";
+    const normalized = toEnglishDigits(text).trim();
+    const parts = normalized.split(/[-/.]/);
+    if (parts.length === 3) {
+      e.preventDefault();
+      let d, m, y;
+      if (parts[0].length === 4) {
+        [y, m, d] = parts;
+      } else {
+        [d, m, y] = parts;
+      }
+      setDobDay(d.replace(/\D/g, "").slice(0, 2));
+      setDobMonth(m.replace(/\D/g, "").slice(0, 2));
+      setDobYear(y.replace(/\D/g, "").slice(0, 4));
     }
   }
 
@@ -111,7 +177,7 @@ export default function AddPlayerModal({
       return;
     }
 
-    const cleanPhone = guardianPhone.trim().replace(/[^0-9]/g, "");
+    const cleanPhone = toEnglishDigits(guardianPhone).trim().replace(/[^0-9]/g, "");
     if (cleanPhone && cleanPhone.length > 0) {
       if (cleanPhone.length < 8 || cleanPhone.length > 15) {
         setError("يرجى التأكد من كتابة رقم هاتف ولي الأمر بشكل صحيح.");
@@ -125,7 +191,7 @@ export default function AddPlayerModal({
       await onAdd({
         name: trimmedName,
         dateOfBirth,
-        guardianPhone: guardianPhone.trim(),
+        guardianPhone: toEnglishDigits(guardianPhone).trim(),
         branch,
         photo,
       });
@@ -209,7 +275,7 @@ export default function AddPlayerModal({
                 <label className="block text-xs font-extrabold text-slate-700 mb-1">
                   تاريخ الميلاد <span className="text-red-500">*</span>
                 </label>
-<div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-3 gap-1.5">
                   <input
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2 py-2.5 text-center text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                     type="text"
@@ -218,6 +284,7 @@ export default function AddPlayerModal({
                     maxLength={2}
                     value={dobDay}
                     onChange={(e) => handleDayChange(e.target.value)}
+                    onPaste={handleDatePaste}
                     required
                   />
                   <input
@@ -229,6 +296,7 @@ export default function AddPlayerModal({
                     maxLength={2}
                     value={dobMonth}
                     onChange={(e) => handleMonthChange(e.target.value)}
+                    onPaste={handleDatePaste}
                     required
                   />
                   <input
@@ -239,7 +307,8 @@ export default function AddPlayerModal({
                     placeholder="السنة"
                     maxLength={4}
                     value={dobYear}
-                    onChange={(e) => setDobYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    onChange={(e) => handleYearChange(e.target.value)}
+                    onPaste={handleDatePaste}
                     required
                   />
                 </div>
@@ -283,7 +352,7 @@ export default function AddPlayerModal({
                 type="tel"
                 inputMode="tel"
                 value={guardianPhone}
-                onChange={(e) => setGuardianPhone(e.target.value)}
+                onChange={(e) => setGuardianPhone(toEnglishDigits(e.target.value))}
                 placeholder="01xxxxxxxxx"
               />
             </div>

@@ -15,9 +15,16 @@ function appDate() {
   );
   return `${values.year}-${values.month}-${values.day}`;
 }
+function toEnglishDigits(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 1632))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 1776));
+}
 function ageFromDateOfBirth(dateOfBirth) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return null;
-  const [year, month, day] = dateOfBirth.split("-").map(Number);
+  const normalizedDob = toEnglishDigits(dateOfBirth);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDob)) return null;
+  const [year, month, day] = normalizedDob.split("-").map(Number);
   const birthday = new Date(year, month - 1, day);
   if (
     birthday.getFullYear() !== year ||
@@ -130,7 +137,7 @@ export async function POST(request) {
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const branch = typeof body.branch === "string" ? body.branch.trim() : "";
     const dateOfBirth =
-      typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
+      typeof body.dateOfBirth === "string" ? toEnglishDigits(body.dateOfBirth).trim() : "";
     const age = ageFromDateOfBirth(dateOfBirth);
     if (!name || !branch || !Number.isInteger(age) || age < 4 || age > 80) {
       return NextResponse.json(
@@ -144,7 +151,7 @@ export async function POST(request) {
       age,
       dateOfBirth,
       guardianPhone:
-        typeof body.guardianPhone === "string" ? body.guardianPhone.trim() : "",
+        typeof body.guardianPhone === "string" ? toEnglishDigits(body.guardianPhone).trim() : "",
       branch,
       photo: typeof body.photo === "string" ? body.photo : "",
       paymentStatus: body.paymentStatus === "paid" ? "paid" : "unpaid",
@@ -196,7 +203,7 @@ export async function PATCH(request) {
       const name = typeof body.name === "string" ? body.name.trim() : "";
       const branch = typeof body.branch === "string" ? body.branch.trim() : "";
       const dateOfBirth =
-        typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
+        typeof body.dateOfBirth === "string" ? toEnglishDigits(body.dateOfBirth).trim() : "";
       const calculatedAge = ageFromDateOfBirth(dateOfBirth);
       const legacyAge = Number(body.age);
       const age = dateOfBirth ? calculatedAge : legacyAge;
@@ -212,7 +219,7 @@ export async function PATCH(request) {
         branch,
         guardianPhone:
           typeof body.guardianPhone === "string"
-            ? body.guardianPhone.trim()
+            ? toEnglishDigits(body.guardianPhone).trim()
             : "",
       };
       if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
