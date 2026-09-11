@@ -82,7 +82,7 @@ export default function SignInPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <strong className="font-cairo text-lg font-black tracking-tight text-white">
-                    COACH
+                    Re_action
                   </strong>
                   <span className="rounded bg-red-500/20 px-1.5 py-0.5 text-[10px] font-extrabold text-red-400 border border-red-500/30">
                     DOJO
@@ -169,7 +169,7 @@ export default function SignInPage() {
 
             <div className="mb-6">
               <h1 className="font-cairo text-2xl font-black text-slate-900">
-                {isRegistering ? "انضم لأكاديمية coach" : "أهلاً بك مجدداً يا كابتن 👋"}
+                {isRegistering ? "انضم لأكاديمية Re_action" : "أهلاً بك مجدداً يا كابتن 👋"}
               </h1>
               <p className="mt-1 text-xs text-slate-500">
                 {isRegistering

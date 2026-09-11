@@ -107,11 +107,10 @@ export default function Header({ players = [], onOpenPlayer }) {
             <button
               type="button"
               id="birthday-menu-btn"
-              className={`relative flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer ${
-                todayBirthdays.length > 0
+              className={`relative flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer ${todayBirthdays.length > 0
                   ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 hover:shadow-md active:scale-95 animate-pulse-glow"
                   : "border-slate-200/80 bg-white/80 text-slate-600 hover:border-slate-300 hover:bg-white shadow-xs"
-              }`}
+                }`}
               onClick={() => setShowBirthdayMenu((prev) => !prev)}
               title="تذكار أعياد ميلاد اللاعبين"
             >

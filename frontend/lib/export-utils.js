@@ -22,6 +22,8 @@ export function exportPlayersToCSV(
   const headers = [
     "اسم اللاعب",
     "الفرع / الصالة",
+    "الحزام",
+    "المستوى",
     "العمر",
     "تاريخ الميلاد",
     "هاتف ولي الأمر",
@@ -58,6 +60,8 @@ export function exportPlayersToCSV(
     return [
       escapeCSV(player.name),
       escapeCSV(player.branch),
+      escapeCSV(player.belt || "أبيض"),
+      escapeCSV(player.level || "A"),
       escapeCSV(player.age ? `${player.age} سنة` : "-"),
       escapeCSV(player.dateOfBirth || "-"),
       escapeCSV(guardianPhone),

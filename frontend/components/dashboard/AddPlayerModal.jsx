@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from "react";
-import { toEnglishDigits } from "../../lib/dashboard-utils";
+import { toEnglishDigits, BELTS, LEVELS } from "../../lib/dashboard-utils";
+import { BookUser } from "lucide-react";
 
 export default function AddPlayerModal({
   branches,
@@ -23,9 +24,32 @@ export default function AddPlayerModal({
 
   const [guardianPhone, setGuardianPhone] = useState("");
   const [branch, setBranch] = useState(initialBranch || "");
+  const [belt, setBelt] = useState("أبيض");
+  const [level, setLevel] = useState("A");
+  const [contactNotice, setContactNotice] = useState("");
   const [photo, setPhoto] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  async function handlePickContact() {
+    if (typeof window !== "undefined" && "contacts" in navigator && "ContactsManager" in window) {
+      try {
+        const props = ["tel"];
+        const contacts = await navigator.contacts.select(props, { multiple: false });
+        if (contacts && contacts.length > 0 && contacts[0]?.tel && contacts[0].tel.length > 0) {
+          const raw = contacts[0].tel[0];
+          setGuardianPhone(toEnglishDigits(raw).replace(/[^0-9]/g, ""));
+          setContactNotice("✓ تم اختيار الرقم بنجاح من جهات الاتصال");
+          setTimeout(() => setContactNotice(""), 3500);
+        }
+      } catch (err) {
+        console.log("Contact picker cancelled:", err);
+      }
+    } else {
+      setContactNotice("💡 خاصية استيراد جهات الاتصال تعمل مباشرة من المتصفح على الهواتف الذكية (مثل Chrome على Android). يمكنك كتابة الرقم يدوياً الآن.");
+      setTimeout(() => setContactNotice(""), 5000);
+    }
+  }
 
   const calculatedAge = useMemo(() => {
     if (!dobYear || !dobMonth || !dobDay) return null;
@@ -193,6 +217,8 @@ export default function AddPlayerModal({
         dateOfBirth,
         guardianPhone: toEnglishDigits(guardianPhone).trim(),
         branch,
+        belt,
+        level,
         photo,
       });
     } finally {
@@ -342,11 +368,65 @@ export default function AddPlayerModal({
               </div>
             </div>
 
-            {/* رقم ولي الأمر */}
+            {/* الحزام والمستوى */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                  حزام الكاراتيه <span className="text-red-500">*</span>
+                </label>
+                <select
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100 cursor-pointer"
+                  value={belt}
+                  onChange={(e) => setBelt(e.target.value)}
+                  required
+                >
+                  {BELTS.map((b) => (
+                    <option key={b.name} value={b.name}>
+                      🥋 حزام {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                  المستوى (Level) <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {LEVELS.map((lvl) => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setLevel(lvl)}
+                      className={`rounded-xl py-2 text-xs font-black transition cursor-pointer active:scale-95 ${
+                        level === lvl
+                          ? "bg-red-600 text-white shadow-xs shadow-red-500/30 ring-2 ring-red-200"
+                          : "border border-slate-200 bg-slate-50/60 text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* رقم ولي الأمر مع خيار استيراد جهات الاتصال */}
             <div>
-              <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                رقم هاتف ولي الأمر <span className="text-slate-400 font-normal">(اختياري لمراسلات الواتساب)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-extrabold text-slate-700">
+                  رقم هاتف ولي الأمر <span className="text-slate-400 font-normal">(اختياري لمراسلات الواتساب)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handlePickContact}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 hover:bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-700 border border-red-200/60 transition active:scale-95 cursor-pointer"
+                  title="اختيار رقم ولي الأمر مباشرة من سجل الأسماء بالهاتف"
+                >
+                  <BookUser className="h-3.5 w-3.5 text-red-600" />
+                  <span>جهات الاتصال 📱</span>
+                </button>
+              </div>
               <input
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                 type="tel"
@@ -355,6 +435,11 @@ export default function AddPlayerModal({
                 onChange={(e) => setGuardianPhone(toEnglishDigits(e.target.value))}
                 placeholder="01xxxxxxxxx"
               />
+              {contactNotice && (
+                <p className="mt-1.5 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1 animate-slide-up">
+                  {contactNotice}
+                </p>
+              )}
             </div>
 
             {/* صورة اللاعب */}

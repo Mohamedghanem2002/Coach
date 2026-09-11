@@ -7,6 +7,9 @@ import {
   getBirthdayInfo,
   generateBirthdayWishUrl,
   toEnglishDigits,
+  BELTS,
+  LEVELS,
+  getBeltStyle,
 } from "../../lib/dashboard-utils";
 import {
   Send,
@@ -19,8 +22,7 @@ import {
   Calendar,
   Check,
   X,
-  ClipboardCopy,
-  Eye,
+  BookUser,
 } from "lucide-react";
 
 export default function Profile({
@@ -55,7 +57,30 @@ export default function Profile({
       : "";
   const [editGuardianPhone, setEditGuardianPhone] = useState(guardianPhone);
   const [editBranch, setEditBranch] = useState(player.branch);
+  const [editBelt, setEditBelt] = useState(player.belt || "أبيض");
+  const [editLevel, setEditLevel] = useState(player.level || "A");
+  const [editContactNotice, setEditContactNotice] = useState("");
   const [editPhoto, setEditPhoto] = useState(player.photo || "");
+
+  async function handleEditPickContact() {
+    if (typeof window !== "undefined" && "contacts" in navigator && "ContactsManager" in window) {
+      try {
+        const props = ["tel"];
+        const contacts = await navigator.contacts.select(props, { multiple: false });
+        if (contacts && contacts.length > 0 && contacts[0]?.tel && contacts[0].tel.length > 0) {
+          const raw = contacts[0].tel[0];
+          setEditGuardianPhone(toEnglishDigits(raw).replace(/[^0-9]/g, ""));
+          setEditContactNotice("✓ تم اختيار الرقم بنجاح من جهات الاتصال");
+          setTimeout(() => setEditContactNotice(""), 3500);
+        }
+      } catch (err) {
+        console.log("Contact picker cancelled:", err);
+      }
+    } else {
+      setEditContactNotice("💡 خاصية استيراد جهات الاتصال تعمل مباشرة من المتصفح على الهواتف الذكية (مثل Chrome على Android). يمكنك كتابة الرقم يدوياً الآن.");
+      setTimeout(() => setEditContactNotice(""), 5000);
+    }
+  }
 
   const editMonthInputRef = useRef(null);
   const editYearInputRef = useRef(null);
@@ -154,14 +179,9 @@ export default function Profile({
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [isSavingAttendance, setIsSavingAttendance] = useState(false);
 
-  // Modal & Card
-  const [imageModalOpen, setImageModalOpen] = useState(false);
-  const [modalImageDataUrl, setModalImageDataUrl] = useState("");
-  const [modalImageBlob, setModalImageBlob] = useState(null);
-  const [imageCopied, setImageCopied] = useState(false);
+  // Card caching and sending
   const [cachedCardBlob, setCachedCardBlob] = useState(null);
-  const [modalNotice, setModalNotice] = useState("");
-  const [isSendingModalImage, setIsSendingModalImage] = useState(false);
+  const [isSendingCard, setIsSendingCard] = useState(false);
 
   // Confirm delete player
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -172,7 +192,6 @@ export default function Profile({
   const [isDownloadingCard, setIsDownloadingCard] = useState(false);
   const [isOpeningChat, setIsOpeningChat] = useState(false);
   const [isCallingGuardian, setIsCallingGuardian] = useState(false);
-  const [isPreviewingCard, setIsPreviewingCard] = useState(false);
   const [isTogglingPayment, setIsTogglingPayment] = useState(false);
   const [updatingPaymentMonth, setUpdatingPaymentMonth] = useState(null);
   const [deletingPaymentMonth, setDeletingPaymentMonth] = useState(null);
@@ -415,7 +434,7 @@ export default function Profile({
     context.beginPath();
     context.roundRect(72, 70, 160, 52, 16);
     context.fill();
-    drawCenter("COACH PRO", 152, 106, "900 24px Cairo, sans-serif", "#ffffff");
+    drawCenter("Re_action PRO", 152, 106, "900 22px Cairo, sans-serif", "#ffffff");
 
     drawRight(
       "بطاقة لاعب الكاراتيه الرسمية 🥋",
@@ -487,13 +506,14 @@ export default function Profile({
     }
 
     // Athlete Details
-    drawRight(player.name, 940, 340, "900 46px Cairo, sans-serif", "#0f172a");
-    drawRight(`🏢 الصالة: ${player.branch}`, 940, 400, "700 28px Cairo, sans-serif", "#334155");
-    drawRight(`🎂 السن: ${player.age} سنة`, 940, 452, "700 28px Cairo, sans-serif", "#334155");
+    drawRight(player.name, 940, 330, "900 44px Cairo, sans-serif", "#0f172a");
+    drawRight(`🥋 الحزام: ${player.belt || "أبيض"}  •  المستوى: ${player.level || "A"}`, 940, 380, "800 27px Cairo, sans-serif", "#b91c1c");
+    drawRight(`🏢 الصالة: ${player.branch}`, 940, 426, "700 26px Cairo, sans-serif", "#334155");
+    drawRight(`🎂 السن: ${player.age} سنة`, 940, 470, "700 26px Cairo, sans-serif", "#334155");
     if (guardianPhone) {
-      drawRight(`📞 ولي الأمر: ${guardianPhone}`, 940, 504, "700 26px Cairo, sans-serif", "#047857");
+      drawRight(`📞 ولي الأمر: ${guardianPhone}`, 940, 514, "700 25px Cairo, sans-serif", "#047857");
     }
-    drawRight(`📅 تاريخ التسجيل: ${registrationDate}`, 940, 550, "600 23px Cairo, sans-serif", "#94a3b8");
+    drawRight(`📅 تاريخ التسجيل: ${registrationDate}`, 940, 555, "600 22px Cairo, sans-serif", "#94a3b8");
 
     // KPI Summary Section (3 Stats Boxes)
     const statBoxWidth = (canvas.width - 144 - 36) / 3;
@@ -596,7 +616,7 @@ export default function Profile({
     context.fillRect(72, canvas.height - 120, canvas.width - 144, 2);
 
     drawRight(
-      `تم استخراج البطاقة رسميًا من نظام COACH PRO  •  ${new Date().toLocaleDateString("ar-EG")}`,
+      `تم استخراج البطاقة رسميًا من نظام Re_action PRO  •  ${new Date().toLocaleDateString("ar-EG")}`,
       canvas.width - 80,
       canvas.height - 70,
       "600 22px Cairo, sans-serif",
@@ -643,82 +663,70 @@ export default function Profile({
     }
   }
 
-  async function openImageModal() {
-    if (isPreviewingCard) return;
-    setIsPreviewingCard(true);
-    try {
-      setProfileNotice("⏳ جاري إنشاء صورة بطاقة اللاعب...");
+  async function handleSendCardDirectly() {
+    if (isSendingCard || isDownloadingCard || isSendingText) return;
 
-      const canvas = await generateProfileCanvas();
-      if (!canvas) return;
-
-      const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
-
-      if (!blob) {
-        setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
-        return;
-      }
-
-      const dataUrl = canvas.toDataURL("image/png");
-      setModalImageDataUrl(dataUrl);
-      setModalImageBlob(blob);
-      setImageCopied(false);
-      setModalNotice("");
-      setImageModalOpen(true);
-      setProfileNotice("");
-    } catch (error) {
-      console.error("Failed to open image modal:", error);
-      setProfileNotice("❌ حدث خطأ أثناء إنشاء صورة البطاقة");
-    } finally {
-      setIsPreviewingCard(false);
-    }
-  }
-
-  async function sendCardToGuardianViaWhatsApp() {
-    if (isSendingModalImage) return;
     if (!guardianPhone) {
-      setModalNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً بالملف الشخصي.");
+      setProfileNotice("⚠️ يرجى تسجيل رقم هاتف ولي الأمر أولاً في ملف اللاعب لإرسال البطاقة له.");
       return;
     }
     const cleanPhone = formatWhatsAppPhone(guardianPhone);
     if (!cleanPhone) {
-      setModalNotice("⚠️ رقم هاتف ولي الأمر المسجل غير صالح.");
+      setProfileNotice("⚠️ رقم هاتف ولي الأمر المسجل غير صالح لإرسال واتساب.");
       return;
     }
 
-    setIsSendingModalImage(true);
-    setModalNotice("⏳ جاري نسخ الصورة للحافظة وتوجيهك لواتساب...");
+    setIsSendingCard(true);
+    setProfileNotice("⏳ جاري تجهيز ونسخ صورة البطاقة للحافظة...");
 
     try {
+      let blob = cachedCardBlob;
+      if (!blob) {
+        const canvas = await generateProfileCanvas();
+        if (!canvas) {
+          setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
+          setIsSendingCard(false);
+          return;
+        }
+        blob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/png"),
+        );
+        if (blob) setCachedCardBlob(blob);
+      }
+
+      if (!blob) {
+        setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
+        setIsSendingCard(false);
+        return;
+      }
+
       let copySuccess = false;
-      if (modalImageBlob && navigator.clipboard?.write) {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
         try {
           await navigator.clipboard.write([
-            new ClipboardItem({ "image/png": modalImageBlob }),
+            new ClipboardItem({ "image/png": blob }),
           ]);
           copySuccess = true;
-          setImageCopied(true);
-          setTimeout(() => setImageCopied(false), 4000);
         } catch (clipErr) {
           console.warn("Clipboard write failed:", clipErr);
         }
       }
 
-      setModalNotice(
-        copySuccess
-          ? "✓ تم نسخ صورة البطاقة للحافظة! جاري فتح الشات... فقط اضغط لصق (Ctrl+V) ثم إرسال."
-          : "جاري فتح محادثة ولي الأمر..."
-      );
-
       // Open WhatsApp chat directly with guardian
       openWhatsAppNative(cleanPhone);
+
+      if (copySuccess) {
+        setProfileNotice(
+          "✓ تم نسخ صورة البطاقة للحافظة وفتح محادثة ولي الأمر! قم بلصق الصورة (Ctrl+V) ثم اضغط إرسال.",
+        );
+      } else {
+        setProfileNotice("جاري فتح محادثة ولي الأمر على واتساب...");
+      }
     } catch (err) {
-      console.error(err);
-      setModalNotice("❌ حدث خطأ، يرجى المحاولة مرة أخرى.");
+      console.error("Failed to send card to guardian:", err);
+      setProfileNotice("❌ حدث خطأ أثناء تجهيز أو إرسال البطاقة");
     } finally {
-      setTimeout(() => setIsSendingModalImage(false), 2500);
+      setTimeout(() => setIsSendingCard(false), 2000);
     }
   }
 
@@ -838,6 +846,8 @@ export default function Profile({
       guardianPhone: toEnglishDigits(editGuardianPhone).trim(),
       age: String(player.age),
       branch: editBranch,
+      belt: editBelt,
+      level: editLevel,
       photo: editPhoto,
     });
     setProfileNotice(
@@ -1016,10 +1026,63 @@ export default function Profile({
                 </div>
               </div>
 
+              {/* الحزام والمستوى */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                    حزام الكاراتيه
+                  </label>
+                  <select
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100 cursor-pointer"
+                    value={editBelt}
+                    onChange={(e) => setEditBelt(e.target.value)}
+                  >
+                    {BELTS.map((b) => (
+                      <option key={b.name} value={b.name}>
+                        🥋 حزام {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                    المستوى (Level)
+                  </label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {LEVELS.map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setEditLevel(lvl)}
+                        className={`rounded-xl py-2 text-xs font-black transition cursor-pointer active:scale-95 ${
+                          editLevel === lvl
+                            ? "bg-red-600 text-white shadow-xs shadow-red-500/30 ring-2 ring-red-200"
+                            : "border border-slate-200 bg-slate-50/60 text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                  رقم ولي الأمر
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-extrabold text-slate-700">
+                    رقم ولي الأمر
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleEditPickContact}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 hover:bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-700 border border-red-200/60 transition active:scale-95 cursor-pointer"
+                    title="اختيار رقم ولي الأمر مباشرة من سجل الأسماء بالهاتف"
+                  >
+                    <BookUser className="h-3.5 w-3.5 text-red-600" />
+                    <span>جهات الاتصال 📱</span>
+                  </button>
+                </div>
                 <input
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                   type="tel"
@@ -1028,6 +1091,11 @@ export default function Profile({
                   onChange={(e) => setEditGuardianPhone(toEnglishDigits(e.target.value))}
                   placeholder="01xxxxxxxxx"
                 />
+                {editContactNotice && (
+                  <p className="mt-1.5 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1 animate-slide-up">
+                    {editContactNotice}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1110,6 +1178,13 @@ export default function Profile({
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold text-slate-700">
                         🎂 {player.age} سنة
+                      </span>
+                      <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold shadow-xs ${getBeltStyle(player.belt).bg} ${getBeltStyle(player.belt).text} ${getBeltStyle(player.belt).border}`}>
+                        <span className={`h-2 w-2 rounded-full ${getBeltStyle(player.belt).dot}`} />
+                        🥋 حزام {player.belt || "أبيض"}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 border border-red-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-black text-red-700 shadow-xs">
+                        مستوى {player.level || "A"}
                       </span>
                     </div>
 
@@ -1203,19 +1278,19 @@ export default function Profile({
                     {/* زر 1: إرسال تقرير نصي على واتساب */}
                     <button
                       type="button"
-                      disabled={isSendingText || isDownloadingCard}
+                      disabled={isSendingText || isDownloadingCard || isSendingCard}
                       onClick={shareOnWhatsApp}
-                      className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-white transition active:scale-95 disabled:opacity-60 cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-emerald-800 transition active:scale-95 disabled:opacity-60 cursor-pointer"
                       title="إرسال تقرير نصي بالحضور والاشتراكات لولي الأمر عبر واتساب"
                     >
                       {isSendingText ? (
                         <>
-                          <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-emerald-700 border-t-transparent animate-spin shrink-0" />
                           <span className="truncate">جاري الفتح...</span>
                         </>
                       ) : (
                         <>
-                          <Send className="h-3.5 w-3.5 shrink-0" />
+                          <MessageCircle className="h-3.5 w-3.5 shrink-0" />
                           <span className="truncate">إرسال تقرير نصي</span>
                         </>
                       )}
@@ -1224,7 +1299,7 @@ export default function Profile({
                     {/* زر 2: حفظ صورة البطاقة */}
                     <button
                       type="button"
-                      disabled={isSendingText || isDownloadingCard}
+                      disabled={isSendingText || isDownloadingCard || isSendingCard}
                       onClick={downloadProfileCard}
                       className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-slate-800 transition active:scale-95 disabled:opacity-60 cursor-pointer"
                       title="حفظ وتحميل صورة بطاقة اللاعب الرسمية مباشرة على جهازك"
@@ -1242,23 +1317,23 @@ export default function Profile({
                       )}
                     </button>
 
-                    {/* زر 3: معاينة البطاقة الرسمية */}
+                    {/* زر 3: إرسال البطاقة لولي الأمر (نسخ وفتح محادثة واتساب) */}
                     <button
                       type="button"
-                      disabled={isPreviewingCard}
-                      onClick={openImageModal}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-slate-700 transition active:scale-95 disabled:opacity-60 cursor-pointer"
-                      title="معاينة شكل البطاقة بالحجم الكامل"
+                      disabled={isSendingText || isDownloadingCard || isSendingCard}
+                      onClick={handleSendCardDirectly}
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-white shadow-xs transition active:scale-95 disabled:opacity-60 cursor-pointer"
+                      title="نسخ صورة البطاقة للحافظة وفتح محادثة واتساب مع ولي الأمر فوراً"
                     >
-                      {isPreviewingCard ? (
+                      {isSendingCard ? (
                         <>
-                          <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-400 border-t-transparent animate-spin shrink-0" />
-                          <span className="truncate">جاري...</span>
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                          <span className="truncate">جاري النسخ والفتح...</span>
                         </>
                       ) : (
                         <>
-                          <Eye className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                          <span className="truncate">معاينة البطاقة</span>
+                          <Send className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">إرسال البطاقة</span>
                         </>
                       )}
                     </button>
@@ -1608,134 +1683,6 @@ export default function Profile({
         }}
         onCancel={() => setShowDeleteConfirm(false)}
       />
-
-      {/* نافذة معاينة صورة البطاقة */}
-      {imageModalOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-3 backdrop-blur-sm animate-fade-in-scale"
-          dir="rtl"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) {
-              setImageModalOpen(false);
-            }
-          }}
-        >
-          <div className="relative max-h-[92vh] w-full max-w-sm sm:max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-2xl">
-            <div className="flex items-center justify-between mb-2.5 border-b border-slate-100 pb-2.5">
-              <h3 className="font-cairo text-xs sm:text-sm font-bold text-slate-900 truncate">
-                بطاقة اللاعب: {player.name}
-              </h3>
-              <button
-                type="button"
-                onClick={() => {
-                  setImageModalOpen(false);
-                  setModalImageDataUrl("");
-                  setModalImageBlob(null);
-                  setImageCopied(false);
-                }}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 cursor-pointer shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* الصورة الناتجة */}
-            <div className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex justify-center p-2">
-              <img
-                src={modalImageDataUrl}
-                alt={`بطاقة ${player.name}`}
-                className="max-h-52 sm:max-h-72 w-auto rounded-lg shadow-sm object-contain"
-              />
-            </div>
-
-            {/* رسالة توجيهية أو إشعار داخل المودال */}
-            {modalNotice ? (
-              <div
-                className={`mb-2.5 rounded-xl p-2 sm:p-2.5 text-center text-[11px] sm:text-xs font-bold transition ${
-                  modalNotice.startsWith("⚠️")
-                    ? "bg-amber-50 text-amber-800 border border-amber-200"
-                    : modalNotice.startsWith("❌")
-                    ? "bg-rose-50 text-rose-800 border border-rose-200"
-                    : "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                }`}
-              >
-                {modalNotice}
-              </div>
-            ) : (
-              <div className="mb-2.5 rounded-xl bg-slate-50 border border-slate-200/80 p-2 text-center text-[10px] sm:text-[11px] font-medium text-slate-500">
-                💡 اضغط <strong className="text-emerald-700 font-bold">إرسال لولي الأمر</strong> ليتم نسخ الصورة وفتح الشات فوراً لتلصقها وتضغط إرسال
-              </div>
-            )}
-
-            {/* أزرار التحميل والنسخ والإرسال */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                disabled={isSendingModalImage}
-                onClick={sendCardToGuardianViaWhatsApp}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2.5 sm:p-3 text-xs font-black text-white shadow-xs transition active:scale-95 disabled:opacity-60 cursor-pointer"
-                title="نسخ الصورة للحافظة وفتح محادثة واتساب مع ولي الأمر فوراً"
-              >
-                {isSendingModalImage ? (
-                  <>
-                    <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                    <span>جاري النسخ وفتح الشات...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                    <span>إرسال لولي الأمر (واتساب)</span>
-                  </>
-                )}
-              </button>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  disabled={imageCopied}
-                  onClick={async () => {
-                    if (modalImageBlob && navigator.clipboard?.write) {
-                      try {
-                        await navigator.clipboard.write([
-                          new ClipboardItem({ "image/png": modalImageBlob }),
-                        ]);
-                        setImageCopied(true);
-                        setModalNotice("✓ تم نسخ صورة البطاقة للحافظة بنجاح!");
-                        setTimeout(() => setImageCopied(false), 3000);
-                      } catch (e) {
-                        console.warn(e);
-                      }
-                    }
-                  }}
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 cursor-pointer"
-                >
-                  <ClipboardCopy className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{imageCopied ? "✓ تم النسخ!" : "نسخ للحافظة"}</span>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={isDownloadingCard}
-                  onClick={downloadProfileCard}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold text-white hover:bg-slate-800 active:scale-95 cursor-pointer"
-                >
-                  {isDownloadingCard ? (
-                    <>
-                      <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                      <span className="truncate">جاري...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">تحميل للجهاز</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

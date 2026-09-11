@@ -9,7 +9,7 @@ import {
   Cake,
   MoreHorizontal,
 } from "lucide-react";
-import { paymentStatusFor, getBirthdayInfo } from "../../lib/dashboard-utils";
+import { paymentStatusFor, getBirthdayInfo, getBeltStyle } from "../../lib/dashboard-utils";
 
 function PlayerRow({
   player,
@@ -28,6 +28,7 @@ function PlayerRow({
   const absent = record?.status === "absent";
   const paymentStatus = paymentStatusFor(player, paymentMonth);
   const birthdayInfo = getBirthdayInfo(player);
+  const beltStyle = getBeltStyle(player.belt);
 
   const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
   const attendedSessions = Array.isArray(player.attendance)
@@ -121,7 +122,15 @@ function PlayerRow({
                 </span>
               )}
             </div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-400">
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-slate-500">
+              <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-bold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${beltStyle.dot}`} />
+                <span>حزام {player.belt || "أبيض"}</span>
+              </span>
+              <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/70 px-1.5 py-0.5 font-black text-red-700">
+                مستوى {player.level || "A"}
+              </span>
+              <span>•</span>
               <span>تسجيل {new Date(player.createdAt).toLocaleDateString("ar-EG")}</span>
               {totalSessions > 0 && (
                 <>

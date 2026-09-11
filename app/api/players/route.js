@@ -59,6 +59,8 @@ function serializePlayer(player) {
         : monthlyPayment.status) !== undefined
         ? monthlyPayment.status
         : player.paymentStatus || "unpaid",
+    belt: player.belt || "أبيض",
+    level: player.level || "A",
     _id: player._id.toString(),
   });
 }
@@ -145,6 +147,8 @@ export async function POST(request) {
         { status: 400 },
       );
     }
+    const belt = typeof body.belt === "string" && body.belt.trim() ? body.belt.trim() : "أبيض";
+    const level = typeof body.level === "string" && body.level.trim() ? body.level.trim().toUpperCase() : "A";
     const player = {
       ownerId,
       name,
@@ -153,6 +157,8 @@ export async function POST(request) {
       guardianPhone:
         typeof body.guardianPhone === "string" ? toEnglishDigits(body.guardianPhone).trim() : "",
       branch,
+      belt,
+      level,
       photo: typeof body.photo === "string" ? body.photo : "",
       paymentStatus: body.paymentStatus === "paid" ? "paid" : "unpaid",
       paymentHistory: [],
@@ -225,6 +231,12 @@ export async function PATCH(request) {
       if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
       if (typeof body.photo === "string") {
         updateData.photo = body.photo;
+      }
+      if (typeof body.belt === "string" && body.belt.trim()) {
+        updateData.belt = body.belt.trim();
+      }
+      if (typeof body.level === "string" && body.level.trim()) {
+        updateData.level = body.level.trim().toUpperCase();
       }
       const player = await collection.findOneAndUpdate(
         { _id: new ObjectId(body.id), ownerId },
