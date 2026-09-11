@@ -164,7 +164,7 @@ export default function Home() {
       return players.filter((player) => {
         const matchesBranch =
           branch === "كل الصالات" || player.branch === branch;
-        const record = player.attendance.find(
+        const record = (player.attendance || []).find(
           (item) => item.date === sessionDate,
         );
         const matchesStatus =
@@ -280,12 +280,12 @@ export default function Home() {
     (player) => paymentStatusFor(player, paymentMonth) === "paid",
   ).length;
   const presentToday = dashboardPlayers.filter((player) =>
-    player.attendance.some(
+    (player.attendance || []).some(
       (item) => item.date === sessionDate && item.status === "present",
     ),
   ).length;
   const absentToday = dashboardPlayers.filter((player) =>
-    player.attendance.some(
+    (player.attendance || []).some(
       (item) => item.date === sessionDate && item.status === "absent",
     ),
   ).length;

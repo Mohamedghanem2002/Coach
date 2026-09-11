@@ -52,10 +52,14 @@ export default function BranchOverview({
           const accentColor = BRANCH_ICON_COLORS[idx % BRANCH_ICON_COLORS.length];
           const branchPlayers = players.filter((p) => p.branch === branch.name);
           const present = branchPlayers.filter((p) =>
-            p.attendance.some((a) => a.date === sessionDate && a.status === "present"),
+            (p.attendance || []).some(
+              (a) => a.date === sessionDate && a.status === "present"
+            )
           ).length;
           const absent = branchPlayers.filter((p) =>
-            p.attendance.some((a) => a.date === sessionDate && a.status === "absent"),
+            (p.attendance || []).some(
+              (a) => a.date === sessionDate && a.status === "absent"
+            )
           ).length;
           const paid = branchPlayers.filter(
             (p) => paymentStatusFor(p, paymentMonth) === "paid",

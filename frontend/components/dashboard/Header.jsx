@@ -33,6 +33,7 @@ export default function Header({ players = [], onOpenPlayer }) {
   const fullName = session?.user?.name || "حساب الأكاديمية";
   const firstName = fullName.split(" ")[0] || "كابتن";
   const email = session?.user?.email || "";
+  const initials = firstName.charAt(0);
   const [congratulateTick, setCongratulateTick] = useState(0);
 
   useEffect(() => {

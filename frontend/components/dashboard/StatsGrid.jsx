@@ -18,6 +18,7 @@ function useCountUp(target, duration = 700) {
   useEffect(() => {
     if (target === prevTarget.current && value !== 0) return;
     prevTarget.current = target;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (target === 0) { setValue(0); return; }
     const start = Date.now();
     function tick() {
@@ -109,10 +110,14 @@ function StatsGrid({
     date.setDate(date.getDate() - (6 - index));
     const day = localDate(date);
     const present = dashboardPlayers.filter((player) =>
-      player.attendance.some((item) => item.date === day && item.status === "present"),
+      (player.attendance || []).some(
+        (item) => item.date === day && item.status === "present"
+      )
     ).length;
     const absent = dashboardPlayers.filter((player) =>
-      player.attendance.some((item) => item.date === day && item.status === "absent"),
+      (player.attendance || []).some(
+        (item) => item.date === day && item.status === "absent"
+      )
     ).length;
     return {
       date: day,

@@ -23,7 +23,7 @@ function PlayerRow({
   const [attendanceBusy, setAttendanceBusy] = useState("");
   const [paymentBusy, setPaymentBusy] = useState(false);
 
-  const record = player.attendance.find((item) => item.date === sessionDate);
+  const record = (player.attendance || []).find((item) => item.date === sessionDate);
   const present = record?.status === "present";
   const absent = record?.status === "absent";
   const paymentStatus = paymentStatusFor(player, paymentMonth);
