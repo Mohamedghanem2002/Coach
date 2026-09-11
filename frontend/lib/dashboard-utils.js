@@ -266,16 +266,9 @@ export function generateBirthdayWishUrl(
       navigator.userAgent,
     );
 
-  if (isMobile) {
-    return cleanPhone
-      ? `whatsapp://send?phone=${cleanPhone}&text=${text}`
-      : `whatsapp://send?text=${text}`;
-  }
-
-  if (cleanPhone) {
-    return `https://wa.me/${cleanPhone}?text=${text}`;
-  }
-  return `https://wa.me/?text=${text}`;
+  return cleanPhone
+    ? `whatsapp://send?phone=${cleanPhone}&text=${text}`
+    : `whatsapp://send?text=${text}`;
 }
 
 export const BELTS = [

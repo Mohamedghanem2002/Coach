@@ -714,52 +714,14 @@ export default function Profile({
   async function handleSendCardDirectly() {
     if (isSendingCard || isDownloadingCard || isSendingText) return;
 
-    const isMobile =
-      typeof navigator !== "undefined" &&
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent,
-      );
-
-    // Pre-open reference window synchronously during user click on desktop to prevent popup blocking
-    let targetWindow = null;
-    if (!isMobile && typeof window !== "undefined") {
-      try {
-        targetWindow = window.open("about:blank", "_blank");
-        if (targetWindow) {
-          targetWindow.document.write(`
-            <!DOCTYPE html>
-            <html dir="rtl">
-              <head>
-                <meta charset="utf-8">
-                <title>جاري فتح محادثة واتساب...</title>
-                <style>
-                  body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0b141a; color:#e9edef; font-family:system-ui,sans-serif; text-align:center; padding:16px; }
-                  .spinner { width:44px; height:44px; border:4px solid #2a3942; border-top-color:#25d366; border-radius:50%; animation:spin .7s linear infinite; margin-bottom:16px; }
-                  @keyframes spin { to { transform:rotate(360deg); } }
-                  h3 { margin:0 0 6px; font-size:18px; color:#ffffff; }
-                  p { margin:0; font-size:13px; color:#8696a0; }
-                </style>
-              </head>
-              <body>
-                <div class="spinner"></div>
-                <h3>جاري فتح محادثة واتساب...</h3>
-                <p>يتم تجهيز بطاقة اللاعب ونسخها للحافظة تلقائياً</p>
-              </body>
-            </html>
-          `);
-        }
-      } catch (_) {}
-    }
-
     setIsSendingCard(true);
-    setProfileNotice("⏳ جاري تجهيز ونسخ صورة البطاقة تلقائياً...");
+    setProfileNotice("⏳ جاري تجهيز صورة البطاقة وإرسالها...");
 
     try {
       let blob = cachedCardBlob;
       if (!blob) {
         const canvas = await generateProfileCanvas();
         if (!canvas) {
-          if (targetWindow && !targetWindow.closed) targetWindow.close();
           setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
           setIsSendingCard(false);
           return;
@@ -771,7 +733,6 @@ export default function Profile({
       }
 
       if (!blob) {
-        if (targetWindow && !targetWindow.closed) targetWindow.close();
         setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
         setIsSendingCard(false);
         return;
@@ -779,8 +740,12 @@ export default function Profile({
 
       const cleanPhone = guardianPhone ? formatWhatsAppPhone(guardianPhone) : "";
 
-      // 1. Native Web Share API on mobile devices
-      if (isMobile && typeof navigator !== "undefined" && navigator.canShare) {
+      // 1. Native Web Share API: Attaches image file directly into WhatsApp on mobile!
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function" &&
+        navigator.canShare
+      ) {
         try {
           const file = new File(
             [blob],
@@ -791,20 +756,33 @@ export default function Profile({
             await navigator.share({
               files: [file],
               title: `بطاقة اللاعب ${player.name}`,
-              text: cleanPhone ? `بطاقة اللاعب: ${player.name} (${guardianPhone})` : `بطاقة اللاعب: ${player.name}`,
+              text: cleanPhone
+                ? `🥋 بطاقة لاعب الكاراتيه: ${player.name}\nإشراف الكابتن: ${captainName}\nالصالة: ${player.branch}`
+                : `🥋 بطاقة لاعب الكاراتيه: ${player.name}`,
             });
-            setProfileNotice("✓ تم فتح المشاركة وجاهزة للإرسال مباشرة في واتساب!");
+            setProfileNotice("✓ تم فتح تطبيق واتساب وجاهزة للإرسال مباشرة!");
             return;
           }
         } catch (shareErr) {
-          if (shareErr.name === "AbortError") {
-            return;
-          }
+          if (shareErr.name === "AbortError") return;
           console.warn("Share fallback:", shareErr);
         }
       }
 
-      // 2. Copy image directly to clipboard for desktop & fallback
+      // 2. Fallback when device doesn't support file sharing:
+      // Auto-download the card image so the user has the file
+      try {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      } catch (_) {}
+
+      // Copy image directly to clipboard
       let copySuccess = false;
       if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
         try {
@@ -817,28 +795,19 @@ export default function Profile({
         }
       }
 
-      // 3. Open WhatsApp directly (without popup blocker delay)
-      openWhatsAppDirect(cleanPhone, "", { targetWindow });
+      // 3. Open WhatsApp native mobile/desktop application
+      openWhatsAppDirect(cleanPhone);
 
-      if (cleanPhone) {
-        setProfileNotice(
-          copySuccess
-            ? "✓ تم نسخ صورة البطاقة تلقائياً وفتح شات ولي الأمر! الصق الصورة (Ctrl+V أو لصق) ثم اضغط إرسال."
-            : "✓ تم فتح محادثة ولي الأمر على واتساب!",
-        );
-      } else {
-        setProfileNotice(
-          copySuccess
-            ? "✓ تم نسخ صورة البطاقة تلقائياً وفتح واتساب! اختر محادثة ولي الأمر ثم الصق الصورة واضغط إرسال."
-            : "✓ تم فتح واتساب لاختيار محادثة ولي الأمر!",
-        );
-      }
+      setProfileNotice(
+        copySuccess
+          ? "✓ تم حفظ صورة البطاقة بجهازك ونسخها للحافظة وفتح تطبيق واتساب! الصق الصورة في الشات واضغط إرسال."
+          : "✓ تم حفظ صورة البطاقة بجهازك وفتح تطبيق واتساب!"
+      );
     } catch (err) {
-      if (targetWindow && !targetWindow.closed) targetWindow.close();
       console.error("Failed to send card to guardian:", err);
       setProfileNotice("❌ حدث خطأ أثناء تجهيز أو إرسال البطاقة");
     } finally {
-      setTimeout(() => setIsSendingCard(false), 1200);
+      setTimeout(() => setIsSendingCard(false), 1000);
     }
   }
 
