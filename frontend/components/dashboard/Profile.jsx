@@ -5,12 +5,13 @@ import {
   localDate,
   paymentStatusFor,
   getBirthdayInfo,
-  generateBirthdayWishUrl,
   toEnglishDigits,
   BELTS,
   LEVELS,
   getBeltStyle,
 } from "../../lib/dashboard-utils";
+import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
+import BirthdayCardModal from "./BirthdayCardModal";
 import {
   Send,
   Download,
@@ -193,6 +194,8 @@ export default function Profile({
   const [isOpeningChat, setIsOpeningChat] = useState(false);
   const [isCallingGuardian, setIsCallingGuardian] = useState(false);
   const [isTogglingPayment, setIsTogglingPayment] = useState(false);
+  const [isSendingBirthdayCard, setIsSendingBirthdayCard] = useState(false);
+  const [showBirthdayCardModal, setShowBirthdayCardModal] = useState(false);
   const [updatingPaymentMonth, setUpdatingPaymentMonth] = useState(null);
   const [deletingPaymentMonth, setDeletingPaymentMonth] = useState(null);
   const [updatingAttendanceDate, setUpdatingAttendanceDate] = useState(null);
@@ -1464,22 +1467,54 @@ export default function Profile({
 
               {/* تنبيه عيد الميلاد إن وُجد */}
               {birthdayInfo?.isToday && (
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-rose-200 bg-rose-50/50 p-3 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🎂</span>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-xs animate-slide-up">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl animate-bounce">🎂</span>
                     <div>
-                      <strong className="font-black text-rose-900">اليوم عيد ميلاد {player.name}! 🎉</strong>
-                      <span className="block text-[11px] text-slate-600">أتم {birthdayInfo.turningAge} سنة</span>
+                      <strong className="block font-cairo text-sm font-black text-rose-900">
+                        اليوم عيد ميلاد {player.name}! 🎉
+                      </strong>
+                      <span className="block text-[11px] font-bold text-amber-900">
+                        يُتم اليوم {birthdayInfo.turningAge} سنة · كل عام وبطلنا بألف خير! 🥋
+                      </span>
                     </div>
                   </div>
-                  <a
-                    href={generateBirthdayWishUrl(player, captainName)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 font-bold text-white hover:bg-emerald-700"
-                  >
-                    تهنئة واتساب 📲
-                  </a>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={isSendingBirthdayCard}
+                      onClick={async () => {
+                        await sendBirthdayCardViaWhatsApp(player, captainName, {
+                          onProgress: setIsSendingBirthdayCard,
+                          onNotice: setProfileNotice,
+                        });
+                      }}
+                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
+                      title="إرسال كارت التهنئة الرسمي عبر واتساب"
+                    >
+                      {isSendingBirthdayCard ? (
+                        <>
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                          <span>جاري الكارت...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🎂</span>
+                          <span>إرسال كارت التهنئة</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowBirthdayCardModal(true)}
+                      className="flex items-center gap-1 rounded-xl border border-amber-300 bg-white hover:bg-amber-50 px-2.5 py-2 font-bold text-amber-900 active:scale-95 transition-all cursor-pointer"
+                      title="معاينة كارت التهنئة أو تحميله"
+                    >
+                      <span>🖼️</span>
+                      <span>معاينة</span>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1716,6 +1751,14 @@ export default function Profile({
           }
         }}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      {/* مودال معاينة وتحميل كارت عيد الميلاد */}
+      <BirthdayCardModal
+        player={player}
+        captainName={captainName}
+        isOpen={showBirthdayCardModal}
+        onClose={() => setShowBirthdayCardModal(false)}
       />
     </div>
   );

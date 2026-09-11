@@ -3,8 +3,9 @@ import { useMemo, useState } from "react";
 import {
   getTodayBirthdays,
   getUpcomingBirthdays,
-  generateBirthdayWishUrl,
 } from "../../lib/dashboard-utils";
+import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
+import BirthdayCardModal from "./BirthdayCardModal";
 
 export default function BirthdayReminder({
   players = [],
@@ -13,6 +14,9 @@ export default function BirthdayReminder({
 }) {
   const [activeTab, setActiveTab] = useState("today"); // 'today' | 'upcoming'
   const [isDismissed, setIsDismissed] = useState(false);
+  const [selectedPlayerForCard, setSelectedPlayerForCard] = useState(null);
+  const [sendingPlayerId, setSendingPlayerId] = useState(null);
+  const [reminderNotice, setReminderNotice] = useState("");
 
   const todayBirthdays = useMemo(
     () => getTodayBirthdays(players),
@@ -44,6 +48,26 @@ export default function BirthdayReminder({
       {/* عناصر زخرفية في الخلفية */}
       <div className="pointer-events-none absolute -top-8 -left-8 h-28 w-28 rounded-full bg-amber-300/20 blur-2xl" />
       <div className="pointer-events-none absolute -bottom-8 -right-8 h-28 w-28 rounded-full bg-rose-300/20 blur-2xl" />
+
+      {/* إشعار العملية التنبيهي */}
+      {reminderNotice && (
+        <div
+          className={`relative z-20 mb-3 flex items-center justify-between gap-2 rounded-2xl p-2.5 sm:p-3 text-xs font-bold shadow-xs animate-slide-up ${
+            reminderNotice.startsWith("❌")
+              ? "bg-rose-100 border border-rose-300 text-rose-900"
+              : "bg-emerald-100 border border-emerald-300 text-emerald-900"
+          }`}
+        >
+          <span>{reminderNotice}</span>
+          <button
+            type="button"
+            onClick={() => setReminderNotice("")}
+            className="text-xs font-bold text-slate-500 hover:text-slate-800"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* الرأس: العنوان وأزرار التبديل وزر الإخفاء */}
       <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 pb-3.5">
@@ -128,7 +152,6 @@ export default function BirthdayReminder({
             player.mobile ||
             player.phone ||
             "";
-          const whatsappUrl = generateBirthdayWishUrl(player, captainName);
 
           return (
             <div
@@ -193,36 +216,69 @@ export default function BirthdayReminder({
                 )}
               </div>
 
-              {/* أزرار الإجراءات السريعة */}
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 py-2 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all text-center"
+              {/* أزرار الإجراءات السريعة للكارت والملف */}
+              <div className="mt-3 flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={sendingPlayerId === player._id}
+                  onClick={async () => {
+                    await sendBirthdayCardViaWhatsApp(player, captainName, {
+                      onProgress: (isBusy) =>
+                        setSendingPlayerId(isBusy ? player._id : null),
+                      onNotice: setReminderNotice,
+                    });
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 py-2 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all text-center cursor-pointer disabled:opacity-60"
                   title={
                     phone
-                      ? `إرسال تهنئة فورية لواتساب ولي الأمر (${phone})`
-                      : "إرسال تهنئة عبر واتساب"
+                      ? `إرسال كارت التهنئة الرسمي لواتساب ولي الأمر (${phone})`
+                      : "إرسال كارت التهنئة عبر واتساب"
                   }
                 >
-                  <span className="text-sm">📲</span>
-                  <span>تهنئة واتساب</span>
-                </a>
+                  {sendingPlayerId === player._id ? (
+                    <>
+                      <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                      <span className="truncate">جاري الكارت...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm">🎂</span>
+                      <span className="truncate">إرسال الكارت</span>
+                    </>
+                  )}
+                </button>
 
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                  onClick={() => setSelectedPlayerForCard(player)}
+                  className="flex items-center justify-center gap-1 rounded-xl border border-amber-300 bg-amber-50/90 hover:bg-amber-100 px-2 py-2 text-xs font-bold text-amber-900 active:scale-95 transition-all cursor-pointer shrink-0"
+                  title="معاينة كارت التهنئة المصمم فخماً أو تحميله بجهازك"
+                >
+                  <span>🖼️</span>
+                  <span>معاينة</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shrink-0"
                   onClick={() => onOpenPlayer?.(player)}
+                  title="فتح الملف الشخصي للاعب"
                 >
                   <span>👤</span>
-                  <span>الملف</span>
                 </button>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* مودال معاينة وتحميل كارت عيد الميلاد */}
+      <BirthdayCardModal
+        player={selectedPlayerForCard}
+        captainName={captainName}
+        isOpen={!!selectedPlayerForCard}
+        onClose={() => setSelectedPlayerForCard(null)}
+      />
     </div>
   );
 }

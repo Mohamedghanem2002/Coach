@@ -14,8 +14,8 @@ import {
 import {
   getTodayBirthdays,
   getUpcomingBirthdays,
-  generateBirthdayWishUrl,
 } from "../../lib/dashboard-utils";
+import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
 
 export default function Header({ players = [], onOpenPlayer }) {
   const { data: session } = useSession();
@@ -75,7 +75,7 @@ export default function Header({ players = [], onOpenPlayer }) {
           <div>
             <div className="flex items-center gap-1.5">
               <strong className="font-cairo text-lg font-black tracking-tight text-slate-900 sm:text-xl">
-                COACH
+                Re_action
               </strong>
               <span className="rounded-md bg-gradient-to-r from-red-600 to-rose-600 px-1.5 py-0.5 text-[9px] font-black text-white shadow-xs shadow-red-500/30">
                 PRO
@@ -186,15 +186,18 @@ export default function Header({ players = [], onOpenPlayer }) {
                               </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <a
-                                href={generateBirthdayWishUrl(player, firstName)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-[11px] font-black text-white shadow-xs hover:bg-emerald-700 transition-colors"
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowBirthdayMenu(false);
+                                  sendBirthdayCardViaWhatsApp(player, firstName);
+                                }}
+                                className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-[11px] font-black text-white shadow-xs hover:bg-emerald-700 transition-colors cursor-pointer"
+                                title="إرسال كارت التهنئة الرسمي عبر واتساب"
                               >
-                                <MessageCircle className="h-3 w-3" />
-                                <span>تهنئة</span>
-                              </a>
+                                <span className="text-xs">🎂</span>
+                                <span>كارت التهنئة</span>
+                              </button>
                               <button
                                 type="button"
                                 className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
@@ -241,14 +244,17 @@ export default function Header({ players = [], onOpenPlayer }) {
                               </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <a
-                                href={generateBirthdayWishUrl(player, firstName)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-1 text-[10px] font-black hover:bg-emerald-100 transition-colors"
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowBirthdayMenu(false);
+                                  sendBirthdayCardViaWhatsApp(player, firstName);
+                                }}
+                                className="flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-1 text-[10px] font-black hover:bg-emerald-100 transition-colors cursor-pointer"
+                                title="إرسال كارت التهنئة الرسمي عبر واتساب"
                               >
-                                <MessageCircle className="h-2.5 w-2.5" />
-                              </a>
+                                <span className="text-xs">🎂</span>
+                              </button>
                               <button
                                 type="button"
                                 className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors"
