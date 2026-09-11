@@ -39,11 +39,11 @@ export default function MobileBottomNav({
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 mobile-bottom-bar px-2 pt-1.5 pb-safe w-full max-w-full overflow-hidden"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 mobile-bottom-bar px-2 pt-1.5 pb-safe w-full max-w-full overflow-visible"
       dir="rtl"
       aria-label="شريط التنقل الرئيسي للهاتف"
     >
-      <div className="mx-auto flex max-w-md w-full items-center justify-between gap-1 overflow-hidden">
+      <div className="mx-auto flex max-w-md w-full items-center justify-between gap-1 overflow-visible">
         {/* Tab 1: Players */}
         {(() => {
           const tab = tabs[0];
@@ -113,11 +113,11 @@ export default function MobileBottomNav({
         })()}
 
         {/* Center Prominent Elevated FAB: Add Player */}
-        <div className="flex shrink-0 items-center justify-center px-1">
+        <div className="flex shrink-0 items-center justify-center px-1 overflow-visible">
           <button
             type="button"
             onClick={onOpenAddPlayer}
-            className="flex h-12 w-12 -translate-y-3.5 items-center justify-center rounded-2xl bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 text-white shadow-lg shadow-red-500/35 ring-4 ring-white active:scale-90 transition-all touch-manipulation cursor-pointer"
+            className="flex h-12 w-12 -translate-y-4 items-center justify-center rounded-full bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 text-white shadow-xl shadow-red-500/35 ring-4 ring-white active:scale-90 transition-all touch-manipulation cursor-pointer select-none"
             title="تسجيل لاعب جديد"
             aria-label="تسجيل لاعب جديد"
           >

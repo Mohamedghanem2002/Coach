@@ -1150,6 +1150,7 @@ export default function Home() {
                 players={dashboardPlayers}
                 captainName={captainName}
                 onOpenPlayer={(player) => setSelected(player)}
+                allowDismiss={false}
               />
             </div>
           )}

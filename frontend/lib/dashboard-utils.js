@@ -198,16 +198,17 @@ export function getTodayBirthdays(players, referenceDate = new Date()) {
 
 export function getUpcomingBirthdays(
   players,
-  daysAhead = 1,
+  daysAhead = 30,
   referenceDate = new Date()
 ) {
   if (!Array.isArray(players)) return [];
   const currentYear = referenceDate.getFullYear();
+  const maxDays = Number(daysAhead) > 0 ? Number(daysAhead) : 30;
   return players
     .map((player) => {
       const bday = getBirthdayInfo(player, referenceDate);
-      // ONLY 1 day before (tomorrow)
-      if (!bday || bday.daysLeft !== 1) return null;
+      if (!bday || bday.isToday) return null;
+      if (bday.daysLeft < 1 || bday.daysLeft > maxDays) return null;
       if (player.lastBirthdayWishedYear === currentYear || isBirthdayCongratulated(player._id, referenceDate)) {
         return null;
       }

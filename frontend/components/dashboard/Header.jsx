@@ -56,7 +56,7 @@ export default function Header({
   }, [players, congratulateTick]);
   const upcomingBirthdays = useMemo(() => {
     void congratulateTick;
-    return getUpcomingBirthdays(players, 1);
+    return getUpcomingBirthdays(players, 7);
   }, [players, congratulateTick]);
   const totalBirthdayCount = todayBirthdays.length + upcomingBirthdays.length;
 
@@ -284,7 +284,7 @@ export default function Header({
                     <div className={todayBirthdays.length > 0 ? "border-t border-slate-100 pt-2.5 mt-1" : ""}>
                       <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-700 mb-2">
                         <CalendarDays className="h-3 w-3" />
-                        <span>قادمة غداً ({upcomingBirthdays.length}):</span>
+                        <span>قادمة هذا الأسبوع ({upcomingBirthdays.length}):</span>
                       </div>
                       <div className="space-y-1.5">
                         {upcomingBirthdays.map((player) => (
@@ -301,7 +301,10 @@ export default function Header({
                                   {player.name}
                                 </strong>
                                 <span className="block text-[10px] font-medium text-slate-500">
-                                  غداً · {player.birthdayInfo?.turningAge} سنة
+                                  {player.birthdayInfo?.daysLeft === 1
+                                    ? "غداً"
+                                    : player.birthdayInfo?.dateFormatted}{" "}
+                                  · {player.birthdayInfo?.turningAge} سنة
                                 </span>
                               </div>
                             </div>
