@@ -42,6 +42,10 @@
         {
           "date": "2026-09-10",
           "status": "present"
+        },
+        {
+          "date": "2026-09-11",
+          "status": "present"
         }
       ],
       "createdAt": "2026-09-10T11:14:13.116Z",
@@ -59,7 +63,12 @@
       "photo": "",
       "paymentStatus": "unpaid",
       "paymentHistory": [],
-      "attendance": [],
+      "attendance": [
+        {
+          "date": "2026-09-11",
+          "status": "present"
+        }
+      ],
       "createdAt": "2026-09-11T12:42:08.498Z",
       "_id": "6aa3f720ec0323d6dd6fe90b"
     }
