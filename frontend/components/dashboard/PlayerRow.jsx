@@ -11,13 +11,16 @@ import {
   Phone,
   MessageCircle,
   MoreHorizontal,
+  AlertCircle,
 } from "lucide-react";
 import {
   paymentStatusFor,
+  getPaymentDetailsFor,
   getBirthdayInfo,
   getBeltStyle,
   formatWhatsAppPhone,
 } from "../../lib/dashboard-utils";
+import QuickPaymentModal from "./QuickPaymentModal";
 
 function PlayerRow({
   player,
@@ -29,12 +32,14 @@ function PlayerRow({
   onToggleSelection,
 }) {
   const [attendanceBusy, setAttendanceBusy] = useState("");
-  const [paymentBusy, setPaymentBusy] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const record = (player.attendance || []).find((item) => item.date === sessionDate);
   const present = record?.status === "present";
   const absent = record?.status === "absent";
-  const paymentStatus = paymentStatusFor(player, paymentMonth);
+  const paymentDetails = getPaymentDetailsFor(player, paymentMonth);
+  const paymentStatus = paymentDetails.status;
+  const { totalAmount, paidAmount, remainingAmount } = paymentDetails;
   const birthdayInfo = getBirthdayInfo(player);
   const beltStyle = getBeltStyle(player.belt);
 
@@ -51,18 +56,6 @@ function PlayerRow({
       await onUpdate(player._id, { attendanceStatus: status, date: sessionDate });
     } finally {
       setAttendanceBusy("");
-    }
-  }
-
-  async function updatePayment() {
-    if (paymentBusy) return;
-    setPaymentBusy(true);
-    try {
-      await onUpdate(player._id, {
-        paymentStatus: paymentStatus === "paid" ? "unpaid" : "paid",
-      });
-    } finally {
-      setPaymentBusy(false);
     }
   }
 
@@ -266,26 +259,30 @@ function PlayerRow({
           {/* Payment Button */}
           <button
             type="button"
-            disabled={paymentBusy}
-            onClick={updatePayment}
-            className={`min-h-[44px] rounded-xl px-3.5 text-xs font-extrabold transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95 touch-manipulation cursor-pointer shrink-0 ${
+            onClick={() => setShowPaymentModal(true)}
+            className={`min-h-[44px] rounded-xl px-3 text-xs font-extrabold transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95 touch-manipulation cursor-pointer shrink-0 ${
               paymentStatus === "paid"
                 ? "border border-emerald-300 bg-emerald-50 text-emerald-800 font-black"
+                : paymentStatus === "partially_paid"
+                ? "border border-amber-300 bg-amber-50 text-amber-900 font-black shadow-2xs"
                 : "border border-rose-300 bg-rose-50 text-rose-800 font-black"
             }`}
-            title="تبديل حالة دفع اشتراك الشهر"
+            title="تسجيل وتحصيل اشتراك الشهر"
           >
-            {paymentBusy ? (
-              <span className="h-4 w-4 rounded-full border-2 border-current/40 border-t-current animate-spin inline-block" />
-            ) : paymentStatus === "paid" ? (
+            {paymentStatus === "paid" ? (
               <>
-                <CreditCard className="h-3.5 w-3.5 text-emerald-600" />
-                <span>مدفوع</span>
+                <CreditCard className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span>مدفوع ({paidAmount})</span>
+              </>
+            ) : paymentStatus === "partially_paid" ? (
+              <>
+                <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                <span>دفع {paidAmount} • باقي {remainingAmount}</span>
               </>
             ) : (
               <>
-                <Clock className="h-3.5 w-3.5 text-rose-500 animate-pulse" />
-                <span>لم يدفع</span>
+                <Clock className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+                <span>لم يدفع (باقي {remainingAmount})</span>
               </>
             )}
           </button>
@@ -455,22 +452,27 @@ function PlayerRow({
           className={`min-h-10 rounded-xl px-2.5 text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
             paymentStatus === "paid"
               ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+              : paymentStatus === "partially_paid"
+              ? "border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-black"
               : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
           }`}
-          disabled={paymentBusy}
-          onClick={updatePayment}
+          onClick={() => setShowPaymentModal(true)}
+          title="تسجيل وتحصيل اشتراك الشهر"
         >
-          {paymentBusy ? (
-            <span className="h-3.5 w-3.5 rounded-full border-2 border-current/40 border-t-current animate-spin inline-block" />
-          ) : paymentStatus === "paid" ? (
+          {paymentStatus === "paid" ? (
             <>
-              <CreditCard className="h-3.5 w-3.5" />
-              <span>مدفوع</span>
+              <CreditCard className="h-3.5 w-3.5 shrink-0" />
+              <span>مدفوع ({paidAmount} ج.م)</span>
+            </>
+          ) : paymentStatus === "partially_paid" ? (
+            <>
+              <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+              <span>دفع {paidAmount} • باقي {remainingAmount}</span>
             </>
           ) : (
             <>
-              <Clock className="h-3.5 w-3.5 animate-pulse" />
-              <span>لم يدفع</span>
+              <Clock className="h-3.5 w-3.5 shrink-0" />
+              <span>لم يدفع (باقي {remainingAmount})</span>
             </>
           )}
         </button>
@@ -485,6 +487,18 @@ function PlayerRow({
           <MoreHorizontal className="h-5 w-5" />
         </button>
       </div>
+
+      {showPaymentModal && (
+        <QuickPaymentModal
+          player={player}
+          paymentMonth={paymentMonth}
+          initialDetails={paymentDetails}
+          onClose={() => setShowPaymentModal(false)}
+          onSave={async (data) => {
+            await onUpdate(player._id, data);
+          }}
+        />
+      )}
     </>
   );
 }

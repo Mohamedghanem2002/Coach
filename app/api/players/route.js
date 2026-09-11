@@ -48,17 +48,33 @@ function serializePlayer(player) {
     ? player.paymentHistory.find((payment) => payment.month === currentMonth)
     : undefined;
 
+  const totalAmount = Number(
+    monthlyPayment?.totalAmount ?? player.totalAmount ?? 100,
+  );
+  const paidAmount = Number(
+    monthlyPayment?.paidAmount ?? (
+      monthlyPayment?.status === "paid"
+        ? totalAmount
+        : (player.paidAmount ?? 0)
+    ),
+  );
+  const remainingAmount = Math.max(0, totalAmount - paidAmount);
+  let status = monthlyPayment?.status || player.paymentStatus || "unpaid";
+  if (paidAmount >= totalAmount && totalAmount > 0) {
+    status = "paid";
+  } else if (paidAmount > 0 && paidAmount < totalAmount) {
+    status = "partially_paid";
+  }
+
   return Object.assign(Object.assign({}, player), {
     attendance: Array.isArray(player.attendance) ? player.attendance : [],
     paymentHistory: Array.isArray(player.paymentHistory)
       ? player.paymentHistory
       : [],
-    paymentStatus:
-      (monthlyPayment === null || monthlyPayment === void 0
-        ? void 0
-        : monthlyPayment.status) !== undefined
-        ? monthlyPayment.status
-        : player.paymentStatus || "unpaid",
+    paymentStatus: status,
+    totalAmount,
+    paidAmount,
+    remainingAmount,
     belt: player.belt || "أبيض",
     level: player.level || "A",
     lastBirthdayWishedYear: player.lastBirthdayWishedYear || null,
@@ -87,20 +103,35 @@ export async function GET() {
     const currentMonth = appDate().slice(0, 7);
     return NextResponse.json(
       players.map((player) => {
-        var _a, _b;
+        var _a;
         const monthlyPayment =
           (_a = player.paymentHistory) === null || _a === void 0
             ? void 0
             : _a.find((payment) => payment.month === currentMonth);
+        const totalAmount = Number(
+          monthlyPayment?.totalAmount ?? player.totalAmount ?? 100,
+        );
+        const paidAmount = Number(
+          monthlyPayment?.paidAmount ?? (
+            monthlyPayment?.status === "paid"
+              ? totalAmount
+              : (player.paidAmount ?? 0)
+          ),
+        );
+        const remainingAmount = Math.max(0, totalAmount - paidAmount);
+        let status = monthlyPayment?.status || player.paymentStatus || "unpaid";
+        if (paidAmount >= totalAmount && totalAmount > 0) {
+          status = "paid";
+        } else if (paidAmount > 0 && paidAmount < totalAmount) {
+          status = "partially_paid";
+        }
+
         return Object.assign(Object.assign({}, player), {
           attendance: Array.isArray(player.attendance) ? player.attendance : [],
-          paymentStatus:
-            (_b =
-              monthlyPayment === null || monthlyPayment === void 0
-                ? void 0
-                : monthlyPayment.status) !== null && _b !== void 0
-              ? _b
-              : player.paymentStatus,
+          paymentStatus: status,
+          totalAmount,
+          paidAmount,
+          remainingAmount,
           paymentHistory: Array.isArray(player.paymentHistory)
             ? player.paymentHistory
             : [],
@@ -346,6 +377,8 @@ export async function PATCH(request) {
       const currentMonth = appDate().slice(0, 7);
       if (month === currentMonth) {
         updateFields.paymentStatus = "unpaid";
+        updateFields.paidAmount = 0;
+        updateFields.remainingAmount = existing.totalAmount || 100;
       }
       const player = await collection.findOneAndUpdate(
         { _id: new ObjectId(body.id), ownerId },
@@ -354,46 +387,95 @@ export async function PATCH(request) {
       );
       return NextResponse.json(player ? serializePlayer(player) : null);
     }
-    if (body.paymentStatus !== "paid" && body.paymentStatus !== "unpaid") {
-      return NextResponse.json(
-        { error: "نوع التحديث غير صحيح" },
-        { status: 400 },
+
+    if (
+      body.paymentStatus !== undefined ||
+      body.paidAmount !== undefined ||
+      body.totalAmount !== undefined
+    ) {
+      const month =
+        typeof body.paymentMonth === "string" &&
+        /^\d{4}-\d{2}$/.test(body.paymentMonth)
+          ? body.paymentMonth
+          : appDate().slice(0, 7);
+      const existing = await collection.findOne({
+        _id: new ObjectId(body.id),
+        ownerId,
+      });
+      if (!existing) {
+        return NextResponse.json({ error: "اللاعب غير موجود" }, { status: 404 });
+      }
+
+      const existingMonthPayment = (existing.paymentHistory || []).find(
+        (p) => p.month === month,
       );
+
+      const totalAmount =
+        body.totalAmount !== undefined
+          ? Math.max(0, Number(body.totalAmount) || 0)
+          : (existingMonthPayment?.totalAmount ?? existing.totalAmount ?? 100);
+
+      let paidAmount;
+      if (body.paidAmount !== undefined) {
+        paidAmount = Math.max(0, Number(body.paidAmount) || 0);
+      } else if (body.paymentStatus === "paid") {
+        paidAmount = totalAmount;
+      } else if (body.paymentStatus === "unpaid") {
+        paidAmount = 0;
+      } else {
+        paidAmount =
+          existingMonthPayment?.paidAmount ??
+          (existingMonthPayment?.status === "paid" ? totalAmount : 0);
+      }
+
+      const remainingAmount = Math.max(0, totalAmount - paidAmount);
+
+      let status = body.paymentStatus;
+      if (paidAmount >= totalAmount && totalAmount > 0) {
+        status = "paid";
+      } else if (paidAmount > 0 && paidAmount < totalAmount) {
+        status = "partially_paid";
+      } else if (paidAmount === 0) {
+        status = "unpaid";
+      }
+
+      const history = (
+        (_b = existing.paymentHistory) !== null && _b !== void 0 ? _b : []
+      ).filter((payment) => payment.month !== month);
+
+      history.push({
+        month,
+        status,
+        totalAmount,
+        paidAmount,
+        remainingAmount,
+        updatedAt: new Date(),
+      });
+
+      const currentMonth = appDate().slice(0, 7);
+      const updateSet = {
+        paymentHistory: history,
+      };
+      if (month === currentMonth) {
+        updateSet.paymentStatus = status;
+        updateSet.totalAmount = totalAmount;
+        updateSet.paidAmount = paidAmount;
+        updateSet.remainingAmount = remainingAmount;
+      }
+      const player = await collection.findOneAndUpdate(
+        { _id: new ObjectId(body.id), ownerId },
+        {
+          $set: updateSet,
+        },
+        { returnDocument: "after" },
+      );
+      return NextResponse.json(player ? serializePlayer(player) : null);
     }
-    const month =
-      typeof body.paymentMonth === "string" &&
-      /^\d{4}-\d{2}$/.test(body.paymentMonth)
-        ? body.paymentMonth
-        : appDate().slice(0, 7);
-    const existing = await collection.findOne({
-      _id: new ObjectId(body.id),
-      ownerId,
-    });
-    if (!existing) {
-      return NextResponse.json({ error: "اللاعب غير موجود" }, { status: 404 });
-    }
-    const history = (
-      (_b = existing.paymentHistory) !== null && _b !== void 0 ? _b : []
-    ).filter((payment) => payment.month !== month);
-    history.push({
-      month,
-      status: body.paymentStatus,
-    });
-    const currentMonth = appDate().slice(0, 7);
-    const updateSet = {
-      paymentHistory: history,
-    };
-    if (month === currentMonth) {
-      updateSet.paymentStatus = body.paymentStatus;
-    }
-    const player = await collection.findOneAndUpdate(
-      { _id: new ObjectId(body.id), ownerId },
-      {
-        $set: updateSet,
-      },
-      { returnDocument: "after" },
+
+    return NextResponse.json(
+      { error: "نوع التحديث غير صحيح" },
+      { status: 400 },
     );
-    return NextResponse.json(player ? serializePlayer(player) : null);
   } catch (error) {
     console.error("PATCH /api/players failed:", error);
     return NextResponse.json(

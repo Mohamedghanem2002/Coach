@@ -1,4 +1,4 @@
-import { paymentStatusFor } from "./dashboard-utils";
+import { getPaymentDetailsFor } from "./dashboard-utils";
 
 /**
  * Escapes a cell value for standard CSV format
@@ -27,7 +27,10 @@ export function exportPlayersToCSV(
     "العمر",
     "تاريخ الميلاد",
     "هاتف ولي الأمر",
-    `اشتراك شهر (${paymentMonth || "الحالي"})`,
+    `حالة اشتراك شهر (${paymentMonth || "الحالي"})`,
+    "قيمة الاشتراك (ج.م)",
+    "المبلغ المدفوع (ج.م)",
+    "المبلغ المتبقي (ج.م)",
     "مرات الحضور",
     "إجمالي الحصص",
     "نسبة الحضور %",
@@ -50,8 +53,15 @@ export function exportPlayersToCSV(
       ? Math.round((presentCount / totalAttendance) * 100)
       : 0;
 
-    const paymentStatus = paymentStatusFor(player, paymentMonth);
-    const paymentLabel = paymentStatus === "paid" ? "مدفوع ✓" : "لم يدفع";
+    const payDetails = getPaymentDetailsFor(player, paymentMonth);
+    let paymentLabel = "لم يدفع";
+    if (payDetails.status === "paid") {
+      paymentLabel = `مدفوع بالكامل (${payDetails.paidAmount} ج.م) ✓`;
+    } else if (payDetails.status === "partially_paid") {
+      paymentLabel = `دفع ${payDetails.paidAmount} • باقي ${payDetails.remainingAmount}`;
+    } else {
+      paymentLabel = `لم يدفع (متبقي ${payDetails.remainingAmount})`;
+    }
 
     const regDate = player.createdAt
       ? new Date(player.createdAt).toLocaleDateString("ar-EG")
@@ -66,6 +76,9 @@ export function exportPlayersToCSV(
       escapeCSV(player.dateOfBirth || "-"),
       escapeCSV(guardianPhone),
       escapeCSV(paymentLabel),
+      escapeCSV(payDetails.totalAmount),
+      escapeCSV(payDetails.paidAmount),
+      escapeCSV(payDetails.remainingAmount),
       escapeCSV(presentCount),
       escapeCSV(totalAttendance),
       escapeCSV(`${attendanceRate}%`),

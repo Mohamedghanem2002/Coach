@@ -9,7 +9,7 @@ import {
   TrendingUp,
   CalendarDays,
 } from "lucide-react";
-import { localDate, paymentStatusFor } from "../../lib/dashboard-utils";
+import { localDate, paymentStatusFor, getPaymentDetailsFor } from "../../lib/dashboard-utils";
 
 /* ── Animated counter hook ─────────────────────────────────────────────── */
 function useCountUp(target, duration = 700) {
@@ -85,9 +85,14 @@ function StatsGrid({
       ? players
       : players.filter((p) => p.branch === branch);
 
-  const paidCount = dashboardPlayers.filter(
-    (p) => paymentStatusFor(p, paymentMonth) === "paid",
-  ).length;
+  const paymentDetailsList = dashboardPlayers.map((p) =>
+    getPaymentDetailsFor(p, paymentMonth),
+  );
+  const paidCount = paymentDetailsList.filter((p) => p.status === "paid").length;
+  const partialCount = paymentDetailsList.filter((p) => p.status === "partially_paid").length;
+  const unpaidCount = paymentDetailsList.filter((p) => p.status === "unpaid").length;
+  const totalRemaining = paymentDetailsList.reduce((sum, p) => sum + (p.remainingAmount || 0), 0);
+  const pendingPlayersCount = unpaidCount + partialCount;
 
   const presentToday = dashboardPlayers.filter((p) => {
     var _a;
@@ -102,8 +107,6 @@ function StatsGrid({
       (a) => a.date === sessionDate && a.status === "absent",
     );
   }).length;
-
-  const unpaidCount = dashboardPlayers.length - paidCount;
 
   const attendanceDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${sessionDate}T12:00:00`);
@@ -161,15 +164,15 @@ function StatsGrid({
     {
       label: "دفعوا الاشتراك",
       value: paidCount,
-      note: paymentMonthLabel,
+      note: partialCount > 0 ? `${paymentMonthLabel} (+${partialCount} جزئي)` : paymentMonthLabel,
       Icon: CreditCard,
       gradient: "from-sky-500 to-blue-600",
       accentColor: "#0ea5e9",
     },
     {
-      label: "لم يدفعوا بعد",
-      value: unpaidCount,
-      note: "مستحقات معلقة",
+      label: "مستحقات معلقة",
+      value: pendingPlayersCount,
+      note: totalRemaining > 0 ? `متبقي ${totalRemaining.toLocaleString("ar-EG")} ج.م` : "لا توجد مستحقات معلقة",
       Icon: Clock,
       gradient: "from-amber-500 to-orange-600",
       accentColor: "#f59e0b",

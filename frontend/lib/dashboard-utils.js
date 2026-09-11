@@ -3,21 +3,72 @@ export function localDate(date = new Date()) {
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
 }
 
-export function paymentStatusFor(player, month) {
-  var _a, _b;
+export function getPaymentDetailsFor(player, month) {
   const currentMonth = localDate().slice(0, 7);
-  return (
-    ((_b =
-      (_a = (
-        Array.isArray(player.paymentHistory) ? player.paymentHistory : []
-      ).find((payment) => payment.month === month)) === null || _a === void 0
-        ? void 0
-        : _a.status) !== null && _b !== void 0
-      ? _b
-      : month === currentMonth
-        ? player.paymentStatus
-        : "unpaid")
-  );
+  const record = (
+    Array.isArray(player?.paymentHistory) ? player.paymentHistory : []
+  ).find((payment) => payment.month === month);
+
+  if (record) {
+    const totalAmount = Number(
+      record.totalAmount ?? record.amount ?? player?.totalAmount ?? 100,
+    );
+    const paidAmount = Number(
+      record.paidAmount ?? (record.status === "paid" ? totalAmount : 0),
+    );
+    const remainingAmount = Math.max(0, totalAmount - paidAmount);
+
+    let status = record.status;
+    if (paidAmount >= totalAmount && totalAmount > 0) {
+      status = "paid";
+    } else if (paidAmount > 0 && paidAmount < totalAmount) {
+      status = "partially_paid";
+    } else if (paidAmount === 0) {
+      status = "unpaid";
+    }
+
+    return {
+      status,
+      totalAmount,
+      paidAmount,
+      remainingAmount,
+    };
+  }
+
+  if (month === currentMonth) {
+    const totalAmount = Number(player?.totalAmount ?? 100);
+    const paidAmount = Number(
+      player?.paidAmount ??
+        (player?.paymentStatus === "paid" ? totalAmount : 0),
+    );
+    const remainingAmount = Math.max(0, totalAmount - paidAmount);
+    let status = player?.paymentStatus || "unpaid";
+    if (paidAmount >= totalAmount && totalAmount > 0) {
+      status = "paid";
+    } else if (paidAmount > 0 && paidAmount < totalAmount) {
+      status = "partially_paid";
+    } else if (paidAmount === 0) {
+      status = "unpaid";
+    }
+
+    return {
+      status,
+      totalAmount,
+      paidAmount,
+      remainingAmount,
+    };
+  }
+
+  return {
+    status: "unpaid",
+    totalAmount: 100,
+    paidAmount: 0,
+    remainingAmount: 100,
+  };
+}
+
+export function paymentStatusFor(player, month) {
+  return getPaymentDetailsFor(player, month).status;
 }
 
 export function normalizePlayer(player) {

@@ -6,6 +6,7 @@ import {
   localDate,
   normalizePlayer,
   paymentStatusFor,
+  getPaymentDetailsFor,
   getBirthdayInfo,
   getTodayBirthdays,
   isBirthdayCongratulated,
@@ -170,6 +171,7 @@ export default function Home() {
         const record = (player.attendance || []).find(
           (item) => item.date === sessionDate,
         );
+        const paymentDetails = getPaymentDetailsFor(player, paymentMonth);
         const matchesStatus =
           statusFilter === "all" ||
           (statusFilter === "present" &&
@@ -179,9 +181,11 @@ export default function Home() {
             (record === null || record === void 0 ? void 0 : record.status) ===
               "absent") ||
           (statusFilter === "paid" &&
-            paymentStatusFor(player, paymentMonth) === "paid") ||
+            paymentDetails.status === "paid") ||
+          (statusFilter === "partially_paid" &&
+            paymentDetails.status === "partially_paid") ||
           (statusFilter === "unpaid" &&
-            paymentStatusFor(player, paymentMonth) === "unpaid") ||
+            paymentDetails.status !== "paid") ||
           (statusFilter === "birthday" &&
             Boolean(getBirthdayInfo(player)?.isToday) &&
             !isBirthdayCongratulated(player._id));
@@ -216,8 +220,13 @@ export default function Home() {
         return list.sort((a, b) => (b.age || 0) - (a.age || 0));
       case "unpaid-first":
         return list.sort((a, b) => {
-          const aPaid = paymentStatusFor(a, paymentMonth) === "paid" ? 1 : 0;
-          const bPaid = paymentStatusFor(b, paymentMonth) === "paid" ? 1 : 0;
+          const aDetails = getPaymentDetailsFor(a, paymentMonth);
+          const bDetails = getPaymentDetailsFor(b, paymentMonth);
+          if (bDetails.remainingAmount !== aDetails.remainingAmount) {
+            return bDetails.remainingAmount - aDetails.remainingAmount;
+          }
+          const aPaid = aDetails.status === "paid" ? 1 : 0;
+          const bPaid = bDetails.status === "paid" ? 1 : 0;
           return aPaid - bPaid;
         });
       case "attendance-desc":
@@ -282,6 +291,13 @@ export default function Home() {
   const paidCount = dashboardPlayers.filter(
     (player) => paymentStatusFor(player, paymentMonth) === "paid",
   ).length;
+  const partialCount = dashboardPlayers.filter(
+    (player) => paymentStatusFor(player, paymentMonth) === "partially_paid",
+  ).length;
+  const unpaidCount = dashboardPlayers.filter(
+    (player) => paymentStatusFor(player, paymentMonth) === "unpaid",
+  ).length;
+  const totalPendingPaymentCount = unpaidCount + partialCount;
   const presentToday = dashboardPlayers.filter((player) =>
     (player.attendance || []).some(
       (item) => item.date === sessionDate && item.status === "present",
@@ -292,7 +308,6 @@ export default function Home() {
       (item) => item.date === sessionDate && item.status === "absent",
     ),
   ).length;
-  const unpaidCount = dashboardPlayers.length - paidCount;
   const attendanceRateToday =
     dashboardPlayers.length > 0
       ? Math.round((presentToday / dashboardPlayers.length) * 100)
@@ -661,8 +676,10 @@ export default function Home() {
                     : "bg-amber-50/80 border border-amber-200/60 text-amber-800"
                 }`}
               >
-                <span className="text-base font-black leading-none">{unpaidCount}</span>
-                <span className="text-[10px] font-bold mt-1">لم يدفع</span>
+                <span className="text-base font-black leading-none">{totalPendingPaymentCount}</span>
+                <span className="text-[10px] font-bold mt-1">
+                  {partialCount > 0 ? "باقي/معلق" : "لم يدفع"}
+                </span>
               </button>
             </div>
           </div>
@@ -824,19 +841,33 @@ export default function Home() {
                   onClick={() => setStatusFilter("paid")}
                 >
                   <CreditCard className="h-3 w-3" />
-                  <span>مدفوع ({paidCount})</span>
+                  <span>مدفوع بالكامل ({paidCount})</span>
                 </button>
+                {partialCount > 0 && (
+                  <button
+                    type="button"
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
+                      statusFilter === "partially_paid"
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "bg-white text-amber-800 border border-amber-300 hover:bg-amber-50"
+                    }`}
+                    onClick={() => setStatusFilter("partially_paid")}
+                  >
+                    <Clock className="h-3 w-3 text-amber-600" />
+                    <span>دفع جزئي ({partialCount})</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 min-h-[36px] cursor-pointer ${
                     statusFilter === "unpaid"
-                      ? "bg-amber-600 text-white shadow-xs"
-                      : "bg-white text-amber-700 border border-amber-200/70 hover:bg-amber-50"
+                      ? "bg-rose-600 text-white shadow-xs"
+                      : "bg-white text-rose-700 border border-rose-200/70 hover:bg-rose-50"
                   }`}
                   onClick={() => setStatusFilter("unpaid")}
                 >
                   <Clock className="h-3 w-3" />
-                  <span>لم يدفع ({unpaidCount})</span>
+                  <span>لم يدفع / متبقي ({totalPendingPaymentCount})</span>
                 </button>
                 {todayBirthdaysCount > 0 && (
                   <button
@@ -1259,21 +1290,36 @@ export default function Home() {
             onClick={() => setStatusFilter("paid")}
           >
             <CreditCard className="h-3 w-3" />
-            <span>مدفوع</span>
+            <span>مدفوع بالكامل</span>
             <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{paidCount}</span>
           </button>
+          {partialCount > 0 && (
+            <button
+              type="button"
+              className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer ${
+                statusFilter === "partially_paid"
+                  ? "bg-amber-600 text-white shadow-xs shadow-amber-500/20"
+                  : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300"
+              }`}
+              onClick={() => setStatusFilter("partially_paid")}
+            >
+              <Clock className="h-3 w-3 text-amber-600" />
+              <span>دفع جزئي</span>
+              <span className="rounded-full bg-white/40 px-1.5 text-[10px] font-black">{partialCount}</span>
+            </button>
+          )}
           <button
             type="button"
             className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer ${
               statusFilter === "unpaid"
-                ? "bg-amber-600 text-white shadow-xs shadow-amber-500/20"
-                : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60"
+                ? "bg-rose-600 text-white shadow-xs shadow-rose-500/20"
+                : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
             }`}
             onClick={() => setStatusFilter("unpaid")}
           >
             <Clock className="h-3 w-3" />
-            <span>لم يدفع</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{unpaidCount}</span>
+            <span>لم يدفع / متبقي</span>
+            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{totalPendingPaymentCount}</span>
           </button>
 
           {todayBirthdaysCount > 0 && (
