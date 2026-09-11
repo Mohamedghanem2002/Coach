@@ -212,14 +212,14 @@ function PlayerRow({
           )}
         </div>
 
-        {/* Main Touch Action Bar: Present / Absent / Payment */}
-        <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2 pt-1">
+        {/* Main Touch Action Bar: Present / Absent (2 large thumb-friendly buttons) */}
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {/* Present Button */}
           <button
             type="button"
             disabled={Boolean(attendanceBusy)}
             onClick={() => updateAttendance("present")}
-            className={`min-h-[44px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95 touch-manipulation cursor-pointer ${
+            className={`min-h-[46px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-2 active:scale-95 touch-manipulation cursor-pointer ${
               present
                 ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-500/25 ring-2 ring-emerald-300"
                 : "bg-slate-50 text-slate-700 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50"
@@ -230,7 +230,7 @@ function PlayerRow({
             ) : (
               <>
                 <Check className="h-4 w-4 stroke-[3]" />
-                <span>حاضر</span>
+                <span>حاضر اليوم</span>
               </>
             )}
           </button>
@@ -240,7 +240,7 @@ function PlayerRow({
             type="button"
             disabled={Boolean(attendanceBusy)}
             onClick={() => updateAttendance("absent")}
-            className={`min-h-[44px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95 touch-manipulation cursor-pointer ${
+            className={`min-h-[46px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-2 active:scale-95 touch-manipulation cursor-pointer ${
               absent
                 ? "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-sm shadow-rose-500/25 ring-2 ring-rose-300"
                 : "bg-slate-50 text-slate-700 border border-slate-200 hover:border-rose-300 hover:bg-rose-50/50"
@@ -251,42 +251,54 @@ function PlayerRow({
             ) : (
               <>
                 <X className="h-4 w-4 stroke-[3]" />
-                <span>غياب</span>
-              </>
-            )}
-          </button>
-
-          {/* Payment Button */}
-          <button
-            type="button"
-            onClick={() => setShowPaymentModal(true)}
-            className={`min-h-[44px] rounded-xl px-3 text-xs font-extrabold transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95 touch-manipulation cursor-pointer shrink-0 ${
-              paymentStatus === "paid"
-                ? "border border-emerald-300 bg-emerald-50 text-emerald-800 font-black"
-                : paymentStatus === "partially_paid"
-                ? "border border-amber-300 bg-amber-50 text-amber-900 font-black shadow-2xs"
-                : "border border-rose-300 bg-rose-50 text-rose-800 font-black"
-            }`}
-            title="تسجيل وتحصيل اشتراك الشهر"
-          >
-            {paymentStatus === "paid" ? (
-              <>
-                <CreditCard className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                <span>مدفوع ({paidAmount})</span>
-              </>
-            ) : paymentStatus === "partially_paid" ? (
-              <>
-                <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                <span>دفع {paidAmount} • باقي {remainingAmount}</span>
-              </>
-            ) : (
-              <>
-                <Clock className="h-3.5 w-3.5 text-rose-500 shrink-0" />
-                <span>لم يدفع (باقي {remainingAmount})</span>
+                <span>غائب اليوم</span>
               </>
             )}
           </button>
         </div>
+
+        {/* Dedicated Full-Width Payment Strip */}
+        <button
+          type="button"
+          onClick={() => setShowPaymentModal(true)}
+          className={`mt-2 w-full min-h-[42px] rounded-xl px-3.5 py-2 text-xs transition-all duration-150 flex items-center justify-between active:scale-[0.98] touch-manipulation cursor-pointer ${
+            paymentStatus === "paid"
+              ? "border border-emerald-200 bg-emerald-50/90 text-emerald-800"
+              : paymentStatus === "partially_paid"
+              ? "border border-amber-300 bg-amber-50/90 text-amber-900 shadow-2xs"
+              : "border border-rose-200 bg-rose-50/80 text-rose-800"
+          }`}
+          title="تسجيل وتحصيل اشتراك الشهر"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {paymentStatus === "paid" ? (
+              <>
+                <CreditCard className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="font-black text-xs truncate">
+                  الاشتراك: مدفوع بالكامل ({paidAmount} ج.م)
+                </span>
+              </>
+            ) : paymentStatus === "partially_paid" ? (
+              <>
+                <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                <span className="font-black text-xs truncate">
+                  سدد {paidAmount} ج.م • متبقي {remainingAmount} ج.م
+                </span>
+              </>
+            ) : (
+              <>
+                <Clock className="h-4 w-4 text-rose-500 shrink-0" />
+                <span className="font-black text-xs truncate">
+                  لم يسدد اشتراك الشهر (متبقي {remainingAmount} ج.م)
+                </span>
+              </>
+            )}
+          </div>
+
+          <span className="text-[11px] font-extrabold text-slate-500 bg-white/80 border border-current/15 rounded-lg px-2 py-0.5 shrink-0">
+            تحصيل 💳
+          </span>
+        </button>
       </div>
 
       {/* ═══════════ DESKTOP TABLE ROW (>= lg) ═══════════ */}

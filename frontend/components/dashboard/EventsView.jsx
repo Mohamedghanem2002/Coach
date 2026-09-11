@@ -237,14 +237,14 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
   return (
     <div className="space-y-6 animate-fade-in" dir="rtl">
       {/* ━━━ Header & Summary Cards ━━━ */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-red-600 text-white shadow-md shadow-amber-500/20">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-red-600 text-white shadow-md shadow-amber-500/20">
               <Compass className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="font-cairo text-lg sm:text-xl font-black text-slate-900 leading-tight">
+              <h2 className="font-cairo text-base sm:text-xl font-black text-slate-900 leading-tight">
                 إدارة الفعاليات والرحلات والمعسكرات
               </h2>
               <p className="text-xs font-semibold text-slate-500">
@@ -257,7 +257,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
         <button
           type="button"
           onClick={onOpenCreateEvent}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 text-xs font-black text-white shadow-lg shadow-red-500/25 hover:from-red-700 hover:to-rose-700 active:scale-95 transition cursor-pointer"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 text-xs sm:text-sm font-black text-white shadow-lg shadow-red-500/25 hover:from-red-700 hover:to-rose-700 active-press transition cursor-pointer min-h-[44px]"
         >
           <Plus className="h-4 w-4 stroke-[3]" />
           <span>إنشاء فعالية جديدة</span>
@@ -295,6 +295,44 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
         </div>
       </div>
 
+      {/* شريط اختيار الفعالية على الموبايل */}
+      {events.length > 0 && (
+        <div className="lg:hidden space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-slate-700">اختر الفعالية:</span>
+            <span className="text-[10px] font-bold text-slate-400">{events.length} فعالية</span>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            {events.map((event) => {
+              const isSelected = selectedEvent?._id === event._id;
+              const typeInfo = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
+              const TypeIcon = typeInfo.icon;
+              const parts = event.participants || [];
+              return (
+                <button
+                  key={event._id}
+                  type="button"
+                  onClick={() => setSelectedEventId(event._id)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shrink-0 transition active-press text-right ${
+                    isSelected
+                      ? "border-red-500 bg-red-50/80 text-red-950 shadow-xs ring-2 ring-red-200"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className={`p-1.5 rounded-xl border ${typeInfo.color}`}>
+                    <TypeIcon className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="min-w-0 text-right">
+                    <strong className="block text-xs font-black truncate max-w-[130px]">{event.title}</strong>
+                    <span className="text-[10px] font-semibold text-slate-500">{parts.length} لاعب • {event.date}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* If no events */}
       {events.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
@@ -318,8 +356,8 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* ━━━ Right Column: Events List Cards ━━━ */}
-          <div className="lg:col-span-5 space-y-3">
+          {/* ━━━ Right Column: Events List Cards (Desktop only) ━━━ */}
+          <div className="hidden lg:block lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-cairo text-sm font-black text-slate-800">
                 قائمة الفعاليات ({events.length})
@@ -451,7 +489,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                     <button
                       type="button"
                       onClick={() => onOpenAddParticipants(selectedEvent)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-50 border border-red-200 text-xs font-black text-red-600 hover:bg-red-600 hover:text-white transition active:scale-95 cursor-pointer"
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-50 border border-red-200 text-xs font-black text-red-600 hover:bg-red-600 hover:text-white transition active-press cursor-pointer"
                     >
                       <UserPlus className="h-3.5 w-3.5" />
                       <span>إضافة لاعبين</span>
@@ -460,7 +498,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                     <button
                       type="button"
                       onClick={() => handleExportEventCSV(selectedEvent)}
-                      className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition active:scale-95 cursor-pointer"
+                      className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition active-press cursor-pointer"
                       title="تصدير كشف المشتركين Excel"
                     >
                       <FileSpreadsheet className="h-4 w-4" />
@@ -469,10 +507,32 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                     <button
                       type="button"
                       onClick={() => handleShareWhatsAppReport(selectedEvent)}
-                      className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition active:scale-95 cursor-pointer"
+                      className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition active-press cursor-pointer"
                       title="مشاركة تقرير الفعالية عبر واتساب"
                     >
                       <Share2 className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onOpenEditEvent(selectedEvent)}
+                      className="p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition active-press cursor-pointer"
+                      title="تعديل بيانات الحدث"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(`هل أنت متأكد من حذف فعالية (${selectedEvent.title})؟`)) {
+                          onDeleteEvent(selectedEvent._id);
+                        }
+                      }}
+                      className="p-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition active-press cursor-pointer"
+                      title="حذف الحدث"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -606,139 +666,151 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                       return (
                         <div
                           key={pId}
-                          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl border transition-all ${
+                          className={`p-3.5 rounded-2xl border transition-all space-y-2.5 ${
                             isSelected
                               ? "border-red-500 bg-red-50/40 shadow-xs"
                               : "border-slate-200/80 bg-white hover:border-slate-300"
                           }`}
                         >
-                          {/* Player info */}
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            {/* Checkbox */}
-                            <button
-                              type="button"
-                              onClick={() => handleToggleSelectParticipant(pId)}
-                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border transition cursor-pointer ${
-                                isSelected
-                                  ? "border-red-600 bg-red-600 text-white"
-                                  : "border-slate-300 bg-white"
-                              }`}
-                            >
-                              {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
-                            </button>
+                          {/* الصف الأول: معلومات اللاعب وأزرار التواصل */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              {/* Checkbox */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleSelectParticipant(pId)}
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition active-press cursor-pointer ${
+                                  isSelected
+                                    ? "border-red-600 bg-red-600 text-white"
+                                    : "border-slate-300 bg-white"
+                                }`}
+                              >
+                                {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                              </button>
 
-                            {/* Avatar */}
-                            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 overflow-hidden ring-2 ring-slate-100">
-                              {participant.photo ? (
-                                <img
-                                  src={participant.photo}
-                                  alt={participant.name}
-                                  className="h-full w-full object-cover"
+                              {/* Avatar */}
+                              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 overflow-hidden ring-2 ring-slate-100">
+                                {participant.photo ? (
+                                  <img
+                                    src={participant.photo}
+                                    alt={participant.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="font-cairo text-sm font-black text-slate-500">
+                                    {participant.name?.slice(0, 1) || "ب"}
+                                  </span>
+                                )}
+                                <span
+                                  className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-white"
+                                  style={{ backgroundColor: beltColor }}
                                 />
-                              ) : (
-                                <span className="font-cairo text-sm font-black text-slate-500">
-                                  {participant.name?.slice(0, 1) || "ب"}
-                                </span>
-                              )}
-                              <span
-                                className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-white"
-                                style={{ backgroundColor: beltColor }}
-                              />
+                              </div>
+
+                              {/* Name & Branch */}
+                              <div className="min-w-0">
+                                <strong className="block truncate font-cairo text-xs sm:text-sm font-black text-slate-900">
+                                  {participant.name}
+                                </strong>
+                                <div className="flex items-center gap-1.5 mt-0.5 text-[10px] font-semibold text-slate-500">
+                                  <span>{participant.branch}</span>
+                                  <span>•</span>
+                                  <span className="text-slate-700 font-bold">{participant.belt}</span>
+                                </div>
+                              </div>
                             </div>
 
-                            {/* Name & Branch */}
-                            <div className="min-w-0">
-                              <strong className="block truncate font-cairo text-xs font-black text-slate-900">
-                                {participant.name}
-                              </strong>
-                              <div className="flex items-center gap-2 mt-0.5 text-[10px] font-semibold text-slate-500">
-                                <span>{participant.branch}</span>
-                                <span>•</span>
-                                <span className="text-slate-700 font-bold">{participant.belt}</span>
-                              </div>
+                            {/* أزرار الاتصال والواتساب والحذف */}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {(participant.parentPhone || participant.phone) && (
+                                <a
+                                  href={`tel:${participant.parentPhone || participant.phone}`}
+                                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 active-press transition"
+                                  title="اتصال هاتفي بولي الأمر"
+                                >
+                                  <Phone className="h-3.5 w-3.5" />
+                                </a>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => handleSendParticipantWhatsApp(participant, selectedEvent)}
+                                className="flex h-8 w-8 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active-press transition cursor-pointer"
+                                title="إرسال تفاصيل الفعالية عبر واتساب"
+                              >
+                                <MessageSquare className="h-3.5 w-3.5" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm(`إزالة (${participant.name}) من هذا الحدث؟`)) {
+                                    onRemoveParticipant(selectedEvent._id, pId);
+                                  }
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 active-press transition cursor-pointer"
+                                title="إزالة من الفعالية"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
                             </div>
                           </div>
 
-                          {/* Payment Badge & Actions */}
-                          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
-                            {/* Payment Badge */}
-                            <button
-                              type="button"
-                              onClick={() => onOpenPaymentModal(participant, selectedEvent)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer ${
-                                participant.paymentStatus === "paid"
-                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
-                                  : participant.paymentStatus === "partially_paid"
-                                  ? "bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 shadow-xs"
-                                  : "bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100"
-                              }`}
-                            >
-                              {participant.paymentStatus === "paid" ? (
-                                <>
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                                  <span>مدفوع ({total} ج.م)</span>
-                                </>
-                              ) : participant.paymentStatus === "partially_paid" ? (
-                                <>
-                                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                                  <span>دفع {paid} • باقي {remaining}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <XCircle className="h-3.5 w-3.5 text-rose-600" />
-                                  <span>لم يدفع (باقي {total})</span>
-                                </>
-                              )}
-                            </button>
-
-                            {/* WhatsApp Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleSendParticipantWhatsApp(participant, selectedEvent)}
-                              className="p-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-95 transition cursor-pointer"
-                              title="إرسال تفاصيل ومتبقي الاشتراك عبر واتساب"
-                            >
-                              <MessageSquare className="h-3.5 w-3.5" />
-                            </button>
-
-                            {/* Direct Call Button */}
-                            {(participant.parentPhone || participant.phone) && (
-                              <a
-                                href={`tel:${participant.parentPhone || participant.phone}`}
-                                className="p-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 active:scale-95 transition cursor-pointer"
-                                title="اتصال هاتفي مباشر"
-                              >
-                                <Phone className="h-3.5 w-3.5" />
-                              </a>
-                            )}
-
+                          {/* الصف الثاني: زرا الحضور وحالة السداد */}
+                          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                             {/* Attendance Toggle */}
                             <button
                               type="button"
                               onClick={() =>
                                 onUpdateAttendance(selectedEvent._id, pId, !participant.attended)
                               }
-                              className={`px-2.5 py-1 rounded-xl text-[10px] font-black transition cursor-pointer ${
+                              className={`min-h-[40px] flex items-center justify-center gap-1.5 rounded-xl text-xs font-black transition active-press cursor-pointer ${
                                 participant.attended
                                   ? "bg-emerald-600 text-white shadow-xs"
-                                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                                  : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
                               }`}
                             >
-                              {participant.attended ? "حاضر ✓" : "غائب"}
+                              {participant.attended ? (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  <span>حاضر بالفعالية ✓</span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-4 w-4 text-slate-400" />
+                                  <span>غائب عن الفعالية</span>
+                                </>
+                              )}
                             </button>
 
-                            {/* Remove button */}
+                            {/* Payment Badge Button */}
                             <button
                               type="button"
-                              onClick={() => {
-                                if (confirm(`إزالة (${participant.name}) من هذا الحدث؟`)) {
-                                  onRemoveParticipant(selectedEvent._id, pId);
-                                }
-                              }}
-                              className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                              title="إزالة من الفعالية"
+                              onClick={() => onOpenPaymentModal(participant, selectedEvent)}
+                              className={`min-h-[40px] flex items-center justify-center gap-1.5 px-2 rounded-xl text-xs font-black transition active-press cursor-pointer ${
+                                participant.paymentStatus === "paid"
+                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
+                                  : participant.paymentStatus === "partially_paid"
+                                  ? "bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 shadow-xs"
+                                  : "bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100"
+                              }`}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              {participant.paymentStatus === "paid" ? (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                                  <span className="truncate">مدفوع ({total} ج.م)</span>
+                                </>
+                              ) : participant.paymentStatus === "partially_paid" ? (
+                                <>
+                                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                                  <span className="truncate">دفع {paid} • باقي {remaining}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                                  <span className="truncate">لم يدفع ({total})</span>
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>

@@ -69,6 +69,7 @@ export default function Profile({
   }, [events, player._id]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [mobileProfileTab, setMobileProfileTab] = useState("overview"); // "overview" | "attendance" | "payments" | "events"
 
   // Edit form state
   const [editName, setEditName] = useState(player.name);
@@ -1008,14 +1009,14 @@ export default function Profile({
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
       dir="rtl"
     >
-      <aside className="relative max-h-[92vh] sm:max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl sm:rounded-3xl">
+      <aside className="relative max-h-[92vh] sm:max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl sm:rounded-3xl animate-bottom-sheet sm:animate-none pb-safe">
         {/* مؤشر سحب لطيف على شاشات الموبايل */}
-        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-slate-300 sm:hidden" />
+        <div className="sheet-drag-handle sm:hidden" />
 
         {/* شريط أحمر جمالي أعلى المودال يتناغم مع لوحة التحكم */}
         <div className="sticky top-0 z-30 h-1 w-full bg-gradient-to-r from-red-600 via-rose-500 to-red-700 mt-1 sm:mt-0" />
 
-        <div className="p-3.5 sm:p-6 pb-8 sm:pb-6">
+        <div className="p-3.5 sm:p-6 pb-6">
           {/* رسالة التنبيه الإشعارية السريعة */}
           {profileNotice && (
             <div
@@ -1267,8 +1268,73 @@ export default function Profile({
           ) : (
             /* ════════════ العرض الأساسي البسيط المريح ════════════ */
             <>
-              {/* بطاقة بيانات وهوية اللاعب الهادئة المتجاوبة */}
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 sm:p-5 mb-3.5 sm:mb-4">
+              {/* شريط تبويبات الموبايل لتقسيم محتوى الملف الشخصي براحة وبدون تمرير لا نهائي */}
+              <div className="sm:hidden flex items-center gap-1 p-1 bg-slate-100 rounded-2xl mb-3.5 border border-slate-200/80 sticky top-2 z-20 backdrop-blur-md shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setMobileProfileTab("overview")}
+                  className={`flex-1 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press ${
+                    mobileProfileTab === "overview"
+                      ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  الرئيسية
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileProfileTab("attendance")}
+                  className={`flex-1 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                    mobileProfileTab === "attendance"
+                      ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  الحضور
+                  {(player.attendance || []).length > 0 && (
+                    <span className="mr-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black rounded-full bg-slate-200 text-slate-700">
+                      {(player.attendance || []).length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileProfileTab("payments")}
+                  className={`flex-1 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                    mobileProfileTab === "payments"
+                      ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  الاشتراكات
+                  {(player.paymentHistory || []).length > 0 && (
+                    <span className="mr-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black rounded-full bg-slate-200 text-slate-700">
+                      {(player.paymentHistory || []).length}
+                    </span>
+                  )}
+                </button>
+                {playerEvents.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setMobileProfileTab("events")}
+                    className={`flex-1 py-2 px-1 text-center rounded-xl text-xs font-black transition active-press relative ${
+                      mobileProfileTab === "events"
+                        ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    الفعاليات
+                    <span className="mr-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black rounded-full bg-amber-200 text-amber-900">
+                      {playerEvents.length}
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {/* قسم 1: النظرة العامة والاشتراك الحالي */}
+              <div className={mobileProfileTab === "overview" ? "block" : "hidden sm:block"}>
+                {/* بطاقة بيانات وهوية اللاعب الهادئة المتجاوبة */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 sm:p-5 mb-3.5 sm:mb-4">
                 {/* الصف العلوي: الصورة الشخصية والاسم والفرع والسن */}
                 <div className="flex items-center gap-3 sm:gap-4">
                   <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-xl sm:text-2xl font-black text-white shadow-xs ring-2 ring-white">
@@ -1681,9 +1747,11 @@ export default function Profile({
                     </div>
                   </div>
                 )}
+              </div>
 
-              {/* سجل الاشتراكات السابقة */}
-              <div className="border-t border-slate-100 pt-4 pb-4">
+              {/* قسم 2: سجل الاشتراكات السابقة */}
+              <div className={mobileProfileTab === "payments" ? "block" : "hidden sm:block"}>
+                <div className="border-t border-slate-100 pt-4 pb-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
@@ -1817,10 +1885,12 @@ export default function Profile({
                   </div>
                 </form>
               </div>
+            </div>
 
-              {/* ━━━ سجل الفعاليات والرحلات المشترك بها ━━━ */}
+              {/* ━━━ قسم 3: سجل الفعاليات والرحلات المشترك بها ━━━ */}
               {playerEvents.length > 0 && (
-                <div className="border-t border-slate-100 pt-4 pb-2">
+                <div className={mobileProfileTab === "events" ? "block" : "hidden sm:block"}>
+                  <div className="border-t border-slate-100 pt-4 pb-2">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
@@ -1869,10 +1939,12 @@ export default function Profile({
                     ))}
                   </div>
                 </div>
+              </div>
               )}
 
-              {/* سجل الحضور والغياب */}
-              <div className="border-t border-slate-100 pt-4 pb-4">
+              {/* قسم 4: سجل الحضور والغياب */}
+              <div className={mobileProfileTab === "attendance" ? "block" : "hidden sm:block"}>
+                <div className="border-t border-slate-100 pt-4 pb-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
@@ -1974,16 +2046,19 @@ export default function Profile({
                   </button>
                 </form>
               </div>
+            </div>
 
-              {/* زر حذف اللاعب النهائي */}
-              <button
-                type="button"
-                className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50/50 px-4 py-3 text-xs font-bold text-rose-700 transition hover:bg-rose-100 hover:border-rose-300 active:scale-98 cursor-pointer"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>حذف اللاعب نهائيًا من الأكاديمية</span>
-              </button>
+              {/* زر حذف اللاعب النهائي - يظهر في تبويب النظرة العامة على الموبايل وبشكل دائم على الديسكتوب */}
+              <div className={mobileProfileTab === "overview" ? "block" : "hidden sm:block"}>
+                <button
+                  type="button"
+                  className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50/50 px-4 py-3 text-xs font-bold text-rose-700 transition hover:bg-rose-100 hover:border-rose-300 active:scale-98 cursor-pointer"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>حذف اللاعب نهائيًا من الأكاديمية</span>
+                </button>
+              </div>
             </>
           )}
         </div>

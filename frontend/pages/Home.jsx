@@ -866,10 +866,10 @@ export default function Home() {
             <div className="space-y-2.5 mb-2">
               {/* حقل البحث وزر الفلاتر الإضافية */}
               <div className="flex items-center gap-2">
-                <div className="relative flex-1 flex min-h-11 items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-3 shadow-xs">
+                <div className="relative flex-1 flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-3.5 shadow-2xs focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 transition-all">
                   <Search className="h-4 w-4 shrink-0 text-slate-400" />
                   <input
-                    className="min-w-0 flex-1 bg-transparent py-2 text-base sm:text-sm text-slate-900 outline-none placeholder:text-slate-400 font-semibold"
+                    className="min-w-0 flex-1 bg-transparent py-2.5 text-base sm:text-sm text-slate-900 outline-none placeholder:text-slate-400 font-bold"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="ابحث باسم اللاعب..."
@@ -878,7 +878,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setSearch("")}
-                      className="text-xs text-slate-400 p-1"
+                      className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs text-slate-500 hover:bg-slate-200 transition-colors"
                     >
                       ✕
                     </button>
@@ -886,87 +886,123 @@ export default function Home() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowMobileFilters((prev) => !prev)}
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition active:scale-95 cursor-pointer ${
-                    showMobileFilters || sortBy !== "newest" || sessionDate !== today
-                      ? "border-red-300 bg-red-50 text-red-600 shadow-xs"
-                      : "border-slate-200/90 bg-white text-slate-600 shadow-xs"
+                  onClick={() => setShowMobileFilters(true)}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition active:scale-95 cursor-pointer touch-manipulation ${
+                    sortBy !== "newest" || sessionDate !== today
+                      ? "border-red-300 bg-red-50 text-red-600 shadow-xs ring-2 ring-red-200/50"
+                      : "border-slate-200/90 bg-white text-slate-600 shadow-2xs hover:bg-slate-50"
                   }`}
-                  title="تخصيص الفلاتر والتاريخ"
+                  title="تخصيص الفلاتر والترتيب وتاريخ الحصة"
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                 </button>
               </div>
 
-              {/* درج الفلاتر المنسدل للموبايل */}
+              {/* نافذة الفلاتر السفلية المنبثقة للموبايل (Mobile Bottom Sheet) */}
               {showMobileFilters && (
-                <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-md space-y-3 animate-slide-up">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <span className="text-xs font-black text-slate-800">خيارات متقدمة وفلاتر</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowMobileFilters(false)}
-                      className="text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
-                    >
-                      ✕ إغلاق
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-500">تاريخ الحصة</span>
-                      <input
-                        type="date"
-                        max={today}
-                        value={sessionDate}
-                        onChange={(e) => { if (e.target.value <= today) setSessionDate(e.target.value); }}
-                        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-2 text-xs font-bold"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-500">شهر الاشتراك</span>
-                      <input
-                        type="month"
-                        value={paymentMonth}
-                        onChange={(e) => setPaymentMonth(e.target.value)}
-                        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-2 text-xs font-bold"
-                      />
-                    </label>
-                  </div>
-                  <div>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-500">ترتيب القائمة</span>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-2.5 text-xs font-bold"
+                <div
+                  className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 p-0 sm:p-4 backdrop-blur-xs animate-backdrop"
+                  onClick={() => setShowMobileFilters(false)}
+                >
+                  <div
+                    className="relative w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 shadow-2xl space-y-4 animate-bottom-sheet sm:animate-fade-in-scale pb-safe"
+                    onClick={(e) => e.stopPropagation()}
+                    dir="rtl"
+                  >
+                    {/* مقبض السحب للموبايل */}
+                    <div className="sheet-drag-handle sm:hidden" />
+
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 border border-red-200">
+                          <SlidersHorizontal className="h-4 w-4" />
+                        </div>
+                        <span className="font-cairo text-sm font-black text-slate-900">خيارات متقدمة وتاريخ الحصة</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowMobileFilters(false)}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500 hover:bg-slate-200 cursor-pointer"
                       >
-                        <option value="newest">الأحدث تسجيلاً (افتراضي)</option>
-                        <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
-                        <option value="oldest">الأقدم تسجيلاً</option>
-                        <option value="age-asc">السن: الأصغر أولاً</option>
-                        <option value="age-desc">السن: الأكبر أولاً</option>
-                        <option value="unpaid-first">غير المسددين أولاً</option>
-                        <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
-                      </select>
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={handleExportAll}
-                      className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-bold text-emerald-700 active:scale-95 cursor-pointer"
-                    >
-                      <FileSpreadsheet className="h-4 w-4" />
-                      <span>تصدير Excel</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={toggleFilteredSelection}
-                      className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 active:scale-95 cursor-pointer"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>تحديد الكل</span>
-                    </button>
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-xs font-extrabold text-slate-600">تاريخ الحصة</span>
+                        <input
+                          type="date"
+                          max={today}
+                          value={sessionDate}
+                          onChange={(e) => { if (e.target.value <= today) setSessionDate(e.target.value); }}
+                          className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-base sm:text-xs font-bold text-slate-800 outline-none focus:border-red-500 focus:bg-white"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-xs font-extrabold text-slate-600">شهر الاشتراك</span>
+                        <input
+                          type="month"
+                          value={paymentMonth}
+                          onChange={(e) => setPaymentMonth(e.target.value)}
+                          className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-base sm:text-xs font-bold text-slate-800 outline-none focus:border-red-500 focus:bg-white"
+                        />
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-xs font-extrabold text-slate-600">ترتيب عرض اللاعبين</span>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value)}
+                          className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-base sm:text-xs font-bold text-slate-800 outline-none focus:border-red-500 focus:bg-white cursor-pointer"
+                        >
+                          <option value="newest">الأحدث تسجيلاً (افتراضي)</option>
+                          <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
+                          <option value="oldest">الأقدم تسجيلاً</option>
+                          <option value="age-asc">السن: الأصغر أولاً</option>
+                          <option value="age-desc">السن: الأكبر أولاً</option>
+                          <option value="unpaid-first">غير المسددين أولاً</option>
+                          <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleExportAll();
+                          setShowMobileFilters(false);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-black text-emerald-700 active:scale-95 transition cursor-pointer"
+                      >
+                        <FileSpreadsheet className="h-4 w-4" />
+                        <span>تصدير كشف Excel</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toggleFilteredSelection();
+                          setShowMobileFilters(false);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 bg-slate-50 text-xs font-black text-slate-700 active:scale-95 transition cursor-pointer"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>تحديد كل المعروض</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowMobileFilters(false)}
+                        className="w-full h-11 rounded-xl bg-slate-900 font-cairo text-xs font-black text-white active:scale-98 transition cursor-pointer"
+                      >
+                        تطبيق الفلاتر
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1645,25 +1681,25 @@ export default function Home() {
 
         {/* شريط الإجراءات الجماعية العائم الفاخر (Floating Bulk Dock) */}
         {selectedPlayerIds.length > 0 && (
-          <div className="fixed bottom-20 md:bottom-5 left-1/2 -translate-x-1/2 z-40 md:z-50 glass-dock text-white rounded-2xl shadow-2xl border border-white/15 p-3 sm:px-5 flex flex-wrap items-center justify-between gap-2.5 animate-slide-up max-w-4xl w-[94%] mb-safe">
-            <div className="flex items-center gap-2 text-xs font-extrabold text-white">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 font-cairo text-sm font-black text-white shadow-xs">
+          <div className="fixed bottom-20 md:bottom-5 left-1/2 -translate-x-1/2 z-40 md:z-50 glass-dock text-white rounded-2xl shadow-2xl border border-white/15 p-2.5 sm:px-5 flex items-center justify-between gap-2.5 animate-slide-up max-w-4xl w-[96%] sm:w-[94%] mb-safe">
+            <div className="flex items-center gap-1.5 text-xs font-extrabold text-white shrink-0">
+              <span className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-red-600 font-cairo text-xs sm:text-sm font-black text-white shadow-xs">
                 {selectedPlayerIds.length}
               </span>
-              <span>لاعبين محددين</span>
+              <span className="hidden xs:inline text-[11px] sm:text-xs">محدد</span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
               <button
                 type="button"
-                className="min-h-9 rounded-xl bg-white/10 px-3 text-xs font-bold text-slate-200 hover:bg-white/20 transition-all cursor-pointer"
+                className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-200 hover:bg-white/20 transition-all cursor-pointer active:scale-95"
                 onClick={toggleFilteredSelection}
               >
-                تحديد الكل
+                الكل
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1.5 min-h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedAttendance("present")}
               >
@@ -1672,7 +1708,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1.5 min-h-9 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedAttendance("absent")}
               >
@@ -1681,7 +1717,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1.5 min-h-9 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedPayment("paid")}
               >
@@ -1690,25 +1726,26 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="min-h-9 rounded-xl bg-white/10 px-3 text-xs font-bold text-slate-300 hover:bg-white/20 transition-all disabled:opacity-60 cursor-pointer"
+                className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-300 hover:bg-white/20 transition-all disabled:opacity-60 cursor-pointer active:scale-95"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedPayment("unpaid")}
               >
-                إلغاء دفع
+                إلغاء
               </button>
               <button
                 type="button"
                 onClick={handleExportSelected}
-                className="flex items-center gap-1.5 min-h-9 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 px-3 text-xs font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
-                title="تصدير اللاعبين المحددين كملف Excel"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 px-2.5 text-xs font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="تصدير كشف Excel"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5" />
-                <span>تصدير Excel</span>
+                <span className="hidden sm:inline">Excel</span>
               </button>
               <button
                 type="button"
-                className="min-h-9 rounded-xl border border-white/20 px-3 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all cursor-pointer"
+                className="min-h-9 rounded-xl border border-white/20 px-2.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95 shrink-0"
                 onClick={() => setSelectedPlayerIds([])}
+                title="إلغاء التحديد"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

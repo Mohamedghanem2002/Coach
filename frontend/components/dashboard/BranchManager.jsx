@@ -68,11 +68,14 @@ export default function BranchManager({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md animate-fade-in-scale"
+        className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-md sm:items-center sm:p-4 animate-fade-in-scale"
         onMouseDown={(event) => event.target === event.currentTarget && onClose()}
         dir="rtl"
       >
-        <div className="relative w-full max-w-lg rounded-3xl border border-slate-200/90 bg-white p-6 shadow-2xl sm:p-8">
+        <div className="relative w-full max-w-lg rounded-t-3xl border border-slate-200/90 bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-8 animate-bottom-sheet sm:animate-none pb-safe">
+          {/* مقبض سحب الموبايل */}
+          <div className="sheet-drag-handle sm:hidden" />
+
           {/* رأس النافذة */}
           <div className="mb-5 flex items-start justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
@@ -117,21 +120,21 @@ export default function BranchManager({
 
           <form className="mb-5 flex flex-col gap-2 sm:flex-row" onSubmit={submit}>
             <input
-              className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 text-right text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+              className="h-12 sm:h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 text-right text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="اسم الفرع، مثال: صالة النادي الرئيسي"
               required
             />
             <button
-              className="min-h-11 whitespace-nowrap rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 cursor-pointer"
+              className="min-h-12 sm:min-h-11 whitespace-nowrap rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 text-xs font-black text-white shadow-xs hover:brightness-110 active-press cursor-pointer"
               type="submit"
             >
               ＋ إضافة فرع
             </button>
           </form>
 
-          <div className="grid max-h-[42vh] gap-2.5 overflow-y-auto pr-0.5">
+          <div className="grid max-h-[50vh] sm:max-h-[42vh] gap-2.5 overflow-y-auto pr-0.5">
             {branches.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
                 <span className="text-3xl block mb-2">🏢</span>
@@ -152,7 +155,7 @@ export default function BranchManager({
                     {isEditingThis ? (
                       <div className="flex flex-1 items-center gap-2">
                         <input
-                          className="h-9 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                          className="h-10 flex-1 rounded-xl border border-slate-300 bg-white px-3 text-sm sm:text-xs font-bold text-slate-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
                           autoFocus
@@ -162,7 +165,7 @@ export default function BranchManager({
                           type="button"
                           onClick={() => handleRenameSubmit(branch.name)}
                           disabled={isRenaming || !editingName.trim()}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 active-press"
                           title="حفظ الاسم"
                         >
                           <Check className="h-4 w-4" />
@@ -171,7 +174,7 @@ export default function BranchManager({
                           type="button"
                           onClick={cancelEdit}
                           disabled={isRenaming}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 active-press"
                           title="إلغاء"
                         >
                           <X className="h-4 w-4" />
@@ -180,8 +183,8 @@ export default function BranchManager({
                     ) : (
                       <>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-base shadow-2xs border border-slate-200/60">
-                            🥋
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-base shadow-2xs border border-slate-200/60 shrink-0">
+                            🏢
                           </div>
                           <div className="min-w-0 flex-1">
                             <strong className="block truncate font-cairo text-sm font-extrabold text-slate-900">
@@ -197,17 +200,17 @@ export default function BranchManager({
                           {onRename && (
                             <button
                               type="button"
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 active-press transition-colors"
                               onClick={() => startEdit(branch)}
                               title="تعديل اسم الفرع"
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <Pencil className="h-4 w-4" />
                             </button>
                           )}
 
                           <button
                             type="button"
-                            className="flex items-center gap-1 rounded-xl bg-rose-50 border border-rose-200/60 px-2.5 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 active:scale-95 cursor-pointer"
+                            className="flex items-center gap-1 min-h-[36px] rounded-xl bg-rose-50 border border-rose-200/60 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 active-press cursor-pointer"
                             onClick={() => {
                               if (playerCount) {
                                 onDeleteBlocked?.(branch.name, playerCount);

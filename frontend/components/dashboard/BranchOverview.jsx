@@ -144,14 +144,14 @@ export default function BranchOverview({
                 <div className="mt-3.5 flex gap-2">
                   <button
                     type="button"
-                    className="min-h-9 flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-bold text-slate-700 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-98"
+                    className="min-h-11 sm:min-h-9 flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 active-press cursor-pointer"
                     onClick={() => onSelectBranch(branch.name)}
                   >
                     عرض اللاعبين
                   </button>
                   <button
                     type="button"
-                    className="relative min-h-9 flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 text-xs font-bold text-white shadow-sm shadow-emerald-500/20 transition-all hover:brightness-105 hover:shadow-md active:scale-98 disabled:cursor-wait disabled:opacity-60"
+                    className="relative min-h-11 sm:min-h-9 flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 text-xs font-black text-white shadow-sm shadow-emerald-500/20 transition-all hover:brightness-105 hover:shadow-md active-press cursor-pointer disabled:cursor-wait disabled:opacity-60"
                     disabled={!branchPlayers.length || busy}
                     onClick={() => onMarkPresent(branch.name)}
                   >

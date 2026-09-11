@@ -105,20 +105,33 @@ export default function Header({
           </div>
         </div>
 
-        {/* Date pill — center */}
-        <div className="hidden flex-col items-center sm:flex">
-          <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-xs">
-            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            {todayFormatted}
+        {/* Date & Captain pill — center on desktop, compact coach badge on mobile */}
+        <div className="flex items-center gap-2">
+          {/* Mobile Captain Badge */}
+          <div className="flex sm:hidden items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-2 py-1 shadow-2xs">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-[10px] font-black text-white">
+              {initials}
+            </div>
+            <span className="text-[11px] font-extrabold text-slate-800 max-w-[80px] truncate">
+              {firstName}
+            </span>
           </div>
-          <h1 className="mt-1 text-xs font-bold text-slate-700">
-            أهلاً يا كابتن{" "}
-            <span className="font-black text-red-600">{firstName}</span>
-          </h1>
+
+          {/* Desktop full greeting */}
+          <div className="hidden flex-col items-center sm:flex">
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-xs">
+              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {todayFormatted}
+            </div>
+            <h1 className="mt-1 text-xs font-bold text-slate-700">
+              أهلاً يا كابتن{" "}
+              <span className="font-black text-red-600">{firstName}</span>
+            </h1>
+          </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
 
           {/* Events navigation button on desktop */}
           <button
@@ -147,10 +160,11 @@ export default function Header({
             <button
               type="button"
               id="birthday-menu-btn"
-              className={`relative flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer ${todayBirthdays.length > 0
-                  ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 hover:shadow-md active:scale-95 animate-pulse-glow"
+              className={`relative flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border px-2.5 sm:px-3 text-xs font-black transition-all duration-200 cursor-pointer touch-manipulation active:scale-95 ${
+                todayBirthdays.length > 0
+                  ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 hover:shadow-md animate-pulse-glow"
                   : "border-slate-200/80 bg-white/80 text-slate-600 hover:border-slate-300 hover:bg-white shadow-xs"
-                }`}
+              }`}
               onClick={() => setShowBirthdayMenu((prev) => !prev)}
               title="تذكار أعياد ميلاد اللاعبين"
             >
@@ -175,28 +189,47 @@ export default function Header({
               )}
             </button>
 
-            {/* Birthday dropdown */}
+            {/* Birthday panel: Bottom sheet on mobile, anchored dropdown on desktop */}
             {showBirthdayMenu && (
-              <div
-                className="fixed sm:absolute left-4 right-4 sm:right-auto sm:left-0 top-16 sm:top-auto sm:mt-2.5 max-w-sm sm:w-96 rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xl z-50 animate-slide-up mx-auto sm:mx-0"
-                dir="rtl"
-              >
-                {/* Decorative top bar */}
-                <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-r from-rose-500 via-amber-500 to-orange-500" />
+              <>
+                {/* Mobile backdrop */}
+                <div
+                  className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-xs sm:hidden animate-backdrop"
+                  onClick={() => setShowBirthdayMenu(false)}
+                />
+                <div
+                  className="fixed sm:absolute bottom-0 sm:bottom-auto left-0 sm:left-0 right-0 sm:right-auto sm:top-full sm:mt-2.5 w-full sm:w-96 rounded-t-3xl sm:rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xl z-50 animate-bottom-sheet sm:animate-slide-up pb-safe"
+                  dir="rtl"
+                >
+                  {/* Mobile drag handle */}
+                  <div className="sheet-drag-handle sm:hidden" />
 
-                <div className="mt-1 flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 shadow-xs shadow-rose-500/25">
-                      <Cake className="h-4 w-4 text-white" />
+                  {/* Decorative top bar */}
+                  <div className="hidden sm:block absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-r from-rose-500 via-amber-500 to-orange-500" />
+
+                  <div className="mt-1 flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 shadow-xs shadow-rose-500/25">
+                        <Cake className="h-4 w-4 text-white" />
+                      </div>
+                      <strong className="font-cairo text-sm font-black text-slate-800">
+                        أعياد ميلاد الأبطال
+                      </strong>
                     </div>
-                    <strong className="font-cairo text-sm font-black text-slate-800">
-                      أعياد ميلاد الأبطال
-                    </strong>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-black text-amber-800">
+                        {totalBirthdayCount} مناسبة
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowBirthdayMenu(false)}
+                        className="sm:hidden flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 text-xs font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
-                  <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-black text-amber-800">
-                    {totalBirthdayCount} مناسبة
-                  </span>
-                </div>
+
 
                 <div className="mt-3 max-h-80 overflow-y-auto space-y-2 pr-0.5">
                   {todayBirthdays.length > 0 && (
@@ -320,8 +353,9 @@ export default function Header({
                   )}
                 </div>
               </div>
-            )}
-          </div>
+            </>
+          )}
+        </div>
 
           {/* User avatar pill */}
           <div

@@ -90,6 +90,22 @@
       "totalAmount": 100,
       "paidAmount": 100,
       "remainingAmount": 0
+    },
+    {
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "ببببب",
+      "age": 10,
+      "dateOfBirth": "2015-09-12",
+      "guardianPhone": "",
+      "branch": "صالة الكاتا الرئيسية",
+      "belt": "أبيض",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "unpaid",
+      "paymentHistory": [],
+      "attendance": [],
+      "createdAt": "2026-09-11T16:33:16.793Z",
+      "_id": "6aa42d4c15e16b5a77c01ee1"
     }
   ],
   "events": [

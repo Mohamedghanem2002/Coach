@@ -68,49 +68,51 @@ export default function SignInPage() {
     >
       <section className="mx-auto grid min-h-[calc(100vh-24px)] w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-800 bg-white shadow-2xl shadow-black/40 sm:min-h-[580px] sm:grid-cols-[1fr_1.15fr]">
         {/* جانب العلامة التجارية الرياضي الفاخر */}
-        <div className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/50 p-8 text-white sm:p-12">
+        <div className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/50 p-5 sm:p-12 text-white">
           {/* لمسات إضاءة خلفية دائرية */}
           <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-red-600/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-rose-600/10 blur-3xl" />
 
           <div className="relative z-10">
             {/* الشعار */}
-            <div className="mb-10 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-rose-600 text-2xl text-white shadow-lg shadow-red-500/30 ring-2 ring-red-400/30">
+            <div className="mb-3 sm:mb-10 flex items-center gap-3">
+              <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-rose-600 text-xl sm:text-2xl text-white shadow-lg shadow-red-500/30 ring-2 ring-red-400/30 shrink-0">
                 🥋
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <strong className="font-cairo text-lg font-black tracking-tight text-white">
+                  <strong className="font-cairo text-base sm:text-lg font-black tracking-tight text-white">
                     Re_action
                   </strong>
                   <span className="rounded bg-red-500/20 px-1.5 py-0.5 text-[10px] font-extrabold text-red-400 border border-red-500/30">
                     DOJO
                   </span>
                 </div>
-                <span className="text-[11px] font-semibold text-slate-400">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400">
                   إدارة أكاديمية الكاراتيه
                 </span>
               </div>
             </div>
 
-            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-widest text-red-400">
-              المنظومة الاحترافية للمدربين
-            </p>
-            <h2 className="font-cairo text-2xl font-black leading-tight text-white sm:text-3xl">
-              إدارة رياضية ذكية.
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-300">
-                متابعة دقيقة للأبطال.
-              </span>
-            </h2>
-            <p className="mt-4 max-w-sm text-xs sm:text-sm leading-relaxed text-slate-400">
-              سجل حضور وغياب لاعبيك فوراً، تابع سداد الاشتراكات الشهرية، واطبع تقارير التدريب بنقرة واحدة.
-            </p>
+            <div className="hidden sm:block">
+              <p className="mb-2 text-[11px] font-extrabold uppercase tracking-widest text-red-400">
+                المنظومة الاحترافية للمدربين
+              </p>
+              <h2 className="font-cairo text-2xl font-black leading-tight text-white sm:text-3xl">
+                إدارة رياضية ذكية.
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-300">
+                  متابعة دقيقة للأبطال.
+                </span>
+              </h2>
+              <p className="mt-4 max-w-sm text-xs sm:text-sm leading-relaxed text-slate-400">
+                سجل حضور وغياب لاعبيك فوراً، تابع سداد الاشتراكات الشهرية، واطبع تقارير التدريب بنقرة واحدة.
+              </p>
+            </div>
           </div>
 
-          {/* مميزات سريعة */}
-          <div className="relative z-10 mt-10 grid gap-2.5 border-t border-slate-800/80 pt-6 text-xs font-bold text-slate-300">
+          {/* مميزات سريعة - تظهر على الشاشات الكبيرة */}
+          <div className="relative z-10 mt-6 sm:mt-10 hidden sm:grid gap-2.5 border-t border-slate-800/80 pt-6 text-xs font-bold text-slate-300">
             <div className="flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-xs">
                 ✓
@@ -133,13 +135,13 @@ export default function SignInPage() {
         </div>
 
         {/* جانب النموذج وإدخال البيانات */}
-        <div className="flex items-center p-6 sm:p-12 bg-white">
+        <div className="flex items-center p-5 sm:p-12 bg-white">
           <div className="w-full max-w-md mx-auto">
             {/* تبويبات التبديل بين الدخول والتسجيل */}
-            <div className="mb-6 flex rounded-2xl bg-slate-100 p-1 border border-slate-200/60">
+            <div className="mb-5 sm:mb-6 flex rounded-2xl bg-slate-100 p-1 border border-slate-200/60">
               <button
                 type="button"
-                className={`flex-1 rounded-xl py-2 text-xs font-extrabold transition-all cursor-pointer ${
+                className={`flex-1 rounded-xl py-2 text-xs font-extrabold transition-all active-press cursor-pointer ${
                   !isRegistering
                     ? "bg-white text-slate-900 shadow-xs"
                     : "text-slate-500 hover:text-slate-900"
@@ -153,7 +155,7 @@ export default function SignInPage() {
               </button>
               <button
                 type="button"
-                className={`flex-1 rounded-xl py-2 text-xs font-extrabold transition-all cursor-pointer ${
+                className={`flex-1 rounded-xl py-2 text-xs font-extrabold transition-all active-press cursor-pointer ${
                   isRegistering
                     ? "bg-white text-slate-900 shadow-xs"
                     : "text-slate-500 hover:text-slate-900"
@@ -167,8 +169,8 @@ export default function SignInPage() {
               </button>
             </div>
 
-            <div className="mb-6">
-              <h1 className="font-cairo text-2xl font-black text-slate-900">
+            <div className="mb-5 sm:mb-6">
+              <h1 className="font-cairo text-xl sm:text-2xl font-black text-slate-900">
                 {isRegistering ? "انضم لأكاديمية Re_action" : "أهلاً بك مجدداً يا كابتن 👋"}
               </h1>
               <p className="mt-1 text-xs text-slate-500">
@@ -185,7 +187,7 @@ export default function SignInPage() {
                     اسم الكابتن / المدرب
                   </label>
                   <input
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-base sm:text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                     name="name"
                     required
                     placeholder="مثال: كابتن ياسر"
@@ -199,7 +201,7 @@ export default function SignInPage() {
                   البريد الإلكتروني
                 </label>
                 <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-base sm:text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                   name="email"
                   type="email"
                   required
@@ -214,7 +216,7 @@ export default function SignInPage() {
                 </label>
                 <div className="relative flex items-center">
                   <input
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 pl-11 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 pl-11 text-base sm:text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     minLength={8}
@@ -242,7 +244,7 @@ export default function SignInPage() {
               )}
 
               <button
-                className="mt-2 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-3.5 font-cairo text-sm font-black text-white shadow-md shadow-red-500/25 transition-all hover:brightness-110 active:scale-98 disabled:opacity-60 cursor-pointer"
+                className="mt-2 flex min-h-[46px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-3.5 font-cairo text-sm font-black text-white shadow-md shadow-red-500/25 transition-all hover:brightness-110 active-press disabled:opacity-60 cursor-pointer"
                 type="submit"
                 disabled={busy}
               >

@@ -70,78 +70,108 @@ export default function Pagination({
 
       {/* Pagination controls (only if totalPages > 1) */}
       {totalPages > 1 && pageSize !== 0 && (
-        <div className="flex items-center gap-1">
-          {/* First page */}
-          <button
-            type="button"
-            disabled={currentPage === 1}
-            onClick={() => onPageChange(1)}
-            title="الصفحة الأولى"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ChevronsRight className="h-4 w-4" />
-          </button>
+        <>
+          {/* تحكم التصفح السريع والمريح للموبايل */}
+          <div className="flex sm:hidden w-full items-center justify-between gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(currentPage - 1)}
+              className="flex-1 flex items-center justify-center gap-1.5 min-h-[42px] rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition active-press disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span>السابق</span>
+            </button>
 
-          {/* Previous page */}
-          <button
-            type="button"
-            disabled={currentPage === 1}
-            onClick={() => onPageChange(currentPage - 1)}
-            title="الصفحة السابقة"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+            <span className="text-xs font-black text-slate-800 shrink-0 px-2 font-cairo">
+              صفحة {currentPage} من {totalPages}
+            </span>
 
-          {/* Page numbers */}
-          <div className="flex items-center gap-1 mx-1">
-            {getPageNumbers().map((page, idx) =>
-              page === "..." ? (
-                <span
-                  key={`ellipsis-${idx}`}
-                  className="px-1.5 text-xs text-slate-400"
-                >
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={`page-${page}`}
-                  type="button"
-                  onClick={() => onPageChange(page)}
-                  className={`flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-xs font-bold transition-all cursor-pointer ${
-                    currentPage === page
-                      ? "bg-gradient-to-r from-red-600 to-rose-600 font-black text-white shadow-xs"
-                      : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300"
-                  }`}
-                >
-                  {page}
-                </button>
-              )
-            )}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => onPageChange(currentPage + 1)}
+              className="flex-1 flex items-center justify-center gap-1.5 min-h-[42px] rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition active-press disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+            >
+              <span>التالي</span>
+              <ChevronLeft className="h-4 w-4" />
+            </button>
           </div>
 
-          {/* Next page */}
-          <button
-            type="button"
-            disabled={currentPage === totalPages}
-            onClick={() => onPageChange(currentPage + 1)}
-            title="الصفحة التالية"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
+          {/* أزرار الصفحات الكاملة للشاشات الأكبر */}
+          <div className="hidden sm:flex items-center gap-1">
+            {/* First page */}
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(1)}
+              title="الصفحة الأولى"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </button>
 
-          {/* Last page */}
-          <button
-            type="button"
-            disabled={currentPage === totalPages}
-            onClick={() => onPageChange(totalPages)}
-            title="الصفحة الأخيرة"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ChevronsLeft className="h-4 w-4" />
-          </button>
-        </div>
+            {/* Previous page */}
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(currentPage - 1)}
+              title="الصفحة السابقة"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+
+            {/* Page numbers */}
+            <div className="flex items-center gap-1 mx-1">
+              {getPageNumbers().map((page, idx) =>
+                page === "..." ? (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="px-1.5 text-xs text-slate-400"
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={`page-${page}`}
+                    type="button"
+                    onClick={() => onPageChange(page)}
+                    className={`flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-xs font-bold transition-all cursor-pointer ${
+                      currentPage === page
+                        ? "bg-gradient-to-r from-red-600 to-rose-600 font-black text-white shadow-xs"
+                        : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+            </div>
+
+            {/* Next page */}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => onPageChange(currentPage + 1)}
+              title="الصفحة التالية"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            {/* Last page */}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => onPageChange(totalPages)}
+              title="الصفحة الأخيرة"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
