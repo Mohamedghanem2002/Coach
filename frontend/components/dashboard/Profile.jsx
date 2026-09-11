@@ -13,7 +13,10 @@ import {
   isBirthdayCongratulated,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
-import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
+import {
+  sendBirthdayCardViaWhatsApp,
+  openWhatsAppDirect,
+} from "../../lib/birthday-card-utils";
 import {
   Send,
   Download,
@@ -316,35 +319,8 @@ export default function Profile({
     return cleaned;
   }
 
-  function openWhatsAppNative(cleanPhone, text = "") {
-    const isMobile =
-      typeof navigator !== "undefined" &&
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent,
-      );
-
-    const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
-    const appUrl = cleanPhone
-      ? `whatsapp://send?phone=${cleanPhone}${encodedText}`
-      : text
-        ? `whatsapp://send?text=${encodeURIComponent(text)}`
-        : `whatsapp://send`;
-
-    if (isMobile) {
-      window.location.href = appUrl;
-    } else {
-      window.location.href = appUrl;
-      setTimeout(() => {
-        if (document.hasFocus()) {
-          const webUrl = cleanPhone
-            ? `https://web.whatsapp.com/send?phone=${cleanPhone}${text ? `&text=${encodeURIComponent(text)}` : ""}`
-            : text
-              ? `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`
-              : `https://web.whatsapp.com/`;
-          window.open(webUrl, "_blank", "noopener,noreferrer");
-        }
-      }, 1200);
-    }
+  function openWhatsAppNative(cleanPhone, text = "", options = {}) {
+    openWhatsAppDirect(cleanPhone, text, options);
   }
 
   function openGuardianChat() {
@@ -360,8 +336,8 @@ export default function Profile({
     }
     setIsOpeningChat(true);
     setProfileNotice(`✓ جاري فتح محادثة واتساب لولي الأمر (${guardianPhone})`);
-    openWhatsAppNative(cleanPhone);
-    setTimeout(() => setIsOpeningChat(false), 2000);
+    openWhatsAppDirect(cleanPhone);
+    setTimeout(() => setIsOpeningChat(false), 1000);
   }
 
   function shareOnWhatsApp() {
@@ -421,9 +397,9 @@ export default function Profile({
       paymentText,
     ].join("\n");
 
-    openWhatsAppNative(cleanPhone, message);
-    setProfileNotice("✓ جاري فتح تطبيق واتساب وإرسال التقرير النصي");
-    setTimeout(() => setIsSendingText(false), 2500);
+    openWhatsAppDirect(cleanPhone, message);
+    setProfileNotice("✓ تم فتح تطبيق واتساب وإرسال التقرير النصي فوراً");
+    setTimeout(() => setIsSendingText(false), 1200);
   }
 
   async function generateProfileCanvas() {
@@ -532,6 +508,7 @@ export default function Profile({
         image.crossOrigin = "anonymous";
         image.onload = () => resolve(image);
         image.onerror = () => resolve(null);
+        setTimeout(() => resolve(null), 250);
         image.src = player.photo;
       });
       if (photo) {
@@ -737,6 +714,43 @@ export default function Profile({
   async function handleSendCardDirectly() {
     if (isSendingCard || isDownloadingCard || isSendingText) return;
 
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent,
+      );
+
+    // Pre-open reference window synchronously during user click on desktop to prevent popup blocking
+    let targetWindow = null;
+    if (!isMobile && typeof window !== "undefined") {
+      try {
+        targetWindow = window.open("about:blank", "_blank");
+        if (targetWindow) {
+          targetWindow.document.write(`
+            <!DOCTYPE html>
+            <html dir="rtl">
+              <head>
+                <meta charset="utf-8">
+                <title>جاري فتح محادثة واتساب...</title>
+                <style>
+                  body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0b141a; color:#e9edef; font-family:system-ui,sans-serif; text-align:center; padding:16px; }
+                  .spinner { width:44px; height:44px; border:4px solid #2a3942; border-top-color:#25d366; border-radius:50%; animation:spin .7s linear infinite; margin-bottom:16px; }
+                  @keyframes spin { to { transform:rotate(360deg); } }
+                  h3 { margin:0 0 6px; font-size:18px; color:#ffffff; }
+                  p { margin:0; font-size:13px; color:#8696a0; }
+                </style>
+              </head>
+              <body>
+                <div class="spinner"></div>
+                <h3>جاري فتح محادثة واتساب...</h3>
+                <p>يتم تجهيز بطاقة اللاعب ونسخها للحافظة تلقائياً</p>
+              </body>
+            </html>
+          `);
+        }
+      } catch (_) {}
+    }
+
     setIsSendingCard(true);
     setProfileNotice("⏳ جاري تجهيز ونسخ صورة البطاقة تلقائياً...");
 
@@ -745,6 +759,7 @@ export default function Profile({
       if (!blob) {
         const canvas = await generateProfileCanvas();
         if (!canvas) {
+          if (targetWindow && !targetWindow.closed) targetWindow.close();
           setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
           setIsSendingCard(false);
           return;
@@ -756,6 +771,7 @@ export default function Profile({
       }
 
       if (!blob) {
+        if (targetWindow && !targetWindow.closed) targetWindow.close();
         setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
         setIsSendingCard(false);
         return;
@@ -763,14 +779,8 @@ export default function Profile({
 
       const cleanPhone = guardianPhone ? formatWhatsAppPhone(guardianPhone) : "";
 
-      const isMobile =
-        typeof navigator !== "undefined" &&
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent,
-        );
-
-      // Native Web Share API attaches the image file directly into WhatsApp so the user just taps Send without pasting!
-      if (typeof navigator !== "undefined" && navigator.canShare) {
+      // 1. Native Web Share API on mobile devices
+      if (isMobile && typeof navigator !== "undefined" && navigator.canShare) {
         try {
           const file = new File(
             [blob],
@@ -794,7 +804,7 @@ export default function Profile({
         }
       }
 
-      // Copy image directly to clipboard
+      // 2. Copy image directly to clipboard for desktop & fallback
       let copySuccess = false;
       if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
         try {
@@ -807,27 +817,28 @@ export default function Profile({
         }
       }
 
-      // Open WhatsApp (either guardian chat directly, or contact chooser if no number)
-      openWhatsAppNative(cleanPhone);
+      // 3. Open WhatsApp directly (without popup blocker delay)
+      openWhatsAppDirect(cleanPhone, "", { targetWindow });
 
       if (cleanPhone) {
         setProfileNotice(
           copySuccess
             ? "✓ تم نسخ صورة البطاقة تلقائياً وفتح شات ولي الأمر! الصق الصورة (Ctrl+V أو لصق) ثم اضغط إرسال."
-            : "جاري فتح محادثة ولي الأمر على واتساب...",
+            : "✓ تم فتح محادثة ولي الأمر على واتساب!",
         );
       } else {
         setProfileNotice(
           copySuccess
             ? "✓ تم نسخ صورة البطاقة تلقائياً وفتح واتساب! اختر محادثة ولي الأمر ثم الصق الصورة واضغط إرسال."
-            : "جاري فتح واتساب لاختيار محادثة ولي الأمر...",
+            : "✓ تم فتح واتساب لاختيار محادثة ولي الأمر!",
         );
       }
     } catch (err) {
+      if (targetWindow && !targetWindow.closed) targetWindow.close();
       console.error("Failed to send card to guardian:", err);
       setProfileNotice("❌ حدث خطأ أثناء تجهيز أو إرسال البطاقة");
     } finally {
-      setTimeout(() => setIsSendingCard(false), 2000);
+      setTimeout(() => setIsSendingCard(false), 1200);
     }
   }
 
@@ -1689,8 +1700,8 @@ export default function Profile({
                   </div>
                 </div>
 
-                {/* تنبيه عيد الميلاد إن وُجد */}
-                {birthdayInfo?.isToday &&
+                {/* تنبيه عيد الميلاد إن وُجد: اليوم أو غداً (قبلها بيوم) */}
+                {(birthdayInfo?.isToday || birthdayInfo?.daysLeft === 1) &&
                   !isBirthdayCongratulated(player._id) &&
                   !birthdayCongratulated && (
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-xs animate-slide-up">
@@ -1698,10 +1709,14 @@ export default function Profile({
                         <span className="text-2xl animate-bounce">🎂</span>
                         <div>
                           <strong className="block font-cairo text-sm font-black text-rose-900">
-                            اليوم عيد ميلاد {player.name}! 🎉
+                            {birthdayInfo.isToday
+                              ? `اليوم عيد ميلاد ${player.name}! 🎉`
+                              : `غداً عيد ميلاد ${player.name}! 🎉 (قبلها بيوم)`}
                           </strong>
                           <span className="block text-[11px] font-bold text-amber-900">
-                            يُتم اليوم {birthdayInfo.turningAge} سنة · كل عام وبطلنا بألف خير! 🥋
+                            {birthdayInfo.isToday
+                              ? `يُتم اليوم ${birthdayInfo.turningAge} سنة · كل عام وبطلنا بألف خير! 🥋`
+                              : `يُتم غداً ${birthdayInfo.turningAge} سنة · يمكنك إرسال كارت التهنئة مسبقاً! 🥋`}
                           </span>
                         </div>
                       </div>

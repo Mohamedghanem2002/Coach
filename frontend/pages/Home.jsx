@@ -205,7 +205,10 @@ export default function Home() {
           (statusFilter === "unpaid" &&
             paymentDetails.status !== "paid") ||
           (statusFilter === "birthday" &&
-            Boolean(getBirthdayInfo(player)?.isToday) &&
+            Boolean(
+              getBirthdayInfo(player)?.isToday ||
+              getBirthdayInfo(player)?.daysLeft === 1
+            ) &&
             !isBirthdayCongratulated(player._id));
         return (
           matchesBranch &&
@@ -330,11 +333,13 @@ export default function Home() {
     dashboardPlayers.length > 0
       ? Math.round((presentToday / dashboardPlayers.length) * 100)
       : 0;
-  const todayBirthdaysCount = dashboardPlayers.filter(
-    (player) =>
-      Boolean(getBirthdayInfo(player)?.isToday) &&
-      !isBirthdayCongratulated(player._id),
-  ).length;
+  const todayBirthdaysCount = dashboardPlayers.filter((player) => {
+    const bday = getBirthdayInfo(player);
+    return (
+      Boolean(bday?.isToday || bday?.daysLeft === 1) &&
+      !isBirthdayCongratulated(player._id)
+    );
+  }).length;
   async function updatePlayer(id, data) {
     if (data.attendanceStatus && data.date > today) {
       setNotice("لا يمكن تسجيل حضور أو غياب في تاريخ مستقبلي.");
@@ -1651,7 +1656,7 @@ export default function Home() {
               onClick={() => setStatusFilter("birthday")}
             >
               <Cake className="h-3 w-3" />
-              <span>أعياد ميلاد اليوم</span>
+              <span>أعياد الميلاد</span>
               <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{todayBirthdaysCount}</span>
             </button>
           )}

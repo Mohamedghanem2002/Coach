@@ -6,9 +6,9 @@ import {
 } from "./dashboard-utils";
 
 /**
- * Open WhatsApp using native protocol or WhatsApp Web
+ * Open WhatsApp reliably across desktop and mobile without popup blocking
  */
-export function openWhatsAppDirect(cleanPhone, text = "") {
+export function openWhatsAppDirect(cleanPhone, text = "", options = {}) {
   const isMobile =
     typeof navigator !== "undefined" &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -16,26 +16,32 @@ export function openWhatsAppDirect(cleanPhone, text = "") {
     );
 
   const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
-  const appUrl = cleanPhone
-    ? `whatsapp://send?phone=${cleanPhone}${encodedText}`
-    : text
-    ? `whatsapp://send?text=${encodeURIComponent(text)}`
-    : `whatsapp://send`;
+  const paramOnly = text ? `text=${encodeURIComponent(text)}` : "";
 
   if (isMobile) {
-    window.location.href = appUrl;
+    // Official WhatsApp Universal Link: Direct app handoff on Android / iOS
+    const mobileUrl = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}${encodedText}`
+      : `https://api.whatsapp.com/send?${paramOnly}`;
+    window.location.href = mobileUrl;
   } else {
-    window.location.href = appUrl;
-    setTimeout(() => {
-      if (document.hasFocus()) {
-        const webUrl = cleanPhone
-          ? `https://web.whatsapp.com/send?phone=${cleanPhone}${text ? `&text=${encodeURIComponent(text)}` : ""}`
-          : text
-          ? `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`
-          : `https://web.whatsapp.com/`;
-        window.open(webUrl, "_blank", "noopener,noreferrer");
+    // Desktop: WhatsApp Web direct URL
+    const webUrl = cleanPhone
+      ? `https://web.whatsapp.com/send?phone=${cleanPhone}${encodedText}`
+      : `https://web.whatsapp.com/send?${paramOnly}`;
+
+    if (options.targetWindow && !options.targetWindow.closed) {
+      options.targetWindow.location.href = webUrl;
+      try {
+        options.targetWindow.focus();
+      } catch (_) {}
+    } else {
+      // Direct opening without popup blocker delay
+      const win = window.open(webUrl, "_blank", "noopener,noreferrer");
+      if (!win) {
+        window.location.href = webUrl;
       }
-    }, 1200);
+    }
   }
 }
 
@@ -45,9 +51,12 @@ export function openWhatsAppDirect(cleanPhone, text = "") {
  */
 export async function generateBirthdayCardCanvas(player, captainName = "كابتن الأكاديمية") {
   if (typeof document === "undefined") return null;
-  if (document.fonts?.ready) {
+  if (document.fonts && document.fonts.status !== "loaded") {
     try {
-      await document.fonts.ready;
+      await Promise.race([
+        document.fonts.ready,
+        new Promise((resolve) => setTimeout(resolve, 150)),
+      ]);
     } catch (_) {
       // Continue even if fonts promise rejected
     }
@@ -297,7 +306,7 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
           resolve();
         };
         img.onerror = () => resolve();
-        setTimeout(resolve, 800);
+        setTimeout(resolve, 250);
       });
 
       if (photoLoaded) {
@@ -514,9 +523,47 @@ export async function sendBirthdayCardViaWhatsApp(
   if (onProgress) onProgress(true);
   if (onNotice) onNotice("⏳ جاري تجهيز كارت عيد الميلاد المتميز...");
 
+  const isMobile =
+    typeof navigator !== "undefined" &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
+
+  // Pre-open reference window synchronously during user click gesture on desktop to prevent popup blocking
+  let targetWindow = null;
+  if (!isMobile && typeof window !== "undefined") {
+    try {
+      targetWindow = window.open("about:blank", "_blank");
+      if (targetWindow) {
+        targetWindow.document.write(`
+          <!DOCTYPE html>
+          <html dir="rtl">
+            <head>
+              <meta charset="utf-8">
+              <title>جاري فتح محادثة واتساب...</title>
+              <style>
+                body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0b141a; color:#e9edef; font-family:system-ui,sans-serif; text-align:center; padding:16px; }
+                .spinner { width:44px; height:44px; border:4px solid #2a3942; border-top-color:#25d366; border-radius:50%; animation:spin .7s linear infinite; margin-bottom:16px; }
+                @keyframes spin { to { transform:rotate(360deg); } }
+                h3 { margin:0 0 6px; font-size:18px; color:#ffffff; }
+                p { margin:0; font-size:13px; color:#8696a0; }
+              </style>
+            </head>
+            <body>
+              <div class="spinner"></div>
+              <h3>جاري فتح محادثة واتساب...</h3>
+              <p>يتم تجهيز كارت التهنئة ونسخه للحافظة تلقائياً</p>
+            </body>
+          </html>
+        `);
+      }
+    } catch (_) {}
+  }
+
   try {
     const canvas = await generateBirthdayCardCanvas(player, captainName);
     if (!canvas) {
+      if (targetWindow && !targetWindow.closed) targetWindow.close();
       if (onNotice) onNotice("❌ تعذر إنشاء كارت عيد الميلاد");
       if (onProgress) onProgress(false);
       return;
@@ -524,6 +571,7 @@ export async function sendBirthdayCardViaWhatsApp(
 
     const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
     if (!blob) {
+      if (targetWindow && !targetWindow.closed) targetWindow.close();
       if (onNotice) onNotice("❌ تعذر إنشاء صورة الكارت");
       if (onProgress) onProgress(false);
       return;
@@ -543,11 +591,14 @@ export async function sendBirthdayCardViaWhatsApp(
     const fileName = `كارت_عيد_ميلاد_${player.name.replace(/\s+/g, "_")}.png`;
     const file = new File([blob], fileName, { type: "image/png" });
 
-    // Mark player's birthday as congratulated so it is removed from the site immediately
+    // Mark player's birthday as congratulated so it is updated immediately
     markBirthdayCongratulated(player._id);
 
-    // 1. Native Web Share API attaches the image file directly so user just taps Send!
+    const wishText = `🎉 كل عام وبطلنا الغالي *${player.name}* بألف خير وسعادة! بمناسبة عيد ميلاده المبارك وإتمامه ${turningAge} سنوات، تتمنى له أسرة الأكاديمية والكابتن *${captainName}* دوام التوفيق والبطولة! 🎂🏆🎈`;
+
+    // 1. Native Web Share API on mobile devices attaches image file directly
     if (
+      isMobile &&
       typeof navigator !== "undefined" &&
       navigator.canShare &&
       navigator.canShare({ files: [file] })
@@ -556,7 +607,7 @@ export async function sendBirthdayCardViaWhatsApp(
         await navigator.share({
           files: [file],
           title: `كارت عيد ميلاد ${player.name}`,
-          text: `🎉 كل عام وبطلنا الغالي *${player.name}* بألف خير بمناسبة عيد ميلاده المبارك (${turningAge} سنة)! 🎂🥋`,
+          text: wishText,
         });
         if (onNotice)
           onNotice("✓ تم فتح المشاركة وجاهز لإرسال كارت التهنئة في واتساب!");
@@ -567,7 +618,7 @@ export async function sendBirthdayCardViaWhatsApp(
       }
     }
 
-    // 2. Clipboard copy fallback
+    // 2. Clipboard copy for desktop & fallback
     let copied = false;
     if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
       try {
@@ -580,22 +631,22 @@ export async function sendBirthdayCardViaWhatsApp(
       }
     }
 
-    // 3. Open WhatsApp (with cleanPhone or without)
-    const wishText = `🎉 كل عام وبطلنا الغالي *${player.name}* بألف خير وسعادة! بمناسبة عيد ميلاده المبارك وإتمامه ${turningAge} سنوات، تتمنى له أسرة الأكاديمية والكابتن *${captainName}* دوام التوفيق والبطولة! 🎂🏆🎈`;
-    openWhatsAppDirect(cleanPhone, wishText);
+    // 3. Open WhatsApp directly (using targetWindow on desktop to beat popup blockers)
+    openWhatsAppDirect(cleanPhone, wishText, { targetWindow });
 
     if (onNotice) {
       onNotice(
         copied
-          ? "✓ تم نسخ كارت عيد الميلاد للحافظة وفتح واتساب! الصق الصورة (Ctrl+V أو لصق) ثم اضغط إرسال."
-          : "جاري فتح واتساب لإرسال تهنئة عيد الميلاد..."
+          ? "✓ تم نسخ كارت التهنئة للحافظة وفتح واتساب! الصق الصورة (Ctrl+V أو لصق) واضغط إرسال."
+          : "✓ تم فتح محادثة واتساب لإرسال تهنئة عيد الميلاد!"
       );
     }
   } catch (err) {
+    if (targetWindow && !targetWindow.closed) targetWindow.close();
     console.error("Birthday card error:", err);
     if (onNotice) onNotice("❌ حدث خطأ أثناء تجهيز كارت عيد الميلاد");
   } finally {
-    if (onProgress) setTimeout(() => onProgress(false), 2000);
+    if (onProgress) setTimeout(() => onProgress(false), 1200);
   }
 }
 
