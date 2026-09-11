@@ -198,12 +198,12 @@ export function getTodayBirthdays(players, referenceDate = new Date()) {
 
 export function getUpcomingBirthdays(
   players,
-  daysAhead = 30,
+  daysAhead = 1,
   referenceDate = new Date()
 ) {
   if (!Array.isArray(players)) return [];
   const currentYear = referenceDate.getFullYear();
-  const maxDays = Number(daysAhead) > 0 ? Number(daysAhead) : 30;
+  const maxDays = Number(daysAhead) > 0 ? Number(daysAhead) : 1;
   return players
     .map((player) => {
       const bday = getBirthdayInfo(player, referenceDate);

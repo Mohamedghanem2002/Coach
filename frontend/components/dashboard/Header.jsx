@@ -24,6 +24,7 @@ export default function Header({
   currentView = "players",
   onToggleEventsView,
   eventsCount = 0,
+  onNavigateToBirthdays,
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -56,7 +57,7 @@ export default function Header({
   }, [players, congratulateTick]);
   const upcomingBirthdays = useMemo(() => {
     void congratulateTick;
-    return getUpcomingBirthdays(players, 7);
+    return getUpcomingBirthdays(players, 1);
   }, [players, congratulateTick]);
   const totalBirthdayCount = todayBirthdays.length + upcomingBirthdays.length;
 
@@ -157,7 +158,13 @@ export default function Header({
                   ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 hover:shadow-md animate-pulse-glow"
                   : "border-slate-200/80 bg-white/80 text-slate-600 hover:border-slate-300 hover:bg-white shadow-xs"
               }`}
-              onClick={() => setShowBirthdayMenu((prev) => !prev)}
+              onClick={() => {
+                if (typeof window !== "undefined" && window.innerWidth < 768 && onNavigateToBirthdays) {
+                  onNavigateToBirthdays();
+                } else {
+                  setShowBirthdayMenu((prev) => !prev);
+                }
+              }}
               title="تذكار أعياد ميلاد اللاعبين"
             >
               <Cake className="h-4 w-4" />
@@ -284,7 +291,7 @@ export default function Header({
                     <div className={todayBirthdays.length > 0 ? "border-t border-slate-100 pt-2.5 mt-1" : ""}>
                       <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-700 mb-2">
                         <CalendarDays className="h-3 w-3" />
-                        <span>قادمة هذا الأسبوع ({upcomingBirthdays.length}):</span>
+                        <span>قادمة غداً ({upcomingBirthdays.length}):</span>
                       </div>
                       <div className="space-y-1.5">
                         {upcomingBirthdays.map((player) => (
@@ -301,10 +308,7 @@ export default function Header({
                                   {player.name}
                                 </strong>
                                 <span className="block text-[10px] font-medium text-slate-500">
-                                  {player.birthdayInfo?.daysLeft === 1
-                                    ? "غداً"
-                                    : player.birthdayInfo?.dateFormatted}{" "}
-                                  · {player.birthdayInfo?.turningAge} سنة
+                                  غداً · {player.birthdayInfo?.turningAge} سنة
                                 </span>
                               </div>
                             </div>
@@ -345,6 +349,19 @@ export default function Header({
                         تأكد من تسجيل تواريخ ميلاد اللاعبين.
                       </p>
                     </div>
+                  )}
+
+                  {onNavigateToBirthdays && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowBirthdayMenu(false);
+                        onNavigateToBirthdays();
+                      }}
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 text-white text-xs font-black shadow-xs active-press transition cursor-pointer"
+                    >
+                      <span>عرض مركز احتفالات أعياد الميلاد الكامل 🎂</span>
+                    </button>
                   )}
                 </div>
               </div>

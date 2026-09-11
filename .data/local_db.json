@@ -68,15 +68,15 @@
       "belt": "أزرق 3",
       "level": "C",
       "photo": "",
-      "paymentStatus": "paid",
+      "paymentStatus": "unpaid",
       "paymentHistory": [
         {
           "month": "2026-09",
-          "status": "paid",
+          "status": "unpaid",
           "totalAmount": 100,
-          "paidAmount": 100,
-          "remainingAmount": 0,
-          "updatedAt": "2026-09-11T15:44:01.122Z"
+          "paidAmount": 0,
+          "remainingAmount": 100,
+          "updatedAt": "2026-09-11T18:18:05.338Z"
         }
       ],
       "attendance": [
@@ -88,8 +88,8 @@
       "createdAt": "2026-09-11T12:42:08.498Z",
       "_id": "6aa3f720ec0323d6dd6fe90b",
       "totalAmount": 100,
-      "paidAmount": 100,
-      "remainingAmount": 0
+      "paidAmount": 0,
+      "remainingAmount": 100
     },
     {
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",
@@ -101,11 +101,28 @@
       "belt": "أبيض",
       "level": "A",
       "photo": "",
-      "paymentStatus": "unpaid",
-      "paymentHistory": [],
-      "attendance": [],
+      "paymentStatus": "paid",
+      "paymentHistory": [
+        {
+          "month": "2026-09",
+          "status": "paid",
+          "totalAmount": 100,
+          "paidAmount": 100,
+          "remainingAmount": 0,
+          "updatedAt": "2026-09-11T18:17:58.022Z"
+        }
+      ],
+      "attendance": [
+        {
+          "date": "2026-09-11",
+          "status": "present"
+        }
+      ],
       "createdAt": "2026-09-11T16:33:16.793Z",
-      "_id": "6aa42d4c15e16b5a77c01ee1"
+      "_id": "6aa42d4c15e16b5a77c01ee1",
+      "totalAmount": 100,
+      "paidAmount": 100,
+      "remainingAmount": 0
     }
   ],
   "events": [
@@ -130,10 +147,10 @@
           "parentPhone": "",
           "phone": "",
           "totalAmount": 100,
-          "paidAmount": 0,
-          "remainingAmount": 100,
-          "paymentStatus": "unpaid",
-          "paymentDate": "",
+          "paidAmount": 100,
+          "remainingAmount": 0,
+          "paymentStatus": "paid",
+          "paymentDate": "2026-09-11",
           "notes": "",
           "attended": false
         },
@@ -155,7 +172,7 @@
         }
       ],
       "createdAt": "2026-09-11T16:26:18.055Z",
-      "updatedAt": "2026-09-11T16:26:30.822Z"
+      "updatedAt": "2026-09-11T18:39:06.199Z"
     }
   ]
 }

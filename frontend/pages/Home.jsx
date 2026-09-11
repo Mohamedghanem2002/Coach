@@ -35,6 +35,7 @@ import {
   AlertCircle,
   Info,
   Compass,
+  ArrowRight,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -735,6 +736,10 @@ export default function Home() {
           setMobileTab(next === "events" ? "events" : "players");
         }}
         eventsCount={events.length}
+        onNavigateToBirthdays={() => {
+          setMobileTab("birthdays");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
       />
 
       <section className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
@@ -967,11 +972,14 @@ export default function Home() {
                   <button
                     type="button"
                     className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                      statusFilter === "birthday"
+                      mobileTab === "birthdays"
                         ? "bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-xs"
                         : "bg-white text-rose-700 border border-rose-200/80 hover:bg-rose-50"
                     }`}
-                    onClick={() => setStatusFilter(statusFilter === "birthday" ? "all" : "birthday")}
+                    onClick={() => {
+                      setMobileTab(mobileTab === "birthdays" ? "players" : "birthdays");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
                   >
                     <Cake className="h-3 w-3" />
                     <span>أعياد الميلاد ({todayBirthdaysCount})</span>
@@ -1139,18 +1147,36 @@ export default function Home() {
 
           {/* محتوى تبويب أعياد الميلاد على الموبايل */}
           {mobileTab === "birthdays" && (
-            <div className="space-y-4 mb-6">
+            <div className="mb-6 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="font-cairo text-base font-black text-slate-900">أعياد ميلاد الأبطال</h2>
-                <span className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 rounded-full px-2.5 py-0.5">
-                  {todayBirthdaysCount} مناسبة
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileTab("players");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 text-xs font-black text-slate-700 hover:bg-slate-50 active-press transition shadow-2xs cursor-pointer min-h-[36px]"
+                >
+                  <ArrowRight className="h-3.5 w-3.5 text-slate-500" />
+                  <span>العودة لقائمة اللاعبين</span>
+                </button>
+
+                <span className="text-[11px] font-black text-rose-600 bg-rose-50 border border-rose-200/80 rounded-full px-2.5 py-0.5">
+                  احتفالات الأبطال 🎉
                 </span>
               </div>
+
               <BirthdayReminder
-                players={dashboardPlayers}
+                players={players}
+                branches={branches}
                 captainName={captainName}
                 onOpenPlayer={(player) => setSelected(player)}
+                onBack={() => {
+                  setMobileTab("players");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
                 allowDismiss={false}
+                isMobileView={true}
               />
             </div>
           )}
@@ -1298,12 +1324,13 @@ export default function Home() {
         <div className={activeView === "players" ? "contents" : "hidden"}>
           {/* تذكار أعياد ميلاد أبطال الأكاديمية للكابتن (على الديسكتوب فقط) */}
           <div className="hidden md:block">
-          <BirthdayReminder
-            players={dashboardPlayers}
-            captainName={captainName}
-            onOpenPlayer={(player) => setSelected(player)}
-          />
-        </div>
+            <BirthdayReminder
+              players={players}
+              branches={branches}
+              captainName={captainName}
+              onOpenPlayer={(player) => setSelected(player)}
+            />
+          </div>
 
         {/* شبكة الإحصائيات ورسوم الحضور البيانية (على الديسكتوب فقط) */}
         <div className="hidden md:block">
