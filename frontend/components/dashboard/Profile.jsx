@@ -21,8 +21,6 @@ import {
   openWhatsAppDirect,
 } from "../../lib/birthday-card-utils";
 import {
-  Send,
-  Download,
   MessageCircle,
   Pencil,
   Trash2,
@@ -219,7 +217,6 @@ export default function Profile({
 
   // Card caching and sending
   const [cachedCardBlob, setCachedCardBlob] = useState(null);
-  const [isSendingCard, setIsSendingCard] = useState(false);
   const [showCardModal, setShowCardModal] = useState(false);
 
   // Confirm delete player
@@ -228,7 +225,6 @@ export default function Profile({
 
   // Action loading states (double-click prevention)
   const [isSendingText, setIsSendingText] = useState(false);
-  const [isDownloadingCard, setIsDownloadingCard] = useState(false);
   const [isOpeningChat, setIsOpeningChat] = useState(false);
   const [isCallingGuardian, setIsCallingGuardian] = useState(false);
   const [isTogglingPayment, setIsTogglingPayment] = useState(false);
@@ -686,117 +682,7 @@ export default function Profile({
     return canvas;
   }
 
-  async function downloadProfileCard() {
-    if (isDownloadingCard) return;
-    setIsDownloadingCard(true);
-    setProfileNotice("⏳ جاري إنشاء وتحميل صورة بطاقة اللاعب...");
-    try {
-      let blob = cachedCardBlob;
-      if (!blob) {
-        const canvas = await generateProfileCanvas();
-        if (!canvas) {
-          setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
-          return;
-        }
-        blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-        if (blob) setCachedCardBlob(blob);
-      }
-      if (!blob) {
-        setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
-        return;
-      }
-      const fileName = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
-      const downloadLink = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      downloadLink.href = url;
-      downloadLink.download = fileName;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-      setTimeout(() => URL.revokeObjectURL(url), 2500);
-      setProfileNotice("✓ تم تحميل وحفظ صورة بطاقة اللاعب بجهازك بنجاح!");
-    } catch (error) {
-      console.error("Failed to download profile card:", error);
-      setProfileNotice("❌ حدث خطأ أثناء تحميل صورة البطاقة");
-    } finally {
-      setTimeout(() => setIsDownloadingCard(false), 2000);
-    }
-  }
 
-  async function handleSendCardDirectly() {
-    if (isSendingCard || isDownloadingCard || isSendingText) return;
-
-    setIsSendingCard(true);
-    setProfileNotice("⏳ جاري تجهيز صورة البطاقة وإرسالها...");
-
-    try {
-      let blob = cachedCardBlob;
-      if (!blob) {
-        const canvas = await generateProfileCanvas();
-        if (!canvas) {
-          setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
-          setIsSendingCard(false);
-          return;
-        }
-        blob = await new Promise((resolve) =>
-          canvas.toBlob(resolve, "image/png"),
-        );
-        if (blob) setCachedCardBlob(blob);
-      }
-
-      if (!blob) {
-        setProfileNotice("❌ تعذر إنشاء صورة البطاقة");
-        setIsSendingCard(false);
-        return;
-      }
-
-      const cleanPhone = guardianPhone ? formatWhatsAppPhone(guardianPhone) : "";
-
-      // 1. Copy image directly to clipboard
-      let copySuccess = false;
-      if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
-        try {
-          await navigator.clipboard.write([
-            new ClipboardItem({ "image/png": blob }),
-          ]);
-          copySuccess = true;
-        } catch (clipErr) {
-          console.warn("Clipboard write failed:", clipErr);
-        }
-      }
-
-      // 2. Auto-download the card image so the user has the file
-      try {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-      } catch (_) {}
-
-      // 3. Open WhatsApp native mobile/desktop application directly
-      const summaryText = `🥋 بطاقة لاعب الكاراتيه الرسمية: *${player.name}*
-إشراف الكابتن: *${captainName}*
-الصالة: ${player.branch || "الرئيسية"}
-الحزام: ${player.belt || "أبيض"} • المستوى: ${player.level || "A"}`;
-
-      openWhatsAppDirect(cleanPhone, summaryText);
-
-      setProfileNotice(
-        copySuccess
-          ? "✓ تم فتح تطبيق واتساب ونسخ البطاقة للحافظة وحفظها بجهازك! الصق الصورة في الشات واضغط إرسال."
-          : "✓ تم فتح تطبيق واتساب وحفظ صورة البطاقة بجهازك!"
-      );
-    } catch (err) {
-      console.error("Failed to send card to guardian:", err);
-      setProfileNotice("❌ حدث خطأ أثناء تجهيز أو إرسال البطاقة");
-    } finally {
-      setTimeout(() => setIsSendingCard(false), 1000);
-    }
-  }
 
   async function handleToggleMonthlyPayment() {
     if (isTogglingPayment) return;
@@ -1235,15 +1121,15 @@ export default function Profile({
               {/* شريط الإجراءات السريعة الدائم (مشاركة البطاقة، تقرير واتساب، تعديل) - ظاهر دائماً على كافة الشاشات والتبويبات */}
               <div className="mb-3.5 flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-slate-50/90 border border-slate-200/80 shadow-2xs">
                 <div className="flex items-center gap-1.5 flex-1 overflow-x-auto no-scrollbar">
-                  {/* زر 1: مشاركة ومعاينة بطاقة اللاعب */}
+                  {/* زر 1: مشاركة بطاقة اللاعب كصورة */}
                   <button
                     type="button"
                     onClick={() => setShowCardModal(true)}
                     className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:brightness-110 px-3 py-2 text-xs font-black text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
-                    title="معاينة ومشاركة بطاقة اللاعب الرسمية وإرسالها لتطبيق واتساب مباشرة"
+                    title="معاينة ومشاركة بطاقة اللاعب كصورة وإرسالها لشات واتساب مباشرة"
                   >
                     <Share2 className="h-3.5 w-3.5" />
-                    <span>مشاركة البطاقة</span>
+                    <span>مشاركة البطاقة كصورة 🖼️</span>
                   </button>
 
                   {/* زر 2: إرسال تقرير نصي فوري */}
@@ -1461,85 +1347,6 @@ export default function Profile({
                     )}
                   </div>
 
-                  {/* أزرار الإجراءات الأساسية المريحة والواضحة */}
-                  <div className="mt-3 border-t border-slate-200/60 pt-3">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {/* زر 1: إرسال تقرير نصي على واتساب */}
-                      <button
-                        type="button"
-                        disabled={isSendingText || isDownloadingCard || isSendingCard}
-                        onClick={shareOnWhatsApp}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-emerald-800 transition active:scale-95 disabled:opacity-60 cursor-pointer"
-                        title="إرسال تقرير نصي بالحضور والاشتراكات لولي الأمر عبر واتساب"
-                      >
-                        {isSendingText ? (
-                          <>
-                            <span className="h-3.5 w-3.5 rounded-full border-2 border-emerald-700 border-t-transparent animate-spin shrink-0" />
-                            <span className="truncate">جاري الفتح...</span>
-                          </>
-                        ) : (
-                          <>
-                            <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">إرسال تقرير نصي</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* زر 2: حفظ صورة البطاقة */}
-                      <button
-                        type="button"
-                        disabled={isSendingText || isDownloadingCard || isSendingCard}
-                        onClick={downloadProfileCard}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-slate-800 transition active:scale-95 disabled:opacity-60 cursor-pointer"
-                        title="حفظ وتحميل صورة بطاقة اللاعب الرسمية مباشرة على جهازك"
-                      >
-                        {isDownloadingCard ? (
-                          <>
-                            <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-600 border-t-transparent animate-spin shrink-0" />
-                            <span className="truncate">جاري التحميل...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Download className="h-3.5 w-3.5 text-slate-600 shrink-0" />
-                            <span className="truncate">حفظ صورة البطاقة</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* زر 3: معاينة ومشاركة بطاقة اللاعب */}
-                      <button
-                        type="button"
-                        onClick={() => setShowCardModal(true)}
-                        className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer"
-                        title="معاينة ومشاركة صورة بطاقة اللاعب الرسمية وإرسالها لتطبيق واتساب فوراً"
-                      >
-                        <Share2 className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">مشاركة البطاقة</span>
-                      </button>
-
-
-                      {/* زر 4: تعديل البيانات */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditName(player.name);
-                          const _d = (player.dateOfBirth || "").split("-");
-                          setEditDobYear(_d[0] || "");
-                          setEditDobMonth(_d[1] || "");
-                          setEditDobDay(_d[2] || "");
-                          setEditGuardianPhone(guardianPhone);
-                          setEditBranch(player.branch);
-                          setEditPhoto(player.photo || "");
-                          setIsEditing(true);
-                        }}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-slate-700 transition active:scale-95 cursor-pointer"
-                        title="تعديل بيانات اللاعب"
-                      >
-                        <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                        <span className="truncate">تعديل البيانات</span>
-                      </button>
-                    </div>
-                  </div>
                 </div>
 
                 {/* بطاقات الإحصائيات البسيطة المتناسقة */}
