@@ -13,13 +13,18 @@ import {
   Building2,
   CheckCircle2,
   ArrowRight,
+  Share2,
+  MessageCircle,
 } from "lucide-react";
 import {
   getBirthdayInfo,
   isBirthdayCongratulated,
   BELT_HEX,
 } from "../../lib/dashboard-utils";
-import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
+import {
+  sendBirthdayCardViaWhatsApp,
+  shareBirthdayCard,
+} from "../../lib/birthday-card-utils";
 import BirthdayCardModal from "./BirthdayCardModal";
 
 export default function BirthdayReminder({
@@ -36,6 +41,7 @@ export default function BirthdayReminder({
   const [searchQuery, setSearchQuery] = useState("");
   const [isDismissed, setIsDismissed] = useState(false);
   const [sendingPlayerId, setSendingPlayerId] = useState(null);
+  const [sharingPlayerId, setSharingPlayerId] = useState(null);
   const [reminderNotice, setReminderNotice] = useState("");
   const [congratulateTick, setCongratulateTick] = useState(0);
   const [previewPlayer, setPreviewPlayer] = useState(null);
@@ -603,10 +609,10 @@ export default function BirthdayReminder({
 
                   {/* ━━━ Mobile-First Touch Action System ━━━ */}
                   <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-2">
-                    {/* Primary Button: Full Width WhatsApp Card Send */}
+                    {/* Primary Button: Open WhatsApp Chat directly with copied Card */}
                     <button
                       type="button"
-                      disabled={sendingPlayerId === player._id}
+                      disabled={sendingPlayerId === player._id || sharingPlayerId === player._id}
                       onClick={async () => {
                         await sendBirthdayCardViaWhatsApp(player, captainName, {
                           onProgress: (isBusy) =>
@@ -617,43 +623,65 @@ export default function BirthdayReminder({
                       className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-600/20 hover:brightness-110 active-press transition cursor-pointer disabled:opacity-60 min-h-[44px]"
                       title={
                         phone
-                          ? `إرسال كارت التهنئة لواتساب ولي الأمر (${phone})`
+                          ? `إرسال كارت التهنئة لشات واتساب ولي الأمر (${phone})`
                           : "إرسال كارت التهنئة عبر واتساب"
                       }
                     >
                       {sendingPlayerId === player._id ? (
                         <>
                           <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                          <span>جاري إرسال الكارت...</span>
+                          <span>جاري تجهيز الكارت وفتح الشات...</span>
                         </>
                       ) : (
                         <>
-                          <Cake className="h-4 w-4 shrink-0" />
+                          <MessageCircle className="h-4 w-4 shrink-0" />
                           <span className="font-cairo">
-                            {isWished ? "إعادة إرسال كارت التهنئة" : "إرسال كارت التهنئة (واتساب)"}
+                            {isWished ? "إعادة إرسال الكارت (شات اللاعب)" : "إرسال كارت التهنئة (واتساب) 💬"}
                           </span>
                         </>
                       )}
                     </button>
 
-                    {/* Secondary Row: 3 Touch Targets */}
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {/* 1. Preview Modal */}
+                    {/* Secondary Row: Share as Image, Preview, Call, Profile */}
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {/* 1. Share as Image */}
+                      <button
+                        type="button"
+                        disabled={sharingPlayerId === player._id || sendingPlayerId === player._id}
+                        onClick={async () => {
+                          await shareBirthdayCard(player, captainName, {
+                            onProgress: (isBusy) =>
+                              setSharingPlayerId(isBusy ? player._id : null),
+                            onNotice: setReminderNotice,
+                          });
+                        }}
+                        className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-amber-300 bg-amber-50/90 text-amber-900 hover:bg-amber-100 active-press transition cursor-pointer min-h-[38px] text-[10px] sm:text-[11px] font-black"
+                        title="مشاركة الكارت كصورة مباشرة عبر التطبيقات"
+                      >
+                        {sharingPlayerId === player._id ? (
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-amber-600 border-t-transparent animate-spin shrink-0" />
+                        ) : (
+                          <Share2 className="h-3.5 w-3.5 text-amber-700 shrink-0" />
+                        )}
+                        <span>مشاركة</span>
+                      </button>
+
+                      {/* 2. Preview Modal */}
                       <button
                         type="button"
                         onClick={() => setPreviewPlayer(player)}
-                        className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 active-press transition cursor-pointer min-h-[38px] text-[11px] font-black"
+                        className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100 active-press transition cursor-pointer min-h-[38px] text-[10px] sm:text-[11px] font-black"
                         title="معاينة وتحميل الكارت"
                       >
-                        <Eye className="h-3.5 w-3.5 text-amber-700 shrink-0" />
+                        <Eye className="h-3.5 w-3.5 text-slate-600 shrink-0" />
                         <span>معاينة</span>
                       </button>
 
-                      {/* 2. Call */}
+                      {/* 3. Call */}
                       {phone ? (
                         <a
                           href={`tel:${phone}`}
-                          className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 active-press transition min-h-[38px] text-[11px] font-black text-center"
+                          className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 active-press transition min-h-[38px] text-[10px] sm:text-[11px] font-black text-center"
                           title={`اتصال بولي الأمر (${phone})`}
                         >
                           <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
@@ -663,18 +691,18 @@ export default function BirthdayReminder({
                         <button
                           type="button"
                           disabled
-                          className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-400 opacity-50 min-h-[38px] text-[11px] font-bold"
+                          className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-slate-200 bg-slate-50 text-slate-400 opacity-50 min-h-[38px] text-[10px] sm:text-[11px] font-bold"
                         >
                           <Phone className="h-3.5 w-3.5 shrink-0" />
                           <span>اتصال</span>
                         </button>
                       )}
 
-                      {/* 3. Profile */}
+                      {/* 4. Profile */}
                       <button
                         type="button"
                         onClick={() => onOpenPlayer?.(player)}
-                        className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active-press transition cursor-pointer min-h-[38px] text-[11px] font-black"
+                        className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active-press transition cursor-pointer min-h-[38px] text-[10px] sm:text-[11px] font-black"
                         title="فتح الملف الشخصي"
                       >
                         <ExternalLink className="h-3.5 w-3.5 text-slate-500 shrink-0" />

@@ -17,6 +17,7 @@ import QuickPaymentModal from "./QuickPaymentModal";
 import ProfileCardModal from "./ProfileCardModal";
 import {
   sendBirthdayCardViaWhatsApp,
+  shareBirthdayCard,
   openWhatsAppDirect,
 } from "../../lib/birthday-card-utils";
 import {
@@ -232,6 +233,7 @@ export default function Profile({
   const [isCallingGuardian, setIsCallingGuardian] = useState(false);
   const [isTogglingPayment, setIsTogglingPayment] = useState(false);
   const [isSendingBirthdayCard, setIsSendingBirthdayCard] = useState(false);
+  const [isSharingBirthdayCard, setIsSharingBirthdayCard] = useState(false);
   const [birthdayCongratulated, setBirthdayCongratulated] = useState(false);
 
   useEffect(() => {
@@ -1716,28 +1718,53 @@ export default function Profile({
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
                         <button
                           type="button"
-                          disabled={isSendingBirthdayCard}
+                          disabled={isSendingBirthdayCard || isSharingBirthdayCard}
                           onClick={async () => {
                             await sendBirthdayCardViaWhatsApp(player, captainName, {
                               onProgress: setIsSendingBirthdayCard,
                               onNotice: setProfileNotice,
                             });
                           }}
-                          className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60"
-                          title="إرسال كارت التهنئة الرسمي عبر واتساب"
+                          className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs"
+                          title="إرسال كارت التهنئة لشات واتساب ولي الأمر"
                         >
                           {isSendingBirthdayCard ? (
                             <>
                               <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                              <span>جاري إرسال الكارت...</span>
+                              <span>جاري التجهيز...</span>
                             </>
                           ) : (
                             <>
-                              <span>🎂</span>
-                              <span>إرسال كارت التهنئة</span>
+                              <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                              <span>إرسال كارت التهنئة (واتساب)</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isSharingBirthdayCard || isSendingBirthdayCard}
+                          onClick={async () => {
+                            await shareBirthdayCard(player, captainName, {
+                              onProgress: setIsSharingBirthdayCard,
+                              onNotice: setProfileNotice,
+                            });
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 font-black text-amber-900 shadow-2xs hover:bg-amber-100 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs"
+                          title="مشاركة الكارت كصورة مباشرة"
+                        >
+                          {isSharingBirthdayCard ? (
+                            <>
+                              <span className="h-3.5 w-3.5 rounded-full border-2 border-amber-600 border-t-transparent animate-spin shrink-0" />
+                              <span>جاري...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Share2 className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+                              <span>مشاركة كصورة</span>
                             </>
                           )}
                         </button>
