@@ -71,7 +71,7 @@ export function paymentStatusFor(player, month) {
   return getPaymentDetailsFor(player, month).status;
 }
 
-export function calculateAge(dateOfBirth, referenceDate = new Date()) {
+export function calculateAge(dateOfBirth, referenceDate) {
   if (!dateOfBirth) return null;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateOfBirth).trim());
   if (!match) return null;
@@ -80,9 +80,14 @@ export function calculateAge(dateOfBirth, referenceDate = new Date()) {
   const birthMonth = parseInt(match[2], 10);
   const birthDay = parseInt(match[3], 10);
 
-  const refYear = referenceDate.getFullYear();
-  const refMonth = referenceDate.getMonth() + 1;
-  const refDay = referenceDate.getDate();
+  const ref =
+    referenceDate instanceof Date && !isNaN(referenceDate.getTime())
+      ? referenceDate
+      : new Date();
+
+  const refYear = ref.getFullYear();
+  const refMonth = ref.getMonth() + 1;
+  const refDay = ref.getDate();
 
   let age = refYear - birthYear;
   if (refMonth < birthMonth || (refMonth === birthMonth && refDay < birthDay)) {
@@ -91,10 +96,10 @@ export function calculateAge(dateOfBirth, referenceDate = new Date()) {
   return age >= 0 ? age : 0;
 }
 
-export function normalizePlayer(player, referenceDate = new Date()) {
+export function normalizePlayer(player) {
   if (!player) return player;
   const dynamicAge = player.dateOfBirth
-    ? calculateAge(player.dateOfBirth, referenceDate)
+    ? calculateAge(player.dateOfBirth)
     : null;
 
   return Object.assign(Object.assign({}, player), {
@@ -110,18 +115,23 @@ export function normalizePlayer(player, referenceDate = new Date()) {
 /**
  * Calculates birthday status for a player
  */
-export function getBirthdayInfo(player, referenceDate = new Date()) {
+export function getBirthdayInfo(player, referenceDate) {
   if (!player || !player.dateOfBirth) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(player.dateOfBirth.trim());
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(player.dateOfBirth).trim());
   if (!match) return null;
 
   const birthYear = parseInt(match[1], 10);
   const birthMonth = parseInt(match[2], 10); // 1-12
   const birthDay = parseInt(match[3], 10);
 
-  const refYear = referenceDate.getFullYear();
-  const refMonth = referenceDate.getMonth() + 1; // 1-12
-  const refDay = referenceDate.getDate();
+  const ref =
+    referenceDate instanceof Date && !isNaN(referenceDate.getTime())
+      ? referenceDate
+      : new Date();
+
+  const refYear = ref.getFullYear();
+  const refMonth = ref.getMonth() + 1; // 1-12
+  const refDay = ref.getDate();
 
   const isToday = birthMonth === refMonth && birthDay === refDay;
 

@@ -123,19 +123,27 @@ export default function Home() {
           router.push("/auth/signin");
           return;
         }
-        if (!playersResponse.ok || !branchesResponse.ok) throw new Error();
+        if (!playersResponse.ok || !branchesResponse.ok) {
+          console.error("Initial fetch failed:", {
+            playersStatus: playersResponse.status,
+            branchesStatus: branchesResponse.status,
+            eventsStatus: eventsResponse.status,
+          });
+          throw new Error("Failed to fetch initial data");
+        }
         const [playersData, branchesData, eventsData] = await Promise.all([
           playersResponse.json(),
           branchesResponse.json(),
           eventsResponse.ok ? eventsResponse.json() : [],
         ]);
         if (!cancelled) {
-          setPlayers(playersData.map(normalizePlayer));
-          setBranches(branchesData);
+          setPlayers(Array.isArray(playersData) ? playersData.map((p) => normalizePlayer(p)) : []);
+          setBranches(Array.isArray(branchesData) ? branchesData : []);
           setEvents(Array.isArray(eventsData) ? eventsData : []);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Data loading error:", err);
         if (!cancelled)
           setNotice("تعذر تحميل البيانات. تأكد من اتصال MongoDB.");
       })
