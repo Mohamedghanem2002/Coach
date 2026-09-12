@@ -494,6 +494,11 @@ export default function Profile({
     const attendanceHistory = Array.isArray(player.attendance)
       ? [...player.attendance].reverse().slice(0, 4)
       : [];
+    const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
+    const attendedSessions = Array.isArray(player.attendance)
+      ? player.attendance.filter((item) => item.status === "present").length
+      : 0;
+    const attRate = totalSessions ? Math.round((attendedSessions / totalSessions) * 100) : 0;
     const paymentHistory = Array.isArray(player.paymentHistory)
       ? [...player.paymentHistory].reverse().slice(0, 3)
       : [];
@@ -707,7 +712,7 @@ export default function Profile({
     context.strokeStyle = "#a7f3d0";
     context.lineWidth = 1.5;
     context.stroke();
-    drawCenter(`✅ حضور التدريبات: ${attended} من ${totalSessions} حصة مسجلة`, 552 + 228, 772, "800 22px Cairo, sans-serif", "#047857");
+    drawCenter(`✅ حضور التدريبات: ${attendedSessions} من ${totalSessions} حصة مسجلة`, 552 + 228, 772, "800 22px Cairo, sans-serif", "#047857");
 
     context.fillStyle = "#f1f5f9";
     context.beginPath();
@@ -716,8 +721,8 @@ export default function Profile({
     context.strokeStyle = "#cbd5e1";
     context.lineWidth = 1.5;
     context.stroke();
-    const rateNote = attendanceRate >= 75 ? "ممتاز 🌟" : attendanceRate >= 50 ? "جيد 👍" : "يحتاج متابعة ⚠️";
-    drawCenter(`📋 نسبة الالتزام: ${attendanceRate}% (${rateNote})`, 72 + 228, 772, "800 22px Cairo, sans-serif", "#1e293b");
+    const rateNote = attRate >= 75 ? "ممتاز 🌟" : attRate >= 50 ? "جيد 👍" : "يحتاج متابعة ⚠️";
+    drawCenter(`📋 نسبة الالتزام: ${attRate}% (${rateNote})`, 72 + 228, 772, "800 22px Cairo, sans-serif", "#1e293b");
 
     // ─── Section 1: Attendance History ───
     drawRight("🥋 آخر سجلات الحضور والغياب (التدريبات)", 1008, 830, "900 28px Cairo, sans-serif", "#0f172a");
