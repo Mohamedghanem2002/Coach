@@ -10,6 +10,7 @@ import {
   getBirthdayInfo,
   getTodayBirthdays,
   isBirthdayCongratulated,
+  getPurchasesSummary,
 } from "../lib/dashboard-utils";
 import {
   Plus,
@@ -36,6 +37,7 @@ import {
   Info,
   Compass,
   ArrowRight,
+  ShoppingBag,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -198,6 +200,7 @@ export default function Home() {
           (item) => item.date === sessionDate,
         );
         const paymentDetails = getPaymentDetailsFor(player, paymentMonth);
+        const purchasesSum = getPurchasesSummary(player);
         const matchesStatus =
           statusFilter === "all" ||
           (statusFilter === "present" &&
@@ -212,6 +215,8 @@ export default function Home() {
             paymentDetails.status === "partially_paid") ||
           (statusFilter === "unpaid" &&
             paymentDetails.status !== "paid") ||
+          (statusFilter === "purchases_debt" &&
+            purchasesSum.remainingAmount > 0) ||
           (statusFilter === "birthday" &&
             Boolean(
               getBirthdayInfo(player)?.isToday ||
@@ -257,6 +262,12 @@ export default function Home() {
           const aPaid = aDetails.status === "paid" ? 1 : 0;
           const bPaid = bDetails.status === "paid" ? 1 : 0;
           return aPaid - bPaid;
+        });
+      case "purchases-debt-first":
+        return list.sort((a, b) => {
+          const aRem = getPurchasesSummary(a).remainingAmount;
+          const bRem = getPurchasesSummary(b).remainingAmount;
+          return bRem - aRem;
         });
       case "attendance-desc":
         return list.sort((a, b) => {
@@ -327,6 +338,10 @@ export default function Home() {
     (player) => paymentStatusFor(player, paymentMonth) === "unpaid",
   ).length;
   const totalPendingPaymentCount = unpaidCount + partialCount;
+  const purchasesDebtCount = dashboardPlayers.filter((player) => {
+    const s = getPurchasesSummary(player);
+    return s.remainingAmount > 0;
+  }).length;
   const presentToday = dashboardPlayers.filter((player) =>
     (player.attendance || []).some(
       (item) => item.date === sessionDate && item.status === "present",
@@ -389,6 +404,13 @@ export default function Home() {
         setNotice(
           `تم ${data.paymentStatus === "paid" ? "تسجيل دفع" : "إلغاء الدفع"} اللاعب بنجاح.`,
         );
+      }
+      if (data.purchaseAction === "add") {
+        setNotice(`تم تسجيل السلعة (${data.title || "السلعة"}) بنجاح.`);
+      } else if (data.purchaseAction === "update") {
+        setNotice("تم تسجيل سداد السلعة بنجاح.");
+      } else if (data.purchaseAction === "delete") {
+        setNotice("تم حذف السلعة من حساب اللاعب بنجاح.");
       }
       return safePlayer;
     } catch (_a) {
@@ -981,6 +1003,21 @@ export default function Home() {
                   </button>
                 )}
 
+                {purchasesDebtCount > 0 && (
+                  <button
+                    type="button"
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                      statusFilter === "purchases_debt"
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "bg-white text-amber-900 border border-amber-300 hover:bg-amber-50"
+                    }`}
+                    onClick={() => setStatusFilter(statusFilter === "purchases_debt" ? "all" : "purchases_debt")}
+                  >
+                    <ShoppingBag className="h-3 w-3 text-amber-600" />
+                    <span>متبقي أدوات ({purchasesDebtCount})</span>
+                  </button>
+                )}
+
                 {todayBirthdaysCount > 0 && (
                   <button
                     type="button"
@@ -1065,7 +1102,8 @@ export default function Home() {
                           <option value="oldest">الأقدم تسجيلاً</option>
                           <option value="age-asc">السن: الأصغر أولاً</option>
                           <option value="age-desc">السن: الأكبر أولاً</option>
-                          <option value="unpaid-first">غير المسددين أولاً</option>
+                          <option value="unpaid-first">متأخرو اشتراك الشهر أولاً</option>
+                          <option value="purchases-debt-first">متبقي الأدوات والمشتريات أولاً</option>
                           <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
                         </select>
                       </label>
@@ -1563,7 +1601,8 @@ export default function Home() {
               <option value="oldest">الأقدم تسجيلاً</option>
               <option value="age-asc">السن: الأصغر أولاً</option>
               <option value="age-desc">السن: الأكبر أولاً</option>
-              <option value="unpaid-first">غير المسددين أولاً</option>
+              <option value="unpaid-first">متأخرو اشتراك الشهر أولاً</option>
+              <option value="purchases-debt-first">متبقي الأدوات والمشتريات أولاً</option>
               <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
             </select>
           </label>
@@ -1621,7 +1660,7 @@ export default function Home() {
             onClick={() => setStatusFilter("paid")}
           >
             <CreditCard className="h-3 w-3" />
-            <span>مدفوع بالكامل</span>
+            <span>اشتراك مسدد</span>
             <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{paidCount}</span>
           </button>
           {partialCount > 0 && (
@@ -1635,7 +1674,7 @@ export default function Home() {
               onClick={() => setStatusFilter("partially_paid")}
             >
               <Clock className="h-3 w-3 text-amber-600" />
-              <span>دفع جزئي</span>
+              <span>اشتراك جزئي</span>
               <span className="rounded-full bg-white/40 px-1.5 text-[10px] font-black">{partialCount}</span>
             </button>
           )}
@@ -1649,9 +1688,25 @@ export default function Home() {
             onClick={() => setStatusFilter("unpaid")}
           >
             <Clock className="h-3 w-3" />
-            <span>لم يدفع / متبقي</span>
+            <span>متأخرات اشتراك الشهر</span>
             <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{totalPendingPaymentCount}</span>
           </button>
+
+          {purchasesDebtCount > 0 && (
+            <button
+              type="button"
+              className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-black transition-all cursor-pointer ${
+                statusFilter === "purchases_debt"
+                  ? "bg-amber-600 text-white shadow-xs shadow-amber-500/20 ring-2 ring-amber-300"
+                  : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300"
+              }`}
+              onClick={() => setStatusFilter("purchases_debt")}
+            >
+              <ShoppingBag className="h-3.5 w-3.5 text-amber-600" />
+              <span>متبقي أدوات / مشتريات</span>
+              <span className="rounded-full bg-white/40 px-1.5 text-[10px] font-black">{purchasesDebtCount}</span>
+            </button>
+          )}
 
           {todayBirthdaysCount > 0 && (
             <button
@@ -1773,12 +1828,12 @@ export default function Home() {
             )}
           </div>
           <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/60 md:bg-white md:shadow-md">
-            <div className="hidden grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 md:grid">
+            <div className="hidden grid-cols-[2fr_0.6fr_1fr_1.4fr_1.8fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 md:grid">
               <span>اللاعب</span>
               <span>العمر</span>
               <span>الفرع</span>
               <span>تسجيل الحضور</span>
-              <span>حالة الاشتراك</span>
+              <span>الاشتراك والمشتريات</span>
               <span></span>
             </div>
 

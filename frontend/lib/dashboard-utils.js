@@ -108,7 +108,37 @@ export function normalizePlayer(player) {
     paymentHistory: Array.isArray(player.paymentHistory)
       ? player.paymentHistory
       : [],
+    purchases: Array.isArray(player.purchases) ? player.purchases : [],
   });
+}
+
+/**
+ * Calculates purchases summary and remaining amounts for a player
+ */
+export function getPurchasesSummary(player) {
+  const purchases = Array.isArray(player?.purchases) ? player.purchases : [];
+  const totalAmount = purchases.reduce(
+    (sum, p) => sum + (Number(p.totalAmount) || 0),
+    0
+  );
+  const paidAmount = purchases.reduce(
+    (sum, p) => sum + (Number(p.paidAmount) || 0),
+    0
+  );
+  const remainingAmount = Math.max(0, totalAmount - paidAmount);
+  const unpaidCount = purchases.filter(
+    (p) => (Number(p.remainingAmount) || 0) > 0
+  ).length;
+
+  return {
+    purchases,
+    totalAmount,
+    paidAmount,
+    remainingAmount,
+    hasDebt: remainingAmount > 0,
+    unpaidCount,
+    count: purchases.length,
+  };
 }
 
 

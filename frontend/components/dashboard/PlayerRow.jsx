@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, useMemo } from "react";
 import {
   Check,
   X,
@@ -12,6 +12,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   AlertCircle,
+  ShoppingBag,
 } from "lucide-react";
 import {
   paymentStatusFor,
@@ -20,6 +21,7 @@ import {
   getBeltStyle,
   formatWhatsAppPhone,
   calculateAge,
+  getPurchasesSummary,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 
@@ -34,6 +36,7 @@ function PlayerRow({
 }) {
   const [attendanceBusy, setAttendanceBusy] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalTab, setPaymentModalTab] = useState("subscription");
 
   const record = (player.attendance || []).find((item) => item.date === sessionDate);
   const present = record?.status === "present";
@@ -46,6 +49,29 @@ function PlayerRow({
   const currentAge = player.dateOfBirth
     ? calculateAge(player.dateOfBirth)
     : player.age;
+  const purchasesSummary = getPurchasesSummary(player);
+
+  const unpaidPurchases = useMemo(() => {
+    return (purchasesSummary.purchases || []).filter(
+      (p) => (Number(p.remainingAmount) || 0) > 0
+    );
+  }, [purchasesSummary.purchases]);
+
+  const purchaseDebtLabel = useMemo(() => {
+    if (purchasesSummary.count === 0) return null;
+    if (purchasesSummary.remainingAmount <= 0) {
+      return `الأدوات والمستلزمات: مسددة بالكامل (${purchasesSummary.totalAmount} ج.م) ✓`;
+    }
+    if (unpaidPurchases.length === 1) {
+      const p = unpaidPurchases[0];
+      const name = p.title || "السلعة";
+      if ((Number(p.paidAmount) || 0) > 0) {
+        return `${name}: سدد ${p.paidAmount} من ${p.totalAmount} ج.م (فاضل عليه ${p.remainingAmount} ج.م)`;
+      }
+      return `${name}: لم يسدد (فاضل عليه ${p.remainingAmount} ج.م)`;
+    }
+    return `المشتريات: سدد ${purchasesSummary.paidAmount} من ${purchasesSummary.totalAmount} ج.م (فاضل عليه ${purchasesSummary.remainingAmount} ج.م)`;
+  }, [purchasesSummary, unpaidPurchases]);
 
   const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
   const attendedSessions = Array.isArray(player.attendance)
@@ -193,6 +219,28 @@ function PlayerRow({
                 التزام {attendanceRate}%
               </span>
             )}
+            {purchasesSummary.count > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentModalTab("purchases");
+                  setShowPaymentModal(true);
+                }}
+                className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-black text-[10px] shrink-0 cursor-pointer ${
+                  purchasesSummary.remainingAmount > 0
+                    ? "bg-amber-50 border border-amber-300/80 text-amber-900"
+                    : "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                }`}
+                title="حساب المشتريات والأدوات - انقر للتحصيل أو العرض"
+              >
+                <ShoppingBag className="h-3 w-3" />
+                {purchasesSummary.remainingAmount > 0
+                  ? (unpaidPurchases.length === 1
+                      ? `${unpaidPurchases[0].title || "السلعة"}: باقي ${unpaidPurchases[0].remainingAmount} ج.م`
+                      : `باقي أدوات: ${purchasesSummary.remainingAmount} ج.م`)
+                  : "الأدوات: خالصة ✓"}
+              </button>
+            )}
           </div>
 
           {/* Guardian Phone quick actions */}
@@ -261,53 +309,107 @@ function PlayerRow({
           </button>
         </div>
 
-        {/* Dedicated Full-Width Payment Strip */}
+        {/* شريط 1: اشتراك الشهر المحدد */}
         <button
           type="button"
-          onClick={() => setShowPaymentModal(true)}
-          className={`mt-2 w-full max-w-full min-h-[44px] rounded-xl px-3 py-2 text-xs transition-all duration-150 flex items-center justify-between gap-2 active-press touch-manipulation cursor-pointer overflow-hidden ${
+          onClick={() => {
+            setPaymentModalTab("subscription");
+            setShowPaymentModal(true);
+          }}
+          className={`mt-2.5 w-full max-w-full min-h-[42px] rounded-xl px-3 py-2 text-xs transition-all duration-150 flex items-center justify-between gap-2 active-press touch-manipulation cursor-pointer overflow-hidden ${
             paymentStatus === "paid"
-              ? "border border-emerald-200 bg-emerald-50/90 text-emerald-800"
+              ? "border border-emerald-200 bg-emerald-50/90 text-emerald-900"
               : paymentStatus === "partially_paid"
               ? "border border-amber-300 bg-amber-50/90 text-amber-900 shadow-2xs"
-              : "border border-rose-200 bg-rose-50/80 text-rose-800"
+              : "border border-rose-200 bg-rose-50/80 text-rose-900"
           }`}
-          title="تسجيل وتحصيل اشتراك الشهر"
+          title={`تسجيل وتحصيل اشتراك شهر ${paymentMonth}`}
         >
           <div className="flex items-center gap-2 min-w-0">
             {paymentStatus === "paid" ? (
               <>
                 <CreditCard className="h-4 w-4 text-emerald-600 shrink-0" />
                 <span className="font-black text-xs truncate">
-                  الاشتراك: مدفوع بالكامل ({paidAmount} ج.م)
+                  اشتراك الشهر: مدفوع بالكامل ({paidAmount} ج.م) ✓
                 </span>
               </>
             ) : paymentStatus === "partially_paid" ? (
               <>
                 <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
                 <span className="font-black text-xs truncate">
-                  سدد {paidAmount} ج.م • متبقي {remainingAmount} ج.م
+                  اشتراك الشهر: سدد {paidAmount} من {totalAmount} ج.م (باقي {remainingAmount} ج.م)
                 </span>
               </>
             ) : (
               <>
                 <Clock className="h-4 w-4 text-rose-500 shrink-0" />
                 <span className="font-black text-xs truncate">
-                  لم يسدد اشتراك الشهر (متبقي {remainingAmount} ج.م)
+                  اشتراك الشهر: غير مسدد (مطلوب {totalAmount || remainingAmount} ج.م)
                 </span>
               </>
             )}
           </div>
 
-          <span className="text-[11px] font-extrabold text-slate-500 bg-white/80 border border-current/15 rounded-lg px-2.5 py-1 shrink-0">
-            تحصيل 💳
+          <span className="text-[10px] font-black text-emerald-800 bg-white/90 border border-emerald-200 rounded-lg px-2 py-1 shrink-0 shadow-2xs">
+            تحصيل الاشتراك 💳
           </span>
         </button>
+
+        {/* شريط 2: مشتريات وأدوات اللاعب */}
+        {purchasesSummary.count > 0 ? (
+          <button
+            type="button"
+            onClick={() => {
+              setPaymentModalTab("purchases");
+              setShowPaymentModal(true);
+            }}
+            className={`mt-1.5 w-full max-w-full min-h-[38px] rounded-xl px-3 py-1.5 text-xs transition-all duration-150 flex items-center justify-between gap-2 active-press touch-manipulation cursor-pointer overflow-hidden ${
+              purchasesSummary.remainingAmount > 0
+                ? "border border-amber-300/90 bg-amber-50/90 text-amber-950 shadow-2xs"
+                : "border border-slate-200/80 bg-slate-50/80 text-slate-700"
+            }`}
+            title="عرض وتحصيل حساب مشتريات وأدوات اللاعب"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <ShoppingBag
+                className={`h-4 w-4 shrink-0 ${
+                  purchasesSummary.remainingAmount > 0 ? "text-amber-600" : "text-emerald-600"
+                }`}
+              />
+              <span className="font-black text-xs truncate">
+                {purchaseDebtLabel}
+              </span>
+            </div>
+
+            <span
+              className={`text-[10px] font-black px-2 py-0.5 rounded-lg shrink-0 ${
+                purchasesSummary.remainingAmount > 0
+                  ? "bg-amber-600 text-white shadow-2xs"
+                  : "bg-white text-slate-600 border border-slate-200"
+              }`}
+            >
+              {purchasesSummary.remainingAmount > 0 ? "سداد الأدوات 🥋" : "عرض"}
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setPaymentModalTab("purchases");
+              setShowPaymentModal(true);
+            }}
+            className="mt-1.5 w-full text-center py-1 rounded-xl border border-dashed border-slate-200 text-slate-400 hover:text-amber-700 hover:border-amber-300 hover:bg-amber-50/50 text-[11px] font-bold transition cursor-pointer flex items-center justify-center gap-1"
+            title="تسجيل شراء بدلة أو أدوات أو ملابس لهذا اللاعب"
+          >
+            <ShoppingBag className="h-3 w-3" />
+            <span>+ تسجيل مشتريات أو بدلة للاعب</span>
+          </button>
+        )}
       </div>
 
       {/* ═══════════ DESKTOP TABLE ROW (>= md) ═══════════ */}
       <div
-        className={`group relative hidden min-w-0 md:grid md:grid-cols-[2.3fr_0.7fr_1.1fr_1.8fr_1.2fr_0.4fr] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3.5 md:hover:bg-slate-50/60 transition-all duration-200 ${
+        className={`group relative hidden min-w-0 md:grid md:grid-cols-[2fr_0.6fr_1fr_1.4fr_1.8fr_0.4fr] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3.5 md:hover:bg-slate-50/60 transition-all duration-200 ${
           isSelected
             ? "md:bg-red-50/30"
             : birthdayInfo?.isToday
@@ -462,36 +564,93 @@ function PlayerRow({
           </button>
         </div>
 
-        {/* Payment badge */}
-        <button
-          type="button"
-          className={`min-h-10 rounded-xl px-2.5 text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
-            paymentStatus === "paid"
-              ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-              : paymentStatus === "partially_paid"
-              ? "border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-black"
-              : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
-          }`}
-          onClick={() => setShowPaymentModal(true)}
-          title="تسجيل وتحصيل اشتراك الشهر"
-        >
-          {paymentStatus === "paid" ? (
-            <>
-              <CreditCard className="h-3.5 w-3.5 shrink-0" />
-              <span>مدفوع ({paidAmount} ج.م)</span>
-            </>
-          ) : paymentStatus === "partially_paid" ? (
-            <>
-              <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-              <span>دفع {paidAmount} • باقي {remainingAmount}</span>
-            </>
+        {/* Payment badge & purchases debt */}
+        <div className="flex flex-col gap-1 min-w-0">
+          {/* 1. زر اشتراك الشهر */}
+          <button
+            type="button"
+            className={`min-h-9 rounded-xl px-2.5 text-xs font-extrabold transition-all duration-200 flex items-center justify-between gap-1.5 cursor-pointer active:scale-95 ${
+              paymentStatus === "paid"
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                : paymentStatus === "partially_paid"
+                ? "border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-black"
+                : "border border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+            }`}
+            onClick={() => {
+              setPaymentModalTab("subscription");
+              setShowPaymentModal(true);
+            }}
+            title={`تسجيل وتحصيل اشتراك شهر ${paymentMonth}`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              {paymentStatus === "paid" ? (
+                <>
+                  <CreditCard className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  <span className="truncate font-black text-xs">اشتراك الشهر: مدفوع ({paidAmount} ج.م) ✓</span>
+                </>
+              ) : paymentStatus === "partially_paid" ? (
+                <>
+                  <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                  <span className="truncate font-black text-xs">اشتراك الشهر: باقي {remainingAmount} من {totalAmount}</span>
+                </>
+              ) : (
+                <>
+                  <Clock className="h-3.5 w-3.5 shrink-0 text-rose-600" />
+                  <span className="truncate font-black text-xs">اشتراك الشهر: غير مسدد ({totalAmount || remainingAmount} ج.م)</span>
+                </>
+              )}
+            </div>
+            <span className="text-[10px] font-black text-slate-400 shrink-0">💳</span>
+          </button>
+
+          {/* 2. زر / شارة مشتريات وأدوات اللاعب */}
+          {purchasesSummary.count > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setPaymentModalTab("purchases");
+                setShowPaymentModal(true);
+              }}
+              className={`min-h-7 text-[10px] font-black rounded-lg px-2 py-0.5 text-center transition cursor-pointer flex items-center justify-between gap-1 border ${
+                purchasesSummary.remainingAmount > 0
+                  ? "text-amber-950 bg-amber-50/95 border-amber-300 hover:bg-amber-100 shadow-2xs"
+                  : "text-emerald-800 bg-emerald-50/60 border-emerald-200/80 hover:bg-emerald-100"
+              }`}
+              title="انقر لفتح حساب مدفوعات الأدوات والمشتريات"
+            >
+              <div className="flex items-center gap-1 min-w-0 truncate">
+                <ShoppingBag
+                  className={`h-3 w-3 shrink-0 ${
+                    purchasesSummary.remainingAmount > 0 ? "text-amber-600" : "text-emerald-600"
+                  }`}
+                />
+                <span className="truncate">{purchaseDebtLabel}</span>
+              </div>
+              <span
+                className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${
+                  purchasesSummary.remainingAmount > 0
+                    ? "bg-amber-600 text-white font-black"
+                    : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                }`}
+              >
+                {purchasesSummary.remainingAmount > 0 ? "تحصيل 🥋" : "عرض"}
+              </span>
+            </button>
           ) : (
-            <>
-              <Clock className="h-3.5 w-3.5 shrink-0" />
-              <span>لم يدفع (باقي {remainingAmount})</span>
-            </>
+            <button
+              type="button"
+              onClick={() => {
+                setPaymentModalTab("purchases");
+                setShowPaymentModal(true);
+              }}
+              className="min-h-6 text-[9px] font-bold text-slate-400 hover:text-amber-800 hover:bg-amber-50/70 rounded-lg py-0.5 px-1.5 transition cursor-pointer border border-dashed border-slate-200 hover:border-amber-300 flex items-center justify-center gap-1"
+              title="تسجيل بدلة أو أدوات جديدة لهذا اللاعب"
+            >
+              <ShoppingBag className="h-2.5 w-2.5" />
+              <span>+ تسجيل بدلة / أدوات</span>
+            </button>
           )}
-        </button>
+        </div>
 
         {/* Open profile button */}
         <button
@@ -509,8 +668,12 @@ function PlayerRow({
           player={player}
           paymentMonth={paymentMonth}
           initialDetails={paymentDetails}
+          initialTab={paymentModalTab}
           onClose={() => setShowPaymentModal(false)}
           onSave={async (data) => {
+            await onUpdate(player._id, data);
+          }}
+          onSavePurchase={async (data) => {
             await onUpdate(player._id, data);
           }}
         />

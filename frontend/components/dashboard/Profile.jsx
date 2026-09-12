@@ -12,9 +12,11 @@ import {
   getBeltStyle,
   isBirthdayCongratulated,
   calculateAge,
+  getPurchasesSummary,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 import ProfileCardModal from "./ProfileCardModal";
+import PurchaseModal from "./PurchaseModal";
 import {
   sendBirthdayCardViaWhatsApp,
   shareBirthdayCard,
@@ -32,6 +34,10 @@ import {
   BookUser,
   Compass,
   Share2,
+  ShoppingBag,
+  Tag,
+  Plus,
+  Package,
 } from "lucide-react";
 
 
@@ -75,7 +81,7 @@ export default function Profile({
   }, [events, player._id]);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [mobileProfileTab, setMobileProfileTab] = useState("overview"); // "overview" | "attendance" | "payments" | "events"
+  const [mobileProfileTab, setMobileProfileTab] = useState("overview"); // "overview" | "attendance" | "payments" | "purchases" | "events"
 
   // Edit form state
   const [editName, setEditName] = useState(player.name);
@@ -208,6 +214,19 @@ export default function Profile({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [targetPaymentMonth, setTargetPaymentMonth] = useState(paymentMonth);
   const [targetPaymentDetails, setTargetPaymentDetails] = useState(null);
+
+  // Purchases state
+  const purchasesSummary = useMemo(() => getPurchasesSummary(player), [player]);
+  const unpaidPurchases = useMemo(() => {
+    return (purchasesSummary.purchases || []).filter(
+      (p) => (Number(p.remainingAmount) || 0) > 0
+    );
+  }, [purchasesSummary.purchases]);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [purchaseModalMode, setPurchaseModalMode] = useState("add"); // "add" | "edit" | "pay"
+  const [selectedPurchase, setSelectedPurchase] = useState(null);
+  const [purchaseToDelete, setPurchaseToDelete] = useState(null);
+  const [isDeletingPurchase, setIsDeletingPurchase] = useState(false);
 
   // Status & loading indicators
   const [profileNotice, setProfileNotice] = useState("");
@@ -377,6 +396,24 @@ export default function Profile({
         })
         .join("\n")
       : "لا توجد مدفوعات مسجلة بعد";
+
+    const purchasesList = Array.isArray(player.purchases) ? player.purchases : [];
+    const purchasesText = purchasesList.length
+      ? purchasesList
+        .map((p) => {
+          const tot = Number(p.totalAmount) || 0;
+          const pd = Number(p.paidAmount) || 0;
+          const rm = Math.max(0, tot - pd);
+          if (pd >= tot && tot > 0) return `• ${p.title}: مدفوع بالكامل (${pd} ج.م) ✓`;
+          if (pd > 0) return `• ${p.title}: تم دفع ${pd} ج.م (المتبقي ${rm} ج.م) ⚠️`;
+          return `• ${p.title}: لم يدفع (المتبقي ${rm} ج.م) ⚠️`;
+        })
+        .join("\n") +
+        (purchasesSummary.remainingAmount > 0
+          ? `\n💰 إجمالي متبقي المشتريات والأدوات: ${purchasesSummary.remainingAmount} ج.م`
+          : "\n✓ تم سداد كافة المشتريات والأدوات بالكامل")
+      : "";
+
     const message = [
       "🥋 بيانات لاعب أكاديمية الكاراتيه",
       `📨 إشراف الكابتن: ${captainName}`,
@@ -397,6 +434,7 @@ export default function Profile({
           ? `تم دفع ${paidAmount} ج.م (المتبقي ${remainingAmount} ج.م) ⚠️`
           : `غير مدفوع (المتبقي ${remainingAmount || totalAmount} ج.م) ⚠️`
       }`,
+      ...(purchasesText ? ["", "🥋 المشتريات والمستلزمات (البدل والأدوات):", purchasesText] : []),
       "",
       "📋 سجل الحضور والغياب:",
       attendanceText,
@@ -408,6 +446,48 @@ export default function Profile({
     openWhatsAppDirect(cleanPhone, message);
     setProfileNotice("✓ تم فتح تطبيق واتساب وإرسال التقرير النصي فوراً");
     setTimeout(() => setIsSendingText(false), 1200);
+  }
+
+  async function handleSavePurchase(payload) {
+    try {
+      const updated = await onUpdate(player._id, payload);
+      if (updated) {
+        if (payload.purchaseAction === "add") {
+          setProfileNotice(`✓ تم إضافة السلعة (${payload.title}) بنجاح`);
+        } else if (payload.addAmount !== undefined) {
+          setProfileNotice(`✓ تم تسجيل سداد مبلغ (${payload.addAmount} ج.م) بنجاح`);
+        } else {
+          setProfileNotice(`✓ تم تحديث بيانات السلعة بنجاح`);
+        }
+      } else {
+        setProfileNotice("تعذر حفظ بيانات السلعة. حاول مرة أخرى.");
+      }
+    } catch (err) {
+      console.error(err);
+      setProfileNotice("تعذر حفظ بيانات السلعة. حاول مرة أخرى.");
+    }
+  }
+
+  async function handleDeletePurchase() {
+    if (!purchaseToDelete || isDeletingPurchase) return;
+    setIsDeletingPurchase(true);
+    try {
+      const updated = await onUpdate(player._id, {
+        purchaseAction: "delete",
+        purchaseId: purchaseToDelete.id,
+      });
+      if (updated) {
+        setProfileNotice(`✓ تم حذف (${purchaseToDelete.title}) من سجل المشتريات`);
+      } else {
+        setProfileNotice("تعذر حذف السلعة. حاول مرة أخرى.");
+      }
+    } catch (err) {
+      console.error(err);
+      setProfileNotice("تعذر حذف السلعة. حاول مرة أخرى.");
+    } finally {
+      setIsDeletingPurchase(false);
+      setPurchaseToDelete(null);
+    }
   }
 
   async function generateProfileCanvas() {
@@ -1211,6 +1291,27 @@ export default function Profile({
                     </span>
                   )}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileProfileTab("purchases")}
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${mobileProfileTab === "purchases"
+                      ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
+                      : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                  <span className="truncate inline-block">المشتريات</span>
+                  {purchasesSummary.count > 0 && (
+                    <span
+                      className={`mr-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black rounded-full ${
+                        purchasesSummary.remainingAmount > 0
+                          ? "bg-rose-100 text-rose-800"
+                          : "bg-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {purchasesSummary.count}
+                    </span>
+                  )}
+                </button>
                 {playerEvents.length > 0 && (
                   <button
                     type="button"
@@ -1398,6 +1499,53 @@ export default function Profile({
                     </span>
                   </div>
                 </div>
+
+                {/* كارت ملخص المشتريات السريع إن وجدت */}
+                {purchasesSummary.count > 0 && (
+                  <div
+                    onClick={() => setMobileProfileTab("purchases")}
+                    className={`mb-3.5 flex items-center justify-between rounded-xl border p-2.5 sm:p-3 cursor-pointer transition active:scale-98 shadow-2xs ${
+                      purchasesSummary.remainingAmount > 0
+                        ? "border-amber-300 bg-amber-50/70 text-amber-950 hover:bg-amber-100/80"
+                        : "border-emerald-200 bg-emerald-50/60 text-emerald-900 hover:bg-emerald-100/80"
+                    }`}
+                    title="انقر لعرض تفاصيل المشتريات"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-xl shrink-0 ${
+                          purchasesSummary.remainingAmount > 0
+                            ? "bg-amber-100 text-amber-700 border border-amber-300"
+                            : "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                        }`}
+                      >
+                        <ShoppingBag className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <strong className="text-xs font-black block font-cairo">
+                          مشتريات ومستلزمات ({purchasesSummary.count} مسجلة)
+                        </strong>
+                        <span className="text-[10px] font-bold opacity-80">
+                          {purchasesSummary.remainingAmount > 0
+                            ? (unpaidPurchases.length === 1
+                                ? `${unpaidPurchases[0].title || "السلعة"}: سدد ${unpaidPurchases[0].paidAmount} من ${unpaidPurchases[0].totalAmount} ج.م (فاضل عليه ${unpaidPurchases[0].remainingAmount} ج.م)`
+                                : `سدد ${purchasesSummary.paidAmount} من ${purchasesSummary.totalAmount} ج.م • متبقي عليه ${purchasesSummary.remainingAmount} ج.م`)
+                            : `مسددة بالكامل (${purchasesSummary.totalAmount} ج.م) ✓`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-black shrink-0 ${
+                        purchasesSummary.remainingAmount > 0
+                          ? "bg-amber-200 text-amber-900"
+                          : "bg-emerald-200 text-emerald-900"
+                      }`}
+                    >
+                      {purchasesSummary.remainingAmount > 0 ? "يوجد متبقي" : "خالص ✓"}
+                    </span>
+                  </div>
+                )}
 
                 {/* صندوق اشتراك الشهر الحالي المطور */}
                 <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/60 p-3.5 sm:p-4 mb-3.5 sm:mb-4 shadow-2xs">
@@ -1717,6 +1865,206 @@ export default function Profile({
                 </div>
               </div>
 
+              {/* ━━━ قسم: المشتريات والمستلزمات (البدل والأدوات) ━━━ */}
+              <div className={mobileProfileTab === "purchases" ? "block" : "hidden sm:block"}>
+                <div className="border-t border-slate-100 pt-4 pb-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                        <ShoppingBag className="h-3.5 w-3.5" />
+                      </div>
+                      <h3 className="font-cairo text-sm font-extrabold text-slate-900">
+                        المشتريات والمستلزمات (البدل والأدوات)
+                      </h3>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPurchaseModalMode("add");
+                        setSelectedPurchase(null);
+                        setShowPurchaseModal(true);
+                      }}
+                      className="flex items-center gap-1 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-3 py-1.5 text-xs font-black text-white shadow-2xs hover:brightness-110 active:scale-95 transition cursor-pointer touch-manipulation"
+                    >
+                      <Plus className="h-3.5 w-3.5 stroke-[3]" />
+                      <span>إضافة سلعة / بدلة</span>
+                    </button>
+                  </div>
+
+                  {/* شريط الإحصائيات عند وجود مشتريات */}
+                  {purchasesSummary.count > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-2 text-center shadow-2xs">
+                        <span className="block text-[10px] font-bold text-slate-500">إجمالي المشتريات</span>
+                        <strong className="font-cairo text-xs sm:text-sm font-black text-slate-800">
+                          {purchasesSummary.totalAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
+                        </strong>
+                      </div>
+                      <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-2 text-center shadow-2xs">
+                        <span className="block text-[10px] font-bold text-emerald-700">المسدد</span>
+                        <strong className="font-cairo text-xs sm:text-sm font-black text-emerald-700">
+                          {purchasesSummary.paidAmount} <span className="text-[9px] font-normal text-emerald-500">ج.م</span>
+                        </strong>
+                      </div>
+                      <div className={`rounded-xl border p-2 text-center shadow-2xs ${
+                        purchasesSummary.remainingAmount > 0
+                          ? "border-rose-300 bg-rose-50/70"
+                          : "border-slate-200/80 bg-white"
+                      }`}>
+                        <span className={`block text-[10px] font-bold ${
+                          purchasesSummary.remainingAmount > 0 ? "text-rose-700" : "text-slate-500"
+                        }`}>
+                          المتبقي
+                        </span>
+                        <strong className={`font-cairo text-xs sm:text-sm font-black ${
+                          purchasesSummary.remainingAmount > 0 ? "text-rose-700" : "text-slate-800"
+                        }`}>
+                          {purchasesSummary.remainingAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
+                        </strong>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* قائمة السلع */}
+                  {purchasesSummary.count === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
+                      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-500">
+                        <ShoppingBag className="h-5 w-5" />
+                      </div>
+                      <p className="text-xs font-extrabold text-slate-700 mb-1">
+                        لا توجد مشتريات أو أدوات مسجلة لهذا اللاعب
+                      </p>
+                      <p className="text-[11px] text-slate-400 mb-3 max-w-sm mx-auto">
+                        يمكنك تسجيل شراء بدلة، حزام، قفازات أو أي أدوات ومتابعة المبالغ المدفوعة والمتبقية بسهولة.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPurchaseModalMode("add");
+                          setSelectedPurchase(null);
+                          setShowPurchaseModal(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-black text-red-700 hover:bg-red-100 transition cursor-pointer touch-manipulation"
+                      >
+                        <Plus className="h-3.5 w-3.5 stroke-[3]" />
+                        <span>تسجيل أول سلعة أو بدلة</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {[...purchasesSummary.purchases].reverse().map((item) => {
+                        const tot = Number(item.totalAmount) || 0;
+                        const pd = Number(item.paidAmount) || 0;
+                        const rem = Math.max(0, tot - pd);
+                        const isPaid = pd >= tot && tot > 0;
+                        const isPartial = pd > 0 && !isPaid;
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-xs space-y-2"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white border border-slate-200 text-slate-700 font-bold shrink-0">
+                                  🥋
+                                </span>
+                                <div>
+                                  <strong className="font-bold text-slate-900 block sm:inline text-xs sm:text-sm">
+                                    {item.title}
+                                  </strong>
+                                  {item.date && (
+                                    <span className="text-[10px] font-semibold text-slate-400 sm:mr-2">
+                                      ({item.date})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <span
+                                className={`px-2 py-0.5 rounded-lg text-[10px] font-black shrink-0 self-start sm:self-auto ${
+                                  isPaid
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                    : isPartial
+                                    ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                    : "bg-rose-100 text-rose-800 border border-rose-200"
+                                }`}
+                              >
+                                {isPaid
+                                  ? "✓ مدفوع بالكامل"
+                                  : isPartial
+                                  ? `دفع ${pd} • باقي ${rem} ج.م`
+                                  : `غير مدفوع (باقي ${rem} ج.م)`}
+                              </span>
+                            </div>
+
+                            {/* Details & notes */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-[11px] text-slate-500">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span>المطلوب: <strong className="text-slate-800 font-bold">{tot} ج.م</strong></span>
+                                <span>•</span>
+                                <span>المدفوع: <strong className="text-emerald-700 font-bold">{pd} ج.م</strong></span>
+                                {rem > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>المتبقي: <strong className="text-rose-700 font-bold">{rem} ج.م</strong></span>
+                                  </>
+                                )}
+                                {item.notes && (
+                                  <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200/60 text-[10px] text-slate-600 max-w-[200px] truncate">
+                                    📝 {item.notes}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                                {rem > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedPurchase(item);
+                                      setPurchaseModalMode("pay");
+                                      setShowPurchaseModal(true);
+                                    }}
+                                    className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-black text-white hover:bg-emerald-700 active:scale-95 transition cursor-pointer touch-manipulation shadow-2xs"
+                                    title="تسجيل سداد دفعة على هذه السلعة"
+                                  >
+                                    <CreditCard className="h-3 w-3" />
+                                    <span>تسجيل دفعة</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedPurchase(item);
+                                    setPurchaseModalMode("edit");
+                                    setShowPurchaseModal(true);
+                                  }}
+                                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer"
+                                  title="تعديل السلعة"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPurchaseToDelete(item)}
+                                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
+                                  title="حذف من السجل"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* ━━━ قسم 3: سجل الفعاليات والرحلات المشترك بها ━━━ */}
               {playerEvents.length > 0 && (
                 <div className={mobileProfileTab === "events" ? "block" : "hidden sm:block"}>
@@ -1923,6 +2271,7 @@ export default function Profile({
             await onUpdate(player._id, data);
             setProfileNotice(`✓ تم تحديث اشتراك شهر ${data.paymentMonth} بنجاح`);
           }}
+          onSavePurchase={handleSavePurchase}
         />
       )}
 
@@ -1937,6 +2286,33 @@ export default function Profile({
           paymentMonth={paymentMonth}
         />
       )}
+
+      {showPurchaseModal && (
+        <PurchaseModal
+          key={selectedPurchase?.id || purchaseModalMode}
+          isOpen={showPurchaseModal}
+          mode={purchaseModalMode}
+          player={player}
+          initialData={selectedPurchase}
+          onClose={() => {
+            setShowPurchaseModal(false);
+            setSelectedPurchase(null);
+          }}
+          onSave={handleSavePurchase}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={Boolean(purchaseToDelete)}
+        title="حذف السلعة"
+        message={`هل أنت متأكد من حذف "${purchaseToDelete?.title}" من سجل مشتريات اللاعب؟`}
+        confirmText="نعم، احذف"
+        cancelText="تراجع"
+        confirmVariant="danger"
+        isBusy={isDeletingPurchase}
+        onConfirm={handleDeletePurchase}
+        onCancel={() => setPurchaseToDelete(null)}
+      />
     </div>
   );
 }

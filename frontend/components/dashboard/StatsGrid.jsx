@@ -8,8 +8,14 @@ import {
   Building2,
   TrendingUp,
   CalendarDays,
+  ShoppingBag,
 } from "lucide-react";
-import { localDate, paymentStatusFor, getPaymentDetailsFor } from "../../lib/dashboard-utils";
+import {
+  localDate,
+  paymentStatusFor,
+  getPaymentDetailsFor,
+  getPurchasesSummary,
+} from "../../lib/dashboard-utils";
 
 /* ── Animated counter hook ─────────────────────────────────────────────── */
 function useCountUp(target, duration = 700) {
@@ -94,6 +100,22 @@ function StatsGrid({
   const totalRemaining = paymentDetailsList.reduce((sum, p) => sum + (p.remainingAmount || 0), 0);
   const pendingPlayersCount = unpaidCount + partialCount;
 
+  const monthlyCollected = paymentDetailsList.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
+
+  // حسابات إحصائيات المشتريات والأدوات المستقلة
+  const allPurchases = dashboardPlayers.flatMap((p) =>
+    Array.isArray(p.purchases) ? p.purchases : []
+  );
+  const totalPurchasesAmount = allPurchases.reduce(
+    (sum, item) => sum + (Number(item.totalAmount) || 0),
+    0
+  );
+  const totalPurchasesPaid = allPurchases.reduce(
+    (sum, item) => sum + (Number(item.paidAmount) || 0),
+    0
+  );
+  const totalPurchasesRemaining = Math.max(0, totalPurchasesAmount - totalPurchasesPaid);
+
   const presentToday = dashboardPlayers.filter((p) => {
     var _a;
     return ((_a = p.attendance) !== null && _a !== void 0 ? _a : []).some(
@@ -162,17 +184,17 @@ function StatsGrid({
       accentColor: "#f43f5e",
     },
     {
-      label: "دفعوا الاشتراك",
+      label: "مسددو اشتراك الشهر",
       value: paidCount,
-      note: partialCount > 0 ? `${paymentMonthLabel} (+${partialCount} جزئي)` : paymentMonthLabel,
+      note: partialCount > 0 ? `${paymentMonthLabel} (+${partialCount} جزئي)` : `اشتراك ${paymentMonthLabel}`,
       Icon: CreditCard,
       gradient: "from-sky-500 to-blue-600",
       accentColor: "#0ea5e9",
     },
     {
-      label: "مستحقات معلقة",
+      label: "متأخرات اشتراك الشهر",
       value: pendingPlayersCount,
-      note: totalRemaining > 0 ? `متبقي ${totalRemaining.toLocaleString("ar-EG")} ج.م` : "لا توجد مستحقات معلقة",
+      note: totalRemaining > 0 ? `متبقي ${totalRemaining.toLocaleString("ar-EG")} ج.م` : "لا توجد متأخرات للشهر",
       Icon: Clock,
       gradient: "from-amber-500 to-orange-600",
       accentColor: "#f59e0b",
@@ -196,6 +218,100 @@ function StatsGrid({
         {stats.map((stat, i) => (
           <StatCard key={stat.label} {...stat} delay={`${i * 60}ms`} />
         ))}
+      </div>
+
+      {/* Financial Streams Separation Banner */}
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Stream 1: اشتراكات الشهور */}
+        <div className="rounded-2xl border border-sky-200/80 bg-gradient-to-br from-sky-50/70 to-blue-50/40 p-4 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-600 text-white shadow-xs">
+                <CreditCard className="h-4 w-4" />
+              </div>
+              <div>
+                <h4 className="font-cairo text-xs sm:text-sm font-black text-slate-900">
+                  إيرادات اشتراك شهر {paymentMonthLabel}
+                </h4>
+                <p className="text-[10px] text-slate-500 font-bold">
+                  حساب الاشتراكات الشهرية المستقل
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-sky-100 text-sky-800 border border-sky-200">
+              شهر {paymentMonth}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-sky-200/60 text-center">
+            <div>
+              <span className="block text-[10px] font-bold text-slate-500">مسدد الشهر</span>
+              <strong className="font-cairo text-xs sm:text-sm font-black text-sky-900">
+                {paidCount} <span className="text-[9px] font-normal text-slate-400">لاعب</span>
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] font-bold text-emerald-700">المحصل للاشتراك</span>
+              <strong className="font-cairo text-xs sm:text-sm font-black text-emerald-700">
+                {monthlyCollected.toLocaleString("ar-EG")}{" "}
+                <span className="text-[9px] font-normal text-emerald-500">ج.م</span>
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] font-bold text-rose-600">متأخرات الشهر</span>
+              <strong className="font-cairo text-xs sm:text-sm font-black text-rose-700">
+                {totalRemaining.toLocaleString("ar-EG")}{" "}
+                <span className="text-[9px] font-normal text-rose-400">ج.م</span>
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Stream 2: مبيعات ومستلزمات الأدوات */}
+        <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/70 to-orange-50/40 p-4 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">
+                <ShoppingBag className="h-4 w-4" />
+              </div>
+              <div>
+                <h4 className="font-cairo text-xs sm:text-sm font-black text-slate-900">
+                  مدفوعات ومبيعات المشتريات والأدوات
+                </h4>
+                <p className="text-[10px] text-slate-500 font-bold">
+                  حساب البدل والمستلزمات المستقل
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-amber-100 text-amber-900 border border-amber-200">
+              {allPurchases.length} صنف مسجل
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-amber-200/60 text-center">
+            <div>
+              <span className="block text-[10px] font-bold text-slate-500">إجمالي المبيعات</span>
+              <strong className="font-cairo text-xs sm:text-sm font-black text-slate-900">
+                {totalPurchasesAmount.toLocaleString("ar-EG")}{" "}
+                <span className="text-[9px] font-normal text-slate-400">ج.م</span>
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] font-bold text-emerald-700">المحصل للأدوات</span>
+              <strong className="font-cairo text-xs sm:text-sm font-black text-emerald-700">
+                {totalPurchasesPaid.toLocaleString("ar-EG")}{" "}
+                <span className="text-[9px] font-normal text-emerald-500">ج.م</span>
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] font-bold text-rose-600">باقي على اللاعبين</span>
+              <strong className="font-cairo text-xs sm:text-sm font-black text-rose-700">
+                {totalPurchasesRemaining.toLocaleString("ar-EG")}{" "}
+                <span className="text-[9px] font-normal text-rose-400">ج.م</span>
+              </strong>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Charts row */}

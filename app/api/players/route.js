@@ -76,6 +76,7 @@ function serializePlayer(player) {
     paymentHistory: Array.isArray(player.paymentHistory)
       ? player.paymentHistory
       : [],
+    purchases: Array.isArray(player.purchases) ? player.purchases : [],
     paymentStatus: status,
     totalAmount,
     paidAmount,
@@ -105,46 +106,7 @@ export async function GET() {
       .find({ ownerId })
       .sort({ createdAt: -1 })
       .toArray();
-    const currentMonth = appDate().slice(0, 7);
-    return NextResponse.json(
-      players.map((player) => {
-        var _a;
-        const monthlyPayment =
-          (_a = player.paymentHistory) === null || _a === void 0
-            ? void 0
-            : _a.find((payment) => payment.month === currentMonth);
-        const totalAmount = Number(
-          monthlyPayment?.totalAmount ?? player.totalAmount ?? 100,
-        );
-        const paidAmount = Number(
-          monthlyPayment?.paidAmount ?? (
-            monthlyPayment?.status === "paid"
-              ? totalAmount
-              : (player.paidAmount ?? 0)
-          ),
-        );
-        const remainingAmount = Math.max(0, totalAmount - paidAmount);
-        let status = monthlyPayment?.status || player.paymentStatus || "unpaid";
-        if (paidAmount >= totalAmount && totalAmount > 0) {
-          status = "paid";
-        } else if (paidAmount > 0 && paidAmount < totalAmount) {
-          status = "partially_paid";
-        }
-
-        return Object.assign(Object.assign({}, player), {
-          attendance: Array.isArray(player.attendance) ? player.attendance : [],
-          paymentStatus: status,
-          totalAmount,
-          paidAmount,
-          remainingAmount,
-          paymentHistory: Array.isArray(player.paymentHistory)
-            ? player.paymentHistory
-            : [],
-          lastBirthdayWishedYear: player.lastBirthdayWishedYear || null,
-          _id: player._id.toString(),
-        });
-      }),
-    );
+    return NextResponse.json(players.map((player) => serializePlayer(player)));
   } catch (error) {
     console.error("=================================");
     console.error("GET /api/players FAILED");
@@ -200,6 +162,7 @@ export async function POST(request) {
       photo: typeof body.photo === "string" ? body.photo : "",
       paymentStatus: body.paymentStatus === "paid" ? "paid" : "unpaid",
       paymentHistory: [],
+      purchases: [],
       attendance: [],
       createdAt: new Date(),
     };
@@ -393,10 +356,137 @@ export async function PATCH(request) {
       return NextResponse.json(player ? serializePlayer(player) : null);
     }
 
+    if (body.purchaseAction) {
+      const existing = await collection.findOne({
+        _id: new ObjectId(body.id),
+        ownerId,
+      });
+      if (!existing) {
+        return NextResponse.json({ error: "اللاعب غير موجود" }, { status: 404 });
+      }
+
+      let purchases = Array.isArray(existing.purchases) ? [...existing.purchases] : [];
+
+      if (body.purchaseAction === "add") {
+        const title = typeof body.title === "string" ? body.title.trim() : "";
+        if (!title) {
+          return NextResponse.json(
+            { error: "يرجى كتابة اسم السلعة أو الغرض المطلوب" },
+            { status: 400 },
+          );
+        }
+        const totalAmount = Math.max(0, Number(body.totalAmount) || 0);
+        let paidAmount = Math.max(0, Number(body.paidAmount) || 0);
+        paidAmount = Math.min(totalAmount, paidAmount);
+        const remainingAmount = Math.max(0, totalAmount - paidAmount);
+        let status = "unpaid";
+        if (paidAmount >= totalAmount && totalAmount > 0) {
+          status = "paid";
+        } else if (paidAmount > 0) {
+          status = "partially_paid";
+        }
+
+        const newPurchase = {
+          id:
+            "prc_" +
+            Date.now().toString(36) +
+            "_" +
+            Math.random().toString(36).substring(2, 7),
+          title,
+          totalAmount,
+          paidAmount,
+          remainingAmount,
+          status,
+          date:
+            typeof body.date === "string" && body.date.trim()
+              ? body.date.trim()
+              : appDate(),
+          notes: typeof body.notes === "string" ? body.notes.trim() : "",
+          createdAt: new Date(),
+        };
+
+        purchases.push(newPurchase);
+      } else if (body.purchaseAction === "update") {
+        const purchaseId = body.purchaseId;
+        const index = purchases.findIndex((p) => p.id === purchaseId);
+        if (index === -1) {
+          return NextResponse.json(
+            { error: "السلعة غير موجودة" },
+            { status: 404 },
+          );
+        }
+        const curr = purchases[index];
+        const title =
+          typeof body.title === "string" && body.title.trim()
+            ? body.title.trim()
+            : curr.title;
+        const totalAmount =
+          body.totalAmount !== undefined
+            ? Math.max(0, Number(body.totalAmount) || 0)
+            : (curr.totalAmount ?? 0);
+
+        let paidAmount = curr.paidAmount ?? 0;
+        if (body.paidAmount !== undefined) {
+          paidAmount = Math.max(0, Number(body.paidAmount) || 0);
+        } else if (body.addAmount !== undefined) {
+          paidAmount = Math.max(
+            0,
+            (Number(curr.paidAmount) || 0) + (Number(body.addAmount) || 0),
+          );
+        }
+        paidAmount = Math.min(totalAmount, paidAmount);
+        const remainingAmount = Math.max(0, totalAmount - paidAmount);
+        let status = "unpaid";
+        if (paidAmount >= totalAmount && totalAmount > 0) {
+          status = "paid";
+        } else if (paidAmount > 0) {
+          status = "partially_paid";
+        }
+
+        purchases[index] = {
+          ...curr,
+          title,
+          totalAmount,
+          paidAmount,
+          remainingAmount,
+          status,
+          date:
+            typeof body.date === "string" && body.date.trim()
+              ? body.date.trim()
+              : curr.date,
+          notes:
+            body.notes !== undefined
+              ? typeof body.notes === "string"
+                ? body.notes.trim()
+                : ""
+              : (curr.notes || ""),
+          updatedAt: new Date(),
+        };
+      } else if (body.purchaseAction === "delete") {
+        const purchaseId = body.purchaseId;
+        purchases = purchases.filter((p) => p.id !== purchaseId);
+      } else {
+        return NextResponse.json(
+          { error: "نوع إجراء السلعة غير صحيح" },
+          { status: 400 },
+        );
+      }
+
+      const player = await collection.findOneAndUpdate(
+        { _id: new ObjectId(body.id), ownerId },
+        {
+          $set: { purchases },
+        },
+        { returnDocument: "after" },
+      );
+      return NextResponse.json(player ? serializePlayer(player) : null);
+    }
+
     if (
-      body.paymentStatus !== undefined ||
-      body.paidAmount !== undefined ||
-      body.totalAmount !== undefined
+      !body.purchaseAction &&
+      (body.paymentStatus !== undefined ||
+        body.paidAmount !== undefined ||
+        body.totalAmount !== undefined)
     ) {
       const month =
         typeof body.paymentMonth === "string" &&

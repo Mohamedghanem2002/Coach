@@ -31,6 +31,7 @@ export function exportPlayersToCSV(
     "قيمة الاشتراك (ج.م)",
     "المبلغ المدفوع (ج.م)",
     "المبلغ المتبقي (ج.م)",
+    "متبقي المشتريات/الأدوات (ج.م)",
     "مرات الحضور",
     "إجمالي الحصص",
     "نسبة الحضور %",
@@ -63,6 +64,12 @@ export function exportPlayersToCSV(
       paymentLabel = `لم يدفع (متبقي ${payDetails.remainingAmount})`;
     }
 
+    const purchases = Array.isArray(player.purchases) ? player.purchases : [];
+    const purchasesRemaining = purchases.reduce(
+      (sum, p) => sum + (Number(p.remainingAmount) || 0),
+      0
+    );
+
     const regDate = player.createdAt
       ? new Date(player.createdAt).toLocaleDateString("ar-EG")
       : "-";
@@ -83,6 +90,7 @@ export function exportPlayersToCSV(
       escapeCSV(payDetails.totalAmount),
       escapeCSV(payDetails.paidAmount),
       escapeCSV(payDetails.remainingAmount),
+      escapeCSV(purchasesRemaining),
       escapeCSV(presentCount),
       escapeCSV(totalAttendance),
       escapeCSV(`${attendanceRate}%`),

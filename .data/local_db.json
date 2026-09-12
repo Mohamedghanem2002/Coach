@@ -106,24 +106,41 @@
         {
           "month": "2026-09",
           "status": "paid",
-          "totalAmount": 100,
-          "paidAmount": 100,
+          "totalAmount": 200,
+          "paidAmount": 200,
           "remainingAmount": 0,
-          "updatedAt": "2026-09-11T18:17:58.022Z"
+          "updatedAt": "2026-09-12T20:21:57.545Z"
         }
       ],
       "attendance": [
         {
           "date": "2026-09-11",
           "status": "present"
+        },
+        {
+          "date": "2026-09-12",
+          "status": "present"
         }
       ],
       "createdAt": "2026-09-11T16:33:16.793Z",
       "_id": "6aa42d4c15e16b5a77c01ee1",
-      "totalAmount": 100,
-      "paidAmount": 100,
+      "totalAmount": 200,
+      "paidAmount": 200,
       "remainingAmount": 0,
-      "lastBirthdayWishedYear": 2026
+      "lastBirthdayWishedYear": 2026,
+      "purchases": [
+        {
+          "id": "prc_mtytyy1e_verj5",
+          "title": "بدلة كاراتيه",
+          "totalAmount": 450,
+          "paidAmount": 200,
+          "remainingAmount": 250,
+          "status": "partially_paid",
+          "date": "2026-09-12",
+          "notes": "",
+          "createdAt": "2026-09-12T20:21:27.122Z"
+        }
+      ]
     }
   ],
   "events": [
