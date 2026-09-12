@@ -405,8 +405,8 @@ export default function Profile({
           const pd = Number(p.paidAmount) || 0;
           const rm = Math.max(0, tot - pd);
           if (pd >= tot && tot > 0) return `• ${p.title}: مدفوع بالكامل (${pd} ج.م) ✓`;
-          if (pd > 0) return `• ${p.title}: تم دفع ${pd} ج.م (المتبقي ${rm} ج.م) ⚠️`;
-          return `• ${p.title}: لم يدفع (المتبقي ${rm} ج.م) ⚠️`;
+          if (pd > 0) return `• ${p.title}: سدد ${pd} من أصل ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
+          return `• ${p.title}: لم يسدد أي مبلغ من ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
         })
         .join("\n") +
         (purchasesSummary.remainingAmount > 0
@@ -431,8 +431,8 @@ export default function Profile({
       `💳 اشتراك شهر ${paymentMonth}: ${monthlyStatus === "paid"
         ? `مدفوع بالكامل (${paidAmount} ج.م) ✓`
         : monthlyStatus === "partially_paid"
-          ? `تم دفع ${paidAmount} ج.م (المتبقي ${remainingAmount} ج.م) ⚠️`
-          : `غير مدفوع (المتبقي ${remainingAmount || totalAmount} ج.م) ⚠️`
+          ? `سدد ${paidAmount} من أصل ${totalAmount} ج.م (فاضل عليه ${remainingAmount} ج.م) ⚠️`
+          : `غير مدفوع (المطلوب ${totalAmount || remainingAmount} ج.م) ⚠️`
       }`,
       ...(purchasesText ? ["", "🥋 المشتريات والمستلزمات (البدل والأدوات):", purchasesText] : []),
       "",
@@ -492,28 +492,24 @@ export default function Profile({
 
   async function generateProfileCanvas() {
     const attendanceHistory = Array.isArray(player.attendance)
-      ? [...player.attendance].reverse().slice(0, 10)
+      ? [...player.attendance].reverse().slice(0, 4)
       : [];
     const paymentHistory = Array.isArray(player.paymentHistory)
-      ? [...player.paymentHistory].reverse().slice(0, 5)
+      ? [...player.paymentHistory].reverse().slice(0, 3)
       : [];
+    const purchasesList = Array.isArray(player.purchases)
+      ? [...player.purchases].reverse().slice(0, 4)
+      : [];
+    const pSummary = getPurchasesSummary(player);
+    const unpdPurchases = (pSummary.purchases || []).filter(
+      (p) => (Number(p.remainingAmount) || 0) > 0,
+    );
 
-    const attendanceLines = attendanceHistory.length
-      ? attendanceHistory.map(
-        (item) =>
-          `${item.date}     ${item.status === "present" ? "حاضر ✓" : "غائب ×"}`,
-      )
-      : ["لا يوجد سجل حضور مسجل بعد"];
-    const paymentLines = paymentHistory.length
-      ? paymentHistory.map((item) => {
-        const total = item.totalAmount ?? 100;
-        const paid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? total : 0);
-        const rem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, total - paid);
-        if (paid >= total && total > 0) return `${item.month}     مدفوع بالكامل (${paid} ج.م) ✓`;
-        if (paid > 0) return `${item.month}     دفع ${paid} ج.م (باقي ${rem} ج.م) ⚠️`;
-        return `${item.month}     لم يدفع (باقي ${rem} ج.م) ⚠️`;
-      })
-      : ["لا توجد اشتراكات مسجلة بعد"];
+    const targetPayment = getPaymentDetailsFor(player, paymentMonth);
+    const mStatus = targetPayment.status;
+    const mTotal = targetPayment.totalAmount ?? 100;
+    const mPaid = targetPayment.paidAmount ?? 0;
+    const mRemaining = targetPayment.remainingAmount ?? 0;
 
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
@@ -525,6 +521,14 @@ export default function Profile({
       context.font = font;
       context.fillStyle = color;
       context.textAlign = "right";
+      context.direction = "rtl";
+      context.fillText(text, x, y);
+    };
+
+    const drawLeft = (text, x, y, font, color) => {
+      context.font = font;
+      context.fillStyle = color;
+      context.textAlign = "left";
       context.direction = "rtl";
       context.fillText(text, x, y);
     };
@@ -554,38 +558,38 @@ export default function Profile({
     gradHeader.addColorStop(1, "#881337");
     context.fillStyle = gradHeader;
     context.beginPath();
-    context.roundRect(36, 36, canvas.width - 72, 190, [40, 40, 0, 0]);
+    context.roundRect(36, 36, canvas.width - 72, 184, [40, 40, 0, 0]);
     context.fill();
 
     // Embellishment badge
     context.fillStyle = "rgba(255, 255, 255, 0.15)";
     context.beginPath();
-    context.roundRect(72, 70, 160, 52, 16);
+    context.roundRect(72, 65, 160, 52, 16);
     context.fill();
-    drawCenter("Re_action PRO", 152, 106, "900 22px Cairo, sans-serif", "#ffffff");
+    drawCenter("Re_action PRO", 152, 100, "900 22px Cairo, sans-serif", "#ffffff");
 
     drawRight(
       "بطاقة لاعب الكاراتيه الرسمية 🥋",
       canvas.width - 80,
-      115,
-      "900 44px Cairo, sans-serif",
+      105,
+      "900 42px Cairo, sans-serif",
       "#ffffff",
     );
     drawRight(
       `إشراف وتدريب الكابتن: ${captainName}`,
       canvas.width - 80,
-      172,
-      "700 28px Cairo, sans-serif",
+      160,
+      "700 26px Cairo, sans-serif",
       "#fecaca",
     );
 
     // Athlete Banner Box
     context.fillStyle = "#f8fafc";
     context.beginPath();
-    context.roundRect(72, 255, canvas.width - 144, 320, 28);
+    context.roundRect(72, 245, canvas.width - 144, 290, 24);
     context.fill();
     context.strokeStyle = "#e2e8f0";
-    context.lineWidth = 2.5;
+    context.lineWidth = 2;
     context.stroke();
 
     // Photo / Monogram Avatar
@@ -602,159 +606,257 @@ export default function Profile({
       if (photo) {
         context.save();
         context.beginPath();
-        context.arc(225, 415, 105, 0, Math.PI * 2);
+        context.arc(220, 390, 95, 0, Math.PI * 2);
         context.clip();
-        context.drawImage(photo, 120, 310, 210, 210);
+        context.drawImage(photo, 125, 295, 190, 190);
         context.restore();
 
         context.beginPath();
-        context.arc(225, 415, 105, 0, Math.PI * 2);
+        context.arc(220, 390, 95, 0, Math.PI * 2);
         context.strokeStyle = "#dc2626";
-        context.lineWidth = 6;
+        context.lineWidth = 5;
         context.stroke();
         photoDrawn = true;
       }
     }
 
     if (!photoDrawn) {
-      const avatarGrad = context.createLinearGradient(120, 310, 330, 520);
+      const avatarGrad = context.createLinearGradient(125, 295, 315, 485);
       avatarGrad.addColorStop(0, "#dc2626");
       avatarGrad.addColorStop(1, "#991b1b");
       context.fillStyle = avatarGrad;
       context.beginPath();
-      context.arc(225, 415, 105, 0, Math.PI * 2);
+      context.arc(220, 390, 95, 0, Math.PI * 2);
       context.fill();
 
       drawCenter(
         player.name ? player.name.charAt(0) : "ك",
-        225,
-        445,
-        "900 86px Cairo, sans-serif",
+        220,
+        425,
+        "900 80px Cairo, sans-serif",
         "#ffffff",
       );
     }
 
     // Athlete Details
-    drawRight(player.name, 940, 330, "900 44px Cairo, sans-serif", "#0f172a");
-    drawRight(`🥋 الحزام: ${player.belt || "أبيض"}  •  المستوى: ${player.level || "A"}`, 940, 380, "800 27px Cairo, sans-serif", "#b91c1c");
-    drawRight(`🏢 الصالة: ${player.branch}`, 940, 426, "700 26px Cairo, sans-serif", "#334155");
-    drawRight(`🎂 السن: ${currentAge} سنة`, 940, 470, "700 26px Cairo, sans-serif", "#334155");
+    drawRight(player.name, 940, 310, "900 42px Cairo, sans-serif", "#0f172a");
+    drawRight(`🥋 الحزام: ${player.belt || "أبيض"}  •  المستوى: ${player.level || "A"}`, 940, 355, "800 25px Cairo, sans-serif", "#b91c1c");
+    drawRight(`🏢 الصالة: ${player.branch}`, 940, 396, "700 23px Cairo, sans-serif", "#334155");
+    drawRight(`🎂 السن: ${currentAge} سنة`, 940, 436, "700 23px Cairo, sans-serif", "#334155");
     if (guardianPhone) {
-      drawRight(`📞 ولي الأمر: ${guardianPhone}`, 940, 514, "700 25px Cairo, sans-serif", "#047857");
+      drawRight(`📞 ولي الأمر: ${guardianPhone}`, 940, 475, "700 23px Cairo, sans-serif", "#047857");
     }
-    drawRight(`📅 تاريخ التسجيل: ${registrationDate}`, 940, 555, "600 22px Cairo, sans-serif", "#94a3b8");
+    drawRight(`📅 تاريخ التسجيل: ${registrationDate}`, 940, 512, "600 20px Cairo, sans-serif", "#94a3b8");
 
-    // KPI Summary Section (3 Stats Boxes)
-    const statBoxWidth = (canvas.width - 144 - 36) / 3;
+    // ─── Financial Status Section: 2 Side-by-Side Cards (Width: 456px each) ───
+    // Card 1 (Right): اشتراك الشهر
+    const mIsPaid = mStatus === "paid";
+    const mIsPartial = mStatus === "partially_paid";
+    context.fillStyle = mIsPaid ? "#f0fdf4" : mIsPartial ? "#fffbeb" : "#fef2f2";
+    context.beginPath();
+    context.roundRect(552, 555, 456, 160, 20);
+    context.fill();
+    context.strokeStyle = mIsPaid ? "#86efac" : mIsPartial ? "#fde68a" : "#fca5a5";
+    context.lineWidth = 2.5;
+    context.stroke();
 
-    // Box 1: Attended
+    drawRight(`💳 اشتراك شهر ${paymentMonth}`, 552 + 456 - 22, 595, "800 23px Cairo, sans-serif", mIsPaid ? "#065f46" : mIsPartial ? "#92400e" : "#991b1b");
+    const mStatusText = mIsPaid ? "مدفوع بالكامل ✓" : mIsPartial ? `سداد جزئي (${mPaid} ج.م)` : "غير مسدد ⚠️";
+    drawCenter(mStatusText, 552 + 228, 646, "900 34px Cairo, sans-serif", mIsPaid ? "#047857" : mIsPartial ? "#b45309" : "#b91c1c");
+    const mSubText = mIsPaid
+      ? `سدد ${mPaid} ج.م من أصل ${mTotal} ج.م`
+      : mIsPartial
+      ? `فاضل عليه: ${mRemaining} ج.م (من ${mTotal})`
+      : `المبلغ المطلوب: ${mTotal || mRemaining} ج.م`;
+    drawCenter(mSubText, 552 + 228, 690, "700 21px Cairo, sans-serif", mIsPaid ? "#065f46" : mIsPartial ? "#b45309" : "#9f1239");
+
+    // Card 2 (Left): المشتريات والبدل والأدوات
+    const hasGearDebt = pSummary.remainingAmount > 0;
+    const hasPurchases = pSummary.count > 0;
+    context.fillStyle = hasGearDebt ? "#fffbeb" : hasPurchases ? "#f0fdf4" : "#f8fafc";
+    context.beginPath();
+    context.roundRect(72, 555, 456, 160, 20);
+    context.fill();
+    context.strokeStyle = hasGearDebt ? "#fde68a" : hasPurchases ? "#86efac" : "#e2e8f0";
+    context.lineWidth = 2.5;
+    context.stroke();
+
+    drawRight("🥋 المشتريات والبدل والأدوات", 72 + 456 - 22, 595, "800 23px Cairo, sans-serif", hasGearDebt ? "#92400e" : hasPurchases ? "#065f46" : "#475569");
+    let gearStatusText = "الحساب خالص ✓";
+    let gearSubText = "لا توجد مديونية أدوات مسجلة";
+    if (hasGearDebt) {
+      gearStatusText = `باقي عليه: ${pSummary.remainingAmount} ج.م ⚠️`;
+      if (unpdPurchases.length === 1) {
+        const item = unpdPurchases[0];
+        gearSubText = `${item.title}: دفع ${item.paidAmount} من ${item.totalAmount} ج.م`;
+      } else {
+        gearSubText = `دفع ${pSummary.paidAmount} من إجمالي ${pSummary.totalAmount} ج.م`;
+      }
+    } else if (hasPurchases) {
+      gearStatusText = `مسددة بالكامل (${pSummary.totalAmount} ج.م) ✓`;
+      gearSubText = "تم سداد كافة المستلزمات والبدل";
+    }
+    drawCenter(gearStatusText, 72 + 228, 646, "900 32px Cairo, sans-serif", hasGearDebt ? "#b45309" : hasPurchases ? "#047857" : "#334155");
+    drawCenter(gearSubText, 72 + 228, 690, "700 21px Cairo, sans-serif", hasGearDebt ? "#92400e" : hasPurchases ? "#065f46" : "#64748b");
+
+    // ─── Attendance Summary Chips (Side-by-Side) ───
     context.fillStyle = "#ecfdf5";
     context.beginPath();
-    context.roundRect(72, 605, statBoxWidth, 145, 20);
+    context.roundRect(552, 730, 456, 68, 16);
     context.fill();
     context.strokeStyle = "#a7f3d0";
-    context.lineWidth = 2;
+    context.lineWidth = 1.5;
     context.stroke();
-    drawCenter(String(attended), 72 + statBoxWidth / 2, 675, "900 52px Cairo, sans-serif", "#047857");
-    drawCenter("حصة حضور", 72 + statBoxWidth / 2, 725, "700 24px Cairo, sans-serif", "#065f46");
+    drawCenter(`✅ حضور التدريبات: ${attended} من ${totalSessions} حصة مسجلة`, 552 + 228, 772, "800 22px Cairo, sans-serif", "#047857");
 
-    // Box 2: Total Sessions
     context.fillStyle = "#f1f5f9";
     context.beginPath();
-    context.roundRect(72 + statBoxWidth + 18, 605, statBoxWidth, 145, 20);
+    context.roundRect(72, 730, 456, 68, 16);
     context.fill();
     context.strokeStyle = "#cbd5e1";
-    context.lineWidth = 2;
+    context.lineWidth = 1.5;
     context.stroke();
-    drawCenter(
-      String((player.attendance || []).length),
-      72 + statBoxWidth + 18 + statBoxWidth / 2,
-      675,
-      "900 52px Cairo, sans-serif",
-      "#1e293b",
-    );
-    drawCenter(
-      "حصة مسجلة",
-      72 + statBoxWidth + 18 + statBoxWidth / 2,
-      725,
-      "700 24px Cairo, sans-serif",
-      "#475569",
-    );
+    const rateNote = attendanceRate >= 75 ? "ممتاز 🌟" : attendanceRate >= 50 ? "جيد 👍" : "يحتاج متابعة ⚠️";
+    drawCenter(`📋 نسبة الالتزام: ${attendanceRate}% (${rateNote})`, 72 + 228, 772, "800 22px Cairo, sans-serif", "#1e293b");
 
-    // Box 3: Monthly Payment
-    const isPaid = monthlyStatus === "paid";
-    context.fillStyle = isPaid ? "#ecfdf5" : "#fff1f2";
-    context.beginPath();
-    context.roundRect(72 + (statBoxWidth + 18) * 2, 605, statBoxWidth, 145, 20);
-    context.fill();
-    context.strokeStyle = isPaid ? "#a7f3d0" : "#fecdd3";
-    context.lineWidth = 2;
-    context.stroke();
-    drawCenter(
-      isPaid ? "مدفوع ✓" : "لم يدفع ⚠️",
-      72 + (statBoxWidth + 18) * 2 + statBoxWidth / 2,
-      675,
-      "900 38px Cairo, sans-serif",
-      isPaid ? "#047857" : "#be123c",
-    );
-    drawCenter(
-      `شهر ${paymentMonth}`,
-      72 + (statBoxWidth + 18) * 2 + statBoxWidth / 2,
-      725,
-      "700 22px Cairo, sans-serif",
-      isPaid ? "#065f46" : "#9f1239",
-    );
-
-    // Attendance History Table
-    drawRight("🥋 آخر سجلات الحضور والغياب", 940, 815, "900 34px Cairo, sans-serif", "#0f172a");
-    let y = 875;
-    for (const line of attendanceLines) {
-      const isPres = line.includes("حاضر");
-      context.fillStyle = isPres ? "#f0fdf4" : "#fef2f2";
+    // ─── Section 1: Attendance History ───
+    drawRight("🥋 آخر سجلات الحضور والغياب (التدريبات)", 1008, 830, "900 28px Cairo, sans-serif", "#0f172a");
+    let y = 852;
+    const attList = attendanceHistory.slice(0, 4);
+    if (attList.length === 0) {
+      context.fillStyle = "#f8fafc";
       context.beginPath();
-      context.roundRect(72, y - 36, canvas.width - 144, 52, 14);
+      context.roundRect(72, y, 936, 44, 12);
       context.fill();
-      context.strokeStyle = isPres ? "#bbf7d0" : "#fecaca";
+      context.strokeStyle = "#e2e8f0";
+      context.lineWidth = 1.5;
+      context.stroke();
+      drawCenter("لا يوجد سجل حضور مسجل بعد", 72 + 468, y + 30, "700 20px Cairo, sans-serif", "#64748b");
+      y += 56;
+    } else {
+      for (const item of attList) {
+        const isPres = item.status === "present";
+        context.fillStyle = isPres ? "#f0fdf4" : "#fef2f2";
+        context.beginPath();
+        context.roundRect(72, y, 936, 44, 12);
+        context.fill();
+        context.strokeStyle = isPres ? "#bbf7d0" : "#fecaca";
+        context.lineWidth = 1.5;
+        context.stroke();
+
+        drawRight(`📅 تاريخ: ${item.date}`, 1008 - 20, y + 30, "700 22px Cairo, sans-serif", isPres ? "#166534" : "#991b1b");
+        drawLeft(isPres ? "حاضر التدريب اليوم ✓" : "غائب عن الحصة ×", 72 + 20, y + 30, "800 22px Cairo, sans-serif", isPres ? "#15803d" : "#b91c1c");
+        y += 52;
+      }
+    }
+
+    // ─── Section 2: Monthly Payments History ───
+    y = Math.max(y + 15, 1075);
+    drawRight("💳 سجل الاشتراكات الشهرية", 1008, y, "900 28px Cairo, sans-serif", "#0f172a");
+    y += 22;
+    const pHistoryList = paymentHistory.slice(0, 3);
+    if (pHistoryList.length === 0) {
+      context.fillStyle = "#f8fafc";
+      context.beginPath();
+      context.roundRect(72, y, 936, 44, 12);
+      context.fill();
+      context.strokeStyle = "#e2e8f0";
+      context.lineWidth = 1.5;
+      context.stroke();
+      drawCenter("لا توجد اشتراكات شهرية سابقة مسجلة", 72 + 468, y + 30, "700 20px Cairo, sans-serif", "#64748b");
+      y += 56;
+    } else {
+      for (const item of pHistoryList) {
+        const total = item.totalAmount ?? 100;
+        const paid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? total : 0);
+        const rem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, total - paid);
+        const isP = paid >= total && total > 0;
+        const isPartial = paid > 0 && !isP;
+
+        context.fillStyle = isP ? "#f0fdf4" : isPartial ? "#fffbeb" : "#fef2f2";
+        context.beginPath();
+        context.roundRect(72, y, 936, 44, 12);
+        context.fill();
+        context.strokeStyle = isP ? "#bbf7d0" : isPartial ? "#fde68a" : "#fecaca";
+        context.lineWidth = 1.5;
+        context.stroke();
+
+        drawRight(`اشتراك شهر: ${item.month}`, 1008 - 20, y + 30, "700 22px Cairo, sans-serif", isP ? "#166534" : isPartial ? "#92400e" : "#991b1b");
+        const pStatusStr = isP
+          ? `مدفوع بالكامل (${paid} ج.م) ✓`
+          : isPartial
+          ? `سدد ${paid} ج.م  •  فاضل عليه: ${rem} ج.م ⚠️`
+          : `لم يدفع (مطلوب ${rem || total} ج.م) ⚠️`;
+        drawLeft(pStatusStr, 72 + 20, y + 30, "800 22px Cairo, sans-serif", isP ? "#15803d" : isPartial ? "#b45309" : "#b91c1c");
+        y += 52;
+      }
+    }
+
+    // ─── Section 3: Gear & Purchases Details ───
+    y = Math.max(y + 15, 1285);
+    drawRight("🛍️ بيان المشتريات والبدل والأدوات المسجلة", 1008, y, "900 28px Cairo, sans-serif", "#0f172a");
+    y += 22;
+    const purchasesToShow = purchasesList.slice(0, 4);
+    if (purchasesToShow.length === 0) {
+      context.fillStyle = "#f0fdf4";
+      context.beginPath();
+      context.roundRect(72, y, 936, 52, 14);
+      context.fill();
+      context.strokeStyle = "#86efac";
+      context.lineWidth = 1.5;
+      context.stroke();
+      drawCenter("لا توجد أي مستلزمات أو بدل مسجلة بحساب اللاعب (الحساب خالص بالكامل ✓)", 72 + 468, y + 35, "800 22px Cairo, sans-serif", "#047857");
+      y += 66;
+    } else {
+      for (const p of purchasesToShow) {
+        const pTot = Number(p.totalAmount) || 0;
+        const pPaid = Number(p.paidAmount) || 0;
+        const pRem = Math.max(0, pTot - pPaid);
+        const pIsPaid = pRem === 0 && pTot > 0;
+
+        context.fillStyle = pIsPaid ? "#f0fdf4" : "#fffbeb";
+        context.beginPath();
+        context.roundRect(72, y, 936, 52, 14);
+        context.fill();
+        context.strokeStyle = pIsPaid ? "#86efac" : "#fcd34d";
+        context.lineWidth = 1.8;
+        context.stroke();
+
+        // Right side: Item name & price
+        const titleStr = `🥋 ${p.title}  •  سعرها: ${pTot} ج.م`;
+        drawRight(titleStr, 1008 - 20, y + 35, "800 23px Cairo, sans-serif", pIsPaid ? "#065f46" : "#78350f");
+
+        // Left side: Paid & Remaining details
+        const payStr = pIsPaid
+          ? `مسددة بالكامل (${pPaid} ج.م) ✓`
+          : `سدد: ${pPaid} ج.م  •  فاضل عليه: ${pRem} ج.م ⚠️`;
+        drawLeft(payStr, 72 + 20, y + 35, "900 23px Cairo, sans-serif", pIsPaid ? "#047857" : "#b45309");
+
+        y += 60;
+      }
+
+      // Summary Pill for purchases
+      context.fillStyle = "#f8fafc";
+      context.beginPath();
+      context.roundRect(72, y, 936, 48, 12);
+      context.fill();
+      context.strokeStyle = "#cbd5e1";
       context.lineWidth = 1.5;
       context.stroke();
 
-      drawRight(line, 930, y + 2, "700 26px Cairo, sans-serif", isPres ? "#15803d" : "#b91c1c");
-      y += 68;
+      const summaryStr = `إجمالي المشتريات: ${pSummary.totalAmount} ج.م   •   المسدد: ${pSummary.paidAmount} ج.م   •   المتبقي الإجمالي: ${pSummary.remainingAmount} ج.م`;
+      drawCenter(summaryStr, 72 + 468, y + 32, "800 21px Cairo, sans-serif", pSummary.remainingAmount > 0 ? "#b45309" : "#047857");
+      y += 60;
     }
 
-    // Payment History Table
-    y = Math.max(y + 25, 1410);
-    drawRight("💳 سجل الاشتراكات السابقة", 940, y, "900 34px Cairo, sans-serif", "#0f172a");
-    y += 60;
-    for (const line of paymentLines) {
-      const isP = line.includes("مدفوع بالكامل");
-      const isPartial = line.includes("دفع ");
-      context.fillStyle = isP ? "#f0fdf4" : isPartial ? "#fffbeb" : "#fef2f2";
-      context.beginPath();
-      context.roundRect(72, y - 36, canvas.width - 144, 52, 14);
-      context.fill();
-      context.strokeStyle = isP ? "#bbf7d0" : isPartial ? "#fde68a" : "#fecaca";
-      context.lineWidth = 1.5;
-      context.stroke();
-
-      drawRight(
-        line,
-        930,
-        y + 2,
-        "700 26px Cairo, sans-serif",
-        isP ? "#15803d" : isPartial ? "#b45309" : "#b91c1c",
-      );
-      y += 68;
-    }
-
-    // Footer
+    // ─── Footer ───
     context.fillStyle = "#e2e8f0";
-    context.fillRect(72, canvas.height - 120, canvas.width - 144, 2);
+    context.fillRect(72, canvas.height - 110, canvas.width - 144, 2);
 
     drawRight(
       `تم استخراج البطاقة رسميًا من نظام Re_action PRO  •  ${new Date().toLocaleDateString("ar-EG")}`,
       canvas.width - 80,
-      canvas.height - 70,
+      canvas.height - 65,
       "600 22px Cairo, sans-serif",
       "#94a3b8",
     );
