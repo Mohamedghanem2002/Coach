@@ -3,18 +3,21 @@ import {
   getBeltStyle,
   formatWhatsAppPhone,
   markBirthdayCongratulated,
+  calculateAge,
 } from "./dashboard-utils";
 
+export { formatWhatsAppPhone };
+
 /**
- * Open the native WhatsApp mobile or desktop Application
- * Strictly never opens WhatsApp Web
+ * Strictly opens the native WhatsApp mobile or desktop application
+ * Never opens WhatsApp Web
  */
 export function openWhatsAppDirect(cleanPhone, text = "") {
   const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
   const paramOnly = text ? `text=${encodeURIComponent(text)}` : "";
 
   // Direct native WhatsApp application scheme
-  // Opens WhatsApp mobile application on Android/iPhone and desktop app on Windows/Mac
+  // Opens the installed WhatsApp mobile app on iOS/Android (strictly NOT WhatsApp Web)
   const appUrl = cleanPhone
     ? `whatsapp://send?phone=${cleanPhone}${encodedText}`
     : text
@@ -22,21 +25,40 @@ export function openWhatsAppDirect(cleanPhone, text = "") {
     : `whatsapp://send`;
 
   if (typeof window !== "undefined") {
-    window.location.href = appUrl;
+    try {
+      const a = document.createElement("a");
+      a.href = appUrl;
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) {
+          document.body.removeChild(a);
+        }
+      }, 300);
+    } catch (_) {
+      window.location.href = appUrl;
+    }
   }
 }
 
 /**
- * Generates an ultra-luxurious, festive Birthday Greeting Card Canvas
+ * Generates an ultra-luxurious, modern and energetic Birthday Greeting Card Canvas
  * Dimensions: 1080 x 1350 (Standard 4:5 portrait)
+ * Adheres to Re_action Karate Academy visual identity (Slate-950, Ruby Red, Warm Gold)
+ * Features a MUCH LARGER player photo as the hero element with festive candles, balloons & stars
  */
-export async function generateBirthdayCardCanvas(player, captainName = "كابتن الأكاديمية") {
+export async function generateBirthdayCardCanvas(
+  player,
+  captainName = "كابتن الأكاديمية"
+) {
   if (typeof document === "undefined") return null;
+
   if (document.fonts && document.fonts.status !== "loaded") {
     try {
       await Promise.race([
         document.fonts.ready,
-        new Promise((resolve) => setTimeout(resolve, 150)),
+        new Promise((resolve) => setTimeout(resolve, 200)),
       ]);
     } catch (_) {
       // Continue even if fonts promise rejected
@@ -49,8 +71,9 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  const bday = getBirthdayInfo(player) || { turningAge: player.age || 10 };
-  const turningAge = bday.turningAge || player.age || 10;
+  const bday = getBirthdayInfo(player);
+  const dynamicAge = player.dateOfBirth ? calculateAge(player.dateOfBirth) : player.age;
+  const turningAge = bday?.turningAge ?? dynamicAge ?? 10;
   const beltStyle = getBeltStyle(player.belt);
 
   // Helper text drawing functions
@@ -102,52 +125,81 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
     ctx.restore();
   };
 
-  // 1. Deep luxury celebratory gradient background
+  // 1. Deep luxury Re_action celebratory gradient background (Slate-950 & Crimson)
   const bg = ctx.createLinearGradient(0, 0, 1080, 1350);
-  bg.addColorStop(0, "#080c18");
-  bg.addColorStop(0.3, "#150d2e");
-  bg.addColorStop(0.65, "#2a0845");
-  bg.addColorStop(1, "#090514");
+  bg.addColorStop(0, "#080c14");
+  bg.addColorStop(0.25, "#15060a");
+  bg.addColorStop(0.55, "#220810");
+  bg.addColorStop(0.85, "#110408");
+  bg.addColorStop(1, "#070b12");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, 1080, 1350);
 
-  // 2. Glowing Celebration Radial Highlights
-  const topGlow = ctx.createRadialGradient(540, 180, 20, 540, 180, 450);
-  topGlow.addColorStop(0, "rgba(251, 191, 36, 0.22)");
-  topGlow.addColorStop(0.6, "rgba(244, 63, 94, 0.1)");
-  topGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = topGlow;
+  // 2. Glowing Celebration Radial Highlights (Ruby & Gold)
+  const rubyTopGlow = ctx.createRadialGradient(540, 150, 20, 540, 150, 480);
+  rubyTopGlow.addColorStop(0, "rgba(225, 29, 72, 0.28)");
+  rubyTopGlow.addColorStop(0.5, "rgba(245, 158, 11, 0.12)");
+  rubyTopGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = rubyTopGlow;
   ctx.fillRect(0, 0, 1080, 600);
 
-  const centerGlow = ctx.createRadialGradient(540, 410, 40, 540, 410, 320);
-  centerGlow.addColorStop(0, "rgba(244, 63, 94, 0.25)");
-  centerGlow.addColorStop(0.5, "rgba(245, 158, 11, 0.12)");
-  centerGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = centerGlow;
-  ctx.fillRect(0, 200, 1080, 500);
+  const heroPhotoGlow = ctx.createRadialGradient(540, 470, 60, 540, 470, 360);
+  heroPhotoGlow.addColorStop(0, "rgba(239, 68, 68, 0.3)");
+  heroPhotoGlow.addColorStop(0.5, "rgba(245, 158, 11, 0.18)");
+  heroPhotoGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = heroPhotoGlow;
+  ctx.fillRect(100, 200, 880, 560);
 
-  const bottomGlow = ctx.createRadialGradient(540, 950, 40, 540, 950, 400);
-  bottomGlow.addColorStop(0, "rgba(245, 158, 11, 0.12)");
-  bottomGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = bottomGlow;
-  ctx.fillRect(0, 700, 1080, 650);
+  const bottomGoldGlow = ctx.createRadialGradient(540, 1100, 40, 540, 1100, 420);
+  bottomGoldGlow.addColorStop(0, "rgba(245, 158, 11, 0.14)");
+  bottomGoldGlow.addColorStop(0.6, "rgba(225, 29, 72, 0.08)");
+  bottomGoldGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = bottomGoldGlow;
+  ctx.fillRect(0, 800, 1080, 550);
 
-  // 3. Festive Confetti & Sparkles
-  const sparkles = [
-    { x: 120, y: 140, r: 18, color: "#fbbf24", char: "★" },
-    { x: 960, y: 150, r: 20, color: "#f43f5e", char: "★" },
-    { x: 160, y: 340, r: 22, color: "#38bdf8", char: "✦" },
-    { x: 920, y: 350, r: 24, color: "#fbbf24", char: "✦" },
-    { x: 220, y: 220, r: 14, color: "#f472b6", char: "✧" },
-    { x: 860, y: 230, r: 16, color: "#34d399", char: "✧" },
-    { x: 100, y: 550, r: 18, color: "#fbbf24", char: "★" },
-    { x: 980, y: 560, r: 18, color: "#a855f7", char: "★" },
-    { x: 140, y: 780, r: 16, color: "#f43f5e", char: "✦" },
-    { x: 940, y: 790, r: 16, color: "#38bdf8", char: "✦" },
-    { x: 110, y: 1100, r: 15, color: "#34d399", char: "★" },
-    { x: 970, y: 1110, r: 15, color: "#fbbf24", char: "★" },
+  // 3. Double Luxury Borders with Corner Jewels (Re_action brand style)
+  ctx.save();
+  ctx.strokeStyle = "rgba(245, 158, 11, 0.45)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(38, 38, 1004, 1274, 38);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(225, 29, 72, 0.35)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(50, 50, 980, 1250, 30);
+  ctx.stroke();
+
+  const corners = [
+    { x: 58, y: 58 },
+    { x: 1022, y: 58 },
+    { x: 58, y: 1292 },
+    { x: 1022, y: 1292 },
   ];
+  corners.forEach((pt) => {
+    ctx.fillStyle = "#fbbf24";
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
 
+  // 4. Festive Confetti & Sparkles
+  const sparkles = [
+    { x: 110, y: 130, r: 20, color: "#fbbf24", char: "★" },
+    { x: 970, y: 135, r: 22, color: "#ef4444", char: "★" },
+    { x: 140, y: 280, r: 24, color: "#38bdf8", char: "✦" },
+    { x: 940, y: 290, r: 24, color: "#fbbf24", char: "✦" },
+    { x: 200, y: 180, r: 16, color: "#f472b6", char: "✧" },
+    { x: 880, y: 190, r: 18, color: "#34d399", char: "✧" },
+    { x: 90, y: 490, r: 22, color: "#fbbf24", char: "★" },
+    { x: 990, y: 500, r: 22, color: "#f43f5e", char: "★" },
+    { x: 130, y: 690, r: 20, color: "#38bdf8", char: "✦" },
+    { x: 950, y: 700, r: 20, color: "#fbbf24", char: "✦" },
+    { x: 120, y: 1230, r: 18, color: "#34d399", char: "★" },
+    { x: 960, y: 1235, r: 18, color: "#fbbf24", char: "★" },
+  ];
   sparkles.forEach((s) => {
     ctx.save();
     ctx.font = `${s.r}px sans-serif`;
@@ -161,16 +213,16 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
   });
 
   const confetti = [
-    { x: 180, y: 180, r: 6, color: "#fbbf24" },
-    { x: 890, y: 180, r: 7, color: "#f43f5e" },
-    { x: 250, y: 400, r: 5, color: "#38bdf8" },
-    { x: 830, y: 420, r: 6, color: "#a855f7" },
-    { x: 130, y: 680, r: 5, color: "#34d399" },
-    { x: 950, y: 670, r: 6, color: "#fbbf24" },
-    { x: 200, y: 920, r: 7, color: "#f43f5e" },
-    { x: 880, y: 930, r: 5, color: "#38bdf8" },
-    { x: 160, y: 1220, r: 6, color: "#fbbf24" },
-    { x: 920, y: 1210, r: 7, color: "#a855f7" },
+    { x: 180, y: 130, r: 6, color: "#fbbf24" },
+    { x: 900, y: 140, r: 7, color: "#ef4444" },
+    { x: 260, y: 350, r: 5, color: "#38bdf8" },
+    { x: 820, y: 360, r: 6, color: "#f472b6" },
+    { x: 110, y: 610, r: 6, color: "#34d399" },
+    { x: 970, y: 620, r: 6, color: "#fbbf24" },
+    { x: 180, y: 830, r: 6, color: "#ef4444" },
+    { x: 900, y: 840, r: 6, color: "#38bdf8" },
+    { x: 140, y: 1140, r: 5, color: "#fbbf24" },
+    { x: 940, y: 1145, r: 6, color: "#a855f7" },
   ];
   confetti.forEach((c) => {
     ctx.save();
@@ -183,98 +235,156 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
     ctx.restore();
   });
 
-  // 4. Double Golden Borders with Corner Accents
-  ctx.save();
-  ctx.strokeStyle = "rgba(245, 158, 11, 0.4)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.roundRect(40, 40, 1000, 1270, 36);
-  ctx.stroke();
-
-  ctx.strokeStyle = "rgba(251, 191, 36, 0.2)";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.roundRect(52, 52, 976, 1246, 28);
-  ctx.stroke();
-
-  const corners = [
-    { x: 62, y: 62 },
-    { x: 1018, y: 62 },
-    { x: 62, y: 1288 },
-    { x: 1018, y: 1288 },
-  ];
-  corners.forEach((pt) => {
-    ctx.fillStyle = "#fbbf24";
-    ctx.beginPath();
-    ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.restore();
-
   // 5. Header: Academy Name & Badge
   drawBadge(
     "🥋 أكاديمية RE_ACTION للكاراتيه 🥋",
     540,
-    95,
-    380,
+    90,
+    390,
     42,
-    "rgba(255, 255, 255, 0.08)",
-    "#fde68a",
-    "rgba(245, 158, 11, 0.5)",
-    "800 18px Cairo, sans-serif"
+    "rgba(225, 29, 72, 0.22)",
+    "#fef08a",
+    "rgba(245, 158, 11, 0.55)",
+    "800 19px Cairo, sans-serif"
   );
 
   // 6. Main Celebration Title
   drawCenter(
     "🎉 عـيـد مـيـلاد سـعـيـد 🎉",
     540,
-    175,
+    168,
     "900 52px Cairo, sans-serif",
     "#ffffff",
-    { color: "rgba(245, 158, 11, 0.6)", blur: 20, y: 4 }
+    { color: "rgba(245, 158, 11, 0.65)", blur: 20, y: 4 }
   );
 
   drawCenter(
     "★ HAPPY BIRTHDAY CHAMPION ★",
     540,
-    222,
+    212,
     "800 18px Cairo, sans-serif",
     "#fbbf24",
     { color: "rgba(251, 191, 36, 0.4)", blur: 10, y: 2 }
   );
 
-  // 7. Player Avatar (Center = 540, 395)
+  // 7. HERO PLAYER PHOTO (Centrally Located, Much Larger and Prominent!)
+  // Previous radius was 110px. New radius is 185px (Diameter 370px - nearly 70% larger!)
   const avatarX = 540;
-  const avatarY = 395;
-  const avatarRadius = 110;
+  const avatarY = 445;
+  const avatarRadius = 185;
 
+  // Birthday Balloons around the Photo (Left and Right)
+  const drawBalloon = (bx, by, color, angle = 0) => {
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate((angle * Math.PI) / 180);
+
+    // Balloon body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 32, 42, 0, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 15;
+    ctx.fill();
+
+    // Balloon highlight sheen
+    ctx.beginPath();
+    ctx.ellipse(-10, -12, 9, 15, -0.3, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+    ctx.fill();
+
+    // Balloon knot
+    ctx.beginPath();
+    ctx.moveTo(-5, 42);
+    ctx.lineTo(5, 42);
+    ctx.lineTo(0, 48);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Balloon wavy string
+    ctx.beginPath();
+    ctx.moveTo(0, 48);
+    ctx.bezierCurveTo(10, 70, -10, 95, 5, 120);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.restore();
+  };
+
+  // Left balloons
+  drawBalloon(avatarX - avatarRadius - 65, avatarY - 40, "#ef4444", -12);
+  drawBalloon(avatarX - avatarRadius - 105, avatarY + 30, "#fbbf24", -22);
+
+  // Right balloons
+  drawBalloon(avatarX + avatarRadius + 65, avatarY - 40, "#38bdf8", 12);
+  drawBalloon(avatarX + avatarRadius + 105, avatarY + 30, "#f43f5e", 22);
+
+  // Floating Birthday Candles above the Hero Photo
+  const candleY = avatarY - avatarRadius - 28;
+  const drawCandle = (cx, cy) => {
+    ctx.save();
+    // Candle body
+    ctx.fillStyle = "#fbbf24";
+    ctx.beginPath();
+    ctx.roundRect(cx - 5, cy, 10, 24, 3);
+    ctx.fill();
+    // Wick
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx, cy - 6);
+    ctx.stroke();
+    // Flame
+    ctx.fillStyle = "#f97316";
+    ctx.shadowColor = "#f59e0b";
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 11, 4.5, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fef08a";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 9, 2.5, 4.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+  drawCandle(avatarX - 28, candleY);
+  drawCandle(avatarX, candleY - 4);
+  drawCandle(avatarX + 28, candleY);
+
+  // Outer Radiant Dual Rings around the Hero Avatar
   ctx.save();
   const avatarRing = ctx.createLinearGradient(
-    avatarX - 120,
-    avatarY - 120,
-    avatarX + 120,
-    avatarY + 120
+    avatarX - avatarRadius,
+    avatarY - avatarRadius,
+    avatarX + avatarRadius,
+    avatarY + avatarRadius
   );
   avatarRing.addColorStop(0, "#fbbf24");
-  avatarRing.addColorStop(0.5, "#f43f5e");
-  avatarRing.addColorStop(1, "#d97706");
+  avatarRing.addColorStop(0.3, "#ef4444");
+  avatarRing.addColorStop(0.7, "#dc2626");
+  avatarRing.addColorStop(1, "#f59e0b");
 
+  // Outer Glowing Ring
   ctx.beginPath();
-  ctx.arc(avatarX, avatarY, avatarRadius + 9, 0, Math.PI * 2);
+  ctx.arc(avatarX, avatarY, avatarRadius + 10, 0, Math.PI * 2);
   ctx.strokeStyle = avatarRing;
-  ctx.lineWidth = 6;
-  ctx.shadowColor = "rgba(244, 63, 94, 0.6)";
-  ctx.shadowBlur = 20;
+  ctx.lineWidth = 7;
+  ctx.shadowColor = "rgba(239, 68, 68, 0.7)";
+  ctx.shadowBlur = 24;
   ctx.stroke();
 
+  // Inner White Divider Ring
   ctx.beginPath();
   ctx.arc(avatarX, avatarY, avatarRadius + 3, 0, Math.PI * 2);
   ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.stroke();
   ctx.restore();
 
-  // Draw Photo or Champion Default
+  // Draw Player Photo or Athletic Martial Arts Avatar
   let photoLoaded = false;
   if (player.photo) {
     try {
@@ -287,7 +397,7 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
           resolve();
         };
         img.onerror = () => resolve();
-        setTimeout(resolve, 250);
+        setTimeout(resolve, 300);
       });
 
       if (photoLoaded) {
@@ -313,61 +423,65 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
   if (!photoLoaded) {
     ctx.save();
     const gradDef = ctx.createLinearGradient(
-      avatarX - 100,
-      avatarY - 100,
-      avatarX + 100,
-      avatarY + 100
+      avatarX - avatarRadius,
+      avatarY - avatarRadius,
+      avatarX + avatarRadius,
+      avatarY + avatarRadius
     );
-    gradDef.addColorStop(0, "#f43f5e");
-    gradDef.addColorStop(1, "#f59e0b");
+    gradDef.addColorStop(0, "#dc2626");
+    gradDef.addColorStop(0.6, "#991b1b");
+    gradDef.addColorStop(1, "#7f1d1d");
     ctx.beginPath();
     ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
     ctx.fillStyle = gradDef;
     ctx.fill();
 
-    ctx.font = "900 80px Cairo, sans-serif";
+    // Player Initial
+    ctx.font = "900 130px Cairo, sans-serif";
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.direction = "rtl";
-    ctx.fillText((player.name || "ب").charAt(0), avatarX, avatarY);
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 12;
+    ctx.fillText((player.name || "ب").charAt(0), avatarX, avatarY + 10);
     ctx.restore();
   }
 
-  // Floating celebration badge on avatar (Crown / Party)
+  // Floating Crown / Champion Badge at top of avatar
   drawBadge(
     "👑",
     avatarX,
-    avatarY - avatarRadius - 8,
-    48,
-    48,
+    avatarY - avatarRadius + 4,
+    52,
+    52,
     "#fbbf24",
     "#78350f",
     "#ffffff",
-    "24px sans-serif"
+    "28px sans-serif"
   );
 
-  // 8. Player Name
+  // 8. Player Name (Prominent & Vibrant)
   drawCenter(
     player.name,
     540,
-    550,
-    "900 42px Cairo, sans-serif",
+    695,
+    "900 48px Cairo, sans-serif",
     "#ffffff",
-    { color: "rgba(0,0,0,0.8)", blur: 14, y: 3 }
+    { color: "rgba(0,0,0,0.85)", blur: 16, y: 3 }
   );
 
   // 9. Badges: Age Celebration + Belt + Level + Branch
   drawBadge(
-    `🎂 يُتم اليوم ${turningAge} سنوات من التألق 🥳`,
+    `🎂 كبرت سنة وبقيت ${turningAge} سنين! 🥳🎈`,
     540,
-    608,
-    440,
-    46,
+    755,
+    460,
+    48,
     "rgba(225, 29, 72, 0.95)",
     "#ffffff",
-    "rgba(255, 255, 255, 0.35)",
-    "900 21px Cairo, sans-serif"
+    "rgba(255, 255, 255, 0.4)",
+    "900 22px Cairo, sans-serif"
   );
 
   const beltColorHex = beltStyle.hex || "#f8fafc";
@@ -379,111 +493,113 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
   drawBadge(
     `🥋 ${player.belt || "حزام أبيض"}`,
     340,
-    672,
-    200,
+    818,
+    210,
     40,
     beltColorHex,
     beltTextColor,
-    "rgba(255, 255, 255, 0.4)",
+    "rgba(255, 255, 255, 0.35)",
     "800 18px Cairo, sans-serif"
   );
 
   drawBadge(
     `⭐ مستوى ${player.level || "A"}`,
     540,
-    672,
+    818,
     140,
     40,
     "rgba(245, 158, 11, 0.9)",
     "#ffffff",
-    "rgba(255, 255, 255, 0.4)",
+    "rgba(255, 255, 255, 0.35)",
     "800 18px Cairo, sans-serif"
   );
 
   drawBadge(
     `🏢 ${player.branch || "الفرع الرئيسي"}`,
     720,
-    672,
+    818,
     180,
     40,
-    "rgba(15, 23, 42, 0.8)",
-    "#e2e8f0",
-    "rgba(255, 255, 255, 0.2)",
+    "rgba(15, 23, 42, 0.85)",
+    "#f1f5f9",
+    "rgba(255, 255, 255, 0.25)",
     "700 17px Cairo, sans-serif"
   );
 
-  // 10. Congratulatory Message Box
+  // 10. WARM, FRIENDLY, NON-FORMAL CELEBRATION MESSAGE BOX
   ctx.save();
-  const boxX = 80;
-  const boxY = 725;
-  const boxW = 920;
-  const boxH = 415;
+  const boxX = 75;
+  const boxY = 875;
+  const boxW = 930;
+  const boxH = 375;
 
   ctx.beginPath();
-  ctx.roundRect(boxX, boxY, boxW, boxH, 26);
-  ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+  ctx.roundRect(boxX, boxY, boxW, boxH, 28);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
   ctx.fill();
-  ctx.strokeStyle = "rgba(251, 191, 36, 0.35)";
+  ctx.strokeStyle = "rgba(251, 191, 36, 0.4)";
   ctx.lineWidth = 2;
   ctx.stroke();
 
   drawBadge(
-    "💌 تهنئة خاصة من أسرة الأكاديمية",
+    "💌 تهنئة من القلب لبطلنا الغالي",
     540,
     boxY + 36,
-    340,
+    360,
     38,
-    "rgba(245, 158, 11, 0.2)",
+    "rgba(225, 29, 72, 0.3)",
     "#fef08a",
-    "rgba(245, 158, 11, 0.4)",
-    "800 17px Cairo, sans-serif"
+    "rgba(245, 158, 11, 0.5)",
+    "800 18px Cairo, sans-serif"
   );
 
+  // Warm, young, energetic, and sports-appropriate wording:
   const lines = [
-    `تتقدم إدارة أكاديمية Re_action والكابتن / ${captainName}`,
-    `بأسمى آيات التهاني والتبريكات لبطلنا الغالي المتميز`,
-    `بمناسبة حلول عيد ميلاده المبارك السعيد 🎉🎂`,
-    `متمنين له عاماً جديداً زاخراً بالصحة والبطولات والتفوق،`,
-    `ودوام التميز والتألق في الكاراتيه والحياة 🏆🥋✨`,
-    `كل عام وأنت بطلنا وفخرنا يا ${player.name}!`,
+    "🎉 النهارده يوم مش عادي، النهارده يوم مميز لبطلنا!",
+    `كل سنة وإنت طيب وبألف صحة وهنا يا ${player.name} ❤️`,
+    `كبرت سنة وبقيت ${turningAge} سنين كلها شجاعة وطاقة وبطولة! 🎂🥋`,
+    "فخورين بيك وبكل خطوة وتمرين وتطور كبير بتعمله في الكاراتيه 🥊✨",
+    "نتمنالك سنة جديدة مليانة نجاح، فرحة، ميداليات دهب وأهداف كتير! 🏆🥇🔥",
+    `من أسرة أكاديمية Re_action والكابتن / ${captainName} ❤️`,
   ];
 
-  lines.forEach((line, idx) => {
-    const isHighlight = idx === 1 || idx === 5;
-    const font = isHighlight
-      ? "900 24px Cairo, sans-serif"
-      : "700 22px Cairo, sans-serif";
-    const color = isHighlight ? "#fde047" : idx === 2 ? "#fda4af" : "#f1f5f9";
-    drawCenter(line, 540, boxY + 95 + idx * 52, font, color);
+  let textY = boxY + 95;
+  lines.forEach((line, index) => {
+    const isHeroLine = index === 1 || index === 2;
+    const font = isHeroLine
+      ? "900 26px Cairo, sans-serif"
+      : index === lines.length - 1
+      ? "800 23px Cairo, sans-serif"
+      : "700 24px Cairo, sans-serif";
+    const color = isHeroLine
+      ? "#fef08a"
+      : index === lines.length - 1
+      ? "#fca5a5"
+      : "#f8fafc";
+
+    drawCenter(line, 540, textY, font, color, {
+      color: "rgba(0,0,0,0.6)",
+      blur: 8,
+      y: 2,
+    });
+    textY += 46;
   });
   ctx.restore();
 
-  // 11. Footer Section
+  // 11. Footer
   ctx.save();
-  const divGrad = ctx.createLinearGradient(120, 1180, 960, 1180);
-  divGrad.addColorStop(0, "rgba(251, 191, 36, 0)");
-  divGrad.addColorStop(0.5, "rgba(251, 191, 36, 0.7)");
-  divGrad.addColorStop(1, "rgba(251, 191, 36, 0)");
-  ctx.strokeStyle = divGrad;
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(120, 1180);
-  ctx.lineTo(960, 1180);
+  ctx.moveTo(120, 1275);
+  ctx.lineTo(960, 1275);
   ctx.stroke();
 
   drawCenter(
-    "🏆 أكاديمية Re_action للكاراتيه • RE_ACTION DOJO 🥋",
+    `كارت تهنئة رسمي من نظام Re_action PRO  •  ${new Date().getFullYear()}`,
     540,
-    1226,
-    "800 22px Cairo, sans-serif",
-    "#fbbf24"
-  );
-
-  drawCenter(
-    "صانعو الأبطال وقادة المستقبل • Champions Factory",
-    540,
-    1266,
-    "600 16px Cairo, sans-serif",
+    1305,
+    "700 18px Cairo, sans-serif",
     "#94a3b8"
   );
   ctx.restore();
@@ -492,7 +608,9 @@ export async function generateBirthdayCardCanvas(player, captainName = "كابت
 }
 
 /**
- * Sends or Shares the Birthday Card via WhatsApp
+ * Sends the Birthday Card directly to the native WhatsApp mobile/desktop application
+ * Strictly never opens WhatsApp Web and does not trigger generic Web Share API sheets.
+ * Copies card image to clipboard, downloads PNG, and opens native WhatsApp directly to chat.
  */
 export async function sendBirthdayCardViaWhatsApp(
   player,
@@ -502,7 +620,7 @@ export async function sendBirthdayCardViaWhatsApp(
   const { onProgress, onNotice } = options;
 
   if (onProgress) onProgress(true);
-  if (onNotice) onNotice("⏳ جاري تجهيز كارت عيد الميلاد المتميز...");
+  if (onNotice) onNotice("⏳ جاري تجهيز كارت عيد الميلاد الفخم...");
 
   try {
     const canvas = await generateBirthdayCardCanvas(player, captainName);
@@ -520,7 +638,8 @@ export async function sendBirthdayCardViaWhatsApp(
     }
 
     const bday = getBirthdayInfo(player);
-    const turningAge = bday?.turningAge || player.age || 10;
+    const dynamicAge = player.dateOfBirth ? calculateAge(player.dateOfBirth) : player.age;
+    const turningAge = bday?.turningAge ?? dynamicAge ?? 10;
     const phone =
       player.guardianPhone ||
       player.parentPhone ||
@@ -531,49 +650,20 @@ export async function sendBirthdayCardViaWhatsApp(
     const cleanPhone = phone ? formatWhatsAppPhone(phone) : "";
 
     const fileName = `كارت_عيد_ميلاد_${player.name.replace(/\s+/g, "_")}.png`;
-    const file = new File([blob], fileName, { type: "image/png" });
 
-    // Mark player's birthday as congratulated so it is updated immediately
+    // Mark player's birthday as congratulated immediately
     markBirthdayCongratulated(player._id);
 
-    const wishText = `🎉 كل عام وبطلنا الغالي *${player.name}* بألف خير وسعادة! بمناسبة عيد ميلاده المبارك وإتمامه ${turningAge} سنوات، تتمنى له أسرة الأكاديمية والكابتن *${captainName}* دوام التوفيق والبطولة! 🎂🏆🎈`;
+    // Warm, friendly, non-formal WhatsApp message
+    const wishText = `🎉 النهارده يوم مميز لبطلنا! 🥋❤️
+كل سنة وإنت طيب وبألف خير يا *${player.name}*! 🎂
+كبرت سنة وبقيت *${turningAge}* سنين مليانة شجاعة وبطولة! 🥳🎈
 
-    // 1. Native Web Share API: Attaches image file directly into WhatsApp on mobile!
-    if (
-      typeof navigator !== "undefined" &&
-      typeof navigator.share === "function" &&
-      navigator.canShare &&
-      navigator.canShare({ files: [file] })
-    ) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: `كارت عيد ميلاد ${player.name}`,
-          text: wishText,
-        });
-        if (onNotice)
-          onNotice("✓ تم فتح تطبيق واتساب وجاهز لإرسال كارت التهنئة!");
-        return;
-      } catch (shareErr) {
-        if (shareErr.name === "AbortError") return;
-        console.warn("Share fallback:", shareErr);
-      }
-    }
+فخورين بيك وبأدائك وتطورك في الأكاديمية ونتمنالك سنة جديدة مليانة نجاح، ميداليات دهب، وأهداف كتير! 🏆🥇🔥
 
-    // 2. Fallback when device doesn't support file sharing (e.g. desktop):
-    // Auto-download card image so the user has the file
-    try {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-    } catch (_) {}
+مع تحيات أسرة أكاديمية Re_action والكابتن *${captainName}* ❤️`;
 
-    // Copy image directly to clipboard
+    // 1. Copy image directly to clipboard so user can paste it straight into WhatsApp chat
     let copied = false;
     if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
       try {
@@ -586,21 +676,33 @@ export async function sendBirthdayCardViaWhatsApp(
       }
     }
 
-    // 3. Open WhatsApp native mobile/desktop application
+    // 2. Auto-save / download card image to the device
+    try {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 2500);
+    } catch (_) {}
+
+    // 3. Directly open the native mobile/desktop WhatsApp application to the guardian's chat
     openWhatsAppDirect(cleanPhone, wishText);
 
     if (onNotice) {
       onNotice(
         copied
-          ? "✓ تم حفظ صورة الكارت ونسخها للحافظة وفتح تطبيق واتساب! الصق الصورة في المحادثة واضغط إرسال."
-          : "✓ تم حفظ صورة الكارت وفتح تطبيق واتساب لإرسال التهنئة!"
+          ? "✓ تم فتح تطبيق واتساب ونسخ كارت التهنئة للحافظة وحفظه بجهازك! الصق الصورة في المحادثة واضغط إرسال."
+          : "✓ تم فتح تطبيق واتساب وحفظ كارت التهنئة بجهازك لإرساله فوراً!"
       );
     }
   } catch (err) {
     console.error("Birthday card error:", err);
     if (onNotice) onNotice("❌ حدث خطأ أثناء تجهيز كارت عيد الميلاد");
   } finally {
-    if (onProgress) setTimeout(() => onProgress(false), 1000);
+    if (onProgress) setTimeout(() => onProgress(false), 1200);
   }
 }
 
@@ -635,7 +737,7 @@ export async function downloadBirthdayCard(
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    setTimeout(() => URL.revokeObjectURL(url), 2500);
     if (onNotice) onNotice("✓ تم تحميل كارت عيد الميلاد بجهازك بنجاح!");
   } catch (err) {
     console.error("Download birthday card error:", err);

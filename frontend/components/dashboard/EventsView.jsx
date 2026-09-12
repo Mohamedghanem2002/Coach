@@ -30,7 +30,7 @@ import {
   DollarSign,
   TrendingUp,
 } from "lucide-react";
-import { BELT_HEX } from "../../lib/dashboard-utils";
+import { BELT_HEX, formatWhatsAppPhone, openWhatsAppDirect } from "../../lib/dashboard-utils";
 
 const TYPE_CONFIG = {
   trip: {
@@ -290,8 +290,7 @@ export default function EventsView({
 
 أكاديمية Re_action للأبطال 🥋`;
 
-    const encoded = encodeURIComponent(message);
-    window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank");
+    openWhatsAppDirect("", message);
   }
 
   function handleSendParticipantWhatsApp(participant, event) {
@@ -300,8 +299,7 @@ export default function EventsView({
     const remaining = Math.max(0, total - paid);
 
     const phone = participant.parentPhone || participant.phone;
-    let cleanPhone = phone ? phone.replace(/\D/g, "") : "";
-    if (cleanPhone.startsWith("01")) cleanPhone = "2" + cleanPhone;
+    const cleanPhone = formatWhatsAppPhone(phone);
 
     const message = `السلام عليكم ورحمة الله،
 تحية طيبة من كابتن أكاديمية Re_action 🥋
@@ -316,12 +314,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
 
 شاكرين لكم حسن تعاونكم ودعمكم الدائم للبطل!`;
 
-    const url = cleanPhone
-      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(
-          message
-        )}`
-      : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
+    openWhatsAppDirect(cleanPhone, message);
   }
 
   return (

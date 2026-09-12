@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import ConfirmDialog from "./ConfirmDialog";
 import { useSession } from "next-auth/react";
 import {
@@ -11,8 +11,10 @@ import {
   LEVELS,
   getBeltStyle,
   isBirthdayCongratulated,
+  calculateAge,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
+import ProfileCardModal from "./ProfileCardModal";
 import {
   sendBirthdayCardViaWhatsApp,
   openWhatsAppDirect,
@@ -30,7 +32,9 @@ import {
   X,
   BookUser,
   Compass,
+  Share2,
 } from "lucide-react";
+
 
 export default function Profile({
   player,
@@ -215,6 +219,7 @@ export default function Profile({
   // Card caching and sending
   const [cachedCardBlob, setCachedCardBlob] = useState(null);
   const [isSendingCard, setIsSendingCard] = useState(false);
+  const [showCardModal, setShowCardModal] = useState(false);
 
   // Confirm delete player
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -285,6 +290,9 @@ export default function Profile({
   const paymentRate = totalAmount > 0 ? Math.min(100, Math.round((paidAmount / totalAmount) * 100)) : 0;
   const birthdayInfo = getBirthdayInfo(player);
   const registrationDate = new Date(player.createdAt).toLocaleDateString("ar-EG");
+  const currentAge = player.dateOfBirth
+    ? calculateAge(player.dateOfBirth)
+    : player.age;
 
   useEffect(() => {
     if (!profileNotice) return undefined;
@@ -305,6 +313,7 @@ export default function Profile({
     return () => {
       isCancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player, attended, monthlyStatus, paymentMonth]);
 
   function formatWhatsAppPhone(phone) {
@@ -375,8 +384,9 @@ export default function Profile({
       `📨 إشراف الكابتن: ${captainName}`,
       "",
       `👤 الاسم: ${player.name}`,
-      `🎂 السن: ${player.age} سنة`,
+      `🎂 السن: ${currentAge} سنة`,
       ...(guardianPhone ? [`📞 ولي الأمر: ${guardianPhone}`] : []),
+
       `🏢 الصالة: ${player.branch}`,
       `📅 تاريخ التسجيل: ${registrationDate}`,
       "",
@@ -550,7 +560,7 @@ export default function Profile({
     drawRight(player.name, 940, 330, "900 44px Cairo, sans-serif", "#0f172a");
     drawRight(`🥋 الحزام: ${player.belt || "أبيض"}  •  المستوى: ${player.level || "A"}`, 940, 380, "800 27px Cairo, sans-serif", "#b91c1c");
     drawRight(`🏢 الصالة: ${player.branch}`, 940, 426, "700 26px Cairo, sans-serif", "#334155");
-    drawRight(`🎂 السن: ${player.age} سنة`, 940, 470, "700 26px Cairo, sans-serif", "#334155");
+    drawRight(`🎂 السن: ${currentAge} سنة`, 940, 470, "700 26px Cairo, sans-serif", "#334155");
     if (guardianPhone) {
       drawRight(`📞 ولي الأمر: ${guardianPhone}`, 940, 514, "700 25px Cairo, sans-serif", "#047857");
     }
@@ -740,49 +750,7 @@ export default function Profile({
 
       const cleanPhone = guardianPhone ? formatWhatsAppPhone(guardianPhone) : "";
 
-      // 1. Native Web Share API: Attaches image file directly into WhatsApp on mobile!
-      if (
-        typeof navigator !== "undefined" &&
-        typeof navigator.share === "function" &&
-        navigator.canShare
-      ) {
-        try {
-          const file = new File(
-            [blob],
-            `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`,
-            { type: "image/png" },
-          );
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: `بطاقة اللاعب ${player.name}`,
-              text: cleanPhone
-                ? `🥋 بطاقة لاعب الكاراتيه: ${player.name}\nإشراف الكابتن: ${captainName}\nالصالة: ${player.branch}`
-                : `🥋 بطاقة لاعب الكاراتيه: ${player.name}`,
-            });
-            setProfileNotice("✓ تم فتح تطبيق واتساب وجاهزة للإرسال مباشرة!");
-            return;
-          }
-        } catch (shareErr) {
-          if (shareErr.name === "AbortError") return;
-          console.warn("Share fallback:", shareErr);
-        }
-      }
-
-      // 2. Fallback when device doesn't support file sharing:
-      // Auto-download the card image so the user has the file
-      try {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-      } catch (_) {}
-
-      // Copy image directly to clipboard
+      // 1. Copy image directly to clipboard
       let copySuccess = false;
       if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
         try {
@@ -795,13 +763,30 @@ export default function Profile({
         }
       }
 
-      // 3. Open WhatsApp native mobile/desktop application
-      openWhatsAppDirect(cleanPhone);
+      // 2. Auto-download the card image so the user has the file
+      try {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `بطاقة_اللاعب_${player.name.replace(/\s+/g, "_")}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      } catch (_) {}
+
+      // 3. Open WhatsApp native mobile/desktop application directly
+      const summaryText = `🥋 بطاقة لاعب الكاراتيه الرسمية: *${player.name}*
+إشراف الكابتن: *${captainName}*
+الصالة: ${player.branch || "الرئيسية"}
+الحزام: ${player.belt || "أبيض"} • المستوى: ${player.level || "A"}`;
+
+      openWhatsAppDirect(cleanPhone, summaryText);
 
       setProfileNotice(
         copySuccess
-          ? "✓ تم حفظ صورة البطاقة بجهازك ونسخها للحافظة وفتح تطبيق واتساب! الصق الصورة في الشات واضغط إرسال."
-          : "✓ تم حفظ صورة البطاقة بجهازك وفتح تطبيق واتساب!"
+          ? "✓ تم فتح تطبيق واتساب ونسخ البطاقة للحافظة وحفظها بجهازك! الصق الصورة في الشات واضغط إرسال."
+          : "✓ تم فتح تطبيق واتساب وحفظ صورة البطاقة بجهازك!"
       );
     } catch (err) {
       console.error("Failed to send card to guardian:", err);
@@ -1245,6 +1230,57 @@ export default function Profile({
           ) : (
             /* ════════════ العرض الأساسي البسيط المريح ════════════ */
             <>
+              {/* شريط الإجراءات السريعة الدائم (مشاركة البطاقة، تقرير واتساب، تعديل) - ظاهر دائماً على كافة الشاشات والتبويبات */}
+              <div className="mb-3.5 flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-slate-50/90 border border-slate-200/80 shadow-2xs">
+                <div className="flex items-center gap-1.5 flex-1 overflow-x-auto no-scrollbar">
+                  {/* زر 1: مشاركة ومعاينة بطاقة اللاعب */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCardModal(true)}
+                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:brightness-110 px-3 py-2 text-xs font-black text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                    title="معاينة ومشاركة بطاقة اللاعب الرسمية وإرسالها لتطبيق واتساب مباشرة"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    <span>مشاركة البطاقة</span>
+                  </button>
+
+                  {/* زر 2: إرسال تقرير نصي فوري */}
+                  <button
+                    type="button"
+                    disabled={isSendingText}
+                    onClick={shareOnWhatsApp}
+                    className="flex items-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 text-xs font-bold text-emerald-800 transition active:scale-95 disabled:opacity-60 cursor-pointer shrink-0"
+                    title="إرسال تقرير نصي شامل بالحضور والاشتراكات لولي الأمر عبر واتساب فوراً"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    <span>تقرير واتساب</span>
+                  </button>
+
+                  {/* زر 3: تعديل بيانات اللاعب */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditName(player.name);
+                      const _d = (player.dateOfBirth || "").split("-");
+                      setEditDobYear(_d[0] || "");
+                      setEditDobMonth(_d[1] || "");
+                      setEditDobDay(_d[2] || "");
+                      setEditGuardianPhone(guardianPhone);
+                      setEditBranch(player.branch);
+                      setEditBelt(player.belt || "أبيض");
+                      setEditLevel(player.level || "A");
+                      setEditPhoto(player.photo || "");
+                      setIsEditing(true);
+                    }}
+                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition active:scale-95 cursor-pointer shrink-0"
+                    title="تعديل بيانات اللاعب"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                    <span>تعديل</span>
+                  </button>
+                </div>
+              </div>
+
               {/* شريط تبويبات الموبايل لتقسيم محتوى الملف الشخصي براحة وبدون تمرير لا نهائي */}
               <div className="sm:hidden flex items-center gap-1 p-1 bg-slate-100/90 rounded-2xl mb-4 border border-slate-200/80 sticky top-0 z-20 backdrop-blur-md shadow-2xs w-full max-w-full overflow-hidden">
                 <button
@@ -1328,7 +1364,7 @@ export default function Profile({
                           🏢 {player.branch}
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold text-slate-700">
-                          🎂 {player.age} سنة
+                          🎂 {currentAge} سنة
                         </span>
                         <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold shadow-xs ${getBeltStyle(player.belt).bg} ${getBeltStyle(player.belt).text} ${getBeltStyle(player.belt).border}`}>
                           <span className={`h-2 w-2 rounded-full ${getBeltStyle(player.belt).dot}`} />
@@ -1468,26 +1504,17 @@ export default function Profile({
                         )}
                       </button>
 
-                      {/* زر 3: إرسال البطاقة لولي الأمر (نسخ وفتح محادثة واتساب) */}
+                      {/* زر 3: معاينة ومشاركة بطاقة اللاعب */}
                       <button
                         type="button"
-                        disabled={isSendingText || isDownloadingCard || isSendingCard}
-                        onClick={handleSendCardDirectly}
-                        className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-white shadow-xs transition active:scale-95 disabled:opacity-60 cursor-pointer"
-                        title="نسخ صورة البطاقة للحافظة وفتح محادثة واتساب مع ولي الأمر فوراً"
+                        onClick={() => setShowCardModal(true)}
+                        className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-white shadow-xs transition active:scale-95 cursor-pointer"
+                        title="معاينة ومشاركة صورة بطاقة اللاعب الرسمية وإرسالها لتطبيق واتساب فوراً"
                       >
-                        {isSendingCard ? (
-                          <>
-                            <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                            <span className="truncate">جاري النسخ والفتح...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Send className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">إرسال البطاقة</span>
-                          </>
-                        )}
+                        <Share2 className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">مشاركة البطاقة</span>
                       </button>
+
 
                       {/* زر 4: تعديل البيانات */}
                       <button
@@ -2062,6 +2089,18 @@ export default function Profile({
             await onUpdate(player._id, data);
             setProfileNotice(`✓ تم تحديث اشتراك شهر ${data.paymentMonth} بنجاح`);
           }}
+        />
+      )}
+
+      {showCardModal && (
+        <ProfileCardModal
+          player={player}
+          captainName={captainName}
+          canvasGenerator={generateProfileCanvas}
+          cachedBlob={cachedCardBlob}
+          isOpen={showCardModal}
+          onClose={() => setShowCardModal(false)}
+          paymentMonth={paymentMonth}
         />
       )}
     </div>

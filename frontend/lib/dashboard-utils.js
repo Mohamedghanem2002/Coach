@@ -71,14 +71,41 @@ export function paymentStatusFor(player, month) {
   return getPaymentDetailsFor(player, month).status;
 }
 
-export function normalizePlayer(player) {
+export function calculateAge(dateOfBirth, referenceDate = new Date()) {
+  if (!dateOfBirth) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateOfBirth).trim());
+  if (!match) return null;
+
+  const birthYear = parseInt(match[1], 10);
+  const birthMonth = parseInt(match[2], 10);
+  const birthDay = parseInt(match[3], 10);
+
+  const refYear = referenceDate.getFullYear();
+  const refMonth = referenceDate.getMonth() + 1;
+  const refDay = referenceDate.getDate();
+
+  let age = refYear - birthYear;
+  if (refMonth < birthMonth || (refMonth === birthMonth && refDay < birthDay)) {
+    age -= 1;
+  }
+  return age >= 0 ? age : 0;
+}
+
+export function normalizePlayer(player, referenceDate = new Date()) {
+  if (!player) return player;
+  const dynamicAge = player.dateOfBirth
+    ? calculateAge(player.dateOfBirth, referenceDate)
+    : null;
+
   return Object.assign(Object.assign({}, player), {
+    age: dynamicAge !== null ? dynamicAge : (player.age ?? 0),
     attendance: Array.isArray(player.attendance) ? player.attendance : [],
     paymentHistory: Array.isArray(player.paymentHistory)
       ? player.paymentHistory
       : [],
   });
 }
+
 
 /**
  * Calculates birthday status for a player
@@ -227,9 +254,13 @@ export function toEnglishDigits(str) {
 
 export function formatWhatsAppPhone(phone) {
   if (!phone) return "";
-  let clean = toEnglishDigits(phone).replace(/[^0-9]/g, "");
+  let clean = toEnglishDigits(String(phone)).replace(/[^0-9]/g, "");
+  if (clean.startsWith("00")) clean = clean.slice(2);
+  if (clean.startsWith("+")) clean = clean.slice(1);
   if (clean.startsWith("01") && clean.length === 11) {
     clean = "2" + clean;
+  } else if (clean.startsWith("1") && clean.length === 10) {
+    clean = "20" + clean;
   }
   return clean;
 }
@@ -239,10 +270,50 @@ export function generateBirthdayWishText(
   captainName = "كابتن الأكاديمية"
 ) {
   const bday = getBirthdayInfo(player);
-  const ageText = bday?.turningAge ? ` وإتمامه ${bday.turningAge} سنوات` : "";
+  const age =
+    bday?.turningAge ??
+    (player?.dateOfBirth ? calculateAge(player.dateOfBirth) : player?.age) ??
+    "";
   const name = player?.name || "البطل";
 
-  return `🎉🥋 كل عام وبطلنا الغالي *${name}* بألف خير وسعادة! بمناسبة عيد ميلاده المبارك${ageText}، تتمنى له أسرة الأكاديمية والكابتن *${captainName}* دوام التوفيق والتميز والتألق الدائم في الكاراتيه والحياة! 🎂🏆🎈`;
+  return `🎉 النهارده يوم مميز لبطلنا! 🥋❤️
+كل سنة وإنت طيب وبألف خير يا *${name}*! 🎂
+كبرت سنة وبقيت *${age}* سنين مليانة شجاعة وبطولة! 🥳🎈
+
+فخورين بيك وبأدائك في الأكاديمية ونتمنالك سنة جديدة مليانة نجاح، ميداليات دهب، وأهداف كتير! 🏆🥇🔥
+
+مع تحيات أسرة أكاديمية Re_action والكابتن *${captainName}* ❤️`;
+}
+
+
+export function openWhatsAppDirect(cleanPhone, text = "") {
+  const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
+  const paramOnly = text ? `text=${encodeURIComponent(text)}` : "";
+
+  // Direct native WhatsApp application scheme
+  // Opens the installed WhatsApp mobile app on iOS/Android (strictly NOT WhatsApp Web)
+  const appUrl = cleanPhone
+    ? `whatsapp://send?phone=${cleanPhone}${encodedText}`
+    : text
+    ? `whatsapp://send?${paramOnly}`
+    : `whatsapp://send`;
+
+  if (typeof window !== "undefined") {
+    try {
+      const a = document.createElement("a");
+      a.href = appUrl;
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) {
+          document.body.removeChild(a);
+        }
+      }, 300);
+    } catch (_) {
+      window.location.href = appUrl;
+    }
+  }
 }
 
 export function generateBirthdayWishUrl(
@@ -260,11 +331,6 @@ export function generateBirthdayWishUrl(
   const text = encodeURIComponent(
     generateBirthdayWishText(player, captainName)
   );
-  const isMobile =
-    typeof navigator !== "undefined" &&
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent,
-    );
 
   return cleanPhone
     ? `whatsapp://send?phone=${cleanPhone}&text=${text}`

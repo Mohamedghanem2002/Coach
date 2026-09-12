@@ -1,4 +1,4 @@
-import { getPaymentDetailsFor } from "./dashboard-utils";
+import { getPaymentDetailsFor, calculateAge } from "./dashboard-utils";
 
 /**
  * Escapes a cell value for standard CSV format
@@ -67,12 +67,16 @@ export function exportPlayersToCSV(
       ? new Date(player.createdAt).toLocaleDateString("ar-EG")
       : "-";
 
+    const dynamicAge = player.dateOfBirth
+      ? calculateAge(player.dateOfBirth)
+      : player.age;
+
     return [
       escapeCSV(player.name),
       escapeCSV(player.branch),
       escapeCSV(player.belt || "أبيض"),
       escapeCSV(player.level || "A"),
-      escapeCSV(player.age ? `${player.age} سنة` : "-"),
+      escapeCSV(dynamicAge ? `${dynamicAge} سنة` : "-"),
       escapeCSV(player.dateOfBirth || "-"),
       escapeCSV(guardianPhone),
       escapeCSV(paymentLabel),

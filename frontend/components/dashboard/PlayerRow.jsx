@@ -19,6 +19,7 @@ import {
   getBirthdayInfo,
   getBeltStyle,
   formatWhatsAppPhone,
+  calculateAge,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 
@@ -42,6 +43,9 @@ function PlayerRow({
   const { totalAmount, paidAmount, remainingAmount } = paymentDetails;
   const birthdayInfo = getBirthdayInfo(player);
   const beltStyle = getBeltStyle(player.belt);
+  const currentAge = player.dateOfBirth
+    ? calculateAge(player.dateOfBirth)
+    : player.age;
 
   const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
   const attendedSessions = Array.isArray(player.attendance)
@@ -174,7 +178,7 @@ function PlayerRow({
               🏢 {player.branch}
             </span>
             <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 shrink-0">
-              🎂 {player.age} سنة
+              🎂 {currentAge} سنة
             </span>
             {totalSessions > 0 && (
               <span
@@ -402,7 +406,7 @@ function PlayerRow({
             birthdayInfo?.isToday ? "bg-rose-100 text-rose-800 font-black" : "bg-slate-100/80 text-slate-700"
           }`}>
             <UserRound className="h-3 w-3" />
-            {player.age} سنة
+            {currentAge} سنة
             {birthdayInfo?.isToday && <Cake className="h-3 w-3 text-rose-500" />}
           </span>
         </div>

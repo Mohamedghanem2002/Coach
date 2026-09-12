@@ -66,7 +66,12 @@ function serializePlayer(player) {
     status = "partially_paid";
   }
 
+  const dynamicAge = player.dateOfBirth
+    ? ageFromDateOfBirth(player.dateOfBirth)
+    : null;
+
   return Object.assign(Object.assign({}, player), {
+    age: dynamicAge !== null ? dynamicAge : (player.age ?? 0),
     attendance: Array.isArray(player.attendance) ? player.attendance : [],
     paymentHistory: Array.isArray(player.paymentHistory)
       ? player.paymentHistory
