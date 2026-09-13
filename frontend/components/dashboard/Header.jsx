@@ -76,15 +76,12 @@ export default function Header({
   }, [showBirthdayMenu]);
 
   return (
-    <header className="sticky top-0 z-40 glass-nav" dir="rtl">
-      {/* Animated accent line */}
-      <div className="nav-accent-bottom" />
-
-      <div className="mx-auto flex min-h-[58px] sm:min-h-[72px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-8 py-2 overflow-hidden">
+    <header className="sticky top-0 z-40 glass-nav border-b border-slate-200/80" dir="rtl">
+      <div className="mx-auto flex min-h-[56px] sm:min-h-[68px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-8 py-2 overflow-hidden">
 
         {/* Brand */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
-          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-md ring-1 ring-red-100">
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink min-w-0">
+          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm ring-2 ring-red-100">
             <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-white stroke-white" />
             <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -92,35 +89,35 @@ export default function Header({
             </span>
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1">
-              <strong className="font-cairo text-base sm:text-xl font-black tracking-tight text-slate-900 truncate">
+            <div className="flex items-center gap-1.5">
+              <strong className="font-cairo text-base sm:text-lg font-black tracking-tight text-slate-900 truncate">
                 Re_action
               </strong>
-              <span className="rounded bg-red-600 px-1 py-0.5 text-[8px] sm:text-[9px] font-black text-white shrink-0">
-                PRO
+              <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 text-[9px] font-black text-red-600 shrink-0">
+                DOJO
               </span>
             </div>
-            {/* Show captain greeting on mobile, subtitle on desktop */}
-            <p className="hidden sm:block text-[10px] font-semibold text-slate-400 leading-tight">
+            {/* Subtitle / Captain greeting */}
+            <p className="hidden sm:block text-[11px] font-semibold text-slate-500 leading-tight">
               إدارة أكاديمية الكاراتيه
             </p>
-            <p className="sm:hidden text-[11px] font-bold text-slate-500 leading-tight truncate">
+            <p className="sm:hidden text-[11px] font-bold text-slate-600 leading-tight truncate">
               أهلاً يا كابتن{" "}
-              <span className="font-black text-red-600">{firstName}</span>
+              <span className="font-extrabold text-red-600">{firstName}</span>
             </p>
           </div>
         </div>
 
-        {/* Date & Captain pill — center on desktop */}
+        {/* Center Pill: Date & Captain Greeting on Desktop */}
         <div className="hidden sm:flex flex-col items-center">
-          <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-xs">
-            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/90 px-3.5 py-1 text-[11px] font-bold text-slate-600 shadow-2xs">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
             {todayFormatted}
           </div>
-          <h1 className="mt-1 text-xs font-bold text-slate-700">
+          <p className="mt-1 text-xs font-bold text-slate-600">
             أهلاً يا كابتن{" "}
-            <span className="font-black text-red-600">{firstName}</span>
-          </h1>
+            <span className="font-extrabold text-slate-900">{firstName}</span> 🥋
+          </p>
         </div>
 
         {/* Actions */}
@@ -203,13 +200,13 @@ export default function Header({
                   {/* Mobile drag handle */}
                   <div className="sheet-drag-handle sm:hidden" />
 
-                  {/* Decorative top bar */}
-                  <div className="hidden sm:block absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-r from-rose-500 via-amber-500 to-orange-500" />
+                  {/* Clean brand top bar on desktop */}
+                  <div className="hidden sm:block absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-red-600" />
 
                   <div className="mt-1 flex items-center justify-between border-b border-slate-100 pb-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 shadow-xs shadow-rose-500/25">
-                        <Cake className="h-4 w-4 text-white" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 border border-red-200/80">
+                        <Cake className="h-4 w-4" />
                       </div>
                       <strong className="font-cairo text-sm font-black text-slate-800">
                         أعياد ميلاد الأبطال

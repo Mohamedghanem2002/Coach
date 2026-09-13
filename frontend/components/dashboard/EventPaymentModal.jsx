@@ -79,18 +79,18 @@ export default function EventPaymentModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative border-b border-slate-100 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4 text-white shrink-0">
-          <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-white/40 sm:hidden" />
+        <div className="relative border-b border-slate-800 bg-slate-900 px-5 py-4 text-white shrink-0">
+          <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-white/30 sm:hidden" />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-emerald-400 ring-1 ring-white/20">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-emerald-400 ring-1 ring-white/10">
                 <CreditCard className="h-5 w-5 stroke-[2.5]" />
               </div>
               <div>
-                <h3 className="font-cairo text-sm font-black leading-tight text-white">
+                <h3 className="font-cairo text-sm font-bold leading-tight text-white">
                   سداد اشتراك الفعالية
                 </h3>
-                <p className="text-[11px] font-bold text-slate-300 truncate max-w-[200px]">
+                <p className="text-[11px] font-medium text-slate-300 truncate max-w-[200px]">
                   {participant.name} • {eventTitle}
                 </p>
               </div>
@@ -228,7 +228,7 @@ export default function EventPaymentModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="min-h-10 px-6 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-xs font-black text-white shadow-md shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700 active:scale-95 transition cursor-pointer"
+              className="min-h-10 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 active:scale-95 transition cursor-pointer"
             >
               {isSubmitting ? "جاري الحفظ..." : "حفظ الدفعة"}
             </button>

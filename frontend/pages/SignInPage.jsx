@@ -244,7 +244,7 @@ export default function SignInPage() {
               )}
 
               <button
-                className="mt-2 flex min-h-[46px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-3.5 font-cairo text-sm font-black text-white shadow-md shadow-red-500/25 transition-all hover:brightness-110 active-press disabled:opacity-60 cursor-pointer"
+                className="mt-3 flex min-h-[48px] w-full items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 font-cairo text-sm font-black text-white shadow-sm shadow-red-600/20 transition-all active-press disabled:opacity-60 cursor-pointer"
                 type="submit"
                 disabled={busy}
               >

@@ -73,11 +73,11 @@ export default function BranchOverview({
           return (
             <article
               key={branch._id}
-              className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300/80 animate-card-entrance"
-              style={{ animationDelay: `${idx * 80}ms` }}
+              className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              style={{ animationDelay: `${idx * 60}ms` }}
             >
-              {/* Gradient header strip */}
-              <div className={`h-1.5 w-full bg-gradient-to-r ${gradient}`} />
+              {/* Top brand strip */}
+              <div className="h-1 w-full bg-red-600" />
 
               <div className="p-4 sm:p-5">
                 {/* Title row */}
@@ -87,7 +87,7 @@ export default function BranchOverview({
                     className="flex min-w-0 flex-1 items-center gap-3 text-right cursor-pointer"
                     onClick={() => onSelectBranch(branch.name)}
                   >
-                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-white shadow-md transition-transform duration-300 group-hover:scale-105`}>
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 border border-red-200/80 transition-transform duration-200 group-hover:scale-105">
                       <Building2 className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -151,7 +151,7 @@ export default function BranchOverview({
                   </button>
                   <button
                     type="button"
-                    className="relative min-h-11 sm:min-h-9 flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 text-xs font-black text-white shadow-sm shadow-emerald-500/20 transition-all hover:brightness-105 hover:shadow-md active-press cursor-pointer disabled:cursor-wait disabled:opacity-60"
+                    className="relative min-h-11 sm:min-h-9 flex-1 overflow-hidden rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 text-xs font-black text-white shadow-xs transition-all active-press cursor-pointer disabled:cursor-wait disabled:opacity-60"
                     disabled={!branchPlayers.length || busy}
                     onClick={() => onMarkPresent(branch.name)}
                   >

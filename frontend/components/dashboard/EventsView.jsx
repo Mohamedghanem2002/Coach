@@ -352,14 +352,14 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
       {/* ━━━ Header & Summary Cards ━━━ */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 via-rose-500 to-red-600 text-white shadow-md shadow-rose-500/20 ring-4 ring-rose-50">
+          <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-red-600 text-white shadow-sm shadow-red-600/20 ring-4 ring-red-50">
             <Compass className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="font-cairo text-lg sm:text-xl font-black text-slate-900 leading-tight">
+            <h2 className="font-cairo text-lg sm:text-xl font-bold text-slate-900 leading-tight">
               إدارة الفعاليات والرحلات والمعسكرات
             </h2>
-            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+            <p className="text-xs font-medium text-slate-500 mt-0.5">
               تنظيم أنشطة الأكاديمية الخارجية، وتحديد الأبطال المشتركين ومتابعة سدادهم
             </p>
           </div>
@@ -368,7 +368,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
         <button
           type="button"
           onClick={onOpenCreateEvent}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-500 text-xs sm:text-sm font-black text-white shadow-lg shadow-red-500/25 hover:brightness-110 active-press transition cursor-pointer min-h-[44px]"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-xs sm:text-sm font-bold text-white shadow-sm shadow-red-600/20 active-press transition cursor-pointer min-h-[44px]"
         >
           <Plus className="h-4 w-4 stroke-[3]" />
           <span>إنشاء فعالية جديدة</span>
@@ -551,7 +551,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
           <button
             type="button"
             onClick={onOpenCreateEvent}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 text-xs font-black text-white shadow-lg shadow-red-500/25 active-press transition cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm shadow-red-600/20 active-press transition cursor-pointer"
           >
             <Plus className="h-4 w-4 stroke-[3]" />
             <span>إنشاء أول فعالية الآن</span>
@@ -634,7 +634,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                     <button
                       type="button"
                       onClick={() => onOpenAddParticipants(selectedEvent)}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-xs font-black text-white shadow-md shadow-red-500/20 hover:brightness-110 active-press transition cursor-pointer min-h-[40px]"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm shadow-red-600/20 active-press transition cursor-pointer min-h-[40px]"
                     >
                       <UserPlus className="h-4 w-4 stroke-[2.5]" />
                       <span>إضافة لاعبين</span>
@@ -721,8 +721,8 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                 </div>
 
                 {/* Financial Progress Bar */}
-                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-50 via-emerald-50/30 to-amber-50/30 border border-slate-200/80 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-black">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold">
                     <div className="flex items-center gap-1.5 text-emerald-800">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                       <span>المسدد: {paidRev.toLocaleString("ar-EG")} ج.م</span>
@@ -741,9 +741,9 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                     </span>
                   </div>
 
-                  <div className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-500"
+                      className="h-full rounded-full bg-emerald-600 transition-all duration-500"
                       style={{ width: `${Math.min(100, collectionPercent)}%` }}
                     />
                   </div>
@@ -1306,7 +1306,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
 
                       <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-300"
+                          className="h-full rounded-full bg-emerald-600 transition-all duration-300"
                           style={{ width: `${Math.min(100, collectionPercent)}%` }}
                         />
                       </div>

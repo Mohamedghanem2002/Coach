@@ -211,10 +211,10 @@ export default function QuickPaymentModal({
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 shrink-0 bg-slate-50/70">
           <div className="flex items-center gap-3">
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-xs transition-colors ${
+              className={`flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-2xs transition-colors ${
                 activeTab === "subscription"
-                  ? "bg-gradient-to-br from-emerald-600 to-teal-600"
-                  : "bg-gradient-to-br from-amber-600 to-rose-600"
+                  ? "bg-emerald-600"
+                  : "bg-amber-600"
               }`}
             >
               {activeTab === "subscription" ? (
@@ -410,7 +410,7 @@ export default function QuickPaymentModal({
               <button
                 type="submit"
                 disabled={isSubmittingSub}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 font-cairo text-sm font-black text-white shadow-md shadow-emerald-500/20 hover:brightness-110 active:scale-98 transition disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-cairo text-sm font-black text-white shadow-sm shadow-emerald-600/20 active:scale-98 transition disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
               >
                 {isSubmittingSub ? (
                   <span className="flex items-center gap-2">

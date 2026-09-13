@@ -1,23 +1,23 @@
 export default function Stat({ label, value, note, icon, color = "red" }) {
   const colorThemes = {
     red: {
-      border: "border-rose-100 hover:border-rose-200",
-      iconBg: "bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-rose-500/20",
-      accent: "text-rose-600",
+      border: "border-slate-200/90 hover:border-red-200",
+      iconBg: "bg-red-600 text-white shadow-sm shadow-red-600/20",
+      accent: "text-red-600",
     },
     green: {
-      border: "border-emerald-100 hover:border-emerald-200",
-      iconBg: "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-emerald-500/20",
+      border: "border-slate-200/90 hover:border-emerald-200",
+      iconBg: "bg-emerald-600 text-white shadow-sm shadow-emerald-600/20",
       accent: "text-emerald-600",
     },
     blue: {
-      border: "border-sky-100 hover:border-sky-200",
-      iconBg: "bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-sky-500/20",
+      border: "border-slate-200/90 hover:border-sky-200",
+      iconBg: "bg-sky-600 text-white shadow-sm shadow-sky-600/20",
       accent: "text-sky-600",
     },
     orange: {
-      border: "border-amber-100 hover:border-amber-200",
-      iconBg: "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-amber-500/20",
+      border: "border-slate-200/90 hover:border-amber-200",
+      iconBg: "bg-amber-600 text-white shadow-sm shadow-amber-600/20",
       accent: "text-amber-600",
     },
   };

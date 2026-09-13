@@ -812,8 +812,8 @@ export default function Home() {
               </div>
 
               {/* بطاقة النبض اليومي السريع (Daily Pulse Card) */}
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm relative overflow-hidden mb-3.5">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs relative overflow-hidden mb-3">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-red-600" />
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">
@@ -836,7 +836,7 @@ export default function Home() {
                   </div>
                   <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+                      className="h-full rounded-full bg-emerald-600 transition-all duration-500"
                       style={{ width: `${attendanceRateToday}%` }}
                     />
                   </div>
@@ -1319,50 +1319,47 @@ export default function Home() {
         )}
 
         {/* ━━━ Hero Banner (على الديسكتوب فقط) ━━━ */}
-        <div className={activeView === "players" ? "hidden md:block relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white p-5 shadow-md sm:p-7" : "hidden"}>
-          {/* Decorative gradient blobs */}
-          <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-red-500/6 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-8 left-1/2 h-32 w-64 -translate-x-1/2 rounded-full bg-slate-200/40 blur-2xl" />
-          {/* Top gradient accent line */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
+        <div className={activeView === "players" ? "hidden md:block relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs sm:p-6" : "hidden"}>
+          {/* Top brand accent line */}
+          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-red-600" />
 
           <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1 min-w-0">
-              <p className="section-eyebrow mb-2">لوحة تحكم الأكاديمية</p>
-              <h2 className="font-cairo text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              <p className="section-eyebrow mb-1.5">لوحة تحكم الأكاديمية</p>
+              <h2 className="font-cairo text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
                 أهلاً يا كابتن{" "}
-                <span className="gradient-text-brand">{captainName}</span>
+                <span className="text-red-600">{captainName}</span>
                 {" "}🥋
               </h2>
-              <p className="mt-2 text-sm font-medium text-slate-500 max-w-lg leading-relaxed">
+              <p className="mt-1.5 text-xs sm:text-sm font-medium text-slate-500 max-w-lg leading-relaxed">
                 إدارة فورية ودقيقة لحضور واشتراكات اللاعبين في مختلف الصالات.
               </p>
 
               {/* Micro-stat pills */}
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-600 shadow-xs">
+              <div className="mt-3.5 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-600 shadow-2xs">
                   <span className="h-2 w-2 rounded-full bg-red-500" />
                   {players.length} لاعب مسجل
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 shadow-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700 shadow-2xs">
                   <Building2 className="h-3 w-3" />
                   {branches.length} صالة نشطة
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-500 shadow-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-2xs">
                   الصالة: <strong className="font-black text-slate-900">{branch}</strong>
                 </span>
               </div>
             </div>
 
             {/* CTA */}
-            <div className="flex shrink-0 flex-col gap-2.5 sm:items-end">
+            <div className="flex shrink-0 flex-col gap-2 sm:items-end">
               <button
                 type="button"
                 id="add-player-hero-btn"
-                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-red-500/25 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-red-500/30 active:scale-95"
+                className="flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-5 py-2.5 text-xs sm:text-sm font-black text-white shadow-sm shadow-red-600/20 transition-all active:scale-95 cursor-pointer"
                 onClick={() => setShowForm(true)}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4 stroke-[3]" />
                 <span>تسجيل لاعب جديد</span>
               </button>
               <span className="text-[10px] font-medium text-slate-400 text-center">
@@ -1748,7 +1745,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active-press disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 text-xs font-black text-white shadow-xs active-press disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedAttendance("present")}
               >
@@ -1757,7 +1754,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active-press disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-rose-600 hover:bg-rose-700 px-3 text-xs font-black text-white shadow-xs active-press disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedAttendance("absent")}
               >
@@ -1766,7 +1763,7 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 px-3 text-xs font-black text-white shadow-xs hover:brightness-110 active-press disabled:opacity-60 cursor-pointer"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-sky-600 hover:bg-sky-700 px-3 text-xs font-black text-white shadow-xs active-press disabled:opacity-60 cursor-pointer"
                 disabled={bulkAttendanceBusy}
                 onClick={() => markSelectedPayment("paid")}
               >
@@ -1891,7 +1888,7 @@ export default function Home() {
                 </span>
                 <button
                   type="button"
-                  className="mt-1 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-2.5 text-xs font-black text-white shadow-xs shadow-red-500/20 hover:brightness-110 active:scale-95 cursor-pointer"
+                  className="mt-1 flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-700 px-5 py-2.5 text-xs font-black text-white shadow-xs active:scale-95 cursor-pointer"
                   onClick={() => setShowForm(true)}
                 >
                   <span>＋</span>

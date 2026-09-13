@@ -30,9 +30,7 @@ export default function ConfirmDialog({
         {/* Accent top border */}
         <div
           className={`absolute top-0 left-0 right-0 h-1.5 ${
-            isDanger
-              ? "bg-gradient-to-r from-red-600 via-rose-500 to-amber-500"
-              : "bg-gradient-to-r from-blue-600 to-indigo-600"
+            isDanger ? "bg-red-600" : "bg-sky-600"
           }`}
         />
 
@@ -83,10 +81,10 @@ export default function ConfirmDialog({
             type="button"
             disabled={isBusy}
             onClick={onConfirm}
-            className={`min-h-10 flex items-center justify-center gap-2 rounded-xl px-5 text-xs font-extrabold text-white shadow-sm transition active:scale-95 disabled:opacity-60 cursor-pointer ${
+            className={`min-h-10 flex items-center justify-center gap-2 rounded-xl px-5 text-xs font-bold text-white shadow-sm transition active-press disabled:opacity-60 cursor-pointer ${
               isDanger
-                ? "bg-gradient-to-r from-red-600 to-rose-600 hover:brightness-110 shadow-red-500/20"
-                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 shadow-blue-500/20"
+                ? "bg-red-600 hover:bg-red-700 shadow-red-600/20"
+                : "bg-sky-600 hover:bg-sky-700 shadow-sky-600/20"
             }`}
           >
             {isBusy ? (

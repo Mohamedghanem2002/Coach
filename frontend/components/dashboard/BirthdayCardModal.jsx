@@ -198,7 +198,7 @@ export default function BirthdayCardModal({
             type="button"
             disabled={isLoading || isSending || !blob}
             onClick={handleSendWhatsApp}
-            className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 p-3 text-xs font-black text-white shadow-lg shadow-emerald-900/40 transition active:scale-95 disabled:opacity-50 cursor-pointer min-h-[48px]"
+            className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-3 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition active-press disabled:opacity-50 cursor-pointer min-h-[48px]"
             title="نسخ الكارت وفتح شات واتساب مباشرة لإرساله كصورة"
           >
             {isSending ? (

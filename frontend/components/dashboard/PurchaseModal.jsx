@@ -155,7 +155,7 @@ export default function PurchaseModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 shrink-0 bg-slate-50/70">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm shadow-red-600/20">
               {mode === "pay" ? (
                 <CreditCard className="h-5 w-5" />
               ) : (
@@ -500,7 +500,7 @@ export default function PurchaseModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 font-cairo text-sm font-black text-white shadow-md shadow-red-500/20 hover:brightness-110 active:scale-98 transition disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2 touch-manipulation"
+              className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 font-cairo text-sm font-bold text-white shadow-sm shadow-red-600/20 active-press transition disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2 touch-manipulation"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">

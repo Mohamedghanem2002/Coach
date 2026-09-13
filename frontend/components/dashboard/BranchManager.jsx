@@ -79,14 +79,14 @@ export default function BranchManager({
           {/* رأس النافذة */}
           <div className="mb-5 flex items-start justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-rose-600 text-white shadow-xs text-lg font-bold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm shadow-red-600/20 text-lg font-bold">
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-red-600">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-red-600">
                   إعداد الصالات
                 </p>
-                <h2 className="font-cairo text-lg font-black text-slate-900 sm:text-xl">
+                <h2 className="font-cairo text-lg font-bold text-slate-900 sm:text-xl">
                   إدارة فروع الأكاديمية
                 </h2>
               </div>
@@ -127,7 +127,7 @@ export default function BranchManager({
               required
             />
             <button
-              className="min-h-12 sm:min-h-11 whitespace-nowrap rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 text-xs font-black text-white shadow-xs hover:brightness-110 active-press cursor-pointer"
+              className="min-h-12 sm:min-h-11 whitespace-nowrap rounded-xl bg-red-600 hover:bg-red-700 px-5 text-xs font-bold text-white shadow-sm shadow-red-600/20 active-press cursor-pointer"
               type="submit"
             >
               ＋ إضافة فرع

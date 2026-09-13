@@ -41,35 +41,35 @@ function useCountUp(target, duration = 700) {
 }
 
 /* ── Stat Card ─────────────────────────────────────────────────────────── */
-function StatCard({ label, value, note, Icon, gradient, accentColor, delay }) {
+function StatCard({ label, value, note, Icon, iconClass, accentBorder, delay }) {
   const animated = useCountUp(value);
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300/80 animate-card-entrance"
+      className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
       style={{ animationDelay: delay }}
     >
-      {/* Colored right-border accent */}
+      {/* Accent right indicator */}
       <div
-        className="absolute right-0 top-3 bottom-3 w-[3px] rounded-full transition-all duration-300 group-hover:top-0 group-hover:bottom-0"
-        style={{ background: accentColor }}
+        className="absolute right-0 top-0 bottom-0 w-[3px]"
+        style={{ background: accentBorder }}
       />
 
       {/* Icon */}
       <div className="flex items-center justify-between gap-2">
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg bg-gradient-to-br ${gradient}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-xs ${iconClass}`}
         >
           <Icon className="h-5 w-5" />
         </div>
-        <span className="text-[10px] font-semibold text-slate-400 text-left leading-tight max-w-[70px]">
+        <span className="text-[10px] font-bold text-slate-400 text-left leading-tight max-w-[75px]">
           {note}
         </span>
       </div>
 
       {/* Value */}
-      <div className="mt-3.5">
-        <span className="block text-xs font-semibold text-slate-500 mb-1">{label}</span>
-        <strong className="font-cairo text-3xl font-black tracking-tight text-slate-900">
+      <div className="mt-3">
+        <span className="block text-xs font-bold text-slate-500 mb-0.5">{label}</span>
+        <strong className="font-cairo text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
           {animated}
         </strong>
       </div>
@@ -164,48 +164,48 @@ function StatsGrid({
       value: dashboardPlayers.length,
       note: "لاعب مسجل",
       Icon: Users,
-      gradient: "from-red-500 to-rose-600",
-      accentColor: "#ef4444",
+      iconClass: "bg-red-600",
+      accentBorder: "#dc2626",
     },
     {
       label: "حاضرون اليوم",
       value: presentToday,
       note: `بتاريخ ${sessionDate}`,
       Icon: CheckCircle2,
-      gradient: "from-emerald-500 to-teal-600",
-      accentColor: "#10b981",
+      iconClass: "bg-emerald-600",
+      accentBorder: "#059669",
     },
     {
       label: "غائبون اليوم",
       value: absentToday,
       note: `بتاريخ ${sessionDate}`,
       Icon: XCircle,
-      gradient: "from-rose-500 to-pink-600",
-      accentColor: "#f43f5e",
+      iconClass: "bg-rose-600",
+      accentBorder: "#e11d48",
     },
     {
       label: "مسددو اشتراك الشهر",
       value: paidCount,
       note: partialCount > 0 ? `${paymentMonthLabel} (+${partialCount} جزئي)` : `اشتراك ${paymentMonthLabel}`,
       Icon: CreditCard,
-      gradient: "from-sky-500 to-blue-600",
-      accentColor: "#0ea5e9",
+      iconClass: "bg-sky-600",
+      accentBorder: "#0284c7",
     },
     {
       label: "متأخرات اشتراك الشهر",
       value: pendingPlayersCount,
       note: totalRemaining > 0 ? `متبقي ${totalRemaining.toLocaleString("ar-EG")} ج.م` : "لا توجد متأخرات للشهر",
       Icon: Clock,
-      gradient: "from-amber-500 to-orange-600",
-      accentColor: "#f59e0b",
+      iconClass: "bg-amber-600",
+      accentBorder: "#d97706",
     },
     {
       label: "الصالات النشطة",
       value: branches.length,
       note: "فروع الأكاديمية",
       Icon: Building2,
-      gradient: "from-slate-600 to-slate-800",
-      accentColor: "#475569",
+      iconClass: "bg-slate-700",
+      accentBorder: "#334155",
     },
   ];
 
@@ -223,7 +223,7 @@ function StatsGrid({
       {/* Financial Streams Separation Banner */}
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Stream 1: اشتراكات الشهور */}
-        <div className="rounded-2xl border border-sky-200/80 bg-gradient-to-br from-sky-50/70 to-blue-50/40 p-4 shadow-xs flex flex-col justify-between">
+        <div className="rounded-2xl border border-sky-200/90 bg-sky-50/40 p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-600 text-white shadow-xs">
@@ -268,7 +268,7 @@ function StatsGrid({
         </div>
 
         {/* Stream 2: مبيعات ومستلزمات الأدوات */}
-        <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/70 to-orange-50/40 p-4 shadow-xs flex flex-col justify-between">
+        <div className="rounded-2xl border border-amber-200/90 bg-amber-50/40 p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">

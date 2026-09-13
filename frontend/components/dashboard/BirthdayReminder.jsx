@@ -177,17 +177,17 @@ export default function BirthdayReminder({
 
   return (
     <div
-      className="relative overflow-hidden rounded-3xl border border-amber-200/90 bg-gradient-to-br from-amber-50/95 via-rose-50/80 to-orange-50/90 p-3.5 sm:p-6 shadow-sm transition-all duration-300 animate-slide-up w-full max-w-full"
+      className="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-amber-50/40 p-3.5 sm:p-6 shadow-xs transition-all duration-300 animate-slide-up w-full max-w-full"
       dir="rtl"
     >
       {/* Ambient background glows */}
-      <div className="pointer-events-none absolute -top-16 -left-16 h-44 w-44 rounded-full bg-amber-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-16 -right-16 h-44 w-44 rounded-full bg-rose-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -top-16 -left-16 h-44 w-44 rounded-full bg-amber-400/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 -right-16 h-44 w-44 rounded-full bg-rose-400/10 blur-3xl" />
 
       {/* Notice Alert Banner */}
       {reminderNotice && (
         <div
-          className={`relative z-20 mb-3.5 flex items-center justify-between gap-2 rounded-2xl p-3 text-xs font-black shadow-xs animate-slide-up ${
+          className={`relative z-20 mb-3.5 flex items-center justify-between gap-2 rounded-2xl p-3 text-xs font-bold shadow-xs animate-slide-up ${
             reminderNotice.startsWith("❌")
               ? "bg-rose-100 border border-rose-300 text-rose-900"
               : "bg-emerald-100 border border-emerald-300 text-emerald-900"
@@ -208,34 +208,34 @@ export default function BirthdayReminder({
       )}
 
       {/* ━━━ Header & Hero Strip ━━━ */}
-      <div className="relative z-10 flex items-center justify-between gap-2.5 border-b border-amber-200/70 pb-3 sm:pb-4">
+      <div className="relative z-10 flex items-center justify-between gap-2.5 border-b border-amber-200/60 pb-3 sm:pb-4">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="relative flex h-10 w-10 sm:h-13 sm:w-13 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 via-rose-500 to-red-600 text-white shadow-md shadow-rose-500/25 ring-3 ring-amber-100">
-            <PartyPopper className="h-5 w-5 sm:h-6 sm:w-6 animate-bounce" />
+          <div className="relative flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-sm shadow-amber-500/20 ring-4 ring-amber-100/60">
+            <PartyPopper className="h-5 w-5 sm:h-6 sm:w-6" />
             {todayPendingCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-rose-600 ring-2 ring-white" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-red-600 ring-2 ring-white" />
               </span>
             )}
           </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h2 className="font-cairo text-sm sm:text-lg font-black text-slate-900 truncate">
+              <h2 className="font-cairo text-sm sm:text-lg font-bold text-slate-900 truncate">
                 تذكار أعياد ميلاد الأبطال
               </h2>
               {todayList.length > 0 ? (
-                <span className="shrink-0 rounded-full bg-gradient-to-r from-rose-600 to-red-600 px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-white shadow-2xs animate-pulse">
+                <span className="shrink-0 rounded-full bg-red-600 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-2xs">
                   {todayPendingCount > 0 ? `${todayPendingCount} اليوم` : "اليوم 🎉"}
                 </span>
               ) : tomorrowList.length > 0 ? (
-                <span className="shrink-0 rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-white shadow-2xs">
+                <span className="shrink-0 rounded-full bg-amber-600 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-2xs">
                   غداً ({tomorrowList.length}) 🎈
                 </span>
               ) : null}
             </div>
-            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 truncate hidden xs:block">
+            <p className="text-[10px] sm:text-xs font-medium text-slate-500 truncate hidden xs:block">
               عرض أعياد ميلاد الأبطال اليوم وقبلها بيوم واحد (غداً) لإرسال كارت التهنئة الرسمي
             </p>
           </div>
@@ -529,7 +529,7 @@ export default function BirthdayReminder({
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
                         {/* 48px Athlete Avatar */}
-                        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-amber-400 via-rose-500 to-red-500 font-cairo text-sm font-black text-white shadow-xs ring-2 ring-slate-100">
+                        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-800 font-cairo text-sm font-bold text-white shadow-xs ring-2 ring-slate-100">
                           {player.photo ? (
                             <img
                               src={player.photo}
@@ -550,7 +550,7 @@ export default function BirthdayReminder({
                         <div className="min-w-0 flex-1">
                           <strong
                             onClick={() => onOpenPlayer?.(player)}
-                            className="block truncate font-cairo text-xs sm:text-sm font-black text-slate-900 group-hover:text-rose-600 transition-colors cursor-pointer"
+                            className="block truncate font-cairo text-xs sm:text-sm font-bold text-slate-900 group-hover:text-red-600 transition-colors cursor-pointer"
                             title="فتح الملف الشخصي"
                           >
                             {player.name}
@@ -561,7 +561,7 @@ export default function BirthdayReminder({
                               <span>{player.branch}</span>
                             </span>
                             <span>•</span>
-                            <span className="text-slate-800 font-black">
+                            <span className="text-slate-800 font-bold">
                               {player.belt}
                             </span>
                           </div>
@@ -571,12 +571,12 @@ export default function BirthdayReminder({
                       {/* Celebration Status Badge */}
                       {isToday ? (
                         isWished ? (
-                          <span className="shrink-0 rounded-xl bg-emerald-50 border border-emerald-300 px-2 py-1 text-[10px] font-black text-emerald-800 shadow-2xs flex items-center gap-1">
+                          <span className="shrink-0 rounded-xl bg-emerald-50 border border-emerald-300 px-2 py-1 text-[10px] font-bold text-emerald-800 shadow-2xs flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                             <span>تمت التهنئة</span>
                           </span>
                         ) : (
-                          <span className="shrink-0 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-2.5 py-1 text-[10px] sm:text-[11px] font-black text-white shadow-xs animate-pulse">
+                          <span className="shrink-0 rounded-xl bg-red-600 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-white shadow-xs">
                             🎉 اليوم!
                           </span>
                         )
@@ -629,7 +629,7 @@ export default function BirthdayReminder({
                             : `✓ تم فتح واتساب لاختيار المحادثة وإرسال التهنئة النصية لـ ${player.name} 🎉`
                         );
                       }}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:brightness-110 active-press transition cursor-pointer min-h-[42px] text-xs font-black shadow-xs"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white active-press transition cursor-pointer min-h-[42px] text-xs font-black shadow-xs"
                       title="إرسال تهنئة نصية فورية عبر واتساب"
                     >
                       <MessageCircle className="h-4 w-4 shrink-0" />
@@ -682,7 +682,7 @@ export default function BirthdayReminder({
                   <button
                     type="button"
                     onClick={() => setSelectedTab("tomorrow")}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-600 text-xs font-black text-white shadow-md shadow-rose-500/20 hover:brightness-110 active-press transition cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-xs font-bold text-white shadow-sm shadow-amber-600/20 active-press transition cursor-pointer"
                   >
                     <span>استعراض مناسبات الغد ({tomorrowList.length})</span>
                     <span>←</span>

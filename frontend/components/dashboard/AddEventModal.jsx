@@ -76,18 +76,18 @@ export default function AddEventModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative border-b border-slate-100 bg-gradient-to-r from-red-600 to-rose-600 px-5 py-4 text-white shrink-0">
+        <div className="relative border-b border-red-700/20 bg-red-600 px-5 py-4 text-white shrink-0">
           <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-white/40 sm:hidden" />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/20 text-white shadow-xs backdrop-blur-xs">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white shadow-xs backdrop-blur-xs">
                 <Compass className="h-5 w-5 stroke-[2.5]" />
               </div>
               <div>
-                <h3 className="font-cairo text-base font-black leading-tight">
+                <h3 className="font-cairo text-base font-bold leading-tight">
                   {isEditing ? "تعديل بيانات الفعالية" : "إنشاء فعالية أو رحلة جديدة"}
                 </h3>
-                <p className="text-[11px] font-semibold text-white/80">
+                <p className="text-[11px] font-medium text-white/80">
                   تنظيم الرحلات والبطولات وإدارة اشتراكات الأبطال
                 </p>
               </div>
@@ -271,7 +271,7 @@ export default function AddEventModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="min-h-11 px-6 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-xs font-black text-white shadow-md shadow-red-500/25 hover:from-red-700 hover:to-rose-700 active:scale-95 transition disabled:opacity-50 cursor-pointer"
+              className="min-h-11 px-6 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm shadow-red-600/20 active:scale-95 transition disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? "جاري الحفظ..." : isEditing ? "تحديث الفعالية" : "إنشاء الفعالية"}
             </button>

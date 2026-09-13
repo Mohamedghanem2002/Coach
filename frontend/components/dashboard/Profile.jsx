@@ -1060,8 +1060,8 @@ export default function Profile({
         {/* مؤشر سحب لطيف على شاشات الموبايل */}
         <div className="sheet-drag-handle sm:hidden" />
 
-        {/* شريط أحمر جمالي أعلى المودال يتناغم مع لوحة التحكم */}
-        <div className="sticky top-0 z-30 h-1 w-full bg-gradient-to-r from-red-600 via-rose-500 to-red-700 mt-1 sm:mt-0" />
+        {/* شريط أحمر موحد أعلى المودال */}
+        <div className="sticky top-0 z-30 h-1 w-full bg-red-600 mt-1 sm:mt-0" />
 
         <div className="p-3.5 sm:p-6 pb-6">
           {/* رسالة التنبيه الإشعارية السريعة */}
@@ -1383,7 +1383,7 @@ export default function Profile({
                   <button
                     type="button"
                     onClick={() => setShowCardModal(true)}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:brightness-110 px-3 py-1.5 text-xs font-black text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                    className="flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-black text-white shadow-2xs transition active:scale-95 cursor-pointer shrink-0"
                     title="معاينة بطاقة اللاعب كصورة وحفظها أو إرسالها عبر واتساب"
                   >
                     <Eye className="h-3.5 w-3.5" />
@@ -1394,7 +1394,7 @@ export default function Profile({
                   <button
                     type="button"
                     onClick={() => setShowBirthdayModal(true)}
-                    className="flex items-center gap-1.5 rounded-xl border border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 hover:from-rose-100 hover:to-amber-100 px-3 py-1.5 text-xs font-black text-rose-900 transition active:scale-95 cursor-pointer shrink-0"
+                    className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 text-xs font-black text-rose-800 transition active:scale-95 cursor-pointer shrink-0"
                     title="معاينة كارت تهنئة عيد الميلاد وحفظه أو إرساله عبر واتساب"
                   >
                     <Eye className="h-3.5 w-3.5 text-rose-600" />

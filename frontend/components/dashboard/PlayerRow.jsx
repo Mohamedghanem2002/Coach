@@ -130,7 +130,7 @@ function PlayerRow({
             >
               {/* Avatar */}
               <div
-                className={`relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-rose-700 font-cairo text-sm font-black text-white shadow-xs ring-2 ${
+                className={`relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-cairo text-sm font-black text-white shadow-2xs ring-2 ${
                   birthdayInfo?.isToday ? "ring-rose-300 animate-pulse" : "ring-white"
                 }`}
               >
@@ -273,7 +273,7 @@ function PlayerRow({
             onClick={() => updateAttendance("present")}
             className={`min-h-[46px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-2 active-press touch-manipulation cursor-pointer ${
               present
-                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-500/25 ring-2 ring-emerald-300"
+                ? "bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-200"
                 : "bg-slate-50 text-slate-700 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50"
             }`}
           >
@@ -294,7 +294,7 @@ function PlayerRow({
             onClick={() => updateAttendance("absent")}
             className={`min-h-[46px] rounded-xl px-3 text-xs font-black transition-all duration-150 flex items-center justify-center gap-2 active-press touch-manipulation cursor-pointer ${
               absent
-                ? "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-sm shadow-rose-500/25 ring-2 ring-rose-300"
+                ? "bg-rose-600 text-white shadow-xs ring-2 ring-rose-200"
                 : "bg-slate-50 text-slate-700 border border-slate-200 hover:border-rose-300 hover:bg-rose-50/50"
             }`}
           >
@@ -438,7 +438,7 @@ function PlayerRow({
             className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-right cursor-pointer"
             onClick={onOpen}
           >
-            <div className={`relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-rose-700 font-cairo text-sm font-black text-white shadow-sm ring-2 ring-white transition-all duration-200 group-hover:ring-red-100 group-hover:shadow-md ${
+            <div className={`relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-cairo text-sm font-black text-white shadow-2xs ring-2 ring-white transition-all duration-200 group-hover:ring-red-100 ${
               birthdayInfo?.isToday ? "ring-rose-200" : ""
             }`}>
               {player.photo ? (
@@ -459,7 +459,7 @@ function PlayerRow({
                   {player.name}
                 </strong>
                 {birthdayInfo?.isToday && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-600 to-amber-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs animate-pulse">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs animate-pulse">
                     <Cake className="h-2.5 w-2.5" />
                     {birthdayInfo.turningAge} سنة
                   </span>
@@ -527,7 +527,7 @@ function PlayerRow({
             type="button"
             className={`min-h-10 flex-1 rounded-xl px-2.5 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1 active:scale-95 cursor-pointer ${
               present
-                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-500/25 ring-2 ring-emerald-200"
+                ? "bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-200"
                 : "bg-slate-50 text-slate-600 border border-slate-200/70 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
             }`}
             disabled={Boolean(attendanceBusy)}
@@ -547,7 +547,7 @@ function PlayerRow({
             type="button"
             className={`min-h-10 flex-1 rounded-xl px-2.5 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1 active:scale-95 cursor-pointer ${
               absent
-                ? "bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-sm shadow-rose-500/25 ring-2 ring-rose-200"
+                ? "bg-rose-600 text-white shadow-xs ring-2 ring-rose-200"
                 : "bg-slate-50 text-slate-600 border border-slate-200/70 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
             }`}
             disabled={Boolean(attendanceBusy)}

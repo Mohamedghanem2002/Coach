@@ -117,7 +117,7 @@ export default function MobileBottomNav({
           <button
             type="button"
             onClick={onOpenAddPlayer}
-            className="flex h-12 w-12 -translate-y-4 items-center justify-center rounded-full bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 text-white shadow-xl shadow-red-500/35 ring-4 ring-white active:scale-90 transition-all touch-manipulation cursor-pointer select-none"
+            className="flex h-12 w-12 -translate-y-4 items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30 ring-4 ring-white active:scale-95 transition-all touch-manipulation cursor-pointer select-none"
             title="تسجيل لاعب جديد"
             aria-label="تسجيل لاعب جديد"
           >
