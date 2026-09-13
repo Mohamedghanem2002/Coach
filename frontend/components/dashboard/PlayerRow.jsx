@@ -219,28 +219,6 @@ function PlayerRow({
                 التزام {attendanceRate}%
               </span>
             )}
-            {purchasesSummary.count > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setPaymentModalTab("purchases");
-                  setShowPaymentModal(true);
-                }}
-                className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-black text-[10px] shrink-0 cursor-pointer ${
-                  purchasesSummary.remainingAmount > 0
-                    ? "bg-amber-50 border border-amber-300/80 text-amber-900"
-                    : "bg-emerald-50 border border-emerald-200 text-emerald-800"
-                }`}
-                title="حساب المشتريات والأدوات - انقر للتحصيل أو العرض"
-              >
-                <ShoppingBag className="h-3 w-3" />
-                {purchasesSummary.remainingAmount > 0
-                  ? (unpaidPurchases.length === 1
-                      ? `${unpaidPurchases[0].title || "السلعة"}: باقي ${unpaidPurchases[0].remainingAmount} ج.م`
-                      : `باقي أدوات: ${purchasesSummary.remainingAmount} ج.م`)
-                  : "الأدوات: خالصة ✓"}
-              </button>
-            )}
           </div>
 
           {/* Guardian Phone quick actions */}
@@ -309,102 +287,120 @@ function PlayerRow({
           </button>
         </div>
 
-        {/* شريط 1: اشتراك الشهر المحدد */}
-        <button
-          type="button"
-          onClick={() => {
-            setPaymentModalTab("subscription");
-            setShowPaymentModal(true);
-          }}
-          className={`mt-2.5 w-full max-w-full min-h-[42px] rounded-xl px-3 py-2 text-xs transition-all duration-150 flex items-center justify-between gap-2 active-press touch-manipulation cursor-pointer overflow-hidden ${
-            paymentStatus === "paid"
-              ? "border border-emerald-200 bg-emerald-50/90 text-emerald-900"
-              : paymentStatus === "partially_paid"
-              ? "border border-amber-300 bg-amber-50/90 text-amber-900 shadow-2xs"
-              : "border border-rose-200 bg-rose-50/80 text-rose-900"
-          }`}
-          title={`تسجيل وتحصيل اشتراك شهر ${paymentMonth}`}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            {paymentStatus === "paid" ? (
-              <>
-                <CreditCard className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span className="font-black text-xs truncate">
-                  اشتراك الشهر: مدفوع بالكامل ({paidAmount} ج.م) ✓
-                </span>
-              </>
-            ) : paymentStatus === "partially_paid" ? (
-              <>
-                <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                <span className="font-black text-xs truncate">
-                  اشتراك الشهر: سدد {paidAmount} من {totalAmount} ج.م (باقي {remainingAmount} ج.م)
-                </span>
-              </>
-            ) : (
-              <>
-                <Clock className="h-4 w-4 text-rose-500 shrink-0" />
-                <span className="font-black text-xs truncate">
-                  اشتراك الشهر: غير مسدد (مطلوب {totalAmount || remainingAmount} ج.م)
-                </span>
-              </>
-            )}
-          </div>
-
-          <span className="text-[10px] font-black text-emerald-800 bg-white/90 border border-emerald-200 rounded-lg px-2 py-1 shrink-0 shadow-2xs">
-            تحصيل الاشتراك 💳
-          </span>
-        </button>
-
-        {/* شريط 2: مشتريات وأدوات اللاعب */}
-        {purchasesSummary.count > 0 ? (
+        {/* شريط المعاملات المالية المدمج: اشتراك الشهر + أدوات اللاعب جنباً إلى جنب */}
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
+          {/* 1: اشتراك الشهر */}
           <button
             type="button"
             onClick={() => {
-              setPaymentModalTab("purchases");
+              setPaymentModalTab("subscription");
               setShowPaymentModal(true);
             }}
-            className={`mt-1.5 w-full max-w-full min-h-[38px] rounded-xl px-3 py-1.5 text-xs transition-all duration-150 flex items-center justify-between gap-2 active-press touch-manipulation cursor-pointer overflow-hidden ${
-              purchasesSummary.remainingAmount > 0
-                ? "border border-amber-300/90 bg-amber-50/90 text-amber-950 shadow-2xs"
-                : "border border-slate-200/80 bg-slate-50/80 text-slate-700"
+            className={`w-full min-h-[46px] rounded-xl p-2 text-xs transition-all duration-150 flex items-center justify-between gap-1.5 active-press touch-manipulation cursor-pointer border ${
+              paymentStatus === "paid"
+                ? "border-emerald-200 bg-emerald-50/90 text-emerald-950"
+                : paymentStatus === "partially_paid"
+                ? "border-amber-300 bg-amber-50/90 text-amber-950 shadow-2xs"
+                : "border-rose-200 bg-rose-50/80 text-rose-950"
             }`}
-            title="عرض وتحصيل حساب مشتريات وأدوات اللاعب"
+            title={`تسجيل وتحصيل اشتراك شهر ${paymentMonth}`}
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <ShoppingBag
-                className={`h-4 w-4 shrink-0 ${
-                  purchasesSummary.remainingAmount > 0 ? "text-amber-600" : "text-emerald-600"
+            <div className="flex items-center gap-1.5 min-w-0">
+              <CreditCard
+                className={`h-3.5 w-3.5 shrink-0 ${
+                  paymentStatus === "paid"
+                    ? "text-emerald-600"
+                    : paymentStatus === "partially_paid"
+                    ? "text-amber-600"
+                    : "text-rose-500"
                 }`}
               />
-              <span className="font-black text-xs truncate">
-                {purchaseDebtLabel}
-              </span>
+              <div className="text-right min-w-0">
+                <div className="text-[10px] text-slate-500 font-bold leading-tight truncate">
+                  اشتراك الشهر
+                </div>
+                <div className="font-black text-[11px] truncate">
+                  {paymentStatus === "paid" ? (
+                    <span className="text-emerald-700">{paidAmount} ج.م ✓</span>
+                  ) : paymentStatus === "partially_paid" ? (
+                    <span className="text-amber-800">باقي {remainingAmount} ج.م</span>
+                  ) : (
+                    <span className="text-rose-700">مطلوب {totalAmount || remainingAmount}</span>
+                  )}
+                </div>
+              </div>
             </div>
-
             <span
-              className={`text-[10px] font-black px-2 py-0.5 rounded-lg shrink-0 ${
-                purchasesSummary.remainingAmount > 0
-                  ? "bg-amber-600 text-white shadow-2xs"
-                  : "bg-white text-slate-600 border border-slate-200"
+              className={`text-[9px] font-black rounded-md px-1.5 py-0.5 shrink-0 shadow-2xs ${
+                paymentStatus === "paid"
+                  ? "bg-white text-emerald-700 border border-emerald-200"
+                  : paymentStatus === "partially_paid"
+                  ? "bg-amber-600 text-white"
+                  : "bg-rose-600 text-white"
               }`}
             >
-              {purchasesSummary.remainingAmount > 0 ? "سداد الأدوات 🥋" : "عرض"}
+              تحصيل 💳
             </span>
           </button>
-        ) : (
+
+          {/* 2: مشتريات وأدوات اللاعب */}
           <button
             type="button"
             onClick={() => {
               setPaymentModalTab("purchases");
               setShowPaymentModal(true);
             }}
-            className="mt-1.5 w-full text-center py-1 rounded-xl border border-dashed border-slate-200 text-slate-400 hover:text-amber-700 hover:border-amber-300 hover:bg-amber-50/50 text-[11px] font-bold transition cursor-pointer flex items-center justify-center gap-1"
-            title="تسجيل شراء بدلة أو أدوات أو ملابس لهذا اللاعب"
+            className={`w-full min-h-[46px] rounded-xl p-2 text-xs transition-all duration-150 flex items-center justify-between gap-1.5 active-press touch-manipulation cursor-pointer border ${
+              purchasesSummary.count === 0
+                ? "border-dashed border-slate-200 bg-slate-50/70 text-slate-600 hover:border-amber-300 hover:bg-amber-50/50"
+                : purchasesSummary.remainingAmount > 0
+                ? "border-amber-300/90 bg-amber-50/90 text-amber-950 shadow-2xs"
+                : "border-emerald-200 bg-emerald-50/80 text-emerald-950"
+            }`}
+            title="حساب مشتريات وأدوات اللاعب"
           >
-            <ShoppingBag className="h-3 w-3" />
-            <span>+ تسجيل مشتريات أو بدلة للاعب</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <ShoppingBag
+                className={`h-3.5 w-3.5 shrink-0 ${
+                  purchasesSummary.count === 0
+                    ? "text-slate-400"
+                    : purchasesSummary.remainingAmount > 0
+                    ? "text-amber-600"
+                    : "text-emerald-600"
+                }`}
+              />
+              <div className="text-right min-w-0">
+                <div className="text-[10px] text-slate-500 font-bold leading-tight truncate">
+                  أدوات وبدل
+                </div>
+                <div className="font-black text-[11px] truncate">
+                  {purchasesSummary.count === 0 ? (
+                    <span className="text-slate-500">+ تسجيل أدوات</span>
+                  ) : purchasesSummary.remainingAmount > 0 ? (
+                    <span className="text-amber-800">باقي {purchasesSummary.remainingAmount} ج.م</span>
+                  ) : (
+                    <span className="text-emerald-700">خالصة بالكامل ✓</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <span
+              className={`text-[9px] font-black rounded-md px-1.5 py-0.5 shrink-0 shadow-2xs ${
+                purchasesSummary.count === 0
+                  ? "bg-white text-slate-600 border border-slate-200"
+                  : purchasesSummary.remainingAmount > 0
+                  ? "bg-amber-600 text-white"
+                  : "bg-white text-emerald-700 border border-emerald-200"
+              }`}
+            >
+              {purchasesSummary.count === 0
+                ? "＋"
+                : purchasesSummary.remainingAmount > 0
+                ? "سداد 🥋"
+                : "عرض"}
+            </span>
           </button>
-        )}
+        </div>
       </div>
 
       {/* ═══════════ DESKTOP TABLE ROW (>= md) ═══════════ */}

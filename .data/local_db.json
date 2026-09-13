@@ -93,7 +93,20 @@
       "_id": "6aa3f720ec0323d6dd6fe90b",
       "totalAmount": 100,
       "paidAmount": 0,
-      "remainingAmount": 100
+      "remainingAmount": 100,
+      "purchases": [
+        {
+          "id": "prc_mu02oim8_jzved",
+          "title": "قفازات وواقيات كوميتيه",
+          "totalAmount": 400,
+          "paidAmount": 120,
+          "remainingAmount": 280,
+          "status": "partially_paid",
+          "date": "2026-09-13",
+          "notes": "",
+          "createdAt": "2026-09-13T17:13:03.296Z"
+        }
+      ]
     },
     {
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",

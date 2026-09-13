@@ -776,160 +776,10 @@ export default function Home() {
       <section className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
         {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
         <div className="md:hidden">
-          {/* شريط اختيار الصالة وبطاقة نبض اليوم (خاصان بتبويب اللاعبين فقط ولا يظهران في الفعاليات) */}
+          {/* ━━━ لوحة التحكم السريعة للموبايل (Native Mobile Command Surface) ━━━ */}
           {mobileTab === "players" && activeView === "players" && (
-            <>
-              {/* شريط اختيار الصالة الأفقي السريع */}
-              <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 mb-2.5 touch-scroll">
-                <button
-                  type="button"
-                  className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-black transition-all active:scale-95 min-h-[38px] cursor-pointer ${
-                    branch === "كل الصالات"
-                      ? "bg-red-600 text-white shadow-xs shadow-red-500/30"
-                      : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
-                  }`}
-                  onClick={() => setBranch("كل الصالات")}
-                >
-                  كل الصالات ({players.length})
-                </button>
-                {branches.map((b) => {
-                  const bCount = players.filter((p) => p.branch === b.name).length;
-                  return (
-                    <button
-                      key={b._id}
-                      type="button"
-                      className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-black transition-all active:scale-95 min-h-[38px] cursor-pointer ${
-                        branch === b.name
-                          ? "bg-red-600 text-white shadow-xs shadow-red-500/30"
-                          : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
-                      }`}
-                      onClick={() => setBranch(b.name)}
-                    >
-                      {b.name} ({bCount})
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* بطاقة النبض اليومي السريع (Daily Pulse Card) */}
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs relative overflow-hidden mb-3">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-red-600" />
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">
-                      نبض اليوم • {sessionDate}
-                    </p>
-                    <h3 className="font-cairo text-sm font-black text-slate-900">
-                      {branch === "كل الصالات" ? "جميع صالات الأكاديمية" : `صالة ${branch}`}
-                    </h3>
-                  </div>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-700">
-                    {dashboardPlayers.length} لاعب
-                  </span>
-                </div>
-
-                {/* شريط نسبة حضور اليوم */}
-                <div className="space-y-1 mb-2.5">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-600">نسبة حضور اليوم:</span>
-                    <span className="font-black text-emerald-700">{attendanceRateToday}% ({presentToday} لاعب)</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-                      style={{ width: `${attendanceRateToday}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* 4 شرائح سريعة تفاعلية لفلترة القائمة بلمسة واحدة مباشرة من نبض اليوم */}
-                <div className="grid grid-cols-4 gap-1.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusFilter(statusFilter === "present" ? "all" : "present");
-                      setMobileTab("players");
-                    }}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
-                      statusFilter === "present"
-                        ? "bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300"
-                        : "bg-emerald-50/70 border border-emerald-200/60 text-emerald-800 hover:bg-emerald-100/60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <Check className={`h-3 w-3 ${statusFilter === "present" ? "text-white" : "text-emerald-600"}`} strokeWidth={3} />
-                      <span className="text-base font-black leading-none">{presentToday}</span>
-                    </div>
-                    <span className="text-[10px] font-bold mt-1">حاضر</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusFilter(statusFilter === "absent" ? "all" : "absent");
-                      setMobileTab("players");
-                    }}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
-                      statusFilter === "absent"
-                        ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300"
-                        : "bg-rose-50/70 border border-rose-200/60 text-rose-800 hover:bg-rose-100/60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <X className={`h-3 w-3 ${statusFilter === "absent" ? "text-white" : "text-rose-600"}`} strokeWidth={3} />
-                      <span className="text-base font-black leading-none">{absentToday}</span>
-                    </div>
-                    <span className="text-[10px] font-bold mt-1">غائب</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusFilter(statusFilter === "paid" ? "all" : "paid");
-                      setMobileTab("players");
-                    }}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
-                      statusFilter === "paid"
-                        ? "bg-sky-600 text-white shadow-sm ring-2 ring-sky-300"
-                        : "bg-sky-50/70 border border-sky-200/60 text-sky-800 hover:bg-sky-100/60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <CreditCard className={`h-3 w-3 ${statusFilter === "paid" ? "text-white" : "text-sky-600"}`} />
-                      <span className="text-base font-black leading-none">{paidCount}</span>
-                    </div>
-                    <span className="text-[10px] font-bold mt-1">مدفوع</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid");
-                      setMobileTab("players");
-                    }}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
-                      statusFilter === "unpaid"
-                        ? "bg-amber-600 text-white shadow-sm ring-2 ring-amber-300"
-                        : "bg-amber-50/70 border border-amber-200/60 text-amber-800 hover:bg-amber-100/60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <Clock className={`h-3 w-3 ${statusFilter === "unpaid" ? "text-white" : "text-amber-600"}`} />
-                      <span className="text-base font-black leading-none">{totalPendingPaymentCount}</span>
-                    </div>
-                    <span className="text-[10px] font-bold mt-1">
-                      {partialCount > 0 ? "باقي/معلق" : "لم يدفع"}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* محتوى تبويب اللاعبين على الموبايل */}
-          {mobileTab === "players" && (
-            <div className="space-y-2 mb-2">
-              {/* شريط البحث مع زر الخيارات المتقدمة ومؤشرات الفلاتر الإضافية */}
+            <div className="space-y-2 mb-3">
+              {/* Row 1: Search Bar + Integrated Branch Selector + Advanced Filters Button */}
               <div className="flex items-center gap-2">
                 <div className="relative flex-1 flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-3.5 shadow-2xs focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 transition-all">
                   <Search className="h-4 w-4 shrink-0 text-slate-400" />
@@ -937,7 +787,7 @@ export default function Home() {
                     className="min-w-0 flex-1 bg-transparent py-2.5 text-base sm:text-sm text-slate-900 outline-none placeholder:text-slate-400 font-bold"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="ابحث باسم اللاعب..."
+                    placeholder="ابحث باسم البطل..."
                   />
                   {search && (
                     <button
@@ -950,6 +800,28 @@ export default function Home() {
                   )}
                 </div>
 
+                {/* Branch Quick Dropdown Selector */}
+                <div className="relative shrink-0">
+                  <select
+                    value={branch}
+                    onChange={(e) => setBranch(e.target.value)}
+                    className="h-11 rounded-2xl border border-slate-200/90 bg-white pr-3 pl-7 text-xs font-black text-slate-800 shadow-2xs outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 cursor-pointer appearance-none touch-manipulation max-w-[125px] truncate"
+                    title="تصفية حسب صالة التدريب"
+                  >
+                    <option value="كل الصالات">كل الصالات ({players.length})</option>
+                    {branches.map((b) => {
+                      const count = players.filter((p) => p.branch === b.name).length;
+                      return (
+                        <option key={b._id} value={b.name}>
+                          {b.name} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                </div>
+
+                {/* Filter Options & Date Button */}
                 <button
                   type="button"
                   onClick={() => setShowMobileFilters(true)}
@@ -964,78 +836,182 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* شريط الفلاتر السريع المدمج (عرض الفلتر النشط وخيارات إضافية ذكية دون تكرار) */}
+              {/* Row 2: Swipeable Horizontal Filter Capsules with Live Counts */}
               <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
+                {/* All */}
                 <button
                   type="button"
-                  className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                  onClick={() => setStatusFilter("all")}
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
                     statusFilter === "all"
                       ? "bg-slate-900 text-white shadow-xs"
-                      : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+                      : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
                   }`}
-                  onClick={() => setStatusFilter("all")}
                 >
-                  عرض الكل ({dashboardPlayers.length})
+                  <span>الكل</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    statusFilter === "all" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                  }`}>
+                    {dashboardPlayers.length}
+                  </span>
                 </button>
 
-                {statusFilter !== "all" && (
-                  <button
-                    type="button"
-                    onClick={() => setStatusFilter("all")}
-                    className="shrink-0 flex items-center gap-1 rounded-xl bg-red-50 border border-red-200 px-2.5 py-1 text-xs font-black text-red-700 active-press cursor-pointer"
-                  >
-                    <span>إلغاء الفلتر</span>
-                    <span className="text-[10px] bg-red-200/60 rounded-full h-4 w-4 flex items-center justify-center">✕</span>
-                  </button>
-                )}
+                {/* Present */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter(statusFilter === "present" ? "all" : "present")}
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                    statusFilter === "present"
+                      ? "bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-300"
+                      : "bg-white text-emerald-800 border border-emerald-200 hover:bg-emerald-50"
+                  }`}
+                >
+                  <Check className="h-3 w-3 stroke-[3]" />
+                  <span>حاضر</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    statusFilter === "present" ? "bg-white/25 text-white" : "bg-emerald-100 text-emerald-800"
+                  }`}>
+                    {presentToday}
+                  </span>
+                </button>
 
+                {/* Absent */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter(statusFilter === "absent" ? "all" : "absent")}
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                    statusFilter === "absent"
+                      ? "bg-rose-600 text-white shadow-xs ring-2 ring-rose-300"
+                      : "bg-white text-rose-800 border border-rose-200 hover:bg-rose-50"
+                  }`}
+                >
+                  <X className="h-3 w-3 stroke-[3]" />
+                  <span>غائب</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    statusFilter === "absent" ? "bg-white/25 text-white" : "bg-rose-100 text-rose-800"
+                  }`}>
+                    {absentToday}
+                  </span>
+                </button>
+
+                {/* Paid */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter(statusFilter === "paid" ? "all" : "paid")}
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                    statusFilter === "paid"
+                      ? "bg-sky-600 text-white shadow-xs ring-2 ring-sky-300"
+                      : "bg-white text-sky-800 border border-sky-200 hover:bg-sky-50"
+                  }`}
+                >
+                  <CreditCard className="h-3 w-3" />
+                  <span>مسدد</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    statusFilter === "paid" ? "bg-white/25 text-white" : "bg-sky-100 text-sky-800"
+                  }`}>
+                    {paidCount}
+                  </span>
+                </button>
+
+                {/* Unpaid / Pending */}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid")}
+                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                    statusFilter === "unpaid"
+                      ? "bg-amber-600 text-white shadow-xs ring-2 ring-amber-300"
+                      : "bg-white text-amber-800 border border-amber-200 hover:bg-amber-50"
+                  }`}
+                >
+                  <Clock className="h-3 w-3" />
+                  <span>متأخر</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    statusFilter === "unpaid" ? "bg-white/25 text-white" : "bg-amber-100 text-amber-900"
+                  }`}>
+                    {totalPendingPaymentCount}
+                  </span>
+                </button>
+
+                {/* Partially paid if any */}
                 {partialCount > 0 && (
                   <button
                     type="button"
-                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
+                    onClick={() => setStatusFilter(statusFilter === "partially_paid" ? "all" : "partially_paid")}
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
                       statusFilter === "partially_paid"
                         ? "bg-amber-600 text-white shadow-xs"
                         : "bg-white text-amber-800 border border-amber-300 hover:bg-amber-50"
                     }`}
-                    onClick={() => setStatusFilter(statusFilter === "partially_paid" ? "all" : "partially_paid")}
                   >
-                    <Clock className="h-3 w-3 text-amber-600" />
-                    <span>دفع جزئي ({partialCount})</span>
+                    <span>دفع جزئي</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      statusFilter === "partially_paid" ? "bg-white/25 text-white" : "bg-amber-100 text-amber-900"
+                    }`}>
+                      {partialCount}
+                    </span>
                   </button>
                 )}
 
+                {/* Purchases debt if any */}
                 {purchasesDebtCount > 0 && (
                   <button
                     type="button"
+                    onClick={() => setStatusFilter(statusFilter === "purchases_debt" ? "all" : "purchases_debt")}
                     className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
                       statusFilter === "purchases_debt"
                         ? "bg-amber-600 text-white shadow-xs"
                         : "bg-white text-amber-900 border border-amber-300 hover:bg-amber-50"
                     }`}
-                    onClick={() => setStatusFilter(statusFilter === "purchases_debt" ? "all" : "purchases_debt")}
                   >
                     <ShoppingBag className="h-3 w-3 text-amber-600" />
-                    <span>متبقي أدوات ({purchasesDebtCount})</span>
+                    <span>أدوات</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      statusFilter === "purchases_debt" ? "bg-white/25 text-white" : "bg-amber-100 text-amber-900"
+                    }`}>
+                      {purchasesDebtCount}
+                    </span>
                   </button>
                 )}
 
+                {/* Today birthdays if any */}
                 {todayBirthdaysCount > 0 && (
                   <button
                     type="button"
-                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                      mobileTab === "birthdays"
-                        ? "bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-xs"
-                        : "bg-white text-rose-700 border border-rose-200/80 hover:bg-rose-50"
-                    }`}
                     onClick={() => {
-                      setMobileTab(mobileTab === "birthdays" ? "players" : "birthdays");
+                      setMobileTab("birthdays");
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
+                    className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 border border-rose-300 hover:shadow-xs"
                   >
-                    <Cake className="h-3 w-3" />
-                    <span>أعياد الميلاد ({todayBirthdaysCount})</span>
+                    <Cake className="h-3.5 w-3.5 text-rose-600" />
+                    <span>أعياد الميلاد</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-600 text-white font-black">
+                      {todayBirthdaysCount}
+                    </span>
                   </button>
                 )}
+              </div>
+
+              {/* Row 3: Slim Pulse Metric Strip (~32px) */}
+              <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+                <div className="flex items-center gap-2 text-slate-700 font-bold min-w-0">
+                  <span className="flex h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                  <span className="text-[11px] font-extrabold text-slate-800 shrink-0">
+                    حضور اليوم ({sessionDate}):
+                  </span>
+                  <span className="font-black text-emerald-700 shrink-0">
+                    {attendanceRateToday}%
+                  </span>
+                  <span className="text-slate-400 text-[10px] truncate">
+                    ({presentToday} من {dashboardPlayers.length})
+                  </span>
+                </div>
+                <div className="w-20 sm:w-28 h-2 rounded-full bg-slate-200 overflow-hidden shrink-0">
+                  <div
+                    className="h-full rounded-full bg-emerald-600 transition-all duration-500"
+                    style={{ width: `${attendanceRateToday}%` }}
+                  />
+                </div>
               </div>
 
               {/* نافذة الفلاتر السفلية المنبثقة للموبايل (Mobile Bottom Sheet) */}
