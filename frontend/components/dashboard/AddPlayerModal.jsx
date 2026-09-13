@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from "react";
-import { toEnglishDigits, BELTS, LEVELS } from "../../lib/dashboard-utils";
+import { toEnglishDigits, BELTS, LEVELS, getBeltStyle } from "../../lib/dashboard-utils";
 import { BookUser } from "lucide-react";
 
 export default function AddPlayerModal({
@@ -392,6 +392,10 @@ export default function AddPlayerModal({
                       </option>
                     ))}
                   </select>
+                  <div className={`mt-1.5 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold shadow-2xs ${getBeltStyle(belt).bg} ${getBeltStyle(belt).text} ${getBeltStyle(belt).border}`}>
+                    <span className={`h-2.5 w-2.5 rounded-full ${getBeltStyle(belt).dot}`} />
+                    <span>حزام {belt}</span>
+                  </div>
                 </div>
 
                 <div>

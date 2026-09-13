@@ -1313,8 +1313,47 @@ export default function Profile({
           ) : (
             /* ════════════ العرض الأساسي البسيط المريح ════════════ */
             <>
+              {/* بطاقة بيانات وهوية اللاعب الرياضية الفاخرة */}
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 sm:p-4 mb-3.5 shadow-2xs">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="relative flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-lg sm:text-xl font-black text-white shadow-xs ring-2 ring-white">
+                    {player.photo ? (
+                      <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span>{player.name.charAt(0)}</span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h2 className="truncate font-cairo text-base sm:text-xl font-black text-slate-900">
+                      {player.name}
+                    </h2>
+
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                        🏢 {player.branch}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                        🎂 {currentAge} سنة
+                      </span>
+                      <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-bold shadow-xs ${getBeltStyle(player.belt).bg} ${getBeltStyle(player.belt).text} ${getBeltStyle(player.belt).border}`}>
+                        <span className={`h-2 w-2 rounded-full ${getBeltStyle(player.belt).dot}`} />
+                        🥋 حزام {player.belt || "أبيض"}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 border border-red-200/80 px-2 py-0.5 text-[11px] font-black text-red-700 shadow-xs">
+                        مستوى {player.level || "A"}
+                      </span>
+                    </div>
+
+                    <span className="mt-1 block text-[10px] sm:text-[11px] font-semibold text-slate-400">
+                      تاريخ التسجيل: {registrationDate}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* شريط المشاركة والإجراءات السريعة (النصية والصور) */}
-              <div className="mb-4 rounded-2xl bg-white border border-slate-200/90 p-2 sm:p-2.5 shadow-2xs space-y-2">
+              <div className="mb-3.5 rounded-2xl bg-white border border-slate-200/90 p-2 sm:p-2.5 shadow-2xs space-y-2">
                 {/* الصف 1: المشاركة النصية الفورية (إرسال تقرير نصي + تهنئة نصية) */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[11px] font-black text-slate-500 px-1 shrink-0 flex items-center gap-1">
@@ -1403,25 +1442,27 @@ export default function Profile({
                 </div>
               </div>
 
-              {/* شريط تبويبات الموبايل لتقسيم محتوى الملف الشخصي براحة وبدون تمرير لا نهائي */}
-              <div className="sm:hidden flex items-center gap-1 p-1 bg-slate-100/90 rounded-2xl mb-4 border border-slate-200/80 sticky top-0 z-20 backdrop-blur-md shadow-2xs w-full max-w-full overflow-hidden">
+              {/* شريط تبويبات الملف الشخصي (متجاوب للموبايل والديسكتوب) */}
+              <div className="flex items-center gap-1 p-1 bg-slate-100/90 rounded-2xl mb-4 border border-slate-200/80 sticky top-0 z-20 backdrop-blur-md shadow-2xs w-full max-w-full overflow-x-auto no-scrollbar">
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("overview")}
-                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation ${mobileProfileTab === "overview"
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation ${
+                    mobileProfileTab === "overview"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
-                    }`}
+                  }`}
                 >
                   <span className="truncate block">الرئيسية</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("attendance")}
-                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${mobileProfileTab === "attendance"
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${
+                    mobileProfileTab === "attendance"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
-                    }`}
+                  }`}
                 >
                   <span className="truncate inline-block">الحضور</span>
                   {(player.attendance || []).length > 0 && (
@@ -1433,10 +1474,11 @@ export default function Profile({
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("payments")}
-                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${mobileProfileTab === "payments"
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${
+                    mobileProfileTab === "payments"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
-                    }`}
+                  }`}
                 >
                   <span className="truncate inline-block">الاشتراكات</span>
                   {(player.paymentHistory || []).length > 0 && (
@@ -1448,10 +1490,11 @@ export default function Profile({
                 <button
                   type="button"
                   onClick={() => setMobileProfileTab("purchases")}
-                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${mobileProfileTab === "purchases"
+                  className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${
+                    mobileProfileTab === "purchases"
                       ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                       : "text-slate-600 hover:text-slate-900"
-                    }`}
+                  }`}
                 >
                   <span className="truncate inline-block">المشتريات</span>
                   {purchasesSummary.count > 0 && (
@@ -1470,10 +1513,11 @@ export default function Profile({
                   <button
                     type="button"
                     onClick={() => setMobileProfileTab("events")}
-                    className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${mobileProfileTab === "events"
+                    className={`flex-1 min-w-0 py-2 px-1 text-center rounded-xl text-xs font-black transition-all active-press cursor-pointer touch-manipulation relative ${
+                      mobileProfileTab === "events"
                         ? "bg-white text-slate-900 shadow-xs border border-slate-200/70"
                         : "text-slate-600 hover:text-slate-900"
-                      }`}
+                    }`}
                   >
                     <span className="truncate inline-block">الفعاليات</span>
                     <span className="mr-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black rounded-full bg-amber-200 text-amber-900">
@@ -1484,48 +1528,9 @@ export default function Profile({
               </div>
 
               {/* قسم 1: النظرة العامة والاشتراك الحالي */}
-              <div className={mobileProfileTab === "overview" ? "block" : "hidden sm:block"}>
-                {/* بطاقة بيانات وهوية اللاعب الهادئة المتجاوبة */}
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 sm:p-5 mb-3.5 sm:mb-4">
-                  {/* الصف العلوي: الصورة الشخصية والاسم والفرع والسن */}
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-xl sm:text-2xl font-black text-white shadow-xs ring-2 ring-white">
-                      {player.photo ? (
-                        <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <span>{player.name.charAt(0)}</span>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <h2 className="truncate font-cairo text-base sm:text-2xl font-black text-slate-900">
-                        {player.name}
-                      </h2>
-
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold text-slate-700">
-                          🏢 {player.branch}
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-slate-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold text-slate-700">
-                          🎂 {currentAge} سنة
-                        </span>
-                        <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-bold shadow-xs ${getBeltStyle(player.belt).bg} ${getBeltStyle(player.belt).text} ${getBeltStyle(player.belt).border}`}>
-                          <span className={`h-2 w-2 rounded-full ${getBeltStyle(player.belt).dot}`} />
-                          🥋 حزام {player.belt || "أبيض"}
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 border border-red-200/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-black text-red-700 shadow-xs">
-                          مستوى {player.level || "A"}
-                        </span>
-                      </div>
-
-                      <span className="mt-1 block text-[10px] sm:text-[11px] font-semibold text-slate-400">
-                        تاريخ التسجيل: {registrationDate}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* قسم بيانات وتواصل ولي الأمر - بعرض كامل مريح ومثالي للموبايل والكمبيوتر */}
-                  <div className="mt-3 rounded-xl border border-slate-200/80 bg-white p-2.5 sm:p-3">
+              <div className={mobileProfileTab === "overview" ? "block" : "hidden"}>
+                {/* قسم بيانات وتواصل ولي الأمر - بعرض كامل مريح ومثالي للموبايل والكمبيوتر */}
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-3 sm:p-4 mb-3.5 shadow-2xs">
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-slate-600">
                         <Phone className="h-3.5 w-3.5 text-red-600 shrink-0" />
@@ -1601,8 +1606,6 @@ export default function Profile({
                       </button>
                     )}
                   </div>
-
-                </div>
 
                 {/* بطاقات الإحصائيات البسيطة المتناسقة */}
                 <div className="grid grid-cols-3 gap-2 sm:gap-2.5 pb-3.5 sm:pb-4">
@@ -1854,7 +1857,7 @@ export default function Profile({
               </div>
 
               {/* قسم 2: سجل الاشتراكات السابقة */}
-              <div className={mobileProfileTab === "payments" ? "block" : "hidden sm:block"}>
+              <div className={mobileProfileTab === "payments" ? "block" : "hidden"}>
                 <div className="border-t border-slate-100 pt-4 pb-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -1991,7 +1994,7 @@ export default function Profile({
               </div>
 
               {/* ━━━ قسم: المشتريات والمستلزمات (البدل والأدوات) ━━━ */}
-              <div className={mobileProfileTab === "purchases" ? "block" : "hidden sm:block"}>
+              <div className={mobileProfileTab === "purchases" ? "block" : "hidden"}>
                 <div className="border-t border-slate-100 pt-4 pb-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -2192,7 +2195,7 @@ export default function Profile({
 
               {/* ━━━ قسم 3: سجل الفعاليات والرحلات المشترك بها ━━━ */}
               {playerEvents.length > 0 && (
-                <div className={mobileProfileTab === "events" ? "block" : "hidden sm:block"}>
+                <div className={mobileProfileTab === "events" ? "block" : "hidden"}>
                   <div className="border-t border-slate-100 pt-4 pb-2">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
@@ -2245,7 +2248,7 @@ export default function Profile({
               )}
 
               {/* قسم 4: سجل الحضور والغياب */}
-              <div className={mobileProfileTab === "attendance" ? "block" : "hidden sm:block"}>
+              <div className={mobileProfileTab === "attendance" ? "block" : "hidden"}>
                 <div className="border-t border-slate-100 pt-4 pb-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -2349,8 +2352,8 @@ export default function Profile({
                 </div>
               </div>
 
-              {/* زر حذف اللاعب النهائي - يظهر في تبويب النظرة العامة على الموبايل وبشكل دائم على الديسكتوب */}
-              <div className={mobileProfileTab === "overview" ? "block" : "hidden sm:block"}>
+              {/* زر حذف اللاعب النهائي - يظهر في تبويب النظرة العامة */}
+              <div className={mobileProfileTab === "overview" ? "block" : "hidden"}>
                 <button
                   type="button"
                   className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50/50 px-4 py-3 text-xs font-bold text-rose-700 transition hover:bg-rose-100 hover:border-rose-300 active:scale-98 cursor-pointer"
