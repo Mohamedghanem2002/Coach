@@ -768,6 +768,7 @@ export default function Home() {
         }}
         eventsCount={events.length}
         onNavigateToBirthdays={() => {
+          setActiveView("birthdays");
           setMobileTab("birthdays");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
@@ -1405,6 +1406,7 @@ export default function Home() {
               branches={branches}
               captainName={captainName}
               onOpenPlayer={(player) => setSelected(player)}
+              onBack={() => setActiveView("players")}
             />
           </div>
         )}

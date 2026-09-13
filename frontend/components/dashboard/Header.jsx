@@ -77,7 +77,7 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 glass-nav border-b border-slate-200/80" dir="rtl">
-      <div className="mx-auto flex min-h-[56px] sm:min-h-[68px] w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] items-center justify-between gap-2 px-3 sm:px-8 py-2 overflow-hidden">
+      <div className="mx-auto flex min-h-[56px] sm:min-h-[68px] w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] items-center justify-between gap-2 px-3 sm:px-8 py-2">
 
         {/* Brand */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink min-w-0">
@@ -151,7 +151,9 @@ export default function Header({
               type="button"
               id="birthday-menu-btn"
               className={`relative flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border px-2.5 sm:px-3 text-xs font-black transition-all duration-200 cursor-pointer touch-manipulation active:scale-95 ${
-                todayBirthdays.length > 0
+                showBirthdayMenu || currentView === "birthdays"
+                  ? "border-rose-500 bg-rose-600 text-white shadow-sm shadow-rose-500/20"
+                  : todayBirthdays.length > 0
                   ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 hover:shadow-md animate-pulse-glow"
                   : "border-slate-200/80 bg-white/80 text-slate-600 hover:border-slate-300 hover:bg-white shadow-xs"
               }`}
@@ -168,16 +170,20 @@ export default function Header({
               <span className="hidden md:inline font-cairo">أعياد الميلاد</span>
 
               {todayBirthdays.length > 0 ? (
-                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black text-white shadow-xs">
+                <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-black shadow-xs ${
+                  showBirthdayMenu || currentView === "birthdays" ? "bg-white text-rose-600" : "bg-rose-600 text-white"
+                }`}>
                   {todayBirthdays.length}
                 </span>
               ) : upcomingBirthdays.length > 0 ? (
-                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-black text-white shadow-xs">
+                <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-black shadow-xs ${
+                  showBirthdayMenu || currentView === "birthdays" ? "bg-white text-amber-800" : "bg-amber-500 text-white"
+                }`}>
                   {upcomingBirthdays.length}
                 </span>
               ) : null}
 
-              {todayBirthdays.length > 0 && (
+              {todayBirthdays.length > 0 && !showBirthdayMenu && currentView !== "birthdays" && (
                 <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
@@ -219,7 +225,8 @@ export default function Header({
                       <button
                         type="button"
                         onClick={() => setShowBirthdayMenu(false)}
-                        className="sm:hidden flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 text-xs font-bold"
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 text-xs font-bold cursor-pointer transition-colors"
+                        title="إغلاق"
                       >
                         ✕
                       </button>
