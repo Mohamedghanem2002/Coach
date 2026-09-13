@@ -92,8 +92,8 @@ export async function generateBirthdayCardCanvas(
   if (!ctx) return null;
 
   const bday = getBirthdayInfo(player);
-  const dynamicAge = player.dateOfBirth ? calculateAge(player.dateOfBirth) : player.age;
-  const turningAge = bday?.turningAge ?? dynamicAge ?? 10;
+  const dynamicAge = calculateAge(player.dateOfBirth) ?? player.age ?? 0;
+  const turningAge = bday?.isToday ? dynamicAge : (bday?.turningAge ?? dynamicAge ?? 10);
   const beltStyle = getBeltStyle(player.belt);
 
   // Helper text drawing functions
@@ -767,33 +767,50 @@ export async function shareBirthdayCard(
   }
 }
 
+export async function copyBlobToClipboard(blob) {
+  if (!blob) return false;
+  if (typeof navigator === "undefined" || !navigator.clipboard?.write) {
+    return false;
+  }
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({ "image/png": blob }),
+    ]);
+    return true;
+  } catch (err) {
+    console.warn("Clipboard write failed:", err);
+    return false;
+  }
+}
+
 /**
  * Sends the Birthday Card directly to the player's WhatsApp chat
  * Automatically opens the chat registered in the player profile
- * Copies the card IMAGE to clipboard and downloads it so it is sent as a CARD (image), NOT text!
+ * Copies the card IMAGE to clipboard, reusing existingBlob if available!
  */
 export async function sendBirthdayCardViaWhatsApp(
   player,
   captainName = "كابتن الأكاديمية",
   options = {}
 ) {
-  const { onProgress, onNotice } = options;
+  const { onProgress, onNotice, existingBlob } = options;
 
   if (onProgress) onProgress(true);
-  if (onNotice) onNotice("⏳ جاري تجهيز كارت عيد الميلاد الفخم...");
 
   try {
-    const canvas = await generateBirthdayCardCanvas(player, captainName);
-    if (!canvas) {
-      if (onNotice) onNotice("❌ تعذر إنشاء كارت عيد الميلاد");
-      if (onProgress) onProgress(false);
-      return;
+    let blob = existingBlob;
+    if (!blob) {
+      if (onNotice) onNotice("⏳ جاري تجهيز كارت عيد الميلاد...");
+      const canvas = await generateBirthdayCardCanvas(player, captainName);
+      if (!canvas) {
+        if (onNotice) onNotice("❌ تعذر إنشاء كارت عيد الميلاد");
+        return;
+      }
+      blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
     }
 
-    const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
     if (!blob) {
-      if (onNotice) onNotice("❌ تعذر إنشاء صورة الكارت");
-      if (onProgress) onProgress(false);
+      if (onNotice) onNotice("❌ تعذر تجهيز صورة الكارت");
       return;
     }
 
@@ -805,65 +822,46 @@ export async function sendBirthdayCardViaWhatsApp(
       player.phone ||
       "";
     const cleanPhone = phone ? formatWhatsAppPhone(phone) : "";
+    const fileName = `كارت_عيد_ميلاد_${(player?.name || "اللاعب").replace(/\s+/g, "_")}.png`;
 
-    const fileName = `كارت_عيد_ميلاد_${player.name.replace(/\s+/g, "_")}.png`;
-
-    // Mark player's birthday as congratulated immediately
+    // 1. Mark player's birthday as congratulated immediately
     markBirthdayCongratulated(player._id);
 
-    // 1. Copy card image directly to clipboard
-    let copied = false;
-    if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
+    // 2. Fast copy card image directly to clipboard
+    const copied = await copyBlobToClipboard(blob);
+
+    // 3. Fallback auto-save if clipboard is not supported
+    if (!copied) {
       try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob }),
-        ]);
-        copied = true;
-      } catch (clipErr) {
-        console.warn("Clipboard write failed:", clipErr);
-      }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 2500);
+      } catch (_) {}
     }
 
-    // 2. Auto-save / download card image to device
-    try {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 2500);
-    } catch (_) {}
+    // 4. Open WhatsApp directly (to player's chat or general selection)
+    openWhatsAppDirect(cleanPhone);
 
-    // 3. Open WhatsApp chat registered in the player's profile WITHOUT text
-    // (so the chat opens cleanly and the coach can paste the card image directly!)
     if (cleanPhone) {
-      openWhatsAppDirect(cleanPhone);
       if (onNotice) {
         onNotice(
           copied
-            ? `✓ تم فتح شات ولي الأمر (${cleanPhone}) ونسخ الكارت للحافظة! اضغط لصق (Paste) لإرسال الكارت كصورة 🖼️`
-            : `✓ تم فتح شات ولي الأمر (${cleanPhone}) وحفظ الكارت بجهازك لإرساله فوراً 🖼️`
+            ? `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) ونسخ الكارت للحافظة! الصق الصورة (Paste) ثم أرسلها 🥋`
+            : `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) وحفظ الكارت بجهازك لإرساله فوراً 🥋`
         );
       }
     } else {
-      // If no phone number is registered in profile, offer native share
-      const file = new File([blob], fileName, { type: "image/png" });
-      if (
-        typeof navigator !== "undefined" &&
-        navigator.canShare &&
-        navigator.canShare({ files: [file] })
-      ) {
-        await navigator.share({
-          files: [file],
-          title: `كارت عيد ميلاد ${player.name}`,
-        });
-      } else {
-        openWhatsAppDirect("");
-      }
       if (onNotice) {
-        onNotice("⚠️ لا يوجد هاتف مسجل ببروفايل اللاعب! تم نسخ الكارت وحفظه بجهازك 🖼️");
+        onNotice(
+          copied
+            ? "✓ تم نسخ الكارت للحافظة وفتح واتساب! اختر المحادثة المطلوبة ثم الصق الصورة (Paste)"
+            : "✓ تم حفظ الكارت بجهازك وفتح واتساب! اختر المحادثة المطلوبة لإرساله"
+        );
       }
     }
   } catch (err) {
@@ -872,34 +870,39 @@ export async function sendBirthdayCardViaWhatsApp(
       if (onNotice) onNotice("❌ حدث خطأ أثناء تجهيز كارت عيد الميلاد");
     }
   } finally {
-    if (onProgress) setTimeout(() => onProgress(false), 1200);
+    if (onProgress) setTimeout(() => onProgress(false), 800);
   }
 }
 
 /**
- * Downloads the high-resolution Birthday Card PNG directly
+ * Downloads the high-resolution Birthday Card PNG directly, reusing existingBlob if available
  */
 export async function downloadBirthdayCard(
   player,
   captainName = "كابتن الأكاديمية",
   options = {}
 ) {
-  const { onProgress, onNotice } = options;
+  const { onProgress, onNotice, existingBlob } = options;
   if (onProgress) onProgress(true);
-  if (onNotice) onNotice("⏳ جاري إنشاء وتحميل كارت عيد الميلاد...");
 
   try {
-    const canvas = await generateBirthdayCardCanvas(player, captainName);
-    if (!canvas) {
-      if (onNotice) onNotice("❌ تعذر إنشاء كارت عيد الميلاد");
-      return;
+    let blob = existingBlob;
+    if (!blob) {
+      if (onNotice) onNotice("⏳ جاري إنشاء وتحميل كارت عيد الميلاد...");
+      const canvas = await generateBirthdayCardCanvas(player, captainName);
+      if (!canvas) {
+        if (onNotice) onNotice("❌ تعذر إنشاء كارت عيد الميلاد");
+        return;
+      }
+      blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
     }
-    const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+
     if (!blob) {
       if (onNotice) onNotice("❌ تعذر إنشاء صورة الكارت");
       return;
     }
-    const fileName = `كارت_عيد_ميلاد_${player.name.replace(/\s+/g, "_")}.png`;
+
+    const fileName = `كارت_عيد_ميلاد_${(player?.name || "اللاعب").replace(/\s+/g, "_")}.png`;
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -908,11 +911,12 @@ export async function downloadBirthdayCard(
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 2500);
-    if (onNotice) onNotice("✓ تم تحميل كارت عيد الميلاد بجهازك بنجاح!");
+    if (onNotice) onNotice("✓ تم حفظ وتحميل كارت عيد الميلاد بجهازك بنجاح!");
   } catch (err) {
     console.error("Download birthday card error:", err);
     if (onNotice) onNotice("❌ حدث خطأ أثناء تحميل الكارت");
   } finally {
-    if (onProgress) setTimeout(() => onProgress(false), 1500);
+    if (onProgress) setTimeout(() => onProgress(false), 500);
   }
 }
+

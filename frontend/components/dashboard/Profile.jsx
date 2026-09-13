@@ -13,15 +13,15 @@ import {
   isBirthdayCongratulated,
   calculateAge,
   getPurchasesSummary,
+  formatWhatsAppPhone,
+  openWhatsAppDirect,
+  generateBirthdayWishText,
+  markBirthdayCongratulated,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 import ProfileCardModal from "./ProfileCardModal";
+import BirthdayCardModal from "./BirthdayCardModal";
 import PurchaseModal from "./PurchaseModal";
-import {
-  sendBirthdayCardViaWhatsApp,
-  shareBirthdayCard,
-  openWhatsAppDirect,
-} from "../../lib/birthday-card-utils";
 import {
   MessageCircle,
   Pencil,
@@ -38,6 +38,9 @@ import {
   Tag,
   Plus,
   Package,
+  PartyPopper,
+  Eye,
+  Cake,
 } from "lucide-react";
 
 
@@ -237,6 +240,8 @@ export default function Profile({
   // Card caching and sending
   const [cachedCardBlob, setCachedCardBlob] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
+  const [cachedBirthdayBlob, setCachedBirthdayBlob] = useState(null);
+  const [showBirthdayModal, setShowBirthdayModal] = useState(false);
 
   // Confirm delete player
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -244,11 +249,10 @@ export default function Profile({
 
   // Action loading states (double-click prevention)
   const [isSendingText, setIsSendingText] = useState(false);
+  const [isSendingBirthdayText, setIsSendingBirthdayText] = useState(false);
   const [isOpeningChat, setIsOpeningChat] = useState(false);
   const [isCallingGuardian, setIsCallingGuardian] = useState(false);
   const [isTogglingPayment, setIsTogglingPayment] = useState(false);
-  const [isSendingBirthdayCard, setIsSendingBirthdayCard] = useState(false);
-  const [isSharingBirthdayCard, setIsSharingBirthdayCard] = useState(false);
   const [birthdayCongratulated, setBirthdayCongratulated] = useState(false);
 
   useEffect(() => {
@@ -307,9 +311,7 @@ export default function Profile({
   const paymentRate = totalAmount > 0 ? Math.min(100, Math.round((paidAmount / totalAmount) * 100)) : 0;
   const birthdayInfo = getBirthdayInfo(player);
   const registrationDate = new Date(player.createdAt).toLocaleDateString("ar-EG");
-  const currentAge = player.dateOfBirth
-    ? calculateAge(player.dateOfBirth)
-    : player.age;
+  const currentAge = calculateAge(player.dateOfBirth) ?? player.age ?? 0;
 
   useEffect(() => {
     if (!profileNotice) return undefined;
@@ -333,21 +335,7 @@ export default function Profile({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player, attended, monthlyStatus, paymentMonth]);
 
-  function formatWhatsAppPhone(phone) {
-    if (!phone) return "";
-    let cleaned = toEnglishDigits(String(phone)).replace(/[^0-9]/g, "");
-    if (cleaned.startsWith("00")) cleaned = cleaned.slice(2);
-    if (cleaned.startsWith("01") && cleaned.length === 11) {
-      cleaned = "2" + cleaned;
-    } else if (cleaned.startsWith("1") && cleaned.length === 10) {
-      cleaned = "20" + cleaned;
-    }
-    return cleaned;
-  }
 
-  function openWhatsAppNative(cleanPhone, text = "", options = {}) {
-    openWhatsAppDirect(cleanPhone, text, options);
-  }
 
   function openGuardianChat() {
     if (isOpeningChat) return;
@@ -366,7 +354,7 @@ export default function Profile({
     setTimeout(() => setIsOpeningChat(false), 1000);
   }
 
-  function shareOnWhatsApp() {
+  function shareReportText() {
     if (isSendingText) return;
     setIsSendingText(true);
     const cleanPhone = formatWhatsAppPhone(guardianPhone);
@@ -421,7 +409,6 @@ export default function Profile({
       `👤 الاسم: ${player.name}`,
       `🎂 السن: ${currentAge} سنة`,
       ...(guardianPhone ? [`📞 ولي الأمر: ${guardianPhone}`] : []),
-
       `🏢 الصالة: ${player.branch}`,
       `📅 تاريخ التسجيل: ${registrationDate}`,
       "",
@@ -444,9 +431,30 @@ export default function Profile({
     ].join("\n");
 
     openWhatsAppDirect(cleanPhone, message);
-    setProfileNotice("✓ تم فتح تطبيق واتساب وإرسال التقرير النصي فوراً");
-    setTimeout(() => setIsSendingText(false), 1200);
+    setProfileNotice(
+      cleanPhone
+        ? `✓ تم فتح تطبيق واتساب لولي الأمر وإرسال التقرير النصي فوراً`
+        : "✓ تم فتح تطبيق واتساب لاختيار المحادثة وإرسال التقرير النصي فوراً"
+    );
+    setTimeout(() => setIsSendingText(false), 800);
   }
+
+  function shareBirthdayText() {
+    if (isSendingBirthdayText) return;
+    setIsSendingBirthdayText(true);
+    const cleanPhone = formatWhatsAppPhone(guardianPhone);
+    const wishText = generateBirthdayWishText(player, captainName);
+    markBirthdayCongratulated(player._id);
+    openWhatsAppDirect(cleanPhone, wishText);
+    setProfileNotice(
+      cleanPhone
+        ? `✓ تم فتح تطبيق واتساب لولي الأمر وإرسال التهنئة النصية فوراً 🎉`
+        : "✓ تم فتح تطبيق واتساب لاختيار المحادثة وإرسال التهنئة النصية فوراً 🎉"
+    );
+    setTimeout(() => setIsSendingBirthdayText(false), 800);
+  }
+
+  const shareOnWhatsApp = shareReportText;
 
   async function handleSavePurchase(payload) {
     try {
@@ -1305,53 +1313,92 @@ export default function Profile({
           ) : (
             /* ════════════ العرض الأساسي البسيط المريح ════════════ */
             <>
-              {/* شريط الإجراءات السريعة الدائم (مشاركة البطاقة، تقرير واتساب، تعديل) - ظاهر دائماً على كافة الشاشات والتبويبات */}
-              <div className="mb-3.5 flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-slate-50/90 border border-slate-200/80 shadow-2xs">
-                <div className="flex items-center gap-1.5 flex-1 overflow-x-auto no-scrollbar">
-                  {/* زر 1: مشاركة بطاقة اللاعب كصورة */}
-                  <button
-                    type="button"
-                    onClick={() => setShowCardModal(true)}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:brightness-110 px-3 py-2 text-xs font-black text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
-                    title="معاينة ومشاركة بطاقة اللاعب كصورة وإرسالها لشات واتساب مباشرة"
-                  >
-                    <Share2 className="h-3.5 w-3.5" />
-                    <span>مشاركة البطاقة كصورة 🖼️</span>
-                  </button>
+              {/* شريط المشاركة والإجراءات السريعة (النصية والصور) */}
+              <div className="mb-4 rounded-2xl bg-white border border-slate-200/90 p-2 sm:p-2.5 shadow-2xs space-y-2">
+                {/* الصف 1: المشاركة النصية الفورية (إرسال تقرير نصي + تهنئة نصية) */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-black text-slate-500 px-1 shrink-0 flex items-center gap-1">
+                    <span>💬</span>
+                    <span>مشاركة نصية:</span>
+                  </span>
 
-                  {/* زر 2: إرسال تقرير نصي فوري */}
+                  {/* إجراء نصي 1: إرسال تقرير نصي */}
                   <button
                     type="button"
                     disabled={isSendingText}
-                    onClick={shareOnWhatsApp}
-                    className="flex items-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 text-xs font-bold text-emerald-800 transition active:scale-95 disabled:opacity-60 cursor-pointer shrink-0"
-                    title="إرسال تقرير نصي شامل بالحضور والاشتراكات لولي الأمر عبر واتساب فوراً"
+                    onClick={shareReportText}
+                    className="flex items-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 text-xs font-black text-emerald-800 transition active:scale-95 disabled:opacity-60 cursor-pointer shrink-0"
+                    title="إرسال تقرير نصي شامل بالحضور والاشتراكات لولي الأمر عبر واتساب فوراً من أول نقرة"
                   >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    <span>تقرير واتساب</span>
+                    <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>إرسال تقرير نصي</span>
                   </button>
 
-                  {/* زر 3: تعديل بيانات اللاعب */}
+                  {/* إجراء نصي 2: تهنئة نصية */}
                   <button
                     type="button"
-                    onClick={() => {
-                      setEditName(player.name);
-                      const _d = (player.dateOfBirth || "").split("-");
-                      setEditDobYear(_d[0] || "");
-                      setEditDobMonth(_d[1] || "");
-                      setEditDobDay(_d[2] || "");
-                      setEditGuardianPhone(guardianPhone);
-                      setEditBranch(player.branch);
-                      setEditBelt(player.belt || "أبيض");
-                      setEditLevel(player.level || "A");
-                      setEditPhoto(player.photo || "");
-                      setIsEditing(true);
-                    }}
-                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition active:scale-95 cursor-pointer shrink-0"
-                    title="تعديل بيانات اللاعب"
+                    disabled={isSendingBirthdayText}
+                    onClick={shareBirthdayText}
+                    className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-3 py-2 text-xs font-black text-amber-900 transition active:scale-95 disabled:opacity-60 cursor-pointer shrink-0"
+                    title="إرسال تهنئة نصية بمناسبة عيد الميلاد عبر واتساب فوراً من أول نقرة"
                   >
-                    <Pencil className="h-3.5 w-3.5 text-slate-500" />
-                    <span>تعديل</span>
+                    <PartyPopper className="h-3.5 w-3.5 text-amber-600" />
+                    <span>تهنئة نصية 🎉</span>
+                  </button>
+
+                  <div className="mr-auto flex items-center gap-1.5">
+                    {/* تعديل بيانات اللاعب */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditName(player.name);
+                        const _d = (player.dateOfBirth || "").split("-");
+                        setEditDobYear(_d[0] || "");
+                        setEditDobMonth(_d[1] || "");
+                        setEditDobDay(_d[2] || "");
+                        setEditGuardianPhone(guardianPhone);
+                        setEditBranch(player.branch);
+                        setEditBelt(player.belt || "أبيض");
+                        setEditLevel(player.level || "A");
+                        setEditPhoto(player.photo || "");
+                        setIsEditing(true);
+                      }}
+                      className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-700 transition active:scale-95 cursor-pointer shrink-0"
+                      title="تعديل بيانات اللاعب"
+                    >
+                      <Pencil className="h-3 w-3 text-slate-500" />
+                      <span>تعديل</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* الصف 2: مشاركة الصور (بطاقة اللاعب + كارت التهنئة) - كلاهما بزر معاينة */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-slate-100">
+                  <span className="text-[11px] font-black text-slate-500 px-1 shrink-0 flex items-center gap-1">
+                    <span>🖼️</span>
+                    <span>مشاركة بالصور:</span>
+                  </span>
+
+                  {/* بطاقة اللاعب: زر معاينة */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCardModal(true)}
+                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:brightness-110 px-3 py-1.5 text-xs font-black text-white shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                    title="معاينة بطاقة اللاعب كصورة وحفظها أو إرسالها عبر واتساب"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>بطاقة اللاعب (معاينة)</span>
+                  </button>
+
+                  {/* كارت التهنئة: زر معاينة */}
+                  <button
+                    type="button"
+                    onClick={() => setShowBirthdayModal(true)}
+                    className="flex items-center gap-1.5 rounded-xl border border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 hover:from-rose-100 hover:to-amber-100 px-3 py-1.5 text-xs font-black text-rose-900 transition active:scale-95 cursor-pointer shrink-0"
+                    title="معاينة كارت تهنئة عيد الميلاد وحفظه أو إرساله عبر واتساب"
+                  >
+                    <Eye className="h-3.5 w-3.5 text-rose-600" />
+                    <span>كارت التهنئة (معاينة) 🎂</span>
                   </button>
                 </div>
               </div>
@@ -1781,54 +1828,27 @@ export default function Profile({
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
+                        {/* 1. تهنئة نصية فورية */}
                         <button
                           type="button"
-                          disabled={isSendingBirthdayCard || isSharingBirthdayCard}
-                          onClick={async () => {
-                            await sendBirthdayCardViaWhatsApp(player, captainName, {
-                              onProgress: setIsSendingBirthdayCard,
-                              onNotice: setProfileNotice,
-                            });
-                          }}
+                          disabled={isSendingBirthdayText}
+                          onClick={shareBirthdayText}
                           className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs"
-                          title="إرسال كارت التهنئة لشات واتساب ولي الأمر"
+                          title="إرسال تهنئة نصية لشات واتساب ولي الأمر فوراً من أول نقرة"
                         >
-                          {isSendingBirthdayCard ? (
-                            <>
-                              <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                              <span>جاري التجهيز...</span>
-                            </>
-                          ) : (
-                            <>
-                              <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                              <span>إرسال كارت التهنئة (واتساب)</span>
-                            </>
-                          )}
+                          <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                          <span>تهنئة نصية (واتساب) 💬</span>
                         </button>
 
+                        {/* 2. كارت التهنئة (معاينة) */}
                         <button
                           type="button"
-                          disabled={isSharingBirthdayCard || isSendingBirthdayCard}
-                          onClick={async () => {
-                            await shareBirthdayCard(player, captainName, {
-                              onProgress: setIsSharingBirthdayCard,
-                              onNotice: setProfileNotice,
-                            });
-                          }}
-                          className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 font-black text-amber-900 shadow-2xs hover:bg-amber-100 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs"
-                          title="مشاركة الكارت كصورة مباشرة"
+                          onClick={() => setShowBirthdayModal(true)}
+                          className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 font-black text-amber-900 shadow-2xs hover:bg-amber-100 active:scale-95 transition-all cursor-pointer text-xs"
+                          title="معاينة كارت التهنئة كصورة وحفظه أو إرساله عبر واتساب"
                         >
-                          {isSharingBirthdayCard ? (
-                            <>
-                              <span className="h-3.5 w-3.5 rounded-full border-2 border-amber-600 border-t-transparent animate-spin shrink-0" />
-                              <span>جاري...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Share2 className="h-3.5 w-3.5 shrink-0 text-amber-700" />
-                              <span>مشاركة كصورة</span>
-                            </>
-                          )}
+                          <Eye className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+                          <span>كارت التهنئة (معاينة) 🖼️</span>
                         </button>
                       </div>
                     </div>
@@ -2391,6 +2411,16 @@ export default function Profile({
           isOpen={showCardModal}
           onClose={() => setShowCardModal(false)}
           paymentMonth={paymentMonth}
+        />
+      )}
+
+      {showBirthdayModal && (
+        <BirthdayCardModal
+          player={player}
+          captainName={captainName}
+          cachedBlob={cachedBirthdayBlob}
+          isOpen={showBirthdayModal}
+          onClose={() => setShowBirthdayModal(false)}
         />
       )}
 

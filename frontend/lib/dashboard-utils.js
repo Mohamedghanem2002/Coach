@@ -71,14 +71,37 @@ export function paymentStatusFor(player, month) {
   return getPaymentDetailsFor(player, month).status;
 }
 
-export function calculateAge(dateOfBirth, referenceDate) {
+export function parseDateOfBirth(dateOfBirth) {
   if (!dateOfBirth) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateOfBirth).trim());
-  if (!match) return null;
+  const clean = toEnglishDigits(String(dateOfBirth).trim())
+    .replace(/[\/\.]/g, "-")
+    .replace(/T.*$/, "");
+  // Match YYYY-M-D or YYYY-MM-DD
+  let match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(clean);
+  if (match) {
+    const year = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const day = parseInt(match[3], 10);
+    if (year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return { year, month, day };
+    }
+  }
+  // Match D-M-YYYY or DD-MM-YYYY
+  match = /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(clean);
+  if (match) {
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+    if (year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return { year, month, day };
+    }
+  }
+  return null;
+}
 
-  const birthYear = parseInt(match[1], 10);
-  const birthMonth = parseInt(match[2], 10);
-  const birthDay = parseInt(match[3], 10);
+export function calculateAge(dateOfBirth, referenceDate) {
+  const parsed = parseDateOfBirth(dateOfBirth);
+  if (!parsed) return null;
 
   const ref =
     referenceDate instanceof Date && !isNaN(referenceDate.getTime())
@@ -89,11 +112,11 @@ export function calculateAge(dateOfBirth, referenceDate) {
   const refMonth = ref.getMonth() + 1;
   const refDay = ref.getDate();
 
-  let age = refYear - birthYear;
-  if (refMonth < birthMonth || (refMonth === birthMonth && refDay < birthDay)) {
+  let age = refYear - parsed.year;
+  if (refMonth < parsed.month || (refMonth === parsed.month && refDay < parsed.day)) {
     age -= 1;
   }
-  return age >= 0 ? age : 0;
+  return Math.max(0, age);
 }
 
 export function normalizePlayer(player) {
@@ -147,12 +170,8 @@ export function getPurchasesSummary(player) {
  */
 export function getBirthdayInfo(player, referenceDate) {
   if (!player || !player.dateOfBirth) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(player.dateOfBirth).trim());
-  if (!match) return null;
-
-  const birthYear = parseInt(match[1], 10);
-  const birthMonth = parseInt(match[2], 10); // 1-12
-  const birthDay = parseInt(match[3], 10);
+  const parsed = parseDateOfBirth(player.dateOfBirth);
+  if (!parsed) return null;
 
   const ref =
     referenceDate instanceof Date && !isNaN(referenceDate.getTime())
@@ -163,20 +182,20 @@ export function getBirthdayInfo(player, referenceDate) {
   const refMonth = ref.getMonth() + 1; // 1-12
   const refDay = ref.getDate();
 
-  const isToday = birthMonth === refMonth && birthDay === refDay;
+  const isToday = parsed.month === refMonth && parsed.day === refDay;
 
   // Next birthday calculation
   let nextBdayYear = refYear;
-  if (birthMonth < refMonth || (birthMonth === refMonth && birthDay < refDay)) {
+  if (parsed.month < refMonth || (parsed.month === refMonth && parsed.day < refDay)) {
     nextBdayYear = refYear + 1;
   }
 
   const currentRef = new Date(refYear, refMonth - 1, refDay);
-  const nextBday = new Date(nextBdayYear, birthMonth - 1, birthDay);
+  const nextBday = new Date(nextBdayYear, parsed.month - 1, parsed.day);
   const diffTime = nextBday.getTime() - currentRef.getTime();
   const daysLeft = Math.max(0, Math.round(diffTime / (1000 * 60 * 60 * 24)));
 
-  const turningAge = nextBdayYear - birthYear;
+  const turningAge = nextBdayYear - parsed.year;
 
   const monthNames = [
     "يناير",
@@ -192,7 +211,7 @@ export function getBirthdayInfo(player, referenceDate) {
     "نوفمبر",
     "ديسمبر",
   ];
-  const dateFormatted = `${birthDay} ${monthNames[birthMonth - 1]}`;
+  const dateFormatted = `${parsed.day} ${monthNames[parsed.month - 1]}`;
 
   return {
     isToday,
@@ -201,9 +220,9 @@ export function getBirthdayInfo(player, referenceDate) {
     daysLeft,
     turningAge,
     dateFormatted,
-    birthDay,
-    birthMonth,
-    birthYear,
+    birthDay: parsed.day,
+    birthMonth: parsed.month,
+    birthYear: parsed.year,
   };
 }
 
@@ -294,13 +313,21 @@ export function toEnglishDigits(str) {
 
 export function formatWhatsAppPhone(phone) {
   if (!phone) return "";
-  let clean = toEnglishDigits(String(phone)).replace(/[^0-9]/g, "");
-  if (clean.startsWith("00")) clean = clean.slice(2);
+  let clean = toEnglishDigits(String(phone)).trim();
   if (clean.startsWith("+")) clean = clean.slice(1);
-  if (clean.startsWith("01") && clean.length === 11) {
+  clean = clean.replace(/[^0-9]/g, "");
+  if (!clean) return "";
+
+  if (clean.startsWith("00")) clean = clean.slice(2);
+
+  // Egypt mobile normalization:
+  // 010, 011, 012, 015 with 11 digits -> 201... (12 digits)
+  if (/^01[0125]\d{8}$/.test(clean)) {
     clean = "2" + clean;
-  } else if (clean.startsWith("1") && clean.length === 10) {
+  } else if (/^1[0125]\d{8}$/.test(clean)) {
     clean = "20" + clean;
+  } else if (/^201[0125]\d{8}$/.test(clean)) {
+    // Already normalized with Egypt country code
   }
   return clean;
 }
@@ -310,10 +337,8 @@ export function generateBirthdayWishText(
   captainName = "كابتن الأكاديمية"
 ) {
   const bday = getBirthdayInfo(player);
-  const age =
-    bday?.turningAge ??
-    (player?.dateOfBirth ? calculateAge(player.dateOfBirth) : player?.age) ??
-    "";
+  const currentAge = calculateAge(player?.dateOfBirth) ?? player?.age ?? 0;
+  const age = bday?.isToday ? currentAge : (bday?.turningAge ?? currentAge ?? "");
   const name = player?.name || "البطل";
 
   return `🎉 النهارده يوم مميز لبطلنا! 🥋❤️
@@ -326,49 +351,54 @@ export function generateBirthdayWishText(
 }
 
 
-export function openWhatsAppDirect(cleanPhone, text = "") {
+export function openWhatsAppDirect(phone, text = "") {
   if (typeof window === "undefined") return;
 
-  const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
-  const paramOnly = text ? `text=${encodeURIComponent(text)}` : "";
+  const cleanPhone = formatWhatsAppPhone(phone);
+  const encodedText = text ? encodeURIComponent(text) : "";
 
   const isMobile =
     typeof navigator !== "undefined" &&
     /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
 
-  if (cleanPhone) {
-    if (isMobile) {
-      const appUrl = `whatsapp://send?phone=${cleanPhone}${encodedText}`;
-      const fallbackUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}${encodedText}`;
-
-      try {
-        const a = document.createElement("a");
-        a.href = appUrl;
-        a.rel = "noopener noreferrer";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          if (a.parentNode) document.body.removeChild(a);
-        }, 300);
-
-        setTimeout(() => {
-          if (document.hasFocus && document.hasFocus()) {
-            window.open(fallbackUrl, "_blank");
-          }
-        }, 1200);
-      } catch (_) {
-        window.location.href = appUrl;
-      }
+  if (isMobile) {
+    let appUrl = "";
+    if (cleanPhone) {
+      appUrl = encodedText
+        ? `whatsapp://send?phone=${cleanPhone}&text=${encodedText}`
+        : `whatsapp://send?phone=${cleanPhone}`;
     } else {
-      const webUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}${encodedText}`;
-      window.open(webUrl, "_blank", "noopener,noreferrer");
+      appUrl = encodedText
+        ? `whatsapp://send?text=${encodedText}`
+        : `whatsapp://send`;
+    }
+
+    try {
+      const a = document.createElement("a");
+      a.href = appUrl;
+      a.target = "_top";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) document.body.removeChild(a);
+      }, 300);
+    } catch (_) {
+      window.location.href = appUrl;
     }
   } else {
-    if (isMobile) {
-      window.location.href = text ? `whatsapp://send?${paramOnly}` : `whatsapp://send`;
+    // Desktop: WhatsApp Web
+    let webUrl = "";
+    if (cleanPhone) {
+      webUrl = encodedText
+        ? `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
+        : `https://web.whatsapp.com/send?phone=${cleanPhone}`;
     } else {
-      window.open("https://web.whatsapp.com", "_blank", "noopener,noreferrer");
+      webUrl = encodedText
+        ? `https://web.whatsapp.com/send?text=${encodedText}`
+        : `https://web.whatsapp.com`;
     }
+    window.open(webUrl, "_blank", "noopener,noreferrer");
   }
 }
 

@@ -22,15 +22,27 @@ function toEnglishDigits(str) {
     .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 1776));
 }
 function ageFromDateOfBirth(dateOfBirth) {
-  const normalizedDob = toEnglishDigits(dateOfBirth);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDob)) return null;
-  const [year, month, day] = normalizedDob.split("-").map(Number);
-  const birthday = new Date(year, month - 1, day);
-  if (
-    birthday.getFullYear() !== year ||
-    birthday.getMonth() !== month - 1 ||
-    birthday.getDate() !== day
-  ) {
+  if (!dateOfBirth) return null;
+  const clean = toEnglishDigits(String(dateOfBirth).trim())
+    .replace(/[\/\.]/g, "-")
+    .replace(/T.*$/, "");
+  let year, month, day;
+  let match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(clean);
+  if (match) {
+    year = parseInt(match[1], 10);
+    month = parseInt(match[2], 10);
+    day = parseInt(match[3], 10);
+  } else {
+    match = /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(clean);
+    if (match) {
+      day = parseInt(match[1], 10);
+      month = parseInt(match[2], 10);
+      year = parseInt(match[3], 10);
+    } else {
+      return null;
+    }
+  }
+  if (year <= 1900 || month < 1 || month > 12 || day < 1 || day > 31) {
     return null;
   }
   const [currentYear, currentMonth, currentDay] = appDate()
@@ -40,7 +52,7 @@ function ageFromDateOfBirth(dateOfBirth) {
   if (currentMonth < month || (currentMonth === month && currentDay < day)) {
     age -= 1;
   }
-  return age;
+  return Math.max(0, age);
 }
 function serializePlayer(player) {
   const currentMonth = appDate().slice(0, 7);

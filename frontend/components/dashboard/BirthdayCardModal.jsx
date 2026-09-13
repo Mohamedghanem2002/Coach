@@ -1,26 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X, Download, Send, ClipboardCopy, Share2, MessageCircle } from "lucide-react";
+import { X, Download, MessageCircle } from "lucide-react";
 import {
   generateBirthdayCardCanvas,
   sendBirthdayCardViaWhatsApp,
-  shareBirthdayCard,
   downloadBirthdayCard,
+  copyBlobToClipboard,
 } from "../../lib/birthday-card-utils";
+import { formatWhatsAppPhone, openWhatsAppDirect } from "../../lib/dashboard-utils";
 
 export default function BirthdayCardModal({
   player,
   captainName = "كابتن الأكاديمية",
+  cachedBlob,
   isOpen,
   onClose,
 }) {
   const [dataUrl, setDataUrl] = useState("");
-  const [blob, setBlob] = useState(null);
+  const [blob, setBlob] = useState(cachedBlob || null);
   const [loadError, setLoadError] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState("");
 
   const isLoading = isOpen && !dataUrl && !loadError;
@@ -32,11 +32,28 @@ export default function BirthdayCardModal({
     player?.mobile ||
     player?.phone ||
     "";
+  const cleanPhone = phone ? formatWhatsAppPhone(phone) : "";
 
   useEffect(() => {
     if (!isOpen || !player) return undefined;
 
     let isMounted = true;
+
+    if (cachedBlob) {
+      const url = URL.createObjectURL(cachedBlob);
+      Promise.resolve().then(() => {
+        if (!isMounted) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        setBlob(cachedBlob);
+        setDataUrl(url);
+      });
+      return () => {
+        isMounted = false;
+        URL.revokeObjectURL(url);
+      };
+    }
 
     generateBirthdayCardCanvas(player, captainName)
       .then((canvas) => {
@@ -50,7 +67,7 @@ export default function BirthdayCardModal({
         setDataUrl(url);
 
         canvas.toBlob((b) => {
-          if (isMounted) {
+          if (isMounted && b) {
             setBlob(b);
           }
         }, "image/png");
@@ -66,41 +83,24 @@ export default function BirthdayCardModal({
       setLoadError(false);
       setNotice("");
     };
-  }, [isOpen, player, captainName]);
+  }, [isOpen, player, captainName, cachedBlob]);
 
   if (!isOpen || !player) return null;
 
-  const handleCopy = async () => {
-    if (!blob || !navigator.clipboard?.write) return;
-    try {
-      await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": blob }),
-      ]);
-      setCopied(true);
-      setNotice("✓ تم نسخ كارت عيد الميلاد للحافظة كصورة بنجاح!");
-      setTimeout(() => setCopied(false), 3000);
-    } catch (err) {
-      console.warn("Copy error:", err);
-    }
-  };
-
-  const handleSend = async () => {
-    await sendBirthdayCardViaWhatsApp(player, captainName, {
-      onProgress: setIsSending,
-      onNotice: setNotice,
-    });
-  };
-
-  const handleShare = async () => {
-    await shareBirthdayCard(player, captainName, {
-      onProgress: setIsSharing,
-      onNotice: setNotice,
-    });
-  };
-
   const handleDownload = async () => {
+    if (!blob) return;
     await downloadBirthdayCard(player, captainName, {
+      existingBlob: blob,
       onProgress: setIsDownloading,
+      onNotice: setNotice,
+    });
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!blob) return;
+    await sendBirthdayCardViaWhatsApp(player, captainName, {
+      existingBlob: blob,
+      onProgress: setIsSending,
       onNotice: setNotice,
     });
   };
@@ -118,7 +118,7 @@ export default function BirthdayCardModal({
             <span className="text-xl">🎂</span>
             <div>
               <h3 className="font-cairo text-xs sm:text-sm font-black text-amber-300">
-                كارت تهنئة عيد الميلاد
+                معاينة كارت تهنئة عيد الميلاد
               </h3>
               <p className="text-[10px] text-slate-400">
                 للبطل: {player.name} {phone ? `• (${phone})` : ""}
@@ -144,17 +144,18 @@ export default function BirthdayCardModal({
               </span>
             </div>
           ) : dataUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={dataUrl}
               alt={`كارت عيد ميلاد ${player.name}`}
-              className="max-h-[55vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
+              className="max-h-[52vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
             />
           ) : (
             <span className="text-xs text-rose-400">تعذر إنشاء الكارت</span>
           )}
         </div>
 
-        {/* Notice alert */}
+        {/* Notice feedback */}
         {notice && (
           <div
             className={`mb-3 rounded-xl p-2.5 text-center text-xs font-bold transition leading-relaxed ${
@@ -169,82 +170,51 @@ export default function BirthdayCardModal({
           </div>
         )}
 
-        {/* Actions */}
-        <div className="space-y-2">
-          {/* Main Action 1: Open Player Chat & Paste Card */}
+        {/* Under preview: TWO clear actions: [ حفظ ] [ إرسال عبر واتساب ] */}
+        <div className="grid grid-cols-2 gap-2.5 pt-1">
+          {/* Action 1: حفظ */}
           <button
             type="button"
-            disabled={isLoading || isSending}
-            onClick={handleSend}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 p-3 text-xs font-black text-white shadow-lg shadow-emerald-900/30 transition active:scale-95 disabled:opacity-60 cursor-pointer"
+            disabled={isLoading || isDownloading || !blob}
+            onClick={handleDownload}
+            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 p-3 text-xs font-black text-slate-100 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer min-h-[48px]"
+            title="تحميل وحفظ كارت عيد الميلاد بجهازك"
+          >
+            {isDownloading ? (
+              <>
+                <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                <span>جاري الحفظ...</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 shrink-0 text-amber-400" />
+                <span>حفظ</span>
+              </>
+            )}
+          </button>
+
+          {/* Action 2: إرسال عبر واتساب */}
+          <button
+            type="button"
+            disabled={isLoading || isSending || !blob}
+            onClick={handleSendWhatsApp}
+            className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 p-3 text-xs font-black text-white shadow-lg shadow-emerald-900/40 transition active:scale-95 disabled:opacity-50 cursor-pointer min-h-[48px]"
+            title="نسخ الكارت وفتح شات واتساب مباشرة لإرساله كصورة"
           >
             {isSending ? (
               <>
                 <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                <span>جاري تجهيز الكارت وفتح الشات...</span>
+                <span>جاري الإرسال...</span>
               </>
             ) : (
               <>
                 <MessageCircle className="h-4 w-4 shrink-0" />
-                <span>إرسال لشات اللاعب (واتساب) 💬</span>
+                <span>إرسال عبر واتساب</span>
               </>
             )}
           </button>
-
-          {/* Main Action 2: Share Card Directly as Image */}
-          <button
-            type="button"
-            disabled={isLoading || isSharing}
-            onClick={handleShare}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:brightness-110 p-2.5 text-xs font-black text-white shadow-md shadow-orange-950/40 transition active:scale-95 disabled:opacity-60 cursor-pointer"
-          >
-            {isSharing ? (
-              <>
-                <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                <span>جاري المشاركة...</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="h-4 w-4 shrink-0" />
-                <span>مشاركة الكارت كصورة مباشرة 📤</span>
-              </>
-            )}
-          </button>
-
-          {/* Sub actions: Copy & Download */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button
-              type="button"
-              disabled={isLoading || !blob}
-              onClick={handleCopy}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 p-2.5 text-[11px] sm:text-xs font-bold text-slate-200 transition active:scale-95 cursor-pointer"
-            >
-              <ClipboardCopy className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-              <span className="truncate">{copied ? "✓ تم النسخ!" : "نسخ الكارت"}</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isLoading || isDownloading}
-              onClick={handleDownload}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 p-2.5 text-[11px] sm:text-xs font-bold text-slate-200 transition active:scale-95 cursor-pointer"
-            >
-              {isDownloading ? (
-                <>
-                  <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                  <span className="truncate">جاري...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                  <span className="truncate">تحميل بالجهاز</span>
-                </>
-              )}
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 }
-
