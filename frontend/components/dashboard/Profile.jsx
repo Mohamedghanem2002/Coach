@@ -310,6 +310,7 @@ export default function Profile({
   const { totalAmount, paidAmount, remainingAmount } = paymentDetails;
   const paymentRate = totalAmount > 0 ? Math.min(100, Math.round((paidAmount / totalAmount) * 100)) : 0;
   const birthdayInfo = getBirthdayInfo(player);
+  const hasActiveBirthday = Boolean(birthdayInfo?.isToday || birthdayInfo?.daysLeft === 1);
   const registrationDate = new Date(player.createdAt).toLocaleDateString("ar-EG");
   const currentAge = calculateAge(player.dateOfBirth) ?? player.age ?? 0;
 
@@ -1373,17 +1374,19 @@ export default function Profile({
                     <span>إرسال تقرير نصي</span>
                   </button>
 
-                  {/* إجراء نصي 2: تهنئة نصية */}
-                  <button
-                    type="button"
-                    disabled={isSendingBirthdayText}
-                    onClick={shareBirthdayText}
-                    className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-3 py-2 text-xs font-black text-amber-900 transition active:scale-95 disabled:opacity-60 cursor-pointer shrink-0"
-                    title="إرسال تهنئة نصية بمناسبة عيد الميلاد عبر واتساب فوراً من أول نقرة"
-                  >
-                    <PartyPopper className="h-3.5 w-3.5 text-amber-600" />
-                    <span>تهنئة نصية 🎉</span>
-                  </button>
+                  {/* إجراء نصي 2: تهنئة نصية - يظهر فقط في بروفايل اللاعبين الذين حل موعد عيد ميلادهم */}
+                  {hasActiveBirthday && (
+                    <button
+                      type="button"
+                      disabled={isSendingBirthdayText}
+                      onClick={shareBirthdayText}
+                      className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-3 py-2 text-xs font-black text-amber-900 transition active:scale-95 disabled:opacity-60 cursor-pointer shrink-0"
+                      title="إرسال تهنئة نصية بمناسبة عيد الميلاد عبر واتساب فوراً من أول نقرة"
+                    >
+                      <PartyPopper className="h-3.5 w-3.5 text-amber-600" />
+                      <span>تهنئة نصية 🎉</span>
+                    </button>
+                  )}
 
                   <div className="mr-auto flex items-center gap-1.5">
                     {/* تعديل بيانات اللاعب */}
@@ -1411,7 +1414,7 @@ export default function Profile({
                   </div>
                 </div>
 
-                {/* الصف 2: مشاركة الصور (بطاقة اللاعب + كارت التهنئة) - كلاهما بزر معاينة */}
+                {/* الصف 2: مشاركة الصور (بطاقة اللاعب + كارت التهنئة) */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-slate-100">
                   <span className="text-[11px] font-black text-slate-500 px-1 shrink-0 flex items-center gap-1">
                     <span>🖼️</span>
@@ -1429,16 +1432,18 @@ export default function Profile({
                     <span>بطاقة اللاعب (معاينة)</span>
                   </button>
 
-                  {/* كارت التهنئة: زر معاينة */}
-                  <button
-                    type="button"
-                    onClick={() => setShowBirthdayModal(true)}
-                    className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 text-xs font-black text-rose-800 transition active:scale-95 cursor-pointer shrink-0"
-                    title="معاينة كارت تهنئة عيد الميلاد وحفظه أو إرساله عبر واتساب"
-                  >
-                    <Eye className="h-3.5 w-3.5 text-rose-600" />
-                    <span>كارت التهنئة (معاينة) 🎂</span>
-                  </button>
+                  {/* كارت التهنئة: زر معاينة - يظهر فقط في بروفايل اللاعبين الذين حل موعد عيد ميلادهم */}
+                  {hasActiveBirthday && (
+                    <button
+                      type="button"
+                      onClick={() => setShowBirthdayModal(true)}
+                      className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 text-xs font-black text-rose-800 transition active:scale-95 cursor-pointer shrink-0"
+                      title="معاينة كارت تهنئة عيد الميلاد وحفظه أو إرساله عبر واتساب"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-rose-600" />
+                      <span>كارت التهنئة (معاينة) 🎂</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1811,7 +1816,7 @@ export default function Profile({
                 </div>
 
                 {/* تنبيه عيد الميلاد إن وُجد: اليوم أو غداً (قبلها بيوم) - يظل متاحاً وظاهراً طوال فترة عيد الميلاد */}
-                {(birthdayInfo?.isToday || birthdayInfo?.daysLeft === 1) && (
+                {hasActiveBirthday && (
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-xs animate-slide-up">
                     <div className="flex items-center gap-2.5">
                       <span className="text-2xl animate-bounce">🎂</span>
