@@ -19,6 +19,10 @@ import {
 import {
   getBirthdayInfo,
   isBirthdayCongratulated,
+  markBirthdayCongratulated,
+  formatWhatsAppPhone,
+  openWhatsAppDirect,
+  generateBirthdayWishText,
   BELT_HEX,
 } from "../../lib/dashboard-utils";
 import {
@@ -43,18 +47,20 @@ export default function BirthdayReminder({
   const [sendingPlayerId, setSendingPlayerId] = useState(null);
   const [sharingPlayerId, setSharingPlayerId] = useState(null);
   const [reminderNotice, setReminderNotice] = useState("");
-  const [congratulateTick, setCongratulateTick] = useState(0);
   const [previewPlayer, setPreviewPlayer] = useState(null);
+  const [congratulateTick, setCongratulateTick] = useState(0);
 
-  // Listen to congratulate events to refresh live
+  // Sync state if a player is congratulated anywhere
   useEffect(() => {
-    const handleCongratulated = () => setCongratulateTick((t) => t + 1);
+    function handleCongratulated() {
+      setCongratulateTick((t) => t + 1);
+    }
     window.addEventListener("birthday_congratulated", handleCongratulated);
     return () =>
       window.removeEventListener("birthday_congratulated", handleCongratulated);
   }, []);
 
-  // Filter players by branch first
+  // Filter players by branch
   const scopedPlayers = useMemo(() => {
     if (!Array.isArray(players)) return [];
     if (selectedBranch === "all") return players;
@@ -92,8 +98,8 @@ export default function BirthdayReminder({
       if (bday.isToday) {
         today.push(playerWithBday);
         if (!isWished) pendingCount += 1;
-      } else if (!isWished && bday.daysLeft === 1) {
-        // ONLY 1 day before (Tomorrow)
+      } else if (bday.daysLeft === 1) {
+        // ALWAYS keep in tomorrow list throughout the birthday window
         tomorrow.push(playerWithBday);
       }
     });
@@ -607,108 +613,50 @@ export default function BirthdayReminder({
                     </div>
                   </div>
 
-                  {/* ━━━ Mobile-First Touch Action System ━━━ */}
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-2">
-                    {/* Primary Button: Open WhatsApp Chat directly with copied Card */}
+                  {/* ━━━ Focused Actions: تهنئة نصية + معاينة + الملف ━━━ */}
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center gap-2">
+                    {/* 1. تهنئة نصية */}
                     <button
                       type="button"
-                      disabled={sendingPlayerId === player._id || sharingPlayerId === player._id}
-                      onClick={async () => {
-                        await sendBirthdayCardViaWhatsApp(player, captainName, {
-                          onProgress: (isBusy) =>
-                            setSendingPlayerId(isBusy ? player._id : null),
-                          onNotice: setReminderNotice,
-                        });
+                      onClick={() => {
+                        const cleanPhone = formatWhatsAppPhone(phone);
+                        const wishText = generateBirthdayWishText(player, captainName);
+                        markBirthdayCongratulated(player._id, now);
+                        openWhatsAppDirect(cleanPhone, wishText);
+                        setReminderNotice(
+                          cleanPhone
+                            ? `✓ تم فتح واتساب لولي أمر ${player.name} لإرسال التهنئة النصية 🎉`
+                            : `✓ تم فتح واتساب لاختيار المحادثة وإرسال التهنئة النصية لـ ${player.name} 🎉`
+                        );
                       }}
-                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-600/20 hover:brightness-110 active-press transition cursor-pointer disabled:opacity-60 min-h-[44px]"
-                      title={
-                        phone
-                          ? `إرسال كارت التهنئة لشات واتساب ولي الأمر (${phone})`
-                          : "إرسال كارت التهنئة عبر واتساب"
-                      }
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:brightness-110 active-press transition cursor-pointer min-h-[42px] text-xs font-black shadow-xs"
+                      title="إرسال تهنئة نصية فورية عبر واتساب"
                     >
-                      {sendingPlayerId === player._id ? (
-                        <>
-                          <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                          <span>جاري تجهيز الكارت وفتح الشات...</span>
-                        </>
-                      ) : (
-                        <>
-                          <MessageCircle className="h-4 w-4 shrink-0" />
-                          <span className="font-cairo">
-                            {isWished ? "إعادة إرسال الكارت (شات اللاعب)" : "إرسال كارت التهنئة (واتساب) 💬"}
-                          </span>
-                        </>
-                      )}
+                      <MessageCircle className="h-4 w-4 shrink-0" />
+                      <span>تهنئة نصية</span>
                     </button>
 
-                    {/* Secondary Row: Share as Image, Preview, Call, Profile */}
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {/* 1. Share as Image */}
-                      <button
-                        type="button"
-                        disabled={sharingPlayerId === player._id || sendingPlayerId === player._id}
-                        onClick={async () => {
-                          await shareBirthdayCard(player, captainName, {
-                            onProgress: (isBusy) =>
-                              setSharingPlayerId(isBusy ? player._id : null),
-                            onNotice: setReminderNotice,
-                          });
-                        }}
-                        className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-amber-300 bg-amber-50/90 text-amber-900 hover:bg-amber-100 active-press transition cursor-pointer min-h-[38px] text-[10px] sm:text-[11px] font-black"
-                        title="مشاركة الكارت كصورة مباشرة عبر التطبيقات"
-                      >
-                        {sharingPlayerId === player._id ? (
-                          <span className="h-3.5 w-3.5 rounded-full border-2 border-amber-600 border-t-transparent animate-spin shrink-0" />
-                        ) : (
-                          <Share2 className="h-3.5 w-3.5 text-amber-700 shrink-0" />
-                        )}
-                        <span>مشاركة</span>
-                      </button>
+                    {/* 2. معاينة */}
+                    <button
+                      type="button"
+                      onClick={() => setPreviewPlayer(player)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 active-press transition cursor-pointer min-h-[42px] text-xs font-black shadow-2xs"
+                      title="معاينة كارت التهنئة كصورة وحفظه أو مشاركته"
+                    >
+                      <Eye className="h-4 w-4 text-amber-700 shrink-0" />
+                      <span>معاينة</span>
+                    </button>
 
-                      {/* 2. Preview Modal */}
-                      <button
-                        type="button"
-                        onClick={() => setPreviewPlayer(player)}
-                        className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100 active-press transition cursor-pointer min-h-[38px] text-[10px] sm:text-[11px] font-black"
-                        title="معاينة وتحميل الكارت"
-                      >
-                        <Eye className="h-3.5 w-3.5 text-slate-600 shrink-0" />
-                        <span>معاينة</span>
-                      </button>
-
-                      {/* 3. Call */}
-                      {phone ? (
-                        <a
-                          href={`tel:${phone}`}
-                          className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 active-press transition min-h-[38px] text-[10px] sm:text-[11px] font-black text-center"
-                          title={`اتصال بولي الأمر (${phone})`}
-                        >
-                          <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                          <span>اتصال</span>
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-slate-200 bg-slate-50 text-slate-400 opacity-50 min-h-[38px] text-[10px] sm:text-[11px] font-bold"
-                        >
-                          <Phone className="h-3.5 w-3.5 shrink-0" />
-                          <span>اتصال</span>
-                        </button>
-                      )}
-
-                      {/* 4. Profile */}
-                      <button
-                        type="button"
-                        onClick={() => onOpenPlayer?.(player)}
-                        className="flex items-center justify-center gap-1 py-2 px-1 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active-press transition cursor-pointer min-h-[38px] text-[10px] sm:text-[11px] font-black"
-                        title="فتح الملف الشخصي"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                        <span>الملف</span>
-                      </button>
-                    </div>
+                    {/* 3. الملف */}
+                    <button
+                      type="button"
+                      onClick={() => onOpenPlayer?.(player)}
+                      className="flex items-center justify-center gap-1.5 py-2.5 px-3.5 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active-press transition cursor-pointer min-h-[42px] text-xs font-black shadow-2xs shrink-0"
+                      title="فتح الملف الشخصي للاعب"
+                    >
+                      <ExternalLink className="h-4 w-4 text-slate-500 shrink-0" />
+                      <span>الملف</span>
+                    </button>
                   </div>
                 </div>
               );

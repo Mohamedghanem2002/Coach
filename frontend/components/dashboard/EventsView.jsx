@@ -19,6 +19,8 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Layers,
   UserPlus,
   Check,
   Search,
@@ -107,46 +109,71 @@ export default function EventsView({
   onBulkPayment,
   showToast = () => {},
 }) {
-  // Mobile navigation: null = overview list, string ID = detail view
-  const [activeEventId, setActiveEventId] = useState(null);
+  // Selected event scope: "all" = all events combined, or specific event _id
+  const [selectedEventId, setSelectedEventId] = useState("all");
   const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [participantFilter, setParticipantFilter] = useState("all"); // "all", "paid", "partial", "unpaid", "attended", "absent"
   const [participantSearch, setParticipantSearch] = useState("");
   const [eventTypeFilter, setEventTypeFilter] = useState("all");
 
-  // Selected event (for detail view)
+  // Selected event (for detail view) - strictly matched by unique _id
   const selectedEvent = useMemo(() => {
-    if (!activeEventId) return null;
-    return events.find((e) => e._id === activeEventId) || null;
-  }, [events, activeEventId]);
+    if (selectedEventId === "all") return null;
+    return events.find((e) => e._id === selectedEventId) || null;
+  }, [events, selectedEventId]);
 
-  // Overall statistics
-  const overallStats = useMemo(() => {
+  // Calculations strictly scoped by selectedEventId (ID-isolated accounting)
+  const activeStats = useMemo(() => {
     let totalParticipants = 0;
-    let totalRevenue = 0;
+    let paidCount = 0;
+    let unpaidCount = 0;
+    let totalExpected = 0;
     let totalPaid = 0;
     let totalRemaining = 0;
 
-    events.forEach((ev) => {
+    // Scope list: either the single selected event or all events
+    const scopedEvents =
+      selectedEventId === "all"
+        ? events
+        : events.filter((e) => e._id === selectedEventId);
+
+    scopedEvents.forEach((ev) => {
       const parts = ev.participants || [];
       totalParticipants += parts.length;
+
       parts.forEach((p) => {
         const tot = Number(p.totalAmount ?? ev.fee ?? 100);
         const paid = Number(p.paidAmount ?? 0);
-        totalRevenue += tot;
+        const rem = Math.max(0, tot - paid);
+
+        totalExpected += tot;
         totalPaid += paid;
-        totalRemaining += Math.max(0, tot - paid);
+        totalRemaining += rem;
+
+        const isPaidInFull =
+          p.paymentStatus === "paid" || (tot > 0 && paid >= tot);
+        if (isPaidInFull) {
+          paidCount += 1;
+        } else {
+          unpaidCount += 1;
+        }
       });
     });
 
+    const collectionPercent =
+      totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
+
     return {
-      totalEvents: events.length,
+      totalEvents: scopedEvents.length,
       totalParticipants,
-      totalRevenue,
+      paidCount,
+      unpaidCount,
+      totalExpected,
       totalPaid,
       totalRemaining,
+      collectionPercent,
     };
-  }, [events]);
+  }, [events, selectedEventId]);
 
   // Filter events in overview
   const filteredEvents = useMemo(() => {
@@ -348,44 +375,164 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
         </button>
       </div>
 
-      {/* Summary KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
-          <span className="block text-[11px] font-bold text-slate-400">
-            إجمالي الفعاليات
-          </span>
-          <strong className="block font-cairo text-xl font-black text-slate-900 mt-0.5">
-            {overallStats.totalEvents}
-          </strong>
-        </div>
+      {/* ━━━ Event Selection Scope Bar & Distinction ━━━ */}
+      {events.length > 0 && (
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xs">
+                <Layers className="h-4 w-4" />
+              </span>
+              <div>
+                <span className="block text-[11px] font-bold text-slate-400">
+                  نطاق الحسابات والبيانات:
+                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {selectedEvent ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200 px-3 py-0.5 text-xs font-black text-red-700">
+                      <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse" />
+                      <span>فعالية محددة: {selectedEvent.title}</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-0.5 text-xs font-black text-blue-700">
+                      <span className="h-2 w-2 rounded-full bg-blue-600" />
+                      <span>جميع الفعاليات (إجمالي {events.length} فعالية)</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
 
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-3.5 shadow-2xs">
-          <span className="block text-[11px] font-bold text-blue-600">
-            إجمالي المشتركين
-          </span>
-          <strong className="block font-cairo text-xl font-black text-blue-900 mt-0.5">
-            {overallStats.totalParticipants} لاعب
-          </strong>
-        </div>
+            {selectedEvent && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedEventId("all");
+                  setSelectedParticipants([]);
+                  setParticipantSearch("");
+                }}
+                className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-black transition active-press cursor-pointer shadow-2xs"
+                title="التبديل إلى حسابات وعرض كافة الفعاليات"
+              >
+                <span>🌐 عرض إجمالي جميع الفعاليات</span>
+              </button>
+            )}
+          </div>
 
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3.5 shadow-2xs">
-          <span className="block text-[11px] font-bold text-emerald-600">
-            المتحصلات المسددة
-          </span>
-          <strong className="block font-cairo text-xl font-black text-emerald-900 mt-0.5">
-            {overallStats.totalPaid.toLocaleString("ar-EG")} ج.م
-          </strong>
+          {/* Mobile-Friendly Accessible Event Selector */}
+          <div>
+            <label htmlFor="event-scope-selector" className="block text-[11px] font-bold text-slate-600 mb-1.5">
+              اختر الفعالية لعرض حساباتها المستقلة:
+            </label>
+            <div className="relative">
+              <select
+                id="event-scope-selector"
+                value={selectedEventId}
+                onChange={(e) => {
+                  setSelectedEventId(e.target.value);
+                  setSelectedParticipants([]);
+                  setParticipantSearch("");
+                }}
+                className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-10 text-xs sm:text-sm font-black text-slate-800 focus:bg-white focus:border-red-500 focus:outline-hidden focus:ring-2 focus:ring-red-100 transition shadow-2xs cursor-pointer"
+              >
+                <option value="all">
+                  🌐 جميع الفعاليات — (عرض إجمالي كافة الفعاليات: {events.length} فعالية)
+                </option>
+                {events.map((ev, idx) => (
+                  <option key={ev._id} value={ev._id}>
+                    [{idx + 1}] {ev.title} • 📅 {ev.date || "بدون تاريخ"}{ev.time ? ` (${ev.time})` : ""}{ev.location ? ` • 📍 ${ev.location}` : ""} • (👥 {(ev.participants || []).length} مشترك) • (💵 {ev.fee} ج.م)
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
         </div>
+      )}
 
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-3.5 shadow-2xs">
-          <span className="block text-[11px] font-bold text-amber-600">
-            المستحقات المتبقية
-          </span>
-          <strong className="block font-cairo text-xl font-black text-amber-900 mt-0.5">
-            {overallStats.totalRemaining.toLocaleString("ar-EG")} ج.م
-          </strong>
+      {/* ━━━ 6 Core Independent Financial & Participation Metrics ━━━ */}
+      {events.length > 0 && (
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-bold text-slate-500">
+              {selectedEvent
+                ? `حسابات فعالية (${selectedEvent.title}) فقط:`
+                : "إجمالي حسابات جميع الفعاليات مجمعة:"}
+            </span>
+            <span className="text-[11px] font-extrabold text-slate-400">
+              {activeStats.collectionPercent}% تم تحصيله
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            {/* 1. عدد المشتركين */}
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xs">
+              <div className="flex items-center justify-between text-slate-500 mb-1">
+                <span className="text-[11px] font-bold">عدد المشتركين</span>
+                <Users className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+              </div>
+              <strong className="block font-cairo text-lg sm:text-xl font-black text-slate-900">
+                {activeStats.totalParticipants} <span className="text-xs font-bold text-slate-400 font-sans">لاعب</span>
+              </strong>
+            </div>
+
+            {/* 2. عدد المدفوعين */}
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3 shadow-2xs">
+              <div className="flex items-center justify-between text-emerald-700 mb-1">
+                <span className="text-[11px] font-bold">عدد المدفوعين</span>
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+              </div>
+              <strong className="block font-cairo text-lg sm:text-xl font-black text-emerald-900">
+                {activeStats.paidCount} <span className="text-xs font-bold text-emerald-700/70 font-sans">لاعب</span>
+              </strong>
+            </div>
+
+            {/* 3. عدد غير المدفوعين */}
+            <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-3 shadow-2xs">
+              <div className="flex items-center justify-between text-rose-700 mb-1">
+                <span className="text-[11px] font-bold">عدد غير المدفوعين</span>
+                <AlertCircle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+              </div>
+              <strong className="block font-cairo text-lg sm:text-xl font-black text-rose-900">
+                {activeStats.unpaidCount} <span className="text-xs font-bold text-rose-700/70 font-sans">لاعب</span>
+              </strong>
+            </div>
+
+            {/* 4. إجمالي المبلغ */}
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xs">
+              <div className="flex items-center justify-between text-slate-500 mb-1">
+                <span className="text-[11px] font-bold">إجمالي المبلغ</span>
+                <DollarSign className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+              </div>
+              <strong className="block font-cairo text-lg sm:text-xl font-black text-slate-900">
+                {activeStats.totalExpected.toLocaleString("ar-EG")} <span className="text-xs font-bold text-slate-400 font-sans">ج.م</span>
+              </strong>
+            </div>
+
+            {/* 5. المدفوع */}
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3 shadow-2xs">
+              <div className="flex items-center justify-between text-emerald-700 mb-1">
+                <span className="text-[11px] font-bold">المدفوع</span>
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+              </div>
+              <strong className="block font-cairo text-lg sm:text-xl font-black text-emerald-900">
+                {activeStats.totalPaid.toLocaleString("ar-EG")} <span className="text-xs font-bold text-emerald-700/70 font-sans">ج.م</span>
+              </strong>
+            </div>
+
+            {/* 6. المتبقي */}
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-3 shadow-2xs">
+              <div className="flex items-center justify-between text-amber-700 mb-1">
+                <span className="text-[11px] font-bold">المتبقي</span>
+                <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+              </div>
+              <strong className="block font-cairo text-lg sm:text-xl font-black text-amber-900">
+                {activeStats.totalRemaining.toLocaleString("ar-EG")} <span className="text-xs font-bold text-amber-700/70 font-sans">ج.م</span>
+              </strong>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ━━━ Main Body: Overview OR Detail View ━━━ */}
       {events.length === 0 ? (
@@ -418,7 +565,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
             <button
               type="button"
               onClick={() => {
-                setActiveEventId(null);
+                setSelectedEventId("all");
                 setSelectedParticipants([]);
                 setParticipantSearch("");
               }}
@@ -531,7 +678,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                           )
                         ) {
                           onDeleteEvent(selectedEvent._id);
-                          setActiveEventId(null);
+                          setSelectedEventId("all");
                         }
                       }}
                       className="flex items-center justify-center p-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 active-press transition cursor-pointer min-h-[40px]"
@@ -1040,7 +1187,7 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
 
           {/* Cards Grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredEvents.map((event) => {
+            {filteredEvents.map((event, eventIdx) => {
               const typeInfo = TYPE_CONFIG[event.type] || TYPE_CONFIG.other;
               const statusInfo =
                 STATUS_LABELS[event.status] || STATUS_LABELS.upcoming;
@@ -1072,6 +1219,9 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                           <TypeIcon className="h-5 w-5" />
                         </div>
                         <div>
+                          <span className="inline-block text-[10px] font-black text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full ml-1">
+                            #{eventIdx + 1}
+                          </span>
                           <span className={`px-2 py-0.5 rounded-full border text-[10px] font-black ${typeInfo.badge}`}>
                             {typeInfo.label}
                           </span>
@@ -1174,11 +1324,14 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setActiveEventId(event._id)}
+                      onClick={() => {
+                        setSelectedEventId(event._id);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-black text-white active-press transition cursor-pointer min-h-[40px]"
                     >
                       <Users className="h-3.5 w-3.5" />
-                      <span>عرض وإدارة المشتركين ({parts.length})</span>
+                      <span>عرض تفاصيل الفعالية وحساباتها ({parts.length})</span>
                       <ChevronLeft className="h-3.5 w-3.5" />
                     </button>
 

@@ -170,7 +170,7 @@
           "paymentStatus": "paid",
           "paymentDate": "2026-09-11",
           "notes": "",
-          "attended": false
+          "attended": true
         },
         {
           "playerId": "6aa3f720ec0323d6dd6fe90b",
@@ -181,16 +181,80 @@
           "parentPhone": "",
           "phone": "",
           "totalAmount": 100,
+          "paidAmount": 50,
+          "remainingAmount": 50,
+          "paymentStatus": "partially_paid",
+          "paymentDate": "2026-09-13",
+          "notes": "",
+          "attended": true
+        }
+      ],
+      "createdAt": "2026-09-11T16:26:18.055Z",
+      "updatedAt": "2026-09-13T15:28:20.978Z"
+    },
+    {
+      "_id": "6aa6bfd347c60e0700594888",
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "title": "اختبار حزام",
+      "type": "belt_exam",
+      "date": "2026-09-13",
+      "time": "08:00 ص",
+      "location": "",
+      "fee": 150,
+      "description": "",
+      "status": "upcoming",
+      "participants": [
+        {
+          "playerId": "6aa29105131cd6a66b5f1aeb",
+          "name": "rrrrr",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 150,
           "paidAmount": 0,
-          "remainingAmount": 100,
+          "remainingAmount": 150,
+          "paymentStatus": "unpaid",
+          "paymentDate": "",
+          "notes": "",
+          "attended": false
+        },
+        {
+          "playerId": "6aa3f720ec0323d6dd6fe90b",
+          "name": "mahmoud",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "أزرق 3",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 150,
+          "paidAmount": 0,
+          "remainingAmount": 150,
+          "paymentStatus": "unpaid",
+          "paymentDate": "",
+          "notes": "",
+          "attended": false
+        },
+        {
+          "playerId": "6aa42d4c15e16b5a77c01ee1",
+          "name": "ببببب",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "أبيض",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 150,
+          "paidAmount": 0,
+          "remainingAmount": 150,
           "paymentStatus": "unpaid",
           "paymentDate": "",
           "notes": "",
           "attended": false
         }
       ],
-      "createdAt": "2026-09-11T16:26:18.055Z",
-      "updatedAt": "2026-09-11T18:39:06.199Z"
+      "createdAt": "2026-09-13T15:22:59.479Z",
+      "updatedAt": "2026-09-13T15:23:37.426Z"
     }
   ]
 }

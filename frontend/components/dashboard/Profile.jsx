@@ -1807,52 +1807,50 @@ export default function Profile({
                   </div>
                 </div>
 
-                {/* تنبيه عيد الميلاد إن وُجد: اليوم أو غداً (قبلها بيوم) */}
-                {(birthdayInfo?.isToday || birthdayInfo?.daysLeft === 1) &&
-                  !isBirthdayCongratulated(player._id) &&
-                  !birthdayCongratulated && (
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-xs animate-slide-up">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-2xl animate-bounce">🎂</span>
-                        <div>
-                          <strong className="block font-cairo text-sm font-black text-rose-900">
-                            {birthdayInfo.isToday
-                              ? `اليوم عيد ميلاد ${player.name}! 🎉`
-                              : `غداً عيد ميلاد ${player.name}! 🎉 (قبلها بيوم)`}
-                          </strong>
-                          <span className="block text-[11px] font-bold text-amber-900">
-                            {birthdayInfo.isToday
-                              ? `يُتم اليوم ${birthdayInfo.turningAge} سنة · كل عام وبطلنا بألف خير! 🥋`
-                              : `يُتم غداً ${birthdayInfo.turningAge} سنة · يمكنك إرسال كارت التهنئة مسبقاً! 🥋`}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
-                        {/* 1. تهنئة نصية فورية */}
-                        <button
-                          type="button"
-                          disabled={isSendingBirthdayText}
-                          onClick={shareBirthdayText}
-                          className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs"
-                          title="إرسال تهنئة نصية لشات واتساب ولي الأمر فوراً من أول نقرة"
-                        >
-                          <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                          <span>تهنئة نصية (واتساب) 💬</span>
-                        </button>
-
-                        {/* 2. كارت التهنئة (معاينة) */}
-                        <button
-                          type="button"
-                          onClick={() => setShowBirthdayModal(true)}
-                          className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 font-black text-amber-900 shadow-2xs hover:bg-amber-100 active:scale-95 transition-all cursor-pointer text-xs"
-                          title="معاينة كارت التهنئة كصورة وحفظه أو إرساله عبر واتساب"
-                        >
-                          <Eye className="h-3.5 w-3.5 shrink-0 text-amber-700" />
-                          <span>كارت التهنئة (معاينة) 🖼️</span>
-                        </button>
+                {/* تنبيه عيد الميلاد إن وُجد: اليوم أو غداً (قبلها بيوم) - يظل متاحاً وظاهراً طوال فترة عيد الميلاد */}
+                {(birthdayInfo?.isToday || birthdayInfo?.daysLeft === 1) && (
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-xs animate-slide-up">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl animate-bounce">🎂</span>
+                      <div>
+                        <strong className="block font-cairo text-sm font-black text-rose-900">
+                          {birthdayInfo.isToday
+                            ? `اليوم عيد ميلاد ${player.name}! 🎉`
+                            : `غداً عيد ميلاد ${player.name}! 🎉 (قبلها بيوم)`}
+                        </strong>
+                        <span className="block text-[11px] font-bold text-amber-900">
+                          {birthdayInfo.isToday
+                            ? `يُتم اليوم ${birthdayInfo.turningAge} سنة · كل عام وبطلنا بألف خير! 🥋`
+                            : `يُتم غداً ${birthdayInfo.turningAge} سنة · يمكنك إرسال كارت التهنئة مسبقاً! 🥋`}
+                        </span>
                       </div>
                     </div>
-                  )}
+                    <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
+                      {/* 1. تهنئة نصية */}
+                      <button
+                        type="button"
+                        disabled={isSendingBirthdayText}
+                        onClick={shareBirthdayText}
+                        className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs"
+                        title="إرسال تهنئة نصية لشات واتساب ولي الأمر فوراً من أول نقرة"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                        <span>تهنئة نصية</span>
+                      </button>
+
+                      {/* 2. معاينة */}
+                      <button
+                        type="button"
+                        onClick={() => setShowBirthdayModal(true)}
+                        className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 font-black text-amber-900 shadow-2xs hover:bg-amber-100 active:scale-95 transition-all cursor-pointer text-xs"
+                        title="معاينة كارت التهنئة كصورة وحفظه أو إرساله عبر واتساب"
+                      >
+                        <Eye className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+                        <span>معاينة</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* قسم 2: سجل الاشتراكات السابقة */}

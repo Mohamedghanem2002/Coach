@@ -217,6 +217,8 @@ export function getBirthdayInfo(player, referenceDate) {
     isToday,
     isTomorrow: daysLeft === 1,
     isUpcoming: daysLeft === 1,
+    isInBirthdayWindow: isToday || daysLeft === 1,
+    status: isToday ? "today" : daysLeft === 1 ? "tomorrow" : "normal",
     daysLeft,
     turningAge,
     dateFormatted,
@@ -238,30 +240,30 @@ export function getCongratulatedBirthdays() {
 
 export function isBirthdayCongratulated(playerId, referenceDate = new Date()) {
   if (!playerId) return false;
-  const currentYear = referenceDate.getFullYear();
-  const key = `${playerId}_${currentYear}`;
-  const list = getCongratulatedBirthdays();
-  return list.includes(key);
+  try {
+    const currentYear = referenceDate.getFullYear();
+    const list = getCongratulatedBirthdays();
+    return list.some(
+      (item) =>
+        item.playerId === playerId &&
+        (item.year === currentYear || item.date === referenceDate.toISOString().slice(0, 10))
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function markBirthdayCongratulated(playerId, referenceDate = new Date()) {
   if (!playerId || typeof window === "undefined") return;
-  const currentYear = referenceDate.getFullYear();
-  const key = `${playerId}_${currentYear}`;
   try {
-    const list = getCongratulatedBirthdays();
-    if (!list.includes(key)) {
-      list.push(key);
-      localStorage.setItem("reaction_congratulated_birthdays", JSON.stringify(list));
-    }
-    window.dispatchEvent(new CustomEvent("birthday_congratulated", { detail: { playerId, year: currentYear } }));
-
-    // Also update backend silently
-    fetch("/api/players", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: playerId, lastBirthdayWishedYear: currentYear }),
-    }).catch(() => {});
+    const currentYear = referenceDate.getFullYear();
+    const dateStr = referenceDate.toISOString().slice(0, 10);
+    const list = getCongratulatedBirthdays().filter(
+      (item) => !(item.playerId === playerId && item.year === currentYear)
+    );
+    list.push({ playerId, year: currentYear, date: dateStr, timestamp: Date.now() });
+    localStorage.setItem("reaction_congratulated_birthdays", JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent("birthday_congratulated", { detail: { playerId } }));
   } catch (e) {
     console.warn("Failed to mark birthday congratulated:", e);
   }
@@ -269,14 +271,10 @@ export function markBirthdayCongratulated(playerId, referenceDate = new Date()) 
 
 export function getTodayBirthdays(players, referenceDate = new Date()) {
   if (!Array.isArray(players)) return [];
-  const currentYear = referenceDate.getFullYear();
   return players
     .map((player) => {
       const bday = getBirthdayInfo(player, referenceDate);
       if (!bday || !bday.isToday) return null;
-      if (player.lastBirthdayWishedYear === currentYear || isBirthdayCongratulated(player._id, referenceDate)) {
-        return null;
-      }
       return { ...player, birthdayInfo: bday };
     })
     .filter(Boolean);
@@ -288,16 +286,12 @@ export function getUpcomingBirthdays(
   referenceDate = new Date()
 ) {
   if (!Array.isArray(players)) return [];
-  const currentYear = referenceDate.getFullYear();
   const maxDays = Number(daysAhead) > 0 ? Number(daysAhead) : 1;
   return players
     .map((player) => {
       const bday = getBirthdayInfo(player, referenceDate);
       if (!bday || bday.isToday) return null;
       if (bday.daysLeft < 1 || bday.daysLeft > maxDays) return null;
-      if (player.lastBirthdayWishedYear === currentYear || isBirthdayCongratulated(player._id, referenceDate)) {
-        return null;
-      }
       return { ...player, birthdayInfo: bday };
     })
     .filter(Boolean)

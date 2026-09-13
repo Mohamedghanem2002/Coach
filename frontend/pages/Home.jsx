@@ -221,8 +221,7 @@ export default function Home() {
             Boolean(
               getBirthdayInfo(player)?.isToday ||
               getBirthdayInfo(player)?.daysLeft === 1
-            ) &&
-            !isBirthdayCongratulated(player._id));
+            ));
         return (
           matchesBranch &&
           matchesStatus &&
@@ -358,10 +357,7 @@ export default function Home() {
       : 0;
   const todayBirthdaysCount = dashboardPlayers.filter((player) => {
     const bday = getBirthdayInfo(player);
-    return (
-      Boolean(bday?.isToday || bday?.daysLeft === 1) &&
-      !isBirthdayCongratulated(player._id)
-    );
+    return Boolean(bday?.isToday || bday?.daysLeft === 1);
   }).length;
   async function updatePlayer(id, data) {
     if (data.attendanceStatus && data.date > today) {
@@ -780,150 +776,155 @@ export default function Home() {
       <section className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
         {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
         <div className="md:hidden">
-          {/* شريط اختيار الصالة الأفقي السريع */}
-          <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 mb-2.5 touch-scroll">
-            <button
-              type="button"
-              className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-black transition-all active:scale-95 min-h-[38px] cursor-pointer ${
-                branch === "كل الصالات"
-                  ? "bg-red-600 text-white shadow-xs shadow-red-500/30"
-                  : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
-              }`}
-              onClick={() => setBranch("كل الصالات")}
-            >
-              كل الصالات ({players.length})
-            </button>
-            {branches.map((b) => {
-              const bCount = players.filter((p) => p.branch === b.name).length;
-              return (
+          {/* شريط اختيار الصالة وبطاقة نبض اليوم (خاصان بتبويب اللاعبين فقط ولا يظهران في الفعاليات) */}
+          {mobileTab === "players" && activeView === "players" && (
+            <>
+              {/* شريط اختيار الصالة الأفقي السريع */}
+              <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 mb-2.5 touch-scroll">
                 <button
-                  key={b._id}
                   type="button"
                   className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-black transition-all active:scale-95 min-h-[38px] cursor-pointer ${
-                    branch === b.name
+                    branch === "كل الصالات"
                       ? "bg-red-600 text-white shadow-xs shadow-red-500/30"
                       : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
                   }`}
-                  onClick={() => setBranch(b.name)}
+                  onClick={() => setBranch("كل الصالات")}
                 >
-                  {b.name} ({bCount})
+                  كل الصالات ({players.length})
                 </button>
-              );
-            })}
-          </div>
-
-          {/* بطاقة النبض اليومي السريع (Daily Pulse Card) */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm relative overflow-hidden mb-3.5">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">
-                  نبض اليوم • {sessionDate}
-                </p>
-                <h3 className="font-cairo text-sm font-black text-slate-900">
-                  {branch === "كل الصالات" ? "جميع صالات الأكاديمية" : `صالة ${branch}`}
-                </h3>
+                {branches.map((b) => {
+                  const bCount = players.filter((p) => p.branch === b.name).length;
+                  return (
+                    <button
+                      key={b._id}
+                      type="button"
+                      className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-black transition-all active:scale-95 min-h-[38px] cursor-pointer ${
+                        branch === b.name
+                          ? "bg-red-600 text-white shadow-xs shadow-red-500/30"
+                          : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
+                      }`}
+                      onClick={() => setBranch(b.name)}
+                    >
+                      {b.name} ({bCount})
+                    </button>
+                  );
+                })}
               </div>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-700">
-                {dashboardPlayers.length} لاعب
-              </span>
-            </div>
 
-            {/* شريط نسبة حضور اليوم */}
-            <div className="space-y-1 mb-2.5">
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-slate-600">نسبة حضور اليوم:</span>
-                <span className="font-black text-emerald-700">{attendanceRateToday}% ({presentToday} لاعب)</span>
+              {/* بطاقة النبض اليومي السريع (Daily Pulse Card) */}
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm relative overflow-hidden mb-3.5">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-red-600">
+                      نبض اليوم • {sessionDate}
+                    </p>
+                    <h3 className="font-cairo text-sm font-black text-slate-900">
+                      {branch === "كل الصالات" ? "جميع صالات الأكاديمية" : `صالة ${branch}`}
+                    </h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-700">
+                    {dashboardPlayers.length} لاعب
+                  </span>
+                </div>
+
+                {/* شريط نسبة حضور اليوم */}
+                <div className="space-y-1 mb-2.5">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-600">نسبة حضور اليوم:</span>
+                    <span className="font-black text-emerald-700">{attendanceRateToday}% ({presentToday} لاعب)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+                      style={{ width: `${attendanceRateToday}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* 4 شرائح سريعة تفاعلية لفلترة القائمة بلمسة واحدة مباشرة من نبض اليوم */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter(statusFilter === "present" ? "all" : "present");
+                      setMobileTab("players");
+                    }}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
+                      statusFilter === "present"
+                        ? "bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300"
+                        : "bg-emerald-50/70 border border-emerald-200/60 text-emerald-800 hover:bg-emerald-100/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <Check className={`h-3 w-3 ${statusFilter === "present" ? "text-white" : "text-emerald-600"}`} strokeWidth={3} />
+                      <span className="text-base font-black leading-none">{presentToday}</span>
+                    </div>
+                    <span className="text-[10px] font-bold mt-1">حاضر</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter(statusFilter === "absent" ? "all" : "absent");
+                      setMobileTab("players");
+                    }}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
+                      statusFilter === "absent"
+                        ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300"
+                        : "bg-rose-50/70 border border-rose-200/60 text-rose-800 hover:bg-rose-100/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <X className={`h-3 w-3 ${statusFilter === "absent" ? "text-white" : "text-rose-600"}`} strokeWidth={3} />
+                      <span className="text-base font-black leading-none">{absentToday}</span>
+                    </div>
+                    <span className="text-[10px] font-bold mt-1">غائب</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter(statusFilter === "paid" ? "all" : "paid");
+                      setMobileTab("players");
+                    }}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
+                      statusFilter === "paid"
+                        ? "bg-sky-600 text-white shadow-sm ring-2 ring-sky-300"
+                        : "bg-sky-50/70 border border-sky-200/60 text-sky-800 hover:bg-sky-100/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <CreditCard className={`h-3 w-3 ${statusFilter === "paid" ? "text-white" : "text-sky-600"}`} />
+                      <span className="text-base font-black leading-none">{paidCount}</span>
+                    </div>
+                    <span className="text-[10px] font-bold mt-1">مدفوع</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid");
+                      setMobileTab("players");
+                    }}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
+                      statusFilter === "unpaid"
+                        ? "bg-amber-600 text-white shadow-sm ring-2 ring-amber-300"
+                        : "bg-amber-50/70 border border-amber-200/60 text-amber-800 hover:bg-amber-100/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <Clock className={`h-3 w-3 ${statusFilter === "unpaid" ? "text-white" : "text-amber-600"}`} />
+                      <span className="text-base font-black leading-none">{totalPendingPaymentCount}</span>
+                    </div>
+                    <span className="text-[10px] font-bold mt-1">
+                      {partialCount > 0 ? "باقي/معلق" : "لم يدفع"}
+                    </span>
+                  </button>
+                </div>
               </div>
-              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
-                  style={{ width: `${attendanceRateToday}%` }}
-                />
-              </div>
-            </div>
-
-            {/* 4 شرائح سريعة تفاعلية لفلترة القائمة بلمسة واحدة مباشرة من نبض اليوم */}
-            <div className="grid grid-cols-4 gap-1.5 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setStatusFilter(statusFilter === "present" ? "all" : "present");
-                  setMobileTab("players");
-                }}
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
-                  statusFilter === "present"
-                    ? "bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300"
-                    : "bg-emerald-50/70 border border-emerald-200/60 text-emerald-800 hover:bg-emerald-100/60"
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <Check className={`h-3 w-3 ${statusFilter === "present" ? "text-white" : "text-emerald-600"}`} strokeWidth={3} />
-                  <span className="text-base font-black leading-none">{presentToday}</span>
-                </div>
-                <span className="text-[10px] font-bold mt-1">حاضر</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setStatusFilter(statusFilter === "absent" ? "all" : "absent");
-                  setMobileTab("players");
-                }}
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
-                  statusFilter === "absent"
-                    ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-300"
-                    : "bg-rose-50/70 border border-rose-200/60 text-rose-800 hover:bg-rose-100/60"
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <X className={`h-3 w-3 ${statusFilter === "absent" ? "text-white" : "text-rose-600"}`} strokeWidth={3} />
-                  <span className="text-base font-black leading-none">{absentToday}</span>
-                </div>
-                <span className="text-[10px] font-bold mt-1">غائب</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setStatusFilter(statusFilter === "paid" ? "all" : "paid");
-                  setMobileTab("players");
-                }}
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
-                  statusFilter === "paid"
-                    ? "bg-sky-600 text-white shadow-sm ring-2 ring-sky-300"
-                    : "bg-sky-50/70 border border-sky-200/60 text-sky-800 hover:bg-sky-100/60"
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <CreditCard className={`h-3 w-3 ${statusFilter === "paid" ? "text-white" : "text-sky-600"}`} />
-                  <span className="text-base font-black leading-none">{paidCount}</span>
-                </div>
-                <span className="text-[10px] font-bold mt-1">مدفوع</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid");
-                  setMobileTab("players");
-                }}
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active-press min-h-[52px] cursor-pointer touch-manipulation ${
-                  statusFilter === "unpaid"
-                    ? "bg-amber-600 text-white shadow-sm ring-2 ring-amber-300"
-                    : "bg-amber-50/70 border border-amber-200/60 text-amber-800 hover:bg-amber-100/60"
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <Clock className={`h-3 w-3 ${statusFilter === "unpaid" ? "text-white" : "text-amber-600"}`} />
-                  <span className="text-base font-black leading-none">{totalPendingPaymentCount}</span>
-                </div>
-                <span className="text-[10px] font-bold mt-1">
-                  {partialCount > 0 ? "باقي/معلق" : "لم يدفع"}
-                </span>
-              </button>
-            </div>
-          </div>
+            </>
+          )}
 
           {/* محتوى تبويب اللاعبين على الموبايل */}
           {mobileTab === "players" && (
