@@ -83,6 +83,10 @@
         {
           "date": "2026-09-11",
           "status": "present"
+        },
+        {
+          "date": "2026-09-13",
+          "status": "present"
         }
       ],
       "createdAt": "2026-09-11T12:42:08.498Z",
@@ -119,6 +123,10 @@
         },
         {
           "date": "2026-09-12",
+          "status": "present"
+        },
+        {
+          "date": "2026-09-13",
           "status": "present"
         }
       ],

@@ -1262,37 +1262,140 @@ export default function Home() {
           )}
         </div>
 
-        {/* ━━━ شريط التبديل العلوي على الديسكتوب بين اللاعبين والفعاليات ━━━ */}
-        <div className="hidden md:flex items-center gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setActiveView("players")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-              activeView === "players"
-                ? "bg-slate-900 text-white shadow-md"
-                : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            <span>اللاعبين والاشتراكات الشهرية ({players.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("events")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-              activeView === "events"
-                ? "bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-500/20"
-                : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
-            }`}
-          >
-            <Compass className="h-4 w-4" />
-            <span>الفعاليات والرحلات ({events.length})</span>
-          </button>
+        {/* ━━━ Executive Workspace Navigation Bar (على الديسكتوب فقط) ━━━ */}
+        <div className="hidden md:flex items-center justify-between gap-4 border-b border-slate-200/80 pb-4 mb-6">
+          <div className="workspace-tabs-container">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveView("players");
+                setMobileTab("players");
+              }}
+              className={`workspace-tab-btn cursor-pointer ${activeView === "players" ? "active" : ""}`}
+            >
+              <Users className="h-4 w-4" />
+              <span>الأبطال والتحضير</span>
+              <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[11px] font-black text-slate-700">
+                {players.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveView("finances");
+                setMobileTab("stats");
+              }}
+              className={`workspace-tab-btn cursor-pointer ${activeView === "finances" ? "active" : ""}`}
+            >
+              <CreditCard className="h-4 w-4" />
+              <span>المركز المالي والتقارير</span>
+              {totalPendingPaymentCount > 0 && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-black text-amber-800">
+                  {totalPendingPaymentCount} معلق
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveView("branches");
+                setMobileTab("branches");
+              }}
+              className={`workspace-tab-btn cursor-pointer ${activeView === "branches" ? "active" : ""}`}
+            >
+              <Building2 className="h-4 w-4" />
+              <span>الصالات ومراكز التدريب</span>
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-black text-slate-700">
+                {branches.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveView("events");
+                setMobileTab("events");
+              }}
+              className={`workspace-tab-btn cursor-pointer ${activeView === "events" ? "active" : ""}`}
+            >
+              <Compass className="h-4 w-4" />
+              <span>الفعاليات والبطولات</span>
+              {events.length > 0 && (
+                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-black text-sky-700">
+                  {events.length}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveView("birthdays");
+                setMobileTab("birthdays");
+              }}
+              className={`workspace-tab-btn cursor-pointer ${activeView === "birthdays" ? "active" : ""}`}
+            >
+              <Cake className="h-4 w-4" />
+              <span>تذكار أعياد الميلاد</span>
+              {todayBirthdaysCount > 0 && (
+                <span className="rounded-full bg-red-600 text-white px-2 py-0.5 text-[11px] font-black animate-pulse">
+                  {todayBirthdaysCount} اليوم!
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportAll}
+              title="تصدير كشف اللاعبين الحالي إلى Excel / CSV"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs cursor-pointer active-press transition"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+              <span>تصدير Excel</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm shadow-red-600/20 cursor-pointer active-press transition"
+            >
+              <Plus className="h-4 w-4 stroke-[3]" />
+              <span>تسجيل لاعب جديد</span>
+            </button>
+          </div>
         </div>
 
-        {/* عرض الفعاليات على الديسكتوب */}
+        {/* ━━━ Workspace 2: المركز المالي والإحصائيات على الديسكتوب ━━━ */}
+        {activeView === "finances" && (
+          <div className="hidden md:block mb-8 animate-fade-in-scale">
+            <StatsGrid
+              players={players}
+              branches={branches}
+              branch={branch}
+              sessionDate={sessionDate}
+              paymentMonth={paymentMonth}
+              paymentMonthLabel={paymentMonthLabel}
+            />
+          </div>
+        )}
+
+        {/* ━━━ Workspace 3: الصالات ومراكز التدريب على الديسكتوب ━━━ */}
+        {activeView === "branches" && (
+          <div className="hidden md:block mb-8 animate-fade-in-scale">
+            <BranchOverview
+              branches={branches}
+              players={players}
+              sessionDate={sessionDate}
+              paymentMonth={paymentMonth}
+              busyBranch={busyBranch}
+              onSelectBranch={handleSelectBranch}
+              onMarkPresent={markBranchPresent}
+            />
+          </div>
+        )}
+
+        {/* ━━━ Workspace 4: الفعاليات والرحلات على الديسكتوب ━━━ */}
         {activeView === "events" && (
-          <div className="hidden md:block mb-8">
+          <div className="hidden md:block mb-8 animate-fade-in-scale">
             <EventsView
               events={events}
               players={players}
@@ -1318,61 +1421,9 @@ export default function Home() {
           </div>
         )}
 
-        {/* ━━━ Hero Banner (على الديسكتوب فقط) ━━━ */}
-        <div className={activeView === "players" ? "hidden md:block relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs sm:p-6" : "hidden"}>
-          {/* Top brand accent line */}
-          <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-red-600" />
-
-          <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex-1 min-w-0">
-              <p className="section-eyebrow mb-1.5">لوحة تحكم الأكاديمية</p>
-              <h2 className="font-cairo text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
-                أهلاً يا كابتن{" "}
-                <span className="text-red-600">{captainName}</span>
-                {" "}🥋
-              </h2>
-              <p className="mt-1.5 text-xs sm:text-sm font-medium text-slate-500 max-w-lg leading-relaxed">
-                إدارة فورية ودقيقة لحضور واشتراكات اللاعبين في مختلف الصالات.
-              </p>
-
-              {/* Micro-stat pills */}
-              <div className="mt-3.5 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-600 shadow-2xs">
-                  <span className="h-2 w-2 rounded-full bg-red-500" />
-                  {players.length} لاعب مسجل
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700 shadow-2xs">
-                  <Building2 className="h-3 w-3" />
-                  {branches.length} صالة نشطة
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-2xs">
-                  الصالة: <strong className="font-black text-slate-900">{branch}</strong>
-                </span>
-              </div>
-            </div>
-
-            {/* CTA */}
-            <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-              <button
-                type="button"
-                id="add-player-hero-btn"
-                className="flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-5 py-2.5 text-xs sm:text-sm font-black text-white shadow-sm shadow-red-600/20 transition-all active:scale-95 cursor-pointer"
-                onClick={() => setShowForm(true)}
-              >
-                <Plus className="h-4 w-4 stroke-[3]" />
-                <span>تسجيل لاعب جديد</span>
-              </button>
-              <span className="text-[10px] font-medium text-slate-400 text-center">
-                {sessionDate}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ━━━ لوحات اللاعبين والتحضير (على الديسكتوب) ━━━ */}
-        <div className={activeView === "players" ? "contents" : "hidden"}>
-          {/* تذكار أعياد ميلاد أبطال الأكاديمية للكابتن (على الديسكتوب فقط) */}
-          <div className="hidden md:block">
+        {/* ━━━ Workspace 5: تذكار أعياد الميلاد على الديسكتوب ━━━ */}
+        {activeView === "birthdays" && (
+          <div className="hidden md:block mb-8 animate-fade-in-scale">
             <BirthdayReminder
               players={players}
               branches={branches}
@@ -1380,348 +1431,313 @@ export default function Home() {
               onOpenPlayer={(player) => setSelected(player)}
             />
           </div>
+        )}
 
-        {/* شبكة الإحصائيات ورسوم الحضور البيانية (على الديسكتوب فقط) */}
-        <div className="hidden md:block">
-          <StatsGrid
-            players={players}
-            branches={branches}
-            branch={branch}
-            sessionDate={sessionDate}
-            paymentMonth={paymentMonth}
-            paymentMonthLabel={paymentMonthLabel}
-          />
-        </div>
+        {/* ━━━ Workspace 1: الأبطال والتحضير اليومي على الديسكتوب ━━━ */}
+        {activeView === "players" && (
+          <div className="hidden md:block space-y-3 mb-5 animate-fade-in-scale">
+            {/* KPI Summary Strip */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm shadow-red-600/20">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-cairo text-sm font-bold text-slate-900">
+                        {branch === "كل الصالات" ? "جميع صالات الأكاديمية" : `صالة ${branch}`}
+                      </h3>
+                      <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                        {dashboardPlayers.length} لاعب
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      حصة {sessionDate} • نسبة الحضور اليوم: <strong className="text-emerald-700 font-bold">{attendanceRateToday}% ({presentToday} حاضر)</strong>
+                    </p>
+                  </div>
+                </div>
 
-        {/* استعراض الصالات والفروع (على الديسكتوب فقط) */}
-        <div className="hidden md:block">
-          <BranchOverview
-            branches={branches}
-            players={players}
-            sessionDate={sessionDate}
-            paymentMonth={paymentMonth}
-            busyBranch={busyBranch}
-            onSelectBranch={handleSelectBranch}
-            onMarkPresent={markBranchPresent}
-          />
-        </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-1.5 text-xs font-bold text-emerald-800">
+                    <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />
+                    <span>حاضر: {presentToday}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/60 px-3 py-1.5 text-xs font-bold text-rose-800">
+                    <X className="h-3.5 w-3.5 text-rose-600" strokeWidth={2.5} />
+                    <span>غائب: {absentToday}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/60 px-3 py-1.5 text-xs font-bold text-sky-800">
+                    <CreditCard className="h-3.5 w-3.5 text-sky-600" />
+                    <span>مسدد: {paidCount}</span>
+                  </div>
+                  {totalPendingPaymentCount > 0 && (
+                    <div className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-1.5 text-xs font-bold text-amber-800">
+                      <Clock className="h-3.5 w-3.5 text-amber-600" />
+                      <span>متأخر: {totalPendingPaymentCount}</span>
+                    </div>
+                  )}
+                  {purchasesDebtCount > 0 && (
+                    <div className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900">
+                      <ShoppingBag className="h-3.5 w-3.5 text-amber-600" />
+                      <span>أدوات: {purchasesDebtCount}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
-        {/* ━━━ Player List Header ━━━ */}
-        <div
-          ref={playerListRef}
-          className="hidden md:flex mt-8 flex-wrap items-center justify-between gap-3 scroll-mt-20"
-        >
-          <div className="flex items-center gap-2.5">
-            <p className="section-eyebrow">قائمة لاعبي الأكاديمية</p>
-            <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-black text-red-600 ring-1 ring-red-200/60">
-              {filteredPlayers.length} لاعب
-            </span>
-            {filteredPlayers.length > 0 && (
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200/80 bg-white px-3 py-1 text-xs font-bold text-slate-600 shadow-xs transition-all hover:border-red-200 hover:text-red-600 active:scale-95 cursor-pointer"
-                onClick={toggleFilteredSelection}
-              >
-                تحديد الكل
-              </button>
-            )}
-          </div>
+            {/* Unified Command Bar */}
+            <div className="command-bar-surface p-4 space-y-3">
+              {/* Row 1: Search + Branches Segment + Branch Management */}
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                {/* Search Box */}
+                <div className="relative flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-3 transition-all focus-within:border-red-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 lg:w-80">
+                  <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                  <input
+                    className="min-w-0 flex-1 bg-transparent px-1 py-2 text-xs font-bold text-slate-900 outline-none placeholder:text-slate-400"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="ابحث باسم اللاعب..."
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportAll}
-              title="تصدير كشف اللاعبين الحالي إلى Excel / CSV"
-              className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all active:scale-95 cursor-pointer shadow-xs"
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">تصدير Excel</span>
-            </button>
+                {/* Branch Pills */}
+                <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
+                  <div className="flex min-w-max items-center gap-1.5 py-0.5">
+                    <button
+                      type="button"
+                      className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
+                        branch === "كل الصالات"
+                          ? "bg-red-600 text-white shadow-sm shadow-red-600/20"
+                          : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                      }`}
+                      onClick={() => setBranch("كل الصالات")}
+                    >
+                      كل الصالات ({players.length})
+                    </button>
+                    {branches.map((item) => {
+                      const count = players.filter((p) => p.branch === item.name).length;
+                      return (
+                        <button
+                          type="button"
+                          key={item._id}
+                          className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
+                            branch === item.name
+                              ? "bg-red-600 text-white shadow-sm shadow-red-600/20"
+                              : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                          }`}
+                          onClick={() => setBranch(item.name)}
+                        >
+                          {item.name} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-            <button
-              type="button"
-              id="add-player-list-btn"
-              className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-extrabold text-red-600 transition-all hover:bg-red-600 hover:text-white hover:shadow-sm active:scale-95 cursor-pointer"
-              onClick={() => setShowForm(true)}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>تسجيل لاعب جديد</span>
-            </button>
-          </div>
-        </div>
+                {/* Add Branch Inline / Manage */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {isAddingBranch ? (
+                    <form
+                      onSubmit={handleQuickBranchSubmit}
+                      className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/50 p-1"
+                    >
+                      <input
+                        value={quickBranchName}
+                        onChange={(e) => setQuickBranchName(e.target.value)}
+                        placeholder="اسم الصالة..."
+                        className="h-9 min-w-0 rounded-lg border border-emerald-300 bg-white px-2.5 text-right text-xs font-bold text-slate-900 outline-none w-36"
+                        autoFocus
+                        required
+                      />
+                      <button
+                        className="h-9 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700 cursor-pointer"
+                        type="submit"
+                      >
+                        حفظ
+                      </button>
+                      <button
+                        className="h-9 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold text-slate-600 cursor-pointer"
+                        type="button"
+                        onClick={() => setIsAddingBranch(false)}
+                      >
+                        إلغاء
+                      </button>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      className="flex h-10 items-center justify-center gap-1 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 cursor-pointer"
+                      onClick={() => setIsAddingBranch(true)}
+                    >
+                      <span>＋</span>
+                      <span>صالة جديدة</span>
+                    </button>
+                  )}
 
-        {/* ━━━ Control Panel (على الديسكتوب فقط) ━━━ */}
-        <div className="hidden md:flex mt-3.5 flex-col gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md lg:flex-row lg:items-center lg:gap-3">
-          {/* حقل البحث */}
-          <div className="relative flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 transition-all focus-within:border-red-500 focus-within:bg-white focus-within:ring-3 focus-within:ring-red-100 lg:w-80">
-            <Search className="h-4 w-4 shrink-0 text-slate-400" />
-            <input
-              className="min-w-0 flex-1 bg-transparent px-1 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 font-medium"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="ابحث باسم اللاعب..."
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="text-xs text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+                  <button
+                    type="button"
+                    className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 cursor-pointer"
+                    onClick={() => setShowBranches(true)}
+                  >
+                    <span>⚙️</span>
+                    <span>إدارة الفروع</span>
+                  </button>
+                </div>
+              </div>
 
-          {/* تبويبات الصالات */}
-          <div className="min-w-0 flex-1 overflow-x-auto scrollbar-none">
-            <div className="flex min-w-max items-center gap-1.5 py-1">
-              <button
-                type="button"
-                className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
-                  branch === "كل الصالات"
-                    ? "bg-red-600 text-white shadow-xs shadow-red-500/20"
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
-                }`}
-                onClick={() => setBranch("كل الصالات")}
-              >
-                كل الصالات
-              </button>
-              {branches.map((item) => (
-                <button
-                  type="button"
-                  key={item._id}
-                  className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
-                    branch === item.name
-                      ? "bg-red-600 text-white shadow-xs shadow-red-500/20"
-                      : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
-                  }`}
-                  onClick={() => setBranch(item.name)}
-                >
-                  {item.name}
-                </button>
-              ))}
+              {/* Row 2: Date + Month + Sort + Status Filters */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                {/* Date & Month & Sort */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs">
+                    <CalendarDays className="h-3.5 w-3.5 text-red-600" />
+                    <span className="font-bold text-slate-500">حصة:</span>
+                    <input
+                      type="date"
+                      max={today}
+                      value={sessionDate}
+                      onChange={(e) => {
+                        if (e.target.value <= today) setSessionDate(e.target.value);
+                      }}
+                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs">
+                    <CreditCard className="h-3.5 w-3.5 text-red-600" />
+                    <span className="font-bold text-slate-500">اشتراك:</span>
+                    <input
+                      type="month"
+                      value={paymentMonth}
+                      onChange={(e) => setPaymentMonth(e.target.value)}
+                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs">
+                    <ArrowUpDown className="h-3.5 w-3.5 text-red-600" />
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs"
+                    >
+                      <option value="newest">الأحدث تسجيلاً</option>
+                      <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
+                      <option value="oldest">الأقدم تسجيلاً</option>
+                      <option value="age-asc">السن: الأصغر أولاً</option>
+                      <option value="age-desc">السن: الأكبر أولاً</option>
+                      <option value="unpaid-first">متأخرو اشتراك الشهر أولاً</option>
+                      <option value="purchases-debt-first">متبقي الأدوات والمشتريات أولاً</option>
+                      <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Fast Status Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    className={`h-8 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                      statusFilter === "all"
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                    }`}
+                    onClick={() => setStatusFilter("all")}
+                  >
+                    الكل
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                      statusFilter === "present"
+                        ? "bg-emerald-600 text-white shadow-xs shadow-emerald-500/20"
+                        : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
+                    }`}
+                    onClick={() => setStatusFilter("present")}
+                  >
+                    <Check className="h-3 w-3 stroke-[2.5]" />
+                    <span>حاضر ({presentToday})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                      statusFilter === "absent"
+                        ? "bg-rose-600 text-white shadow-xs shadow-rose-500/20"
+                        : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
+                    }`}
+                    onClick={() => setStatusFilter("absent")}
+                  >
+                    <X className="h-3 w-3 stroke-[2.5]" />
+                    <span>غائب ({absentToday})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                      statusFilter === "paid"
+                        ? "bg-sky-600 text-white shadow-xs shadow-sky-500/20"
+                        : "bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200/60"
+                    }`}
+                    onClick={() => setStatusFilter("paid")}
+                  >
+                    <CreditCard className="h-3 w-3" />
+                    <span>مسدد ({paidCount})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                      statusFilter === "unpaid"
+                        ? "bg-amber-600 text-white shadow-xs shadow-amber-500/20"
+                        : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/60"
+                    }`}
+                    onClick={() => setStatusFilter("unpaid")}
+                  >
+                    <Clock className="h-3 w-3" />
+                    <span>متأخر ({totalPendingPaymentCount})</span>
+                  </button>
+                  {purchasesDebtCount > 0 && (
+                    <button
+                      type="button"
+                      className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                        statusFilter === "purchases_debt"
+                          ? "bg-amber-600 text-white shadow-xs"
+                          : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300"
+                      }`}
+                      onClick={() => setStatusFilter("purchases_debt")}
+                    >
+                      <ShoppingBag className="h-3 w-3 text-amber-600" />
+                      <span>أدوات ({purchasesDebtCount})</span>
+                    </button>
+                  )}
+                  {todayBirthdaysCount > 0 && (
+                    <button
+                      type="button"
+                      className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                        statusFilter === "birthday"
+                          ? "bg-red-600 text-white shadow-xs"
+                          : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
+                      }`}
+                      onClick={() => setStatusFilter("birthday")}
+                    >
+                      <Cake className="h-3 w-3" />
+                      <span>عيد ميلاد ({todayBirthdaysCount})</span>
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* أزرار إدارة الصالات */}
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            {isAddingBranch ? (
-              <form
-                onSubmit={handleQuickBranchSubmit}
-                className="flex w-full min-w-0 flex-col gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 p-1.5 sm:w-auto sm:flex-row sm:items-center"
-              >
-                <input
-                  value={quickBranchName}
-                  onChange={(e) => setQuickBranchName(e.target.value)}
-                  placeholder="اسم الصالة..."
-                  className="h-10 min-w-0 flex-1 rounded-lg border border-emerald-300 bg-white px-3 text-right text-xs font-bold text-slate-900 outline-none transition focus:ring-2 focus:ring-emerald-200 sm:w-40"
-                  autoFocus
-                  required
-                />
-                <button
-                  className="min-h-10 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-xs hover:bg-emerald-700"
-                  type="submit"
-                >
-                  حفظ
-                </button>
-                <button
-                  className="min-h-10 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600"
-                  type="button"
-                  onClick={() => setIsAddingBranch(false)}
-                >
-                  إلغاء
-                </button>
-              </form>
-            ) : (
-              <button
-                type="button"
-                className="flex min-h-10 items-center justify-center gap-1 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
-                onClick={() => setIsAddingBranch(true)}
-              >
-                <span>＋</span>
-                <span>صالة جديدة</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              className="flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:border-slate-300 hover:bg-slate-50"
-              onClick={() => setShowBranches(true)}
-            >
-              <span>⚙️</span>
-              <span>إدارة الفروع</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ━━━ Date Controls & Sort Strip (على الديسكتوب فقط) ━━━ */}
-        <div className="hidden md:grid mt-2.5 gap-2.5 rounded-2xl border border-slate-200/60 bg-white p-3.5 shadow-md sm:grid-cols-3">
-          <label className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500">
-              <CalendarDays className="h-3.5 w-3.5 text-red-500" />
-              تاريخ الحصة
-            </span>
-            <input
-              className="min-h-10 w-full rounded-xl border border-slate-200/70 bg-slate-50/60 px-3.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
-              type="date"
-              max={today}
-              value={sessionDate}
-              onChange={(event) => {
-                if (event.target.value <= today)
-                  setSessionDate(event.target.value);
-              }}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500">
-              <CreditCard className="h-3.5 w-3.5 text-red-500" />
-              شهر الاشتراك
-            </span>
-            <input
-              className="min-h-10 w-full rounded-xl border border-slate-200/70 bg-slate-50/60 px-3.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
-              type="month"
-              value={paymentMonth}
-              onChange={(event) => setPaymentMonth(event.target.value)}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500">
-              <ArrowUpDown className="h-3.5 w-3.5 text-red-500" />
-              ترتيب القائمة
-            </span>
-            <select
-              className="min-h-10 w-full rounded-xl border border-slate-200/70 bg-slate-50/60 px-3.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100 cursor-pointer"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="newest">الأحدث تسجيلاً (افتراضي)</option>
-              <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
-              <option value="oldest">الأقدم تسجيلاً</option>
-              <option value="age-asc">السن: الأصغر أولاً</option>
-              <option value="age-desc">السن: الأكبر أولاً</option>
-              <option value="unpaid-first">متأخرو اشتراك الشهر أولاً</option>
-              <option value="purchases-debt-first">متبقي الأدوات والمشتريات أولاً</option>
-              <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
-            </select>
-          </label>
-        </div>
-
-        {/* ━━━ Status Filters (على الديسكتوب فقط) ━━━ */}
-        <div className="hidden md:flex mt-2.5 flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200/60 bg-white p-2.5 shadow-md sm:gap-2">
-          <span className="px-2 text-xs font-extrabold text-slate-400">
-            فلترة سريعة:
-          </span>
-          <button
-            type="button"
-            className={`min-h-9 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === "all"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
-            }`}
-            onClick={() => setStatusFilter("all")}
-          >
-            الكل
-          </button>
-          <button
-            type="button"
-            className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === "present"
-                ? "bg-emerald-600 text-white shadow-xs shadow-emerald-500/20"
-                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
-            }`}
-            onClick={() => setStatusFilter("present")}
-          >
-            <Check className="h-3 w-3" strokeWidth={2.5} />
-            <span>حاضر</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{presentToday}</span>
-          </button>
-          <button
-            type="button"
-            className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === "absent"
-                ? "bg-rose-600 text-white shadow-xs shadow-rose-500/20"
-                : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
-            }`}
-            onClick={() => setStatusFilter("absent")}
-          >
-            <X className="h-3 w-3" strokeWidth={2.5} />
-            <span>غائب</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{absentToday}</span>
-          </button>
-          <button
-            type="button"
-            className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === "paid"
-                ? "bg-sky-600 text-white shadow-xs shadow-sky-500/20"
-                : "bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200/60"
-            }`}
-            onClick={() => setStatusFilter("paid")}
-          >
-            <CreditCard className="h-3 w-3" />
-            <span>اشتراك مسدد</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{paidCount}</span>
-          </button>
-          {partialCount > 0 && (
-            <button
-              type="button"
-              className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer ${
-                statusFilter === "partially_paid"
-                  ? "bg-amber-600 text-white shadow-xs shadow-amber-500/20"
-                  : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300"
-              }`}
-              onClick={() => setStatusFilter("partially_paid")}
-            >
-              <Clock className="h-3 w-3 text-amber-600" />
-              <span>اشتراك جزئي</span>
-              <span className="rounded-full bg-white/40 px-1.5 text-[10px] font-black">{partialCount}</span>
-            </button>
-          )}
-          <button
-            type="button"
-            className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === "unpaid"
-                ? "bg-rose-600 text-white shadow-xs shadow-rose-500/20"
-                : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
-            }`}
-            onClick={() => setStatusFilter("unpaid")}
-          >
-            <Clock className="h-3 w-3" />
-            <span>متأخرات اشتراك الشهر</span>
-            <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{totalPendingPaymentCount}</span>
-          </button>
-
-          {purchasesDebtCount > 0 && (
-            <button
-              type="button"
-              className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-black transition-all cursor-pointer ${
-                statusFilter === "purchases_debt"
-                  ? "bg-amber-600 text-white shadow-xs shadow-amber-500/20 ring-2 ring-amber-300"
-                  : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300"
-              }`}
-              onClick={() => setStatusFilter("purchases_debt")}
-            >
-              <ShoppingBag className="h-3.5 w-3.5 text-amber-600" />
-              <span>متبقي أدوات / مشتريات</span>
-              <span className="rounded-full bg-white/40 px-1.5 text-[10px] font-black">{purchasesDebtCount}</span>
-            </button>
-          )}
-
-          {todayBirthdaysCount > 0 && (
-            <button
-              type="button"
-              className={`flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-black transition-all cursor-pointer ${
-                statusFilter === "birthday"
-                  ? "bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-xs shadow-rose-500/20"
-                  : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
-              }`}
-              onClick={() => setStatusFilter("birthday")}
-            >
-              <Cake className="h-3 w-3" />
-              <span>أعياد الميلاد</span>
-              <span className="rounded-full bg-white/30 px-1.5 text-[10px] font-black">{todayBirthdaysCount}</span>
-            </button>
-          )}
-        </div>
+        )}
 
         {/* Toast placeholder removed — now rendered as fixed overlay near </main> */}
 
@@ -1798,10 +1814,9 @@ export default function Home() {
             </div>
           </div>
         )}
-        </div>
 
         {/* ━━━ Player Table & Pagination Container ━━━ */}
-        <div className={activeView === "events" ? (mobileTab === "players" ? "block md:hidden" : "hidden") : (mobileTab === "players" ? "block" : "hidden md:block")}>
+        <div className={`${mobileTab === "players" ? "block" : "hidden"} ${activeView === "players" ? "md:block" : "md:hidden"}`}>
           {/* شريط موجز عدد اللاعبين السريع للموبايل */}
           <div className="md:hidden flex items-center justify-between px-1 py-1.5 mb-1 text-xs font-bold text-slate-500">
             <div className="flex items-center gap-1.5">
@@ -1941,6 +1956,12 @@ export default function Home() {
             setActiveView("events");
           } else if (tab === "players") {
             setActiveView("players");
+          } else if (tab === "branches") {
+            setActiveView("branches");
+          } else if (tab === "stats") {
+            setActiveView("finances");
+          } else if (tab === "birthdays") {
+            setActiveView("birthdays");
           }
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}

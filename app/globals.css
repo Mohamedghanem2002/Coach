@@ -324,3 +324,71 @@ img {
   animation: pulseGlowEmerald 2s infinite;
 }
 
+/* ─── 2026 Workspace & Operations Utilities ─────────────────────────────── */
+.workspace-tabs-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.workspace-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+.workspace-tab-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.6);
+}
+.workspace-tab-btn.active {
+  color: #0f172a;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* Command Bar (Unified Controls) */
+.command-bar-surface {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 18px;
+  box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.04), 0 1px 4px -1px rgba(15, 23, 42, 0.02);
+}
+
+/* Native List Item */
+.native-list-item {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 16px;
+  transition: all 0.15s ease;
+}
+.native-list-item:hover {
+  border-color: rgba(203, 213, 225, 1);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+}
+
+/* Belt indicator pill */
+.belt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #f8fafc;
+}
+
+
