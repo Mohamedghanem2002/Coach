@@ -31,15 +31,15 @@
       "guardianPhone": "01552488179",
       "branch": "صالة الكاتا الرئيسية",
       "photo": "",
-      "paymentStatus": "partially_paid",
+      "paymentStatus": "paid",
       "paymentHistory": [
         {
           "month": "2026-09",
-          "status": "partially_paid",
+          "status": "paid",
           "totalAmount": 200,
-          "paidAmount": 100,
-          "remainingAmount": 100,
-          "updatedAt": "2026-09-11T15:41:24.254Z"
+          "paidAmount": 200,
+          "remainingAmount": 0,
+          "updatedAt": "2026-09-13T18:19:25.610Z"
         }
       ],
       "attendance": [
@@ -50,13 +50,17 @@
         {
           "date": "2026-09-11",
           "status": "present"
+        },
+        {
+          "date": "2026-09-13",
+          "status": "present"
         }
       ],
       "createdAt": "2026-09-10T11:14:13.116Z",
       "_id": "6aa29105131cd6a66b5f1aeb",
       "totalAmount": 200,
-      "paidAmount": 100,
-      "remainingAmount": 100
+      "paidAmount": 200,
+      "remainingAmount": 0
     },
     {
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",

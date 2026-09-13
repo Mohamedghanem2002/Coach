@@ -77,7 +77,7 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 glass-nav border-b border-slate-200/80" dir="rtl">
-      <div className="mx-auto flex min-h-[56px] sm:min-h-[68px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-8 py-2 overflow-hidden">
+      <div className="mx-auto flex min-h-[56px] sm:min-h-[68px] w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] items-center justify-between gap-2 px-3 sm:px-8 py-2 overflow-hidden">
 
         {/* Brand */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink min-w-0">

@@ -773,7 +773,7 @@ export default function Home() {
         }}
       />
 
-      <section className="mx-auto w-full max-w-7xl px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
+      <section className="mx-auto w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
         {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
         <div className="md:hidden">
           {/* ━━━ لوحة التحكم السريعة للموبايل (Native Mobile Command Surface) ━━━ */}
@@ -1573,9 +1573,9 @@ export default function Home() {
               </div>
 
               {/* Row 2: Date + Month + Sort + Status Filters */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 border-t border-slate-100 pt-3">
                 {/* Date & Month & Sort */}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs">
                     <CalendarDays className="h-3.5 w-3.5 text-red-600" />
                     <span className="font-bold text-slate-500">حصة:</span>
@@ -1621,7 +1621,7 @@ export default function Home() {
                 </div>
 
                 {/* Fast Status Filter Pills */}
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
                   <button
                     type="button"
                     className={`h-8 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
@@ -1817,7 +1817,7 @@ export default function Home() {
             )}
           </div>
           <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/60 md:bg-white md:shadow-md">
-            <div className="hidden grid-cols-[2fr_0.6fr_1fr_1.4fr_1.8fr_0.4fr] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 md:grid">
+            <div className="hidden grid-cols-[minmax(240px,2.2fr)_75px_110px_160px_minmax(240px,2.2fr)_48px] xl:grid-cols-[minmax(280px,2.5fr)_85px_130px_180px_minmax(280px,2.5fr)_52px] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 md:grid">
               <span>اللاعب</span>
               <span>العمر</span>
               <span>الفرع</span>

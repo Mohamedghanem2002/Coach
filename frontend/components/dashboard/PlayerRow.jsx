@@ -73,6 +73,19 @@ function PlayerRow({
     return `المشتريات: سدد ${purchasesSummary.paidAmount} من ${purchasesSummary.totalAmount} ج.م (فاضل عليه ${purchasesSummary.remainingAmount} ج.م)`;
   }, [purchasesSummary, unpaidPurchases]);
 
+  const purchaseDebtLabelDesktop = useMemo(() => {
+    if (purchasesSummary.count === 0) return null;
+    if (purchasesSummary.remainingAmount <= 0) {
+      return `الأدوات مسددة (${purchasesSummary.totalAmount} ج.م) ✓`;
+    }
+    if (unpaidPurchases.length === 1) {
+      const p = unpaidPurchases[0];
+      const name = p.title || "السلعة";
+      return `${name}: باقي ${p.remainingAmount} ج.م`;
+    }
+    return `باقي أدوات: ${purchasesSummary.remainingAmount} ج.م`;
+  }, [purchasesSummary, unpaidPurchases]);
+
   const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
   const attendedSessions = Array.isArray(player.attendance)
     ? player.attendance.filter((item) => item.status === "present").length
@@ -405,7 +418,7 @@ function PlayerRow({
 
       {/* ═══════════ DESKTOP TABLE ROW (>= md) ═══════════ */}
       <div
-        className={`group relative hidden min-w-0 md:grid md:grid-cols-[2fr_0.6fr_1fr_1.4fr_1.8fr_0.4fr] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3.5 md:hover:bg-slate-50/60 transition-all duration-200 ${
+        className={`group relative hidden min-w-0 md:grid md:grid-cols-[minmax(240px,2.2fr)_75px_110px_160px_minmax(240px,2.2fr)_48px] xl:grid-cols-[minmax(280px,2.5fr)_85px_130px_180px_minmax(280px,2.5fr)_52px] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3.5 md:hover:bg-slate-50/60 transition-all duration-200 ${
           isSelected
             ? "md:bg-red-50/30"
             : birthdayInfo?.isToday
@@ -468,30 +481,25 @@ function PlayerRow({
                 )}
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-bold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
+                <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-bold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border} shrink-0`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${beltStyle.dot}`} />
                   <span>حزام {player.belt || "أبيض"}</span>
                 </span>
-                <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/70 px-1.5 py-0.5 font-black text-red-700">
+                <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/70 px-1.5 py-0.5 font-black text-red-700 shrink-0">
                   مستوى {player.level || "A"}
                 </span>
-                <span>•</span>
-                <span>تسجيل {new Date(player.createdAt).toLocaleDateString("ar-EG")}</span>
                 {totalSessions > 0 && (
-                  <>
-                    <span>•</span>
-                    <span
-                      className={`font-bold ${
-                        attendanceRate >= 75
-                          ? "text-emerald-600"
-                          : attendanceRate >= 50
-                          ? "text-amber-600"
-                          : "text-rose-600"
-                      }`}
-                    >
-                      التزام {attendanceRate}%
-                    </span>
-                  </>
+                  <span
+                    className={`font-bold shrink-0 ${
+                      attendanceRate >= 75
+                        ? "text-emerald-600"
+                        : attendanceRate >= 50
+                        ? "text-amber-600"
+                        : "text-rose-600"
+                    }`}
+                  >
+                    • التزام {attendanceRate}%
+                  </span>
                 )}
               </div>
             </div>
@@ -582,17 +590,17 @@ function PlayerRow({
               {paymentStatus === "paid" ? (
                 <>
                   <CreditCard className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                  <span className="truncate font-black text-xs">اشتراك الشهر: مدفوع ({paidAmount} ج.م) ✓</span>
+                  <span className="truncate font-black text-xs">اشتراك مدفوع ({paidAmount} ج.م) ✓</span>
                 </>
               ) : paymentStatus === "partially_paid" ? (
                 <>
                   <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                  <span className="truncate font-black text-xs">اشتراك الشهر: باقي {remainingAmount} من {totalAmount}</span>
+                  <span className="truncate font-black text-xs">دفع {paidAmount} • باقي {remainingAmount} ج.م</span>
                 </>
               ) : (
                 <>
                   <Clock className="h-3.5 w-3.5 shrink-0 text-rose-600" />
-                  <span className="truncate font-black text-xs">اشتراك الشهر: غير مسدد ({totalAmount || remainingAmount} ج.م)</span>
+                  <span className="truncate font-black text-xs">غير مسدد ({totalAmount || remainingAmount} ج.م)</span>
                 </>
               )}
             </div>
@@ -620,7 +628,7 @@ function PlayerRow({
                     purchasesSummary.remainingAmount > 0 ? "text-amber-600" : "text-emerald-600"
                   }`}
                 />
-                <span className="truncate">{purchaseDebtLabel}</span>
+                <span className="truncate">{purchaseDebtLabelDesktop}</span>
               </div>
               <span
                 className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${

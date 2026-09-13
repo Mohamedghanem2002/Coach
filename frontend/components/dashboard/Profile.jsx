@@ -1055,25 +1055,54 @@ export default function Profile({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4 animate-fade-in-scale overflow-hidden max-w-full"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4 lg:p-6 animate-fade-in-scale overflow-hidden max-w-full"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
       dir="rtl"
     >
-      <aside className="relative flex flex-col h-full h-dvh sm:h-auto sm:max-h-[90vh] w-full max-w-full sm:max-w-2xl overflow-hidden rounded-none sm:rounded-3xl border-0 sm:border sm:border-slate-200/80 bg-slate-50 shadow-2xl animate-fade-in-scale pb-safe">
-        {/* ════════════ شريط التطبيق العلوي الذكي (Native Mobile App Bar) ════════════ */}
+      <aside className="relative flex flex-col h-full h-dvh sm:h-auto sm:max-h-[90vh] lg:max-h-[88vh] w-full max-w-full sm:max-w-3xl lg:max-w-5xl overflow-hidden rounded-none sm:rounded-3xl border-0 sm:border sm:border-slate-200/80 bg-slate-50 shadow-2xl animate-fade-in-scale pb-safe">
+        {/* ════════════ شريط التطبيق العلوي الذكي ════════════ */}
         <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-slate-200/80 bg-white/95 px-3.5 sm:px-6 py-2.5 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
+            {/* Mobile Back Button */}
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-3 text-xs font-black text-slate-700 transition active-press cursor-pointer touch-manipulation"
+              className="flex sm:hidden h-9 items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-3 text-xs font-black text-slate-700 transition active-press cursor-pointer touch-manipulation"
               title="الرجوع للقائمة"
             >
               <ArrowRight className="h-4 w-4 text-slate-600 stroke-[2.5]" />
               <span className="text-xs">رجوع</span>
             </button>
 
-            <div className="min-w-0">
+            {/* Desktop Header Identity Badge */}
+            <div className="hidden sm:flex items-center gap-2.5 min-w-0">
+              <div className={`relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-cairo text-xs font-black text-white ring-2 ${beltStyle.border}`}>
+                {player.photo ? (
+                  <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span>{player.name.charAt(0)}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="truncate font-cairo text-sm sm:text-base font-black text-slate-900 leading-tight">
+                    {player.name}
+                  </h1>
+                  <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.2 text-[10px] font-bold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
+                    🥋 {player.belt || "أبيض"}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-slate-100 border border-slate-200 px-1.5 py-0.2 text-[10px] font-bold text-slate-600">
+                    🏢 {player.branch}
+                  </span>
+                </div>
+                <span className="block text-[10px] font-semibold text-slate-400">
+                  عضوية الأكاديمية • مستوى {player.level || "A"} • السن: {currentAge} سنة
+                </span>
+              </div>
+            </div>
+
+            {/* Mobile Player Title */}
+            <div className="sm:hidden min-w-0">
               <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
                 ملف بطل الكاراتيه
               </span>
@@ -1598,600 +1627,660 @@ export default function Profile({
               {/* ════════════ 3. محتويات التبويبات ════════════ */}
 
               {/* قسم 1: النظرة العامة والاشتراك الحالي */}
-              <div className={mobileProfileTab === "overview" ? "space-y-3.5 block" : "hidden"}>
-                {/* كارت تواصل ولي الأمر المباشر */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                      <Phone className="h-4 w-4 text-red-600 shrink-0" />
-                      هاتف ولي الأمر:
-                    </span>
-                    {guardianPhone ? (
-                      <span className="font-cairo text-xs sm:text-sm font-black text-slate-900 tracking-wider" dir="ltr">
-                        {guardianPhone}
-                      </span>
-                    ) : (
-                      <span className="text-[11px] font-medium text-slate-400">غير مسجل</span>
-                    )}
+              <div className={mobileProfileTab === "overview" ? "block" : "hidden"}>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-start">
+                  {/* العمود الرئيسي (المعاملات المالية ونسب الالتزام) */}
+                  <div className="lg:col-span-7 space-y-3.5 sm:space-y-4">
+                    {/* كارت اشتراك الشهر الحالي المطور */}
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-xs">
+                            <CreditCard className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h3 className="font-cairo text-xs sm:text-sm font-black text-slate-900">
+                              اشتراك شهر {paymentMonth}
+                            </h3>
+                            <p className="text-[10px] sm:text-[11px] font-medium text-slate-400">
+                              تفاصيل سداد اشتراك الشهر المحدد
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* شارة الحالة */}
+                        <span
+                          className={`px-2.5 py-1 rounded-xl text-xs font-black shrink-0 ${
+                            monthlyStatus === "paid"
+                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                              : monthlyStatus === "partially_paid"
+                                ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                : "bg-rose-100 text-rose-800 border border-rose-200"
+                          }`}
+                        >
+                          {monthlyStatus === "paid"
+                            ? "✓ مدفوع بالكامل"
+                            : monthlyStatus === "partially_paid"
+                              ? "دفع جزئي"
+                              : "لم يدفع بعد"}
+                        </span>
+                      </div>
+
+                      {/* 3 أرقام بيانية للمطلوب والمدفوع والمتبقي */}
+                      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+                        <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-2.5 text-center shadow-2xs">
+                          <span className="block text-[10px] font-bold text-slate-500">المطلوب</span>
+                          <strong className="font-cairo text-sm sm:text-base font-black text-slate-800">
+                            {totalAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
+                          </strong>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 border border-emerald-200/80 p-2.5 text-center shadow-2xs">
+                          <span className="block text-[10px] font-bold text-emerald-700">المدفوع</span>
+                          <strong className="font-cairo text-sm sm:text-base font-black text-emerald-700">
+                            {paidAmount} <span className="text-[9px] font-normal text-emerald-500">ج.م</span>
+                          </strong>
+                        </div>
+                        <div className={`rounded-xl bg-slate-50 border p-2.5 text-center shadow-2xs ${
+                          remainingAmount > 0 ? "border-rose-200" : "border-slate-200/80"
+                        }`}>
+                          <span className={`block text-[10px] font-bold ${
+                            remainingAmount > 0 ? "text-rose-600" : "text-slate-500"
+                          }`}>المتبقي</span>
+                          <strong className={`font-cairo text-sm sm:text-base font-black ${
+                            remainingAmount > 0 ? "text-rose-600" : "text-slate-800"
+                          }`}>
+                            {remainingAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
+                          </strong>
+                        </div>
+                      </div>
+
+                      {/* شريط نسبة السداد */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                          <span>نسبة السداد:</span>
+                          <span className="font-black text-slate-800">{paymentRate}%</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              paymentRate === 100
+                                ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                                : paymentRate > 0
+                                  ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                                  : "bg-slate-300"
+                            }`}
+                            style={{ width: `${paymentRate}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* أزرار الإجراءات السريعة */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetPaymentMonth(paymentMonth);
+                            setTargetPaymentDetails(paymentDetails);
+                            setShowPaymentModal(true);
+                          }}
+                          className="flex-1 h-10 rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 text-white font-cairo text-xs font-black shadow-xs hover:brightness-110 active:scale-95 transition cursor-pointer flex items-center justify-center gap-1.5 touch-manipulation"
+                        >
+                          <CreditCard className="h-3.5 w-3.5" />
+                          <span>تسجيل / تعديل الدفعة</span>
+                        </button>
+
+                        {monthlyStatus !== "paid" && (
+                          <button
+                            type="button"
+                            disabled={isTogglingPayment}
+                            onClick={() => handleToggleMonthlyPayment()}
+                            className="h-10 px-3.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-cairo text-xs font-black active:scale-95 transition cursor-pointer shrink-0 touch-manipulation"
+                          >
+                            {isTogglingPayment ? "جاري..." : "سداد كامل ✓"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* كارت الإحصائيات الحيوية الثلاثية */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+                      <div className="rounded-2xl border border-slate-200/80 bg-white p-3 sm:p-4 text-center shadow-2xs">
+                        <strong className="block font-cairo text-lg sm:text-2xl font-black text-slate-900">
+                          {attendanceRate}%
+                        </strong>
+                        <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate">
+                          نسبة الالتزام
+                        </span>
+                      </div>
+
+                      <div className="rounded-2xl border border-slate-200/80 bg-white p-3 sm:p-4 text-center shadow-2xs">
+                        <strong className="block font-cairo text-lg sm:text-2xl font-black text-slate-900">
+                          {attended} <span className="text-[10px] sm:text-xs text-slate-400 font-normal">/ {totalAttendanceCount}</span>
+                        </strong>
+                        <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate">
+                          حصة حضور
+                        </span>
+                      </div>
+
+                      <div
+                        className={`rounded-2xl border p-3 sm:p-4 text-center cursor-pointer transition active:scale-95 shadow-2xs ${
+                          monthlyStatus === "paid"
+                            ? "border-emerald-200 bg-emerald-50/60"
+                            : monthlyStatus === "partially_paid"
+                              ? "border-amber-300 bg-amber-50/70"
+                              : "border-rose-200 bg-rose-50/60"
+                        }`}
+                        onClick={() => {
+                          setTargetPaymentMonth(paymentMonth);
+                          setTargetPaymentDetails(paymentDetails);
+                          setShowPaymentModal(true);
+                        }}
+                        title="انقر لتسجيل أو تعديل الاشتراك"
+                      >
+                        <strong
+                          className={`block font-cairo text-xs sm:text-base font-black truncate ${
+                            monthlyStatus === "paid"
+                              ? "text-emerald-700"
+                              : monthlyStatus === "partially_paid"
+                                ? "text-amber-900"
+                                : "text-rose-700"
+                          }`}
+                        >
+                          {monthlyStatus === "paid"
+                            ? "✓ مدفوع"
+                            : monthlyStatus === "partially_paid"
+                              ? `دفع ${paidAmount}`
+                              : `لم يدفع (${remainingAmount})`}
+                        </strong>
+                        <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">
+                          شهر {paymentMonth}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {guardianPhone ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <a
-                        href={`tel:${guardianPhone}`}
-                        onClick={handlePhoneCallClick}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 px-3 py-2.5 text-xs font-bold text-blue-800 transition active:scale-95 text-center touch-manipulation"
-                        title="إجراء اتصال هاتفي مباشر بولي الأمر"
-                      >
-                        {isCallingGuardian ? (
-                          <>
-                            <span className="h-3.5 w-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin shrink-0" />
-                            <span className="truncate">جاري الاتصال...</span>
-                          </>
+                  {/* العمود الجانبي (التواصل والمناسبات والإجراءات) */}
+                  <div className="lg:col-span-5 space-y-3.5 sm:space-y-4">
+                    {/* كارت تواصل ولي الأمر المباشر */}
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
+                          <Phone className="h-4 w-4 text-red-600 shrink-0" />
+                          هاتف ولي الأمر:
+                        </span>
+                        {guardianPhone ? (
+                          <span className="font-cairo text-xs sm:text-sm font-black text-slate-900 tracking-wider" dir="ltr">
+                            {guardianPhone}
+                          </span>
                         ) : (
-                          <>
-                            <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                            <span className="truncate">اتصال هاتفي</span>
-                          </>
+                          <span className="text-[11px] font-medium text-slate-400">غير مسجل</span>
                         )}
-                      </a>
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={openGuardianChat}
-                        disabled={isOpeningChat}
-                        className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-2.5 text-xs font-bold text-white transition active:scale-95 disabled:opacity-60 cursor-pointer text-center touch-manipulation shadow-2xs"
-                        title="فتح محادثة واتساب مباشرة مع ولي الأمر"
-                      >
-                        {isOpeningChat ? (
-                          <>
-                            <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                            <span className="truncate">جاري الفتح...</span>
-                          </>
-                        ) : (
-                          <>
+                      {guardianPhone ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <a
+                            href={`tel:${guardianPhone}`}
+                            onClick={handlePhoneCallClick}
+                            className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 px-3 py-2.5 text-xs font-bold text-blue-800 transition active:scale-95 text-center touch-manipulation"
+                            title="إجراء اتصال هاتفي مباشر بولي الأمر"
+                          >
+                            {isCallingGuardian ? (
+                              <>
+                                <span className="h-3.5 w-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin shrink-0" />
+                                <span className="truncate">جاري الاتصال...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                                <span className="truncate">اتصال هاتفي</span>
+                              </>
+                            )}
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={openGuardianChat}
+                            disabled={isOpeningChat}
+                            className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-2.5 text-xs font-bold text-white transition active:scale-95 disabled:opacity-60 cursor-pointer text-center touch-manipulation shadow-2xs"
+                            title="فتح محادثة واتساب مباشرة مع ولي الأمر"
+                          >
+                            {isOpeningChat ? (
+                              <>
+                                <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                                <span className="truncate">جاري الفتح...</span>
+                              </>
+                            ) : (
+                              <>
+                                <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">محادثة واتساب</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditName(player.name);
+                            const _d = (player.dateOfBirth || "").split("-");
+                            setEditDobYear(_d[0] || "");
+                            setEditDobMonth(_d[1] || "");
+                            setEditDobDay(_d[2] || "");
+                            setEditGuardianPhone("");
+                            setEditBranch(player.branch);
+                            setEditPhoto(player.photo || "");
+                            setIsEditing(true);
+                          }}
+                          className="w-full text-center text-xs font-bold text-red-600 hover:underline py-1.5 cursor-pointer"
+                        >
+                          + اضغط هنا لإضافة رقم هاتف ولي الأمر
+                        </button>
+                      )}
+                    </div>
+
+                    {/* تنبيه عيد الميلاد التفاعلي إن وُجد */}
+                    {hasActiveBirthday && (
+                      <div className="rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-2xs animate-slide-up space-y-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-2xl animate-bounce shrink-0">🎂</span>
+                          <div>
+                            <strong className="block font-cairo text-sm font-black text-rose-900 leading-snug">
+                              {birthdayInfo.isToday
+                                ? `اليوم عيد ميلاد ${player.name}! 🎉`
+                                : `غداً عيد ميلاد ${player.name}! 🎉 (قبلها بيوم)`}
+                            </strong>
+                            <span className="block text-[11px] font-bold text-amber-900 mt-0.5">
+                              {birthdayInfo.isToday
+                                ? `يُتم اليوم ${birthdayInfo.turningAge} سنة · كل عام وبطلنا بألف خير! 🥋`
+                                : `يُتم غداً ${birthdayInfo.turningAge} سنة · يمكنك إرسال كارت التهنئة مسبقاً! 🥋`}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-rose-200/60">
+                          <button
+                            type="button"
+                            disabled={isSendingBirthdayText}
+                            onClick={shareBirthdayText}
+                            className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs touch-manipulation"
+                            title="إرسال تهنئة نصية لشات واتساب ولي الأمر فوراً من أول نقرة"
+                          >
                             <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">محادثة واتساب</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditName(player.name);
-                        const _d = (player.dateOfBirth || "").split("-");
-                        setEditDobYear(_d[0] || "");
-                        setEditDobMonth(_d[1] || "");
-                        setEditDobDay(_d[2] || "");
-                        setEditGuardianPhone("");
-                        setEditBranch(player.branch);
-                        setEditPhoto(player.photo || "");
-                        setIsEditing(true);
-                      }}
-                      className="w-full text-center text-xs font-bold text-red-600 hover:underline py-1.5 cursor-pointer"
-                    >
-                      + اضغط هنا لإضافة رقم هاتف ولي الأمر
-                    </button>
-                  )}
-                </div>
+                            <span>تهنئة نصية 🎉</span>
+                          </button>
 
-                {/* كارت الإحصائيات الحيوية الثلاثية */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                  <div className="rounded-2xl border border-slate-200/80 bg-white p-3 text-center shadow-2xs">
-                    <strong className="block font-cairo text-lg sm:text-2xl font-black text-slate-900">
-                      {attendanceRate}%
-                    </strong>
-                    <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate">
-                      نسبة الالتزام
-                    </span>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200/80 bg-white p-3 text-center shadow-2xs">
-                    <strong className="block font-cairo text-lg sm:text-2xl font-black text-slate-900">
-                      {attended} <span className="text-[10px] sm:text-xs text-slate-400 font-normal">/ {totalAttendanceCount}</span>
-                    </strong>
-                    <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate">
-                      حصة حضور
-                    </span>
-                  </div>
-
-                  <div
-                    className={`rounded-2xl border p-3 text-center cursor-pointer transition active:scale-95 shadow-2xs ${
-                      monthlyStatus === "paid"
-                        ? "border-emerald-200 bg-emerald-50/60"
-                        : monthlyStatus === "partially_paid"
-                          ? "border-amber-300 bg-amber-50/70"
-                          : "border-rose-200 bg-rose-50/60"
-                    }`}
-                    onClick={() => {
-                      setTargetPaymentMonth(paymentMonth);
-                      setTargetPaymentDetails(paymentDetails);
-                      setShowPaymentModal(true);
-                    }}
-                    title="انقر لتسجيل أو تعديل الاشتراك"
-                  >
-                    <strong
-                      className={`block font-cairo text-xs sm:text-base font-black truncate ${
-                        monthlyStatus === "paid"
-                          ? "text-emerald-700"
-                          : monthlyStatus === "partially_paid"
-                            ? "text-amber-900"
-                            : "text-rose-700"
-                      }`}
-                    >
-                      {monthlyStatus === "paid"
-                        ? "✓ مدفوع"
-                        : monthlyStatus === "partially_paid"
-                          ? `دفع ${paidAmount}`
-                          : `لم يدفع (${remainingAmount})`}
-                    </strong>
-                    <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">
-                      شهر {paymentMonth}
-                    </span>
-                  </div>
-                </div>
-
-                {/* كارت اشتراك الشهر الحالي المطور */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-xs">
-                        <CreditCard className="h-4 w-4" />
+                          <button
+                            type="button"
+                            onClick={() => setShowBirthdayModal(true)}
+                            className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 font-black text-amber-900 shadow-2xs hover:bg-amber-100 active:scale-95 transition-all cursor-pointer text-xs touch-manipulation"
+                            title="معاينة كارت التهنئة كصورة وحفظه أو إرساله عبر واتساب"
+                          >
+                            <Eye className="h-3.5 w-3.5 shrink-0 text-amber-700" />
+                            <span>معاينة الكارت 🎂</span>
+                          </button>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-cairo text-xs sm:text-sm font-black text-slate-900">
-                          اشتراك شهر {paymentMonth}
-                        </h3>
-                        <p className="text-[10px] sm:text-[11px] font-medium text-slate-400">
-                          تفاصيل سداد اشتراك الشهر المحدد
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* شارة الحالة */}
-                    <span
-                      className={`px-2.5 py-1 rounded-xl text-xs font-black shrink-0 ${
-                        monthlyStatus === "paid"
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                          : monthlyStatus === "partially_paid"
-                            ? "bg-amber-100 text-amber-900 border border-amber-300"
-                            : "bg-rose-100 text-rose-800 border border-rose-200"
-                      }`}
-                    >
-                      {monthlyStatus === "paid"
-                        ? "✓ مدفوع بالكامل"
-                        : monthlyStatus === "partially_paid"
-                          ? "دفع جزئي"
-                          : "لم يدفع بعد"}
-                    </span>
-                  </div>
-
-                  {/* 3 أرقام بيانية للمطلوب والمدفوع والمتبقي */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
-                    <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-2 text-center shadow-2xs">
-                      <span className="block text-[10px] font-bold text-slate-500">المطلوب</span>
-                      <strong className="font-cairo text-sm sm:text-base font-black text-slate-800">
-                        {totalAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
-                      </strong>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 border border-emerald-200/80 p-2 text-center shadow-2xs">
-                      <span className="block text-[10px] font-bold text-emerald-700">المدفوع</span>
-                      <strong className="font-cairo text-sm sm:text-base font-black text-emerald-700">
-                        {paidAmount} <span className="text-[9px] font-normal text-emerald-500">ج.م</span>
-                      </strong>
-                    </div>
-                    <div className={`rounded-xl bg-slate-50 border p-2 text-center shadow-2xs ${
-                      remainingAmount > 0 ? "border-rose-200" : "border-slate-200/80"
-                    }`}>
-                      <span className={`block text-[10px] font-bold ${
-                        remainingAmount > 0 ? "text-rose-600" : "text-slate-500"
-                      }`}>المتبقي</span>
-                      <strong className={`font-cairo text-sm sm:text-base font-black ${
-                        remainingAmount > 0 ? "text-rose-600" : "text-slate-800"
-                      }`}>
-                        {remainingAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
-                      </strong>
-                    </div>
-                  </div>
-
-                  {/* شريط نسبة السداد */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
-                      <span>نسبة السداد:</span>
-                      <span className="font-black text-slate-800">{paymentRate}%</span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          paymentRate === 100
-                            ? "bg-gradient-to-r from-emerald-500 to-teal-500"
-                            : paymentRate > 0
-                              ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                              : "bg-slate-300"
-                        }`}
-                        style={{ width: `${paymentRate}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* أزرار الإجراءات السريعة */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTargetPaymentMonth(paymentMonth);
-                        setTargetPaymentDetails(paymentDetails);
-                        setShowPaymentModal(true);
-                      }}
-                      className="flex-1 h-10 rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 text-white font-cairo text-xs font-black shadow-xs hover:brightness-110 active:scale-95 transition cursor-pointer flex items-center justify-center gap-1.5 touch-manipulation"
-                    >
-                      <CreditCard className="h-3.5 w-3.5" />
-                      <span>تسجيل / تعديل الدفعة</span>
-                    </button>
-
-                    {monthlyStatus !== "paid" && (
-                      <button
-                        type="button"
-                        disabled={isTogglingPayment}
-                        onClick={() => handleToggleMonthlyPayment()}
-                        className="h-10 px-3.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-cairo text-xs font-black active:scale-95 transition cursor-pointer shrink-0 touch-manipulation"
-                      >
-                        {isTogglingPayment ? "جاري..." : "سداد كامل ✓"}
-                      </button>
                     )}
+
+                    {/* كارت ملخص المشتريات إن وُجدت */}
+                    {purchasesSummary.count > 0 && (
+                      <div
+                        onClick={() => setMobileProfileTab("purchases")}
+                        className={`flex items-center justify-between rounded-2xl border p-3.5 cursor-pointer transition active:scale-98 shadow-2xs ${
+                          purchasesSummary.remainingAmount > 0
+                            ? "border-amber-300 bg-amber-50/70 text-amber-950 hover:bg-amber-100/80"
+                            : "border-emerald-200 bg-emerald-50/60 text-emerald-900 hover:bg-emerald-100/80"
+                        }`}
+                        title="انقر لعرض تفاصيل المشتريات"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={`flex h-9 w-9 items-center justify-center rounded-xl shrink-0 ${
+                              purchasesSummary.remainingAmount > 0
+                                ? "bg-amber-100 text-amber-700 border border-amber-300"
+                                : "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                            }`}
+                          >
+                            <ShoppingBag className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <strong className="text-xs font-black block font-cairo truncate">
+                              مشتريات ومستلزمات ({purchasesSummary.count} مسجلة)
+                            </strong>
+                            <span className="text-[10px] font-bold opacity-80 truncate block">
+                              {purchasesSummary.remainingAmount > 0
+                                ? (unpaidPurchases.length === 1
+                                    ? `${unpaidPurchases[0].title || "السلعة"}: باقي ${unpaidPurchases[0].remainingAmount} ج.م`
+                                    : `سدد ${purchasesSummary.paidAmount} • باقي ${purchasesSummary.remainingAmount} ج.م`)
+                                : `مسددة بالكامل (${purchasesSummary.totalAmount} ج.م) ✓`}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black shrink-0 ${
+                            purchasesSummary.remainingAmount > 0
+                              ? "bg-amber-200 text-amber-900"
+                              : "bg-emerald-200 text-emerald-900"
+                          }`}
+                        >
+                          {purchasesSummary.remainingAmount > 0 ? "يوجد متبقي" : "خالص ✓"}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* زر حذف اللاعب النهائي */}
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white hover:bg-rose-50/50 p-3 text-xs font-bold text-rose-700 transition hover:border-rose-300 active:scale-98 cursor-pointer shadow-2xs touch-manipulation"
+                      onClick={() => setShowDeleteConfirm(true)}
+                    >
+                      <Trash2 className="h-4 w-4 text-rose-500" />
+                      <span>حذف اللاعب نهائيًا من الأكاديمية</span>
+                    </button>
                   </div>
                 </div>
-
-                {/* كارت ملخص المشتريات إن وُجدت */}
-                {purchasesSummary.count > 0 && (
-                  <div
-                    onClick={() => setMobileProfileTab("purchases")}
-                    className={`flex items-center justify-between rounded-2xl border p-3 sm:p-3.5 cursor-pointer transition active:scale-98 shadow-2xs ${
-                      purchasesSummary.remainingAmount > 0
-                        ? "border-amber-300 bg-amber-50/70 text-amber-950 hover:bg-amber-100/80"
-                        : "border-emerald-200 bg-emerald-50/60 text-emerald-900 hover:bg-emerald-100/80"
-                    }`}
-                    title="انقر لعرض تفاصيل المشتريات"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-xl shrink-0 ${
-                          purchasesSummary.remainingAmount > 0
-                            ? "bg-amber-100 text-amber-700 border border-amber-300"
-                            : "bg-emerald-100 text-emerald-700 border border-emerald-300"
-                        }`}
-                      >
-                        <ShoppingBag className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <strong className="text-xs font-black block font-cairo truncate">
-                          مشتريات ومستلزمات ({purchasesSummary.count} مسجلة)
-                        </strong>
-                        <span className="text-[10px] font-bold opacity-80 truncate block">
-                          {purchasesSummary.remainingAmount > 0
-                            ? (unpaidPurchases.length === 1
-                                ? `${unpaidPurchases[0].title || "السلعة"}: سدد ${unpaidPurchases[0].paidAmount} من ${unpaidPurchases[0].totalAmount} ج.م (باقي ${unpaidPurchases[0].remainingAmount} ج.م)`
-                                : `سدد ${purchasesSummary.paidAmount} من ${purchasesSummary.totalAmount} ج.م • متبقي ${purchasesSummary.remainingAmount} ج.م`)
-                            : `مسددة بالكامل (${purchasesSummary.totalAmount} ج.م) ✓`}
-                        </span>
-                      </div>
-                    </div>
-
-                    <span
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black shrink-0 ${
-                        purchasesSummary.remainingAmount > 0
-                          ? "bg-amber-200 text-amber-900"
-                          : "bg-emerald-200 text-emerald-900"
-                      }`}
-                    >
-                      {purchasesSummary.remainingAmount > 0 ? "يوجد متبقي" : "خالص ✓"}
-                    </span>
-                  </div>
-                )}
-
-                {/* تنبيه عيد الميلاد التفاعلي إن وُجد */}
-                {hasActiveBirthday && (
-                  <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-2xs animate-slide-up">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-2xl animate-bounce">🎂</span>
-                      <div>
-                        <strong className="block font-cairo text-sm font-black text-rose-900">
-                          {birthdayInfo.isToday
-                            ? `اليوم عيد ميلاد ${player.name}! 🎉`
-                            : `غداً عيد ميلاد ${player.name}! 🎉 (قبلها بيوم)`}
-                        </strong>
-                        <span className="block text-[11px] font-bold text-amber-900">
-                          {birthdayInfo.isToday
-                            ? `يُتم اليوم ${birthdayInfo.turningAge} سنة · كل عام وبطلنا بألف خير! 🥋`
-                            : `يُتم غداً ${birthdayInfo.turningAge} سنة · يمكنك إرسال كارت التهنئة مسبقاً! 🥋`}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
-                      <button
-                        type="button"
-                        disabled={isSendingBirthdayText}
-                        onClick={shareBirthdayText}
-                        className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs touch-manipulation"
-                        title="إرسال تهنئة نصية لشات واتساب ولي الأمر فوراً من أول نقرة"
-                      >
-                        <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                        <span>تهنئة نصية 🎉</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowBirthdayModal(true)}
-                        className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 font-black text-amber-900 shadow-2xs hover:bg-amber-100 active:scale-95 transition-all cursor-pointer text-xs touch-manipulation"
-                        title="معاينة كارت التهنئة كصورة وحفظه أو إرساله عبر واتساب"
-                      >
-                        <Eye className="h-3.5 w-3.5 shrink-0 text-amber-700" />
-                        <span>معاينة كارت العيد 🎂</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* زر حذف اللاعب النهائي - بأسلوب بطاقة مخصصة في أسفل الرئيسية */}
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white hover:bg-rose-50/50 p-3 text-xs font-bold text-rose-700 transition hover:border-rose-300 active:scale-98 cursor-pointer shadow-2xs touch-manipulation"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <Trash2 className="h-4 w-4 text-rose-500" />
-                  <span>حذف اللاعب نهائيًا من الأكاديمية</span>
-                </button>
               </div>
 
               {/* قسم 2: سجل الحضور والغياب */}
-              <div className={mobileProfileTab === "attendance" ? "space-y-3.5 block" : "hidden"}>
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                        <Calendar className="h-4 w-4" />
+              <div className={mobileProfileTab === "attendance" ? "block" : "hidden"}>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-start">
+                  {/* سجل الحضور */}
+                  <div className="lg:col-span-7">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                            <Calendar className="h-4 w-4" />
+                          </div>
+                          <h3 className="font-cairo text-sm font-extrabold text-slate-900">
+                            سجل الحضور والغياب
+                          </h3>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                          {(player.attendance || []).length} حصة مسجلة
+                        </span>
                       </div>
-                      <h3 className="font-cairo text-sm font-extrabold text-slate-900">
-                        سجل الحضور والغياب
-                      </h3>
+
+                      {!player.attendance || player.attendance.length === 0 ? (
+                        <div className="py-12 text-center text-slate-400">
+                          <Calendar className="h-10 w-10 mx-auto mb-2 text-slate-300" />
+                          <p className="text-xs font-bold">لا توجد حصص حضور مسجلة بعد.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-60 sm:max-h-80 lg:max-h-[380px] overflow-y-auto pr-1">
+                          {[...player.attendance].reverse().map((item) => (
+                            <div
+                              className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5 text-xs"
+                              key={item.date}
+                            >
+                              <span className="font-bold text-slate-800">{item.date}</span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
+                                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer touch-manipulation ${
+                                    item.status === "present"
+                                      ? "bg-emerald-600 text-white"
+                                      : "bg-rose-600 text-white"
+                                  }`}
+                                  onClick={() => handleTogglePastAttendance(item.date, item.status)}
+                                  title="انقر للتبديل"
+                                >
+                                  {updatingAttendanceDate === item.date ? (
+                                    <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                                  ) : item.status === "present" ? (
+                                    <><Check className="h-3 w-3" strokeWidth={2.5} /> حاضر</>
+                                  ) : (
+                                    <><X className="h-3 w-3" strokeWidth={2.5} /> غائب</>
+                                  )}
+                                </button>
+                                <button
+                                  disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
+                                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition cursor-pointer touch-manipulation"
+                                  onClick={() => handleDeletePastAttendance(item.date)}
+                                  title="حذف من السجل"
+                                >
+                                  {deletingAttendanceDate === item.date ? (
+                                    <span className="h-3 w-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                      {(player.attendance || []).length} حصة مسجلة
-                    </span>
                   </div>
 
-                  {!player.attendance || player.attendance.length === 0 ? (
-                    <div className="py-8 text-center text-slate-400">
-                      <Calendar className="h-8 w-8 mx-auto mb-1 text-slate-300" />
-                      <p className="text-xs">لا توجد حصص حضور مسجلة بعد.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                      {[...player.attendance].reverse().map((item) => (
-                        <div
-                          className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5 text-xs"
-                          key={item.date}
-                        >
-                          <span className="font-bold text-slate-800">{item.date}</span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
-                              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer touch-manipulation ${
-                                item.status === "present"
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-rose-600 text-white"
-                              }`}
-                              onClick={() => handleTogglePastAttendance(item.date, item.status)}
-                              title="انقر للتبديل"
-                            >
-                              {updatingAttendanceDate === item.date ? (
-                                <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                              ) : item.status === "present" ? (
-                                <><Check className="h-3 w-3" strokeWidth={2.5} /> حاضر</>
-                              ) : (
-                                <><X className="h-3 w-3" strokeWidth={2.5} /> غائب</>
-                              )}
-                            </button>
-                            <button
-                              disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition cursor-pointer touch-manipulation"
-                              onClick={() => handleDeletePastAttendance(item.date)}
-                              title="حذف من السجل"
-                            >
-                              {deletingAttendanceDate === item.date ? (
-                                <span className="h-3 w-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin" />
-                              ) : (
-                                <Trash2 className="h-3.5 w-3.5" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
                   {/* إضافة حصة حضور مخصصة */}
-                  <form
-                    onSubmit={addCustomAttendance}
-                    className="pt-3 border-t border-slate-100 flex flex-col gap-2 rounded-xl bg-slate-50/80 p-3 sm:flex-row sm:items-center"
-                  >
-                    <span className="whitespace-nowrap text-[11px] font-bold text-slate-700">
-                      تسجيل حصة مخصصة:
-                    </span>
-                    <input
-                      type="date"
-                      max={today}
-                      value={customAttendanceDate}
-                      onChange={(e) => setCustomAttendanceDate(e.target.value)}
-                      className="min-h-9 flex-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold outline-none focus:border-red-500"
-                      required
-                    />
-                    <select
-                      value={customAttendanceStatus}
-                      onChange={(e) => setCustomAttendanceStatus(e.target.value)}
-                      className="min-h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold outline-none focus:border-red-500"
-                    >
-                      <option value="present">حاضر ✓</option>
-                      <option value="absent">غائب ×</option>
-                    </select>
-                    <button
-                      className="min-h-9 rounded-lg bg-slate-900 px-3.5 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-60 active:scale-95 cursor-pointer touch-manipulation"
-                      type="submit"
-                      disabled={isSavingAttendance}
-                    >
-                      {isSavingAttendance ? (
-                        <span className="flex items-center gap-1">
-                          <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                          <span>جاري...</span>
-                        </span>
-                      ) : (
-                        "إضافة"
-                      )}
-                    </button>
-                  </form>
+                  <div className="lg:col-span-5">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                          <Plus className="h-4 w-4 stroke-[3]" />
+                        </div>
+                        <div>
+                          <h3 className="font-cairo text-sm font-extrabold text-slate-900">
+                            تسجيل حصة مخصصة
+                          </h3>
+                          <p className="text-[10px] text-slate-400">سجل حضور أو غياب بتاريخ محدد</p>
+                        </div>
+                      </div>
+
+                      <form onSubmit={addCustomAttendance} className="space-y-3 pt-1">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            تاريخ الحصة
+                          </label>
+                          <input
+                            type="date"
+                            max={today}
+                            value={customAttendanceDate}
+                            onChange={(e) => setCustomAttendanceDate(e.target.value)}
+                            className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 text-xs font-bold outline-none focus:border-red-500 focus:bg-white"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            حالة الحضور
+                          </label>
+                          <select
+                            value={customAttendanceStatus}
+                            onChange={(e) => setCustomAttendanceStatus(e.target.value)}
+                            className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 text-xs font-bold outline-none focus:border-red-500 focus:bg-white cursor-pointer"
+                          >
+                            <option value="present">حاضر ✓</option>
+                            <option value="absent">غائب ×</option>
+                          </select>
+                        </div>
+
+                        <button
+                          className="min-h-10 w-full rounded-xl bg-slate-900 px-4 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-60 active:scale-95 cursor-pointer touch-manipulation shadow-2xs"
+                          type="submit"
+                          disabled={isSavingAttendance}
+                        >
+                          {isSavingAttendance ? (
+                            <span className="flex items-center justify-center gap-1.5">
+                              <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                              <span>جاري التسجيل...</span>
+                            </span>
+                          ) : (
+                            "+ إضافة الحصة للسجل"
+                          )}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* قسم 3: سجل الاشتراكات السابقة */}
-              <div className={mobileProfileTab === "payments" ? "space-y-3.5 block" : "hidden"}>
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                        <CreditCard className="h-4 w-4" />
+              <div className={mobileProfileTab === "payments" ? "block" : "hidden"}>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-start">
+                  {/* سجل الاشتراكات */}
+                  <div className="lg:col-span-7">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                            <CreditCard className="h-4 w-4" />
+                          </div>
+                          <h3 className="font-cairo text-sm font-extrabold text-slate-900">
+                            سجل الاشتراكات السابقة
+                          </h3>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                          {(player.paymentHistory || []).length} شهر مسجل
+                        </span>
                       </div>
-                      <h3 className="font-cairo text-sm font-extrabold text-slate-900">
-                        سجل الاشتراكات السابقة
-                      </h3>
+
+                      {!player.paymentHistory || player.paymentHistory.length === 0 ? (
+                        <div className="py-12 text-center text-slate-400">
+                          <CreditCard className="h-10 w-10 mx-auto mb-2 text-slate-300" />
+                          <p className="text-xs font-bold">لا توجد اشتراكات مسجلة بعد.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-60 sm:max-h-80 lg:max-h-[380px] overflow-y-auto pr-1">
+                          {[...player.paymentHistory].reverse().map((item) => {
+                            const itemTotal = item.totalAmount ?? 100;
+                            const itemPaid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? itemTotal : 0);
+                            const itemRem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, itemTotal - itemPaid);
+                            const isItemPaid = itemPaid >= itemTotal && itemTotal > 0;
+                            const isItemPartial = itemPaid > 0 && !isItemPaid;
+
+                            return (
+                              <div
+                                className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 text-xs gap-2"
+                                key={item.month}
+                              >
+                                <div>
+                                  <span className="font-bold text-slate-800 block sm:inline">{item.month}</span>
+                                  <span className="text-[11px] font-semibold text-slate-500 sm:mr-2">
+                                    (دفع: {itemPaid} ج.م • متبقي: {itemRem} ج.م)
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTargetPaymentMonth(item.month);
+                                      setTargetPaymentDetails({
+                                        totalAmount: itemTotal,
+                                        paidAmount: itemPaid,
+                                        remainingAmount: itemRem,
+                                        status: isItemPaid ? "paid" : isItemPartial ? "partially_paid" : "unpaid",
+                                      });
+                                      setShowPaymentModal(true);
+                                    }}
+                                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer touch-manipulation ${
+                                      isItemPaid
+                                        ? "bg-emerald-600 text-white"
+                                        : isItemPartial
+                                          ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                          : "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                                    }`}
+                                    title="انقر لتعديل الدفعة"
+                                  >
+                                    {isItemPaid ? "✓ مدفوع" : isItemPartial ? `دفع ${itemPaid} • باقي ${itemRem}` : "لم يدفع"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={Boolean(updatingPaymentMonth || deletingPaymentMonth)}
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition cursor-pointer touch-manipulation"
+                                    onClick={() => handleDeletePastPayment(item.month)}
+                                    title="حذف من السجل"
+                                  >
+                                    {deletingPaymentMonth === item.month ? (
+                                      <span className="h-3 w-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                      {(player.paymentHistory || []).length} شهر مسجل
-                    </span>
                   </div>
 
-                  {!player.paymentHistory || player.paymentHistory.length === 0 ? (
-                    <div className="py-8 text-center text-slate-400">
-                      <CreditCard className="h-8 w-8 mx-auto mb-1 text-slate-300" />
-                      <p className="text-xs">لا توجد اشتراكات مسجلة بعد.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                      {[...player.paymentHistory].reverse().map((item) => {
-                        const itemTotal = item.totalAmount ?? 100;
-                        const itemPaid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? itemTotal : 0);
-                        const itemRem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, itemTotal - itemPaid);
-                        const isItemPaid = itemPaid >= itemTotal && itemTotal > 0;
-                        const isItemPartial = itemPaid > 0 && !isItemPaid;
-
-                        return (
-                          <div
-                            className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 text-xs gap-2"
-                            key={item.month}
-                          >
-                            <div>
-                              <span className="font-bold text-slate-800 block sm:inline">{item.month}</span>
-                              <span className="text-[11px] font-semibold text-slate-500 sm:mr-2">
-                                (دفع: {itemPaid} ج.م • متبقي: {itemRem} ج.م)
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setTargetPaymentMonth(item.month);
-                                  setTargetPaymentDetails({
-                                    totalAmount: itemTotal,
-                                    paidAmount: itemPaid,
-                                    remainingAmount: itemRem,
-                                    status: isItemPaid ? "paid" : isItemPartial ? "partially_paid" : "unpaid",
-                                  });
-                                  setShowPaymentModal(true);
-                                }}
-                                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer touch-manipulation ${
-                                  isItemPaid
-                                    ? "bg-emerald-600 text-white"
-                                    : isItemPartial
-                                      ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                      : "bg-rose-100 text-rose-700 hover:bg-rose-200"
-                                }`}
-                                title="انقر لتعديل الدفعة"
-                              >
-                                {isItemPaid ? "✓ مدفوع" : isItemPartial ? `دفع ${itemPaid} • باقي ${itemRem}` : "لم يدفع"}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={Boolean(updatingPaymentMonth || deletingPaymentMonth)}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition cursor-pointer touch-manipulation"
-                                onClick={() => handleDeletePastPayment(item.month)}
-                                title="حذف من السجل"
-                              >
-                                {deletingPaymentMonth === item.month ? (
-                                  <span className="h-3 w-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
                   {/* إضافة اشتراك شهر مخصص */}
-                  <form
-                    onSubmit={addCustomPayment}
-                    className="pt-3 border-t border-slate-100 grid gap-2 rounded-xl bg-slate-50/80 p-3 sm:grid-cols-4"
-                  >
-                    <span className="text-[11px] font-bold text-slate-700 sm:col-span-full">
-                      تسجيل اشتراك لشهر محدد:
-                    </span>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">الشهر</label>
-                      <input
-                        type="month"
-                        value={customPaymentMonth}
-                        onChange={(e) => setCustomPaymentMonth(e.target.value)}
-                        className="min-h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold outline-none focus:border-red-500"
-                        required
-                      />
+                  <div className="lg:col-span-5">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                          <Plus className="h-4 w-4 stroke-[3]" />
+                        </div>
+                        <div>
+                          <h3 className="font-cairo text-sm font-extrabold text-slate-900">
+                            تسجيل اشتراك شهر محدد
+                          </h3>
+                          <p className="text-[10px] text-slate-400">سجل أو حدد اشتراك لأي شهر</p>
+                        </div>
+                      </div>
+
+                      <form onSubmit={addCustomPayment} className="space-y-3 pt-1">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">الشهر</label>
+                          <input
+                            type="month"
+                            value={customPaymentMonth}
+                            onChange={(e) => setCustomPaymentMonth(e.target.value)}
+                            className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 text-xs font-bold outline-none focus:border-red-500 focus:bg-white cursor-pointer"
+                            required
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">المطلوب (ج.م)</label>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={customTotalAmount}
+                              onChange={(e) => setCustomTotalAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))}
+                              placeholder="100"
+                              className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 text-xs font-bold outline-none focus:border-red-500 focus:bg-white text-center"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">المدفوع (ج.م)</label>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={customPaidAmount}
+                              onChange={(e) => setCustomPaidAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))}
+                              placeholder="100"
+                              className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 text-xs font-bold outline-none focus:border-red-500 focus:bg-white text-center"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          className="min-h-10 w-full rounded-xl bg-slate-900 px-4 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-60 active:scale-95 cursor-pointer touch-manipulation shadow-2xs"
+                          type="submit"
+                          disabled={paymentSaving}
+                        >
+                          {paymentSaving ? (
+                            <span className="flex items-center justify-center gap-1.5">
+                              <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                              <span>جاري الحفظ...</span>
+                            </span>
+                          ) : (
+                            "+ حفظ الاشتراك للسجل"
+                          )}
+                        </button>
+                      </form>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">المطلوب (ج.م)</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={customTotalAmount}
-                        onChange={(e) => setCustomTotalAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))}
-                        placeholder="100"
-                        className="min-h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold outline-none focus:border-red-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">المدفوع (ج.م)</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={customPaidAmount}
-                        onChange={(e) => setCustomPaidAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))}
-                        placeholder="100"
-                        className="min-h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold outline-none focus:border-red-500"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <button
-                        className="min-h-9 w-full rounded-lg bg-slate-900 px-3.5 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-60 active:scale-95 cursor-pointer touch-manipulation"
-                        type="submit"
-                        disabled={paymentSaving}
-                      >
-                        {paymentSaving ? "جاري..." : "حفظ"}
-                      </button>
-                    </div>
-                  </form>
+                  </div>
                 </div>
               </div>
 
@@ -2282,7 +2371,7 @@ export default function Profile({
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 sm:max-h-80 lg:max-h-[420px] overflow-y-auto pr-1">
                       {[...purchasesSummary.purchases].reverse().map((item) => {
                         const tot = Number(item.totalAmount) || 0;
                         const pd = Number(item.paidAmount) || 0;
@@ -2293,7 +2382,7 @@ export default function Profile({
                         return (
                           <div
                             key={item.id}
-                            className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-xs space-y-2"
+                            className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-xs space-y-2 flex flex-col justify-between"
                           >
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                               <div className="flex items-center gap-2">
