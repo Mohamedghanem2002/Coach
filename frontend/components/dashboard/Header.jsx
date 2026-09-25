@@ -83,7 +83,7 @@ export default function Header({
         <div className="flex items-center gap-2.5 sm:gap-3 shrink min-w-0">
           <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm ring-2 ring-red-100">
             <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-white stroke-white" />
-            <sp an className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
             </span>
