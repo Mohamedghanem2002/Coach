@@ -54,6 +54,7 @@ import EventsView from "../components/dashboard/EventsView";
 import AddEventModal from "../components/dashboard/AddEventModal";
 import AddParticipantsModal from "../components/dashboard/AddParticipantsModal";
 import EventPaymentModal from "../components/dashboard/EventPaymentModal";
+import Footer from "../components/dashboard/Footer";
 import { exportPlayersToCSV } from "../lib/export-utils";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
@@ -756,7 +757,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen text-slate-900 selection:bg-red-500 selection:text-white pb-28 md:pb-20 w-full max-w-full overflow-x-hidden" dir="rtl">
+    <main className="min-h-screen flex flex-col justify-between text-slate-900 selection:bg-red-500 selection:text-white w-full max-w-full overflow-x-hidden" dir="rtl">
       <Header
         players={players}
         onOpenPlayer={(player) => setSelected(player)}
@@ -1924,6 +1925,9 @@ export default function Home() {
           />
         </div>
       </section>
+
+      {/* تذييل الصفحة / Footer */}
+      <Footer />
 
       {/* شريط الملاحة السفلي الثابت على الموبايل */}
       <MobileBottomNav
