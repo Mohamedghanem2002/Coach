@@ -52,7 +52,8 @@ function ageFromDateOfBirth(dateOfBirth) {
   if (currentMonth < month || (currentMonth === month && currentDay < day)) {
     age -= 1;
   }
-  return Math.max(0, age);
+  if (age < 0) return null;
+  return age;
 }
 function serializePlayer(player) {
   const currentMonth = appDate().slice(0, 7);
@@ -153,9 +154,9 @@ export async function POST(request) {
     const dateOfBirth =
       typeof body.dateOfBirth === "string" ? toEnglishDigits(body.dateOfBirth).trim() : "";
     const age = ageFromDateOfBirth(dateOfBirth);
-    if (!name || !branch || !Number.isInteger(age) || age < 4 || age > 80) {
+    if (!name || !branch || !Number.isInteger(age) || age < 0 || age > 120) {
       return NextResponse.json(
-        { error: "بيانات اللاعب غير مكتملة" },
+        { error: "بيانات اللاعب غير مكتملة أو تاريخ الميلاد غير صحيح" },
         { status: 400 },
       );
     }
@@ -226,7 +227,7 @@ export async function PATCH(request) {
       const calculatedAge = ageFromDateOfBirth(dateOfBirth);
       const legacyAge = Number(body.age);
       const age = dateOfBirth ? calculatedAge : legacyAge;
-      if (!name || !branch || !Number.isInteger(age) || age < 4 || age > 80) {
+      if (!name || !branch || !Number.isInteger(age) || age < 0 || age > 120) {
         return NextResponse.json(
           { error: "بيانات اللاعب غير صالحة" },
           { status: 400 },

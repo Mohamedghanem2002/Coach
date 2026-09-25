@@ -56,7 +56,7 @@ export default function AddPlayerModal({
     const y = parseInt(dobYear, 10);
     const m = parseInt(dobMonth, 10);
     const d = parseInt(dobDay, 10);
-    if (isNaN(y) || isNaN(m) || isNaN(d) || y < 1950 || m < 1 || m > 12 || d < 1 || d > 31) {
+    if (isNaN(y) || isNaN(m) || isNaN(d) || y < 1900 || m < 1 || m > 12 || d < 1 || d > 31) {
       return null;
     }
     const birthDate = new Date(y, m - 1, d);
@@ -74,7 +74,7 @@ export default function AddPlayerModal({
     if (currentMonth < m || (currentMonth === m && currentDay < d)) {
       age -= 1;
     }
-    return age >= 0 && age <= 100 ? age : null;
+    return age >= 0 && age <= 120 ? age : null;
   }, [dobYear, dobMonth, dobDay]);
 
   function handleDayChange(val) {
@@ -190,10 +190,6 @@ export default function AddPlayerModal({
     }
     if (!dateOfBirth || calculatedAge === null) {
       setError("يرجى إدخال تاريخ ميلاد صحيح وصالح.");
-      return;
-    }
-    if (calculatedAge < 4 || calculatedAge > 80) {
-      setError("يجب أن يكون عمر اللاعب بين 4 و 80 سنة.");
       return;
     }
     if (!branch) {
@@ -347,7 +343,7 @@ export default function AddPlayerModal({
                   {calculatedAge !== null && (
                     <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg px-2.5 py-1 animate-slide-up">
                       <span>✓</span>
-                      <span>العمر المحسوب: {calculatedAge} سنة</span>
+                      <span>العمر المحسوب: {calculatedAge === 0 ? "أقل من سنة" : `${calculatedAge} سنة`}</span>
                     </div>
                   )}
                 </div>

@@ -278,7 +278,7 @@ export default function Profile({
     const y = parseInt(editDobYear, 10);
     const m = parseInt(editDobMonth, 10);
     const d = parseInt(editDobDay, 10);
-    if (isNaN(y) || isNaN(m) || isNaN(d) || y < 1950 || m < 1 || m > 12 || d < 1 || d > 31) {
+    if (isNaN(y) || isNaN(m) || isNaN(d) || y < 1900 || m < 1 || m > 12 || d < 1 || d > 31) {
       return null;
     }
     const birthDate = new Date(y, m - 1, d);
@@ -296,7 +296,7 @@ export default function Profile({
     if (currentMonth < m || (currentMonth === m && currentDay < d)) {
       age -= 1;
     }
-    return age >= 0 && age <= 100 ? age : null;
+    return age >= 0 && age <= 120 ? age : null;
   }, [editDobYear, editDobMonth, editDobDay]);
 
   const attended = (
@@ -994,13 +994,17 @@ export default function Profile({
   async function saveInfo(e) {
     e.preventDefault();
     if (profileSaving) return;
+    if (editDateOfBirth && (calculatedEditAge === null || calculatedEditAge < 0)) {
+      setProfileNotice("يرجى إدخال تاريخ ميلاد صحيح وصالح.");
+      return;
+    }
     setProfileSaving(true);
     const updatedPlayer = await onUpdate(player._id, {
       updateInfo: "true",
       name: editName.trim(),
       dateOfBirth: editDateOfBirth,
       guardianPhone: toEnglishDigits(editGuardianPhone).trim(),
-      age: String(player.age),
+      age: String(calculatedEditAge ?? player.age ?? 0),
       branch: editBranch,
       belt: editBelt,
       level: editLevel,
@@ -1247,7 +1251,7 @@ export default function Profile({
                   {calculatedEditAge !== null && (
                     <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg px-2 py-0.5">
                       <span>✓</span>
-                      <span>العمر المحسوب: {calculatedEditAge} سنة</span>
+                      <span>العمر المحسوب: {calculatedEditAge === 0 ? "أقل من سنة" : `${calculatedEditAge} سنة`}</span>
                     </div>
                   )}
                 </div>
