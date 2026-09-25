@@ -10,18 +10,6 @@
   ],
   "branches": [
     {
-      "_id": "6ab6feeb39e4b81002b51ffe",
-      "ownerId": "test_owner_123",
-      "name": "صالة الكاتا الرئيسية",
-      "createdAt": "2026-09-25T23:08:27.120Z"
-    },
-    {
-      "_id": "6ab6feeb39e4b81002b51fff",
-      "ownerId": "test_owner_123",
-      "name": "دوجو الكوميتيه للأبطال",
-      "createdAt": "2026-09-25T23:08:27.120Z"
-    },
-    {
       "_id": "6aa28a77131cd6a66b5f1ae9",
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",
       "name": "صالة الكاتا الرئيسية",
@@ -121,6 +109,61 @@
           "date": "2026-09-13",
           "notes": "",
           "createdAt": "2026-09-13T17:13:03.296Z"
+        }
+      ]
+    },
+    {
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "ببببب",
+      "age": 10,
+      "dateOfBirth": "2015-09-12",
+      "guardianPhone": "",
+      "branch": "صالة الكاتا الرئيسية",
+      "belt": "أبيض",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "paid",
+      "paymentHistory": [
+        {
+          "month": "2026-09",
+          "status": "paid",
+          "totalAmount": 200,
+          "paidAmount": 200,
+          "remainingAmount": 0,
+          "updatedAt": "2026-09-12T20:21:57.545Z"
+        }
+      ],
+      "attendance": [
+        {
+          "date": "2026-09-11",
+          "status": "present"
+        },
+        {
+          "date": "2026-09-12",
+          "status": "present"
+        },
+        {
+          "date": "2026-09-13",
+          "status": "present"
+        }
+      ],
+      "createdAt": "2026-09-11T16:33:16.793Z",
+      "_id": "6aa42d4c15e16b5a77c01ee1",
+      "totalAmount": 200,
+      "paidAmount": 200,
+      "remainingAmount": 0,
+      "lastBirthdayWishedYear": 2026,
+      "purchases": [
+        {
+          "id": "prc_mtytyy1e_verj5",
+          "title": "بدلة كاراتيه",
+          "totalAmount": 450,
+          "paidAmount": 200,
+          "remainingAmount": 250,
+          "status": "partially_paid",
+          "date": "2026-09-12",
+          "notes": "",
+          "createdAt": "2026-09-12T20:21:27.122Z"
         }
       ]
     }

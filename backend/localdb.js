@@ -4,59 +4,156 @@ import { ObjectId } from "mongodb";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DB_FILE = path.join(DATA_DIR, "local_db.json");
+const BAK_FILE = path.join(DATA_DIR, "local_db.bak.json");
+const BACKUP_DIR = path.join(DATA_DIR, "backups");
 
-function ensureDbFile() {
+function ensureDirs() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  if (!fs.existsSync(DB_FILE)) {
-    const initialData = {
-      users: [],
-      branches: [],
-      players: [],
-      events: [],
-    };
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), "utf-8");
+  if (!fs.existsSync(BACKUP_DIR)) {
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
   }
+}
+
+function parseAndNormalizeData(raw) {
+  const data = JSON.parse(raw);
+  if (!data || typeof data !== "object") throw new Error("Invalid root data");
+  if (!Array.isArray(data.users)) data.users = [];
+  if (!Array.isArray(data.branches)) data.branches = [];
+  if (!Array.isArray(data.players)) data.players = [];
+  if (!Array.isArray(data.events)) data.events = [];
+
+  // Ensure _id are ObjectId instances
+  data.users.forEach((u) => {
+    if (u._id && typeof u._id === "string") u._id = new ObjectId(u._id);
+  });
+  data.branches.forEach((b) => {
+    if (b._id && typeof b._id === "string") b._id = new ObjectId(b._id);
+  });
+  data.players.forEach((p) => {
+    if (p._id && typeof p._id === "string") p._id = new ObjectId(p._id);
+  });
+  data.events.forEach((e) => {
+    if (e._id && typeof e._id === "string") e._id = new ObjectId(e._id);
+  });
+
+  return data;
 }
 
 function loadData() {
-  try {
-    ensureDbFile();
-    const raw = fs.readFileSync(DB_FILE, "utf-8");
-    const data = JSON.parse(raw);
-    if (!Array.isArray(data.users)) data.users = [];
-    if (!Array.isArray(data.branches)) data.branches = [];
-    if (!Array.isArray(data.players)) data.players = [];
-    if (!Array.isArray(data.events)) data.events = [];
+  ensureDirs();
 
-    // Ensure _id are ObjectId instances
-    data.users.forEach((u) => {
-      if (u._id && typeof u._id === "string") u._id = new ObjectId(u._id);
-    });
-    data.branches.forEach((b) => {
-      if (b._id && typeof b._id === "string") b._id = new ObjectId(b._id);
-    });
-    data.players.forEach((p) => {
-      if (p._id && typeof p._id === "string") p._id = new ObjectId(p._id);
-    });
-    data.events.forEach((e) => {
-      if (e._id && typeof e._id === "string") e._id = new ObjectId(e._id);
-    });
-
-    return data;
-  } catch (err) {
-    console.error("Failed to read local_db.json, using in-memory store", err);
-    return { users: [], branches: [], players: [], events: [] };
+  // 1. Try reading the main file
+  if (fs.existsSync(DB_FILE)) {
+    try {
+      const raw = fs.readFileSync(DB_FILE, "utf-8");
+      if (raw && raw.trim().length > 0) {
+        return parseAndNormalizeData(raw);
+      }
+    } catch (err) {
+      console.error("⚠️ Main database file corrupted or unreadable. Attempting backup recovery...", err?.message);
+    }
   }
+
+  // 2. Try shadow backup file
+  if (fs.existsSync(BAK_FILE)) {
+    try {
+      const rawBak = fs.readFileSync(BAK_FILE, "utf-8");
+      if (rawBak && rawBak.trim().length > 0) {
+        const recovered = parseAndNormalizeData(rawBak);
+        console.warn("✓ Successfully recovered database from shadow backup (local_db.bak.json)");
+        fs.writeFileSync(DB_FILE, rawBak, "utf-8");
+        return recovered;
+      }
+    } catch (errBak) {
+      console.error("Shadow backup recovery failed:", errBak?.message);
+    }
+  }
+
+  // 3. Try latest file in backups directory
+  try {
+    if (fs.existsSync(BACKUP_DIR)) {
+      const backupFiles = fs
+        .readdirSync(BACKUP_DIR)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .reverse();
+
+      for (const bFile of backupFiles) {
+        try {
+          const rawArchive = fs.readFileSync(path.join(BACKUP_DIR, bFile), "utf-8");
+          const recovered = parseAndNormalizeData(rawArchive);
+          console.warn(`✓ Successfully recovered database from archive backup (${bFile})`);
+          fs.writeFileSync(DB_FILE, rawArchive, "utf-8");
+          return recovered;
+        } catch {}
+      }
+    }
+  } catch (errArchive) {
+    console.error("Archive recovery failed:", errArchive?.message);
+  }
+
+  // 4. Clean initial state if fresh install
+  const initialData = { users: [], branches: [], players: [], events: [] };
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), "utf-8");
+  } catch {}
+  return initialData;
 }
+
+let lastBackupTimestamp = 0;
 
 function saveData(data) {
   try {
-    ensureDbFile();
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
+    ensureDirs();
+
+    // Guard: Do not wipe existing data with empty invalid state
+    if (!data || typeof data !== "object") return;
+    if (!Array.isArray(data.users) || !Array.isArray(data.players)) return;
+
+    const serialized = JSON.stringify(data, null, 2);
+    const tmpFile = path.join(
+      DATA_DIR,
+      `local_db_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.tmp`
+    );
+
+    // 1. Atomic write: write to temp file first
+    fs.writeFileSync(tmpFile, serialized, "utf-8");
+
+    // 2. Update immediate shadow backup
+    try {
+      fs.writeFileSync(BAK_FILE, serialized, "utf-8");
+    } catch {}
+
+    // 3. Atomic rename to guarantee zero file corruption on crash/power cut
+    fs.renameSync(tmpFile, DB_FILE);
+
+    // 4. Create periodic timestamped backup snapshot (at most once every 30 minutes)
+    const now = Date.now();
+    if (now - lastBackupTimestamp > 30 * 60 * 1000) {
+      lastBackupTimestamp = now;
+      const dateStr = new Date().toISOString().slice(0, 13).replace("T", "_"); // YYYY-MM-DD_HH
+      const snapshotPath = path.join(BACKUP_DIR, `snapshot_${dateStr}.json`);
+      try {
+        fs.writeFileSync(snapshotPath, serialized, "utf-8");
+
+        // Keep at most 20 recent snapshots, prune older
+        const files = fs
+          .readdirSync(BACKUP_DIR)
+          .filter((f) => f.endsWith(".json"))
+          .sort();
+        if (files.length > 20) {
+          files.slice(0, files.length - 20).forEach((oldFile) => {
+            try {
+              fs.unlinkSync(path.join(BACKUP_DIR, oldFile));
+            } catch {}
+          });
+        }
+      } catch {}
+    }
   } catch (err) {
-    console.error("Failed to write to local_db.json", err);
+    console.error("Critical error in saveData (localdb):", err);
   }
 }
 
@@ -252,6 +349,33 @@ export function getLocalDbClient() {
               return { insertedId: _id };
             },
 
+            async insertMany(docs = []) {
+              if (!Array.isArray(docs) || docs.length === 0) {
+                return { insertedCount: 0, insertedIds: {} };
+              }
+
+              const insertedIds = {};
+              const processedDocs = docs.map((doc, idx) => {
+                const _id = doc._id || new ObjectId();
+                insertedIds[idx] = _id;
+                return { ...doc, _id };
+              });
+
+              if (collectionName === "users") {
+                currentData.users.push(...processedDocs);
+              } else if (collectionName === "branches") {
+                currentData.branches.push(...processedDocs);
+              } else if (collectionName === "players") {
+                currentData.players.push(...processedDocs);
+              } else if (collectionName === "events") {
+                if (!Array.isArray(currentData.events)) currentData.events = [];
+                currentData.events.push(...processedDocs);
+              }
+
+              saveData(currentData);
+              return { insertedCount: processedDocs.length, insertedIds };
+            },
+
             async updateOne(filter = {}, update = {}) {
               if (collectionName === "players") {
                 const player = currentData.players.find(
@@ -345,6 +469,32 @@ export function getLocalDbClient() {
                 return { deletedCount: 1 };
               }
               return { deletedCount: 0 };
+            },
+
+            async deleteMany(filter = {}) {
+              let list = [];
+              if (collectionName === "branches") list = currentData.branches;
+              else if (collectionName === "players") list = currentData.players;
+              else if (collectionName === "events") list = currentData.events || [];
+              else if (collectionName === "users") list = currentData.users;
+
+              const initialCount = list.length;
+              const remaining = list.filter((item) => {
+                if (filter.ownerId && !matchId(item.ownerId, filter.ownerId)) return true;
+                if (filter._id && !matchId(item._id, filter._id)) return true;
+                return false; // delete item
+              });
+
+              const deletedCount = initialCount - remaining.length;
+              if (collectionName === "branches") currentData.branches = remaining;
+              else if (collectionName === "players") currentData.players = remaining;
+              else if (collectionName === "events") currentData.events = remaining;
+              else if (collectionName === "users") currentData.users = remaining;
+
+              if (deletedCount > 0) {
+                saveData(currentData);
+              }
+              return { deletedCount };
             },
           };
         },

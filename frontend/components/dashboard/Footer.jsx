@@ -67,10 +67,10 @@ export default function Footer() {
       dir="rtl"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Top / Main Smart Bar */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-5 pb-6 border-b border-slate-100">
-          
+
           {/* Identity & Developer */}
           <div className="flex items-center gap-3.5 w-full lg:w-auto justify-start">
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-red-600 to-rose-500 text-white shadow-xs">
@@ -94,7 +94,7 @@ export default function Footer() {
 
           {/* Smart Contact & Social Pills */}
           <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end">
-            
+
             {/* Phone & WhatsApp interactive badges */}
             {phoneContacts.map((contact) => {
               const isCopied = copiedNumber === contact.number;
@@ -132,11 +132,10 @@ export default function Footer() {
                   <button
                     type="button"
                     onClick={() => handleCopy(contact.number)}
-                    className={`flex h-6 items-center gap-1 px-2 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                      isCopied
+                    className={`flex h-6 items-center gap-1 px-2 rounded-md text-[10px] font-bold transition-all cursor-pointer ${isCopied
                         ? "bg-emerald-500 text-white"
                         : "bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/60"
-                    }`}
+                      }`}
                     title="نسخ الرقم"
                   >
                     {isCopied ? (

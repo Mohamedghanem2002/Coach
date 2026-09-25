@@ -149,6 +149,93 @@ export async function POST(request) {
         { status: 401 },
       );
     const body = await request.json();
+    if (body?.action === "restore_backup") {
+      const backupData = body?.data || body;
+      const players = Array.isArray(backupData.players) ? backupData.players : [];
+      const branches = Array.isArray(backupData.branches) ? backupData.branches : [];
+      const events = Array.isArray(backupData.events) ? backupData.events : [];
+
+      if (!players.length && !branches.length && !events.length) {
+        return NextResponse.json(
+          { error: "ملف النسخة الاحتياطية فارغ أو لا يحتوي على بيانات صالحة" },
+          { status: 400 }
+        );
+      }
+
+      const client = await clientPromise;
+      const db = client.db(process.env.MONGODB_DB);
+
+      // Clean existing records for this owner using safe individual deletion
+      const oldPlayers = await db.collection("players").find({ ownerId }).toArray();
+      for (const p of oldPlayers) {
+        if (p._id) await db.collection("players").deleteOne({ _id: p._id, ownerId });
+      }
+
+      const oldBranches = await db.collection("branches").find({ ownerId }).toArray();
+      for (const b of oldBranches) {
+        if (b._id) await db.collection("branches").deleteOne({ _id: b._id, ownerId });
+      }
+
+      const oldEvents = await db.collection("events").find({ ownerId }).toArray();
+      for (const e of oldEvents) {
+        if (e._id) await db.collection("events").deleteOne({ _id: e._id, ownerId });
+      }
+
+      // Insert branches
+      for (const b of branches) {
+        let bId;
+        try {
+          bId = b._id && typeof b._id === "string" && b._id.length === 24 ? new ObjectId(b._id) : new ObjectId();
+        } catch {
+          bId = new ObjectId();
+        }
+        await db.collection("branches").insertOne({
+          ...b,
+          _id: bId,
+          ownerId,
+        });
+      }
+
+      // Insert players
+      for (const p of players) {
+        let pId;
+        try {
+          pId = p._id && typeof p._id === "string" && p._id.length === 24 ? new ObjectId(p._id) : new ObjectId();
+        } catch {
+          pId = new ObjectId();
+        }
+        await db.collection("players").insertOne({
+          ...p,
+          _id: pId,
+          ownerId,
+        });
+      }
+
+      // Insert events
+      for (const e of events) {
+        let eId;
+        try {
+          eId = e._id && typeof e._id === "string" && e._id.length === 24 ? new ObjectId(e._id) : new ObjectId();
+        } catch {
+          eId = new ObjectId();
+        }
+        await db.collection("events").insertOne({
+          ...e,
+          _id: eId,
+          ownerId,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "تمت استعادة النسخة الاحتياطية بنجاح",
+        stats: {
+          playersRestored: players.length,
+          branchesRestored: branches.length,
+          eventsRestored: events.length,
+        },
+      });
+    }
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const branch = typeof body.branch === "string" ? body.branch.trim() : "";
     const dateOfBirth =

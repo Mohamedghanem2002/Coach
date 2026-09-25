@@ -38,6 +38,8 @@ import {
   Compass,
   ArrowRight,
   ShoppingBag,
+  ShieldCheck,
+  RotateCcw,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -321,6 +323,125 @@ export default function Home() {
     );
     if (success) {
       showToast(`تم تصدير (${selectedList.length}) لاعب محدد بنجاح إلى ملف Excel / CSV.`);
+    }
+  }
+
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const restoreFileRef = useRef(null);
+
+  async function handleDownloadBackup() {
+    if (isBackingUp) return;
+    setIsBackingUp(true);
+    try {
+      const res = await fetch("/api/backup");
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.download = `نسخة_احتياطية_أكاديمية_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      showToast("✓ تم تنزيل النسخة الاحتياطية بنجاح. احتفظ بالملف في مكان آمن.");
+    } catch {
+      showToast("تعذر تنزيل النسخة الاحتياطية. حاول مرة أخرى.", "error");
+    } finally {
+      setIsBackingUp(false);
+    }
+  }
+
+  async function handleFileSelectedForRestore(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const backupData = parsed?.data || parsed;
+      const countPlayers = (backupData.players || []).length;
+      const countBranches = (backupData.branches || []).length;
+
+      if (!countPlayers && !countBranches) {
+        showToast("الملف المحدد لا يحتوي على بيانات صالحة للاستعادة.", "error");
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `هل أنت متأكد من استعادة النسخة الاحتياطية؟\n\n- عدد اللاعبين: ${countPlayers}\n- عدد الصالات: ${countBranches}\n\nسيتم استرجاع هؤلاء اللاعبين فوراً إلى النظام.`
+      );
+      if (!confirmed) return;
+
+      setIsRestoring(true);
+      let res;
+      try {
+        res = await fetch("/api/backup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsed),
+        });
+      } catch (networkErr) {
+        console.warn("/api/backup network error, will try /api/players fallback:", networkErr);
+      }
+
+      if (!res || !res.ok) {
+        // Fallback to /api/players restore endpoint
+        try {
+          res = await fetch("/api/players", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "restore_backup", data: backupData }),
+          });
+        } catch (playerErr) {
+          console.error("/api/players fallback error:", playerErr);
+        }
+      }
+
+      const rawText = res ? await res.text() : "";
+      let result = {};
+      try {
+        result = JSON.parse(rawText);
+      } catch {
+        result = { error: rawText.slice(0, 200) };
+      }
+
+      if (!res || !res.ok) {
+        const errorMsg = result.details
+          ? `${result.error || "تعذر استعادة النسخة الاحتياطية"}: ${result.details}`
+          : result.error || `تعذر استعادة النسخة الاحتياطية (${res?.status || "خطأ اتصال"})`;
+        showToast(errorMsg, "error");
+        return;
+      }
+
+      // Reload fresh data
+      const [pRes, bRes, eRes] = await Promise.all([
+        fetch("/api/players", { cache: "no-store" }),
+        fetch("/api/branches", { cache: "no-store" }),
+        fetch("/api/events", { cache: "no-store" }),
+      ]);
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        setPlayers(Array.isArray(pData) ? pData.map((p) => normalizePlayer(p)) : []);
+      }
+      if (bRes.ok) {
+        const bData = await bRes.json();
+        setBranches(Array.isArray(bData) ? bData : []);
+      }
+      if (eRes.ok) {
+        const eData = await eRes.json();
+        setEvents(Array.isArray(eData) ? eData : []);
+      }
+
+      showToast(`✓ تمت الاستعادة بنجاح! تم استرجاع (${result.stats?.playersRestored ?? countPlayers}) لاعب.`);
+    } catch (err) {
+      console.error("Restore failed:", err);
+      showToast("حدث خطأ أثناء قراءة ملف النسخة الاحتياطية.", "error");
+    } finally {
+      setIsRestoring(false);
+      if (restoreFileRef.current) restoreFileRef.current.value = "";
     }
   }
 
@@ -776,8 +897,51 @@ export default function Home() {
       />
 
       <section className="mx-auto w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
+        <input
+          ref={restoreFileRef}
+          type="file"
+          accept=".json,application/json"
+          onChange={handleFileSelectedForRestore}
+          className="hidden"
+        />
+
         {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
         <div className="md:hidden">
+          {/* شريط الإجراءات والنسخ الاحتياطي السريع للهاتف */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <button
+              type="button"
+              onClick={handleDownloadBackup}
+              disabled={isBackingUp || isRestoring}
+              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl border border-blue-200/90 bg-white hover:bg-blue-50 text-blue-700 text-xs font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
+              title="تنزيل نسخة احتياطية آمنة وشاملة (JSON)"
+            >
+              <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
+              <span className="truncate">{isBackingUp ? "جار النسخ..." : "نسخ احتياطي"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => restoreFileRef.current?.click()}
+              disabled={isRestoring || isBackingUp}
+              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl border border-amber-200/90 bg-white hover:bg-amber-50 text-amber-800 text-xs font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
+              title="استعادة اللاعبين والبيانات من ملف نسخة احتياطية"
+            >
+              <RotateCcw className="h-4 w-4 text-amber-600 shrink-0" />
+              <span className="truncate">{isRestoring ? "جار الاستعادة..." : "استعادة نسخة"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportAll}
+              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl border border-emerald-200/90 bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
+              title="تصدير كشف اللاعبين إلى Excel"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span className="truncate">تصدير Excel</span>
+            </button>
+          </div>
+
           {/* ━━━ لوحة التحكم السريعة للموبايل (Native Mobile Command Surface) ━━━ */}
           {mobileTab === "players" && activeView === "players" && (
             <div className="space-y-2 mb-3">
@@ -1113,6 +1277,33 @@ export default function Home() {
                       </button>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleDownloadBackup();
+                          setShowMobileFilters(false);
+                        }}
+                        disabled={isBackingUp || isRestoring}
+                        className="flex items-center justify-center gap-1.5 h-11 rounded-xl border border-blue-200 bg-blue-50 text-xs font-black text-blue-700 active:scale-95 transition cursor-pointer"
+                      >
+                        <ShieldCheck className="h-4 w-4 text-blue-600" />
+                        <span>{isBackingUp ? "جار النسخ..." : "نسخ احتياطي"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMobileFilters(false);
+                          setTimeout(() => restoreFileRef.current?.click(), 150);
+                        }}
+                        disabled={isRestoring || isBackingUp}
+                        className="flex items-center justify-center gap-1.5 h-11 rounded-xl border border-amber-200 bg-amber-50 text-xs font-black text-amber-800 active:scale-95 transition cursor-pointer"
+                      >
+                        <RotateCcw className="h-4 w-4 text-amber-600" />
+                        <span>استعادة نسخة</span>
+                      </button>
+                    </div>
+
                     <div className="pt-1">
                       <button
                         type="button"
@@ -1322,6 +1513,26 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadBackup}
+              disabled={isBackingUp || isRestoring}
+              title="تنزيل نسخة احتياطية آمنة وشاملة لكافة بيانات الأكاديمية (JSON)"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs cursor-pointer active-press transition"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+              <span>{isBackingUp ? "جار النسخ..." : "نسخ احتياطي"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => restoreFileRef.current?.click()}
+              disabled={isRestoring || isBackingUp}
+              title="استعادة اللاعبين والبيانات من ملف نسخة احتياطية سابقة"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs cursor-pointer active-press transition"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-amber-600" />
+              <span>{isRestoring ? "جار الاستعادة..." : "استعادة نسخة"}</span>
+            </button>
             <button
               type="button"
               onClick={handleExportAll}
