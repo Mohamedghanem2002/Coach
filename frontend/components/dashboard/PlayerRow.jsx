@@ -13,6 +13,7 @@ import {
   MoreHorizontal,
   AlertCircle,
   ShoppingBag,
+  Sparkles,
 } from "lucide-react";
 import {
   paymentStatusFor,
@@ -122,7 +123,11 @@ function PlayerRow({
           isSelected
             ? "border-red-300 bg-red-50/50 shadow-sm"
             : birthdayInfo?.isToday
-            ? "border-rose-300/80 bg-rose-50/30 shadow-xs"
+            ? "border-rose-300/90 bg-rose-50/30 shadow-xs"
+            : birthdayInfo?.daysLeft === 1
+            ? "border-amber-300/80 bg-amber-50/20 shadow-xs"
+            : isNew
+            ? "border-emerald-300/80 bg-emerald-50/15 shadow-xs"
             : "border-slate-200/80 bg-white shadow-xs hover:border-slate-300"
         }`}
       >
@@ -147,7 +152,13 @@ function PlayerRow({
               {/* Avatar */}
               <div
                 className={`relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-cairo text-sm font-black text-white shadow-2xs ring-2 ${
-                  birthdayInfo?.isToday ? "ring-rose-300 animate-pulse" : "ring-white"
+                  birthdayInfo?.isToday
+                    ? "ring-rose-400 ring-offset-1 animate-pulse"
+                    : birthdayInfo?.daysLeft === 1
+                    ? "ring-amber-400 ring-offset-1 animate-pulse"
+                    : isNew
+                    ? "ring-emerald-400 ring-offset-1 animate-pulse"
+                    : "ring-white"
                 }`}
               >
                 {player.photo ? (
@@ -162,31 +173,42 @@ function PlayerRow({
                   </span>
                 )}
                 {birthdayInfo?.isToday && (
-                  <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 ring-1 ring-white">
+                  <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 ring-1.5 ring-white animate-bounce shadow-xs">
                     <Cake className="h-2.5 w-2.5 text-white" />
+                  </span>
+                )}
+                {!birthdayInfo?.isToday && birthdayInfo?.daysLeft === 1 && (
+                  <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 ring-1.5 ring-white animate-pulse shadow-xs">
+                    <Cake className="h-2.5 w-2.5 text-white" />
+                  </span>
+                )}
+                {!birthdayInfo?.isToday && birthdayInfo?.daysLeft !== 1 && isNew && (
+                  <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-1.5 ring-white animate-pulse shadow-xs">
+                    <Sparkles className="h-2.5 w-2.5 text-amber-200" />
                   </span>
                 )}
               </div>
 
               {/* Name, Belt, Level */}
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <strong className="truncate font-cairo text-sm font-black text-slate-900">
                     {player.name}
                   </strong>
                   {birthdayInfo?.isToday && (
-                    <span className="shrink-0 rounded-md bg-rose-500 px-1.5 py-0.5 text-[9px] font-black text-white shadow-2xs animate-pulse">
+                    <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 px-2 py-0.5 text-[9.5px] font-black text-white shadow-xs ring-2 ring-rose-300 animate-pulse">
                       🎂 اليوم
                     </span>
                   )}
                   {birthdayInfo?.daysLeft === 1 && (
-                    <span className="shrink-0 rounded-md bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[9px] font-black text-amber-800">
+                    <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-2 py-0.5 text-[9.5px] font-black text-white shadow-xs ring-2 ring-amber-300 animate-pulse">
                       🎂 غداً
                     </span>
                   )}
                   {isNew && (
-                    <span className="shrink-0 rounded-md bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-emerald-800 shadow-2xs">
-                      ✨ جديد
+                    <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 px-2 py-0.5 text-[9.5px] font-black text-white shadow-xs ring-2 ring-emerald-300/60 animate-pulse">
+                      <Sparkles className="h-2.5 w-2.5 text-amber-200 shrink-0" />
+                      <span>جديد ✨</span>
                     </span>
                   )}
                 </div>
@@ -430,7 +452,11 @@ function PlayerRow({
           isSelected
             ? "md:bg-red-50/30"
             : birthdayInfo?.isToday
-            ? "bg-rose-50/15"
+            ? "bg-rose-50/20"
+            : birthdayInfo?.daysLeft === 1
+            ? "bg-amber-50/15"
+            : isNew
+            ? "bg-emerald-50/10"
             : "bg-white"
         }`}
       >
@@ -455,8 +481,14 @@ function PlayerRow({
             className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-right cursor-pointer"
             onClick={onOpen}
           >
-            <div className={`relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-cairo text-sm font-black text-white shadow-2xs ring-2 ring-white transition-all duration-200 group-hover:ring-red-100 ${
-              birthdayInfo?.isToday ? "ring-rose-200" : ""
+            <div className={`relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-cairo text-sm font-black text-white shadow-2xs ring-2 transition-all duration-200 group-hover:ring-red-100 ${
+              birthdayInfo?.isToday
+                ? "ring-rose-400 ring-offset-1 animate-pulse"
+                : birthdayInfo?.daysLeft === 1
+                ? "ring-amber-400 ring-offset-1 animate-pulse"
+                : isNew
+                ? "ring-emerald-400 ring-offset-1 animate-pulse"
+                : "ring-white"
             }`}>
               {player.photo ? (
                 <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
@@ -464,8 +496,18 @@ function PlayerRow({
                 <span className="font-cairo text-sm font-black">{player.name.charAt(0)}</span>
               )}
               {birthdayInfo?.isToday && (
-                <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 ring-1 ring-white">
+                <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 ring-1.5 ring-white animate-bounce shadow-xs">
                   <Cake className="h-2.5 w-2.5 text-white" />
+                </span>
+              )}
+              {!birthdayInfo?.isToday && birthdayInfo?.daysLeft === 1 && (
+                <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 ring-1.5 ring-white animate-pulse shadow-xs">
+                  <Cake className="h-2.5 w-2.5 text-white" />
+                </span>
+              )}
+              {!birthdayInfo?.isToday && birthdayInfo?.daysLeft !== 1 && isNew && (
+                <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-1.5 ring-white animate-pulse shadow-xs">
+                  <Sparkles className="h-2.5 w-2.5 text-amber-200" />
                 </span>
               )}
             </div>
@@ -476,15 +518,21 @@ function PlayerRow({
                   {player.name}
                 </strong>
                 {birthdayInfo?.isToday && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black text-white shadow-xs animate-pulse">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs ring-2 ring-rose-300 animate-pulse">
                     <Cake className="h-2.5 w-2.5" />
-                    {birthdayInfo.turningAge} سنة
+                    <span>اليوم ({birthdayInfo.turningAge} سنة) 🎂</span>
                   </span>
                 )}
                 {birthdayInfo?.daysLeft === 1 && (
-                  <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 px-2 py-0.5 text-[9.5px] font-black text-white shadow-xs ring-2 ring-amber-300 animate-pulse">
                     <Cake className="h-2.5 w-2.5" />
-                    غداً
+                    <span>غداً ({birthdayInfo.turningAge} سنة) 🎂</span>
+                  </span>
+                )}
+                {isNew && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs ring-2 ring-emerald-300/60 animate-pulse">
+                    <Sparkles className="h-2.5 w-2.5 text-amber-200 shrink-0" />
+                    <span>لاعب جديد ✨</span>
                   </span>
                 )}
               </div>
@@ -517,11 +565,16 @@ function PlayerRow({
         {/* Age */}
         <div>
           <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 font-bold text-[11px] ${
-            birthdayInfo?.isToday ? "bg-rose-100 text-rose-800 font-black" : "bg-slate-100/80 text-slate-700"
+            birthdayInfo?.isToday
+              ? "bg-rose-100 text-rose-800 font-black ring-1 ring-rose-300 animate-pulse"
+              : birthdayInfo?.daysLeft === 1
+              ? "bg-amber-100 text-amber-800 font-bold ring-1 ring-amber-300 animate-pulse"
+              : "bg-slate-100/80 text-slate-700"
           }`}>
             <UserRound className="h-3 w-3" />
             {currentAge} سنة
-            {birthdayInfo?.isToday && <Cake className="h-3 w-3 text-rose-500" />}
+            {birthdayInfo?.isToday && <Cake className="h-3 w-3 text-rose-500 animate-bounce" />}
+            {birthdayInfo?.daysLeft === 1 && <Cake className="h-3 w-3 text-amber-600 animate-pulse" />}
           </span>
         </div>
 

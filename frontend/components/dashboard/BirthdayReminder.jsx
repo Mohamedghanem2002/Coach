@@ -576,7 +576,7 @@ export default function BirthdayReminder({
                             <span>تمت التهنئة</span>
                           </span>
                         ) : (
-                          <span className="shrink-0 rounded-xl bg-red-600 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-white shadow-xs">
+                          <span className="shrink-0 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-white shadow-xs ring-2 ring-rose-300 animate-pulse">
                             🎉 اليوم!
                           </span>
                         )
@@ -585,7 +585,7 @@ export default function BirthdayReminder({
                           تمت التهنئة
                         </span>
                       ) : (
-                        <span className="shrink-0 rounded-xl bg-amber-100 border border-amber-300 px-2.5 py-1 text-[10px] font-black text-amber-900">
+                        <span className="shrink-0 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 text-[10px] font-black shadow-xs ring-2 ring-amber-300 animate-pulse">
                           🗓️ غداً (قبلها بيوم)
                         </span>
                       )}

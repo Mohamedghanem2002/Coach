@@ -1551,7 +1551,7 @@ export default function Profile({
                       <button
                         type="button"
                         onClick={() => setShowWelcomeCardModal(true)}
-                        className="shrink-0 flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-black shadow-xs transition active:scale-95 cursor-pointer"
+                        className="shrink-0 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3 py-1.5 text-xs font-black shadow-xs transition active:scale-95 cursor-pointer ring-2 ring-emerald-300/60 animate-pulse"
                         title="معاينة كارت الترحيب بالبطل"
                       >
                         <Sparkles className="h-3.5 w-3.5 text-amber-300" />
@@ -1591,7 +1591,7 @@ export default function Profile({
                     <button
                       type="button"
                       onClick={() => setShowWelcomeCardModal(true)}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs animate-fade-in"
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs ring-2 ring-amber-300/60 animate-pulse"
                       title="معاينة كارت الترحيب بالبطل ومشاركته على السوشيال ميديا"
                     >
                       <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
@@ -1640,7 +1640,7 @@ export default function Profile({
                     <button
                       type="button"
                       onClick={() => setShowBirthdayModal(true)}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs animate-pulse"
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 via-rose-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs ring-2 ring-amber-300/70 animate-pulse"
                       title="معاينة كارت تهنئة عيد الميلاد"
                     >
                       <PartyPopper className="h-4 w-4 text-amber-600 shrink-0" />
@@ -2016,7 +2016,7 @@ export default function Profile({
 
                     {/* تنبيه عيد الميلاد التفاعلي إن وُجد */}
                     {hasActiveBirthday && (
-                      <div className="rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-2xs animate-slide-up space-y-2.5">
+                      <div className="rounded-2xl border-2 border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-xs animate-slide-up space-y-2.5 ring-2 ring-rose-200/60">
                         <div className="flex items-center gap-2.5">
                           <span className="text-2xl animate-bounce shrink-0">🎂</span>
                           <div>

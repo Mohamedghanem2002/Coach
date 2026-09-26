@@ -1218,11 +1218,11 @@ export default function Home() {
                       setMobileTab("birthdays");
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 border border-rose-300 hover:shadow-xs"
+                    className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-xs hover:shadow-sm ring-2 ring-rose-300/70 animate-pulse"
                   >
-                    <Cake className="h-3.5 w-3.5 text-rose-600" />
+                    <Cake className="h-3.5 w-3.5 text-white animate-bounce" />
                     <span>أعياد الميلاد</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-600 text-white font-black">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-rose-700 font-black">
                       {todayBirthdaysCount}
                     </span>
                   </button>
@@ -1985,14 +1985,14 @@ export default function Home() {
                   {todayBirthdaysCount > 0 && (
                     <button
                       type="button"
-                      className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                      className={`flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
                         statusFilter === "birthday"
                           ? "bg-red-600 text-white shadow-xs"
-                          : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
+                          : "bg-rose-100/90 text-rose-800 hover:bg-rose-200 border border-rose-300 ring-2 ring-rose-200/80 animate-pulse"
                       }`}
                       onClick={() => setStatusFilter("birthday")}
                     >
-                      <Cake className="h-3 w-3" />
+                      <Cake className="h-3 w-3 text-rose-600 animate-bounce" />
                       <span>عيد ميلاد ({todayBirthdaysCount})</span>
                     </button>
                   )}
