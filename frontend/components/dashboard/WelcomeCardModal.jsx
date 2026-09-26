@@ -21,6 +21,8 @@ export default function WelcomeCardModal({
   const [isDownloading, setIsDownloading] = useState(false);
   const [notice, setNotice] = useState("");
 
+  const [whatsAppUrl, setWhatsAppUrl] = useState("");
+
   const isLoading = isOpen && !dataUrl && !loadError;
 
   const guardianPhone =
@@ -65,6 +67,7 @@ export default function WelcomeCardModal({
       setBlob(null);
       setLoadError(false);
       setNotice("");
+      setWhatsAppUrl("");
     };
   }, [isOpen, player, captainName]);
 
@@ -95,14 +98,28 @@ export default function WelcomeCardModal({
   const handleSendToWhatsApp = async () => {
     if (!blob) return;
     setIsSending(true);
+    setWhatsAppUrl("");
+
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
+
+    // 1. Synchronously pre-open blank window on desktop inside the user click gesture
+    // This permanently prevents browsers from blocking the popup window
+    let preWin = null;
+    if (!isMobile) {
+      try {
+        preWin = window.open("about:blank", "_blank");
+      } catch (_) {}
+    }
 
     const fileName = `كارت_ترحيب_${(player.name || "اللاعب").replace(/\s+/g, "_")}.png`;
 
     try {
-      // 1. Fast copy image to clipboard as PNG
+      // 2. Fast copy image to clipboard as PNG
       const copied = await copyBlobToClipboard(blob);
 
-      // 2. Fallback auto-save if clipboard is unsupported
+      // 3. Fallback auto-save if clipboard is unsupported
       if (!copied) {
         try {
           const url = URL.createObjectURL(blob);
@@ -116,24 +133,34 @@ export default function WelcomeCardModal({
         } catch (_) {}
       }
 
-      // 3. Open WhatsApp directly to player's chat (or manual contact selection)
-      openWhatsAppDirect(cleanPhone);
+      // 4. Open WhatsApp directly to player's chat (or manual contact selection)
+      openWhatsAppDirect(cleanPhone, "", preWin);
+
+      const targetLink = cleanPhone
+        ? (isMobile ? `whatsapp://send?phone=${cleanPhone}` : `https://web.whatsapp.com/send?phone=${cleanPhone}`)
+        : (isMobile ? `whatsapp://send` : `https://web.whatsapp.com`);
+      setWhatsAppUrl(targetLink);
 
       if (cleanPhone) {
         setNotice(
           copied
-            ? `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) ونسخ كارت الترحيب للحافظة! الصق الصورة (Paste) ثم أرسلها كصورة 🥋`
-            : `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) وحفظ كارت الترحيب بجهازك لإرسالها كصورة فوراً 🥋`
+            ? `✓ تم نسخ كارت الترحيب للحافظة وجاري فتح محادثة (${cleanPhone})! الصق الصورة (Paste) ثم أرسلها 🥋`
+            : `✓ تم حفظ كارت الترحيب بجهازك وجاري فتح محادثة (${cleanPhone}) لإرسالها فوراً 🥋`
         );
       } else {
         setNotice(
           copied
-            ? "✓ تم نسخ كارت الترحيب للحافظة وفتح واتساب! اختر المحادثة المطلوبة ثم الصق الصورة (Paste) 🥋"
-            : "✓ تم حفظ كارت الترحيب بجهازك وفتح واتساب! اختر المحادثة المطلوبة لإرسالها كصورة 🥋"
+            ? "✓ تم نسخ كارت الترحيب للحافظة وجاري فتح واتساب! اختر المحادثة المطلوبة ثم الصق الصورة (Paste) 🥋"
+            : "✓ تم حفظ كارت الترحيب بجهازك وجاري فتح واتساب! اختر المحادثة المطلوبة لإرسالها 🥋"
         );
       }
     } catch (err) {
       console.error(err);
+      if (preWin && !preWin.closed) {
+        try {
+          preWin.close();
+        } catch (_) {}
+      }
       setNotice("❌ حدث خطأ أثناء تجهيز أو إرسال كارت الترحيب.");
     } finally {
       setTimeout(() => setIsSending(false), 800);
@@ -201,7 +228,20 @@ export default function WelcomeCardModal({
                 : "bg-emerald-950/80 text-emerald-200 border border-emerald-800"
             }`}
           >
-            {notice}
+            <div>{notice}</div>
+            {whatsAppUrl && !notice.startsWith("❌") && (
+              <div className="mt-2 pt-2 border-t border-emerald-800/60 flex items-center justify-center">
+                <a
+                  href={whatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition active:scale-95 cursor-pointer"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span>إذا لم تفتح المحادثة تلقائياً، اضغط هنا لفتح واتساب مباشرة</span>
+                </a>
+              </div>
+            )}
           </div>
         )}
 

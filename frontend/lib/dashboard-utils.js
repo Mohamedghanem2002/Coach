@@ -361,7 +361,7 @@ export function generateBirthdayWishText(
 }
 
 
-export function openWhatsAppDirect(phone, text = "") {
+export function openWhatsAppDirect(phone, text = "", preOpenedWindow = null) {
   if (typeof window === "undefined") return;
 
   const cleanPhone = formatWhatsAppPhone(phone);
@@ -372,21 +372,58 @@ export function openWhatsAppDirect(phone, text = "") {
     /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
 
   if (isMobile) {
-    let appUrl = "";
-    if (cleanPhone) {
-      appUrl = encodedText
-        ? `whatsapp://send?phone=${cleanPhone}&text=${encodedText}`
-        : `whatsapp://send?phone=${cleanPhone}`;
-    } else {
-      appUrl = encodedText
-        ? `whatsapp://send?text=${encodedText}`
-        : `whatsapp://send`;
-    }
+    const appUrl = cleanPhone
+      ? (encodedText ? `whatsapp://send?phone=${cleanPhone}&text=${encodedText}` : `whatsapp://send?phone=${cleanPhone}`)
+      : (encodedText ? `whatsapp://send?text=${encodedText}` : `whatsapp://send`);
+    const fallbackUrl = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}${encodedText ? `&text=${encodedText}` : ""}`
+      : `https://api.whatsapp.com/send`;
 
     try {
       const a = document.createElement("a");
       a.href = appUrl;
-      a.target = "_top";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) document.body.removeChild(a);
+      }, 300);
+
+      setTimeout(() => {
+        if (document.hasFocus && document.hasFocus()) {
+          window.location.href = fallbackUrl;
+        }
+      }, 1200);
+    } catch (_) {
+      window.location.href = appUrl;
+    }
+    return;
+  }
+
+  // Desktop: WhatsApp Web
+  const webUrl = cleanPhone
+    ? (encodedText ? `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}` : `https://web.whatsapp.com/send?phone=${cleanPhone}`)
+    : (encodedText ? `https://web.whatsapp.com/send?text=${encodedText}` : `https://web.whatsapp.com`);
+
+  if (preOpenedWindow && !preOpenedWindow.closed) {
+    try {
+      preOpenedWindow.location.href = webUrl;
+      preOpenedWindow.focus();
+      return;
+    } catch (_) {}
+  }
+
+  let win = null;
+  try {
+    win = window.open(webUrl, "_blank", "noopener,noreferrer");
+  } catch (_) {}
+
+  // If window.open was blocked by the browser popup blocker:
+  if (!win || win.closed || typeof win.closed === "undefined") {
+    try {
+      const a = document.createElement("a");
+      a.href = webUrl;
+      a.target = "_blank";
       a.rel = "noopener noreferrer";
       document.body.appendChild(a);
       a.click();
@@ -394,21 +431,8 @@ export function openWhatsAppDirect(phone, text = "") {
         if (a.parentNode) document.body.removeChild(a);
       }, 300);
     } catch (_) {
-      window.location.href = appUrl;
+      window.location.href = webUrl;
     }
-  } else {
-    // Desktop: WhatsApp Web
-    let webUrl = "";
-    if (cleanPhone) {
-      webUrl = encodedText
-        ? `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
-        : `https://web.whatsapp.com/send?phone=${cleanPhone}`;
-    } else {
-      webUrl = encodedText
-        ? `https://web.whatsapp.com/send?text=${encodedText}`
-        : `https://web.whatsapp.com`;
-    }
-    window.open(webUrl, "_blank", "noopener,noreferrer");
   }
 }
 

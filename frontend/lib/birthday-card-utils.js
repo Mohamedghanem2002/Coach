@@ -13,7 +13,7 @@ export { formatWhatsAppPhone };
  * On mobile: triggers native WhatsApp application
  * On desktop: opens WhatsApp Web chat directly with the phone number
  */
-export function openWhatsAppDirect(cleanPhone, text = "") {
+export function openWhatsAppDirect(cleanPhone, text = "", preOpenedWindow = null) {
   if (typeof window === "undefined") return;
 
   const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
@@ -42,7 +42,7 @@ export function openWhatsAppDirect(cleanPhone, text = "") {
         // Fallback to web link if native scheme does not respond
         setTimeout(() => {
           if (document.hasFocus && document.hasFocus()) {
-            window.open(fallbackUrl, "_blank");
+            window.location.href = fallbackUrl;
           }
         }, 1200);
       } catch (_) {
@@ -51,13 +51,55 @@ export function openWhatsAppDirect(cleanPhone, text = "") {
     } else {
       // Desktop: Open WhatsApp Web directly into the contact chat
       const webUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}${encodedText}`;
-      window.open(webUrl, "_blank", "noopener,noreferrer");
+
+      if (preOpenedWindow && !preOpenedWindow.closed) {
+        try {
+          preOpenedWindow.location.href = webUrl;
+          preOpenedWindow.focus();
+          return;
+        } catch (_) {}
+      }
+
+      let win = null;
+      try {
+        win = window.open(webUrl, "_blank", "noopener,noreferrer");
+      } catch (_) {}
+
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        try {
+          const a = document.createElement("a");
+          a.href = webUrl;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            if (a.parentNode) document.body.removeChild(a);
+          }, 300);
+        } catch (_) {
+          window.location.href = webUrl;
+        }
+      }
     }
   } else {
     if (isMobile) {
       window.location.href = text ? `whatsapp://send?${paramOnly}` : `whatsapp://send`;
     } else {
-      window.open("https://web.whatsapp.com", "_blank", "noopener,noreferrer");
+      const webUrl = "https://web.whatsapp.com";
+      if (preOpenedWindow && !preOpenedWindow.closed) {
+        try {
+          preOpenedWindow.location.href = webUrl;
+          preOpenedWindow.focus();
+          return;
+        } catch (_) {}
+      }
+      let win = null;
+      try {
+        win = window.open(webUrl, "_blank", "noopener,noreferrer");
+      } catch (_) {}
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        window.location.href = webUrl;
+      }
     }
   }
 }

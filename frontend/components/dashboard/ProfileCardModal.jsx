@@ -20,6 +20,8 @@ export default function ProfileCardModal({
   const [isDownloading, setIsDownloading] = useState(false);
   const [notice, setNotice] = useState("");
 
+  const [whatsAppUrl, setWhatsAppUrl] = useState("");
+
   const isLoading = isOpen && !dataUrl && !loadError;
 
   const guardianPhone =
@@ -81,6 +83,7 @@ export default function ProfileCardModal({
       setBlob(null);
       setLoadError(false);
       setNotice("");
+      setWhatsAppUrl("");
     };
   }, [isOpen, player, cachedBlob, canvasGenerator]);
 
@@ -111,6 +114,18 @@ export default function ProfileCardModal({
   const handleSendToWhatsApp = async () => {
     if (!blob) return;
     setIsSending(true);
+    setWhatsAppUrl("");
+
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
+
+    let preWin = null;
+    if (!isMobile) {
+      try {
+        preWin = window.open("about:blank", "_blank");
+      } catch (_) {}
+    }
 
     const fileName = `بطاقة_اللاعب_${(player.name || "اللاعب").replace(/\s+/g, "_")}.png`;
 
@@ -133,23 +148,33 @@ export default function ProfileCardModal({
       }
 
       // 3. Open WhatsApp directly to player's chat (or manual contact selection)
-      openWhatsAppDirect(cleanPhone);
+      openWhatsAppDirect(cleanPhone, "", preWin);
+
+      const targetLink = cleanPhone
+        ? (isMobile ? `whatsapp://send?phone=${cleanPhone}` : `https://web.whatsapp.com/send?phone=${cleanPhone}`)
+        : (isMobile ? `whatsapp://send` : `https://web.whatsapp.com`);
+      setWhatsAppUrl(targetLink);
 
       if (cleanPhone) {
         setNotice(
           copied
-            ? `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) ونسخ البطاقة للحافظة! الصق الصورة (Paste) ثم أرسلها 🥋`
-            : `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) وحفظ البطاقة بجهازك لإرسالها فوراً 🥋`
+            ? `✓ تم نسخ البطاقة للحافظة وجاري فتح محادثة (${cleanPhone})! الصق الصورة (Paste) ثم أرسلها 🥋`
+            : `✓ تم حفظ البطاقة بجهازك وجاري فتح محادثة (${cleanPhone}) لإرسالها فوراً 🥋`
         );
       } else {
         setNotice(
           copied
-            ? "✓ تم نسخ البطاقة للحافظة وفتح واتساب! اختر المحادثة المطلوبة ثم الصق الصورة (Paste) 🥋"
-            : "✓ تم حفظ البطاقة بجهازك وفتح واتساب! اختر المحادثة المطلوبة لإرسالها 🥋"
+            ? "✓ تم نسخ البطاقة للحافظة وجاري فتح واتساب! اختر المحادثة المطلوبة ثم الصق الصورة (Paste) 🥋"
+            : "✓ تم حفظ البطاقة بجهازك وجاري فتح واتساب! اختر المحادثة المطلوبة لإرسالها 🥋"
         );
       }
     } catch (err) {
       console.error(err);
+      if (preWin && !preWin.closed) {
+        try {
+          preWin.close();
+        } catch (_) {}
+      }
       setNotice("❌ حدث خطأ أثناء تجهيز أو إرسال البطاقة.");
     } finally {
       setTimeout(() => setIsSending(false), 800);
@@ -217,7 +242,20 @@ export default function ProfileCardModal({
                 : "bg-emerald-950/80 text-emerald-200 border border-emerald-800"
             }`}
           >
-            {notice}
+            <div>{notice}</div>
+            {whatsAppUrl && !notice.startsWith("❌") && (
+              <div className="mt-2 pt-2 border-t border-emerald-800/60 flex items-center justify-center">
+                <a
+                  href={whatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition active:scale-95 cursor-pointer"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span>إذا لم تفتح المحادثة تلقائياً، اضغط هنا لفتح واتساب مباشرة</span>
+                </a>
+              </div>
+            )}
           </div>
         )}
 
