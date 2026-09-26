@@ -1,4 +1,4 @@
-import { Building2, ChevronLeft, MapPin, Users } from "lucide-react";
+import { Building2, ChevronLeft, MapPin, Users, FileText } from "lucide-react";
 import { paymentStatusFor } from "../../lib/dashboard-utils";
 
 const BRANCH_GRADIENTS = [
@@ -24,6 +24,7 @@ export default function BranchOverview({
   paymentMonth,
   onSelectBranch,
   onMarkPresent,
+  onOpenAttendanceReport,
   busyBranch,
 }) {
   if (!branches.length) return null;
@@ -140,33 +141,46 @@ export default function BranchOverview({
                   ))}
                 </div>
 
-                {/* Action buttons */}
-                <div className="mt-3.5 flex gap-2">
+                {/* Attendance & Absence Report Card Button */}
+                <div className="mt-3.5 space-y-2">
                   <button
                     type="button"
-                    className="min-h-11 sm:min-h-9 flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 active-press cursor-pointer"
-                    onClick={() => onSelectBranch(branch.name)}
+                    className="w-full flex items-center justify-center gap-1.5 min-h-10 rounded-xl border border-red-200/90 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 text-red-700 px-3 py-2 text-xs font-black shadow-2xs transition active-press cursor-pointer touch-manipulation"
+                    onClick={() => onOpenAttendanceReport?.(branch.name)}
+                    title="توليد كارت تقرير الحضور والغياب للصالة للمشاركة على جروب أولياء الأمور عبر واتساب"
                   >
-                    عرض اللاعبين
+                    <FileText className="h-4 w-4 text-red-600 shrink-0" />
+                    <span>تقرير غياب وحضور 📋</span>
                   </button>
-                  <button
-                    type="button"
-                    className="relative min-h-11 sm:min-h-9 flex-1 overflow-hidden rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 text-xs font-black text-white shadow-xs transition-all active-press cursor-pointer disabled:cursor-wait disabled:opacity-60"
-                    disabled={!branchPlayers.length || busy}
-                    onClick={() => onMarkPresent(branch.name)}
-                  >
-                    {busy ? (
-                      <span className="flex items-center justify-center gap-1.5">
-                        <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
-                        جاري...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-1">
-                        <CheckMarkIcon className="h-3.5 w-3.5" />
-                        تحضير الكل
-                      </span>
-                    )}
-                  </button>
+
+                  {/* Secondary Action buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="min-h-11 sm:min-h-9 flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 active-press cursor-pointer"
+                      onClick={() => onSelectBranch(branch.name)}
+                    >
+                      عرض اللاعبين
+                    </button>
+                    <button
+                      type="button"
+                      className="relative min-h-11 sm:min-h-9 flex-1 overflow-hidden rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 text-xs font-black text-white shadow-xs transition-all active-press cursor-pointer disabled:cursor-wait disabled:opacity-60"
+                      disabled={!branchPlayers.length || busy}
+                      onClick={() => onMarkPresent(branch.name)}
+                    >
+                      {busy ? (
+                        <span className="flex items-center justify-center gap-1.5">
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
+                          جاري...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-1">
+                          <CheckMarkIcon className="h-3.5 w-3.5" />
+                          تحضير الكل
+                        </span>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </article>

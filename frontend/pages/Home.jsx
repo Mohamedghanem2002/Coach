@@ -41,6 +41,7 @@ import {
   RotateCcw,
   Mail,
   Sparkles,
+  FileText,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -61,6 +62,7 @@ import Footer from "../components/dashboard/Footer";
 import EmailBackupModal from "../components/dashboard/EmailBackupModal";
 import RestoreModal from "../components/dashboard/RestoreModal";
 import WelcomeCardModal from "../components/dashboard/WelcomeCardModal";
+import BranchAttendanceModal from "../components/dashboard/BranchAttendanceModal";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 
@@ -95,6 +97,7 @@ export default function Home() {
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [isCloudBackingUp, setIsCloudBackingUp] = useState(false);
   const [welcomePlayer, setWelcomePlayer] = useState(null);
+  const [branchAttendanceReport, setBranchAttendanceReport] = useState(null);
 
   // Events management state
   const [events, setEvents] = useState([]);
@@ -1075,6 +1078,22 @@ export default function Home() {
 
               {/* Row 2: Swipeable Horizontal Filter Capsules with Live Counts */}
               <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
+                {/* Branch Attendance Report Button */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setBranchAttendanceReport({
+                      branchName: branch === "كل الصالات" ? (branches[0]?.name || "كل الصالات") : branch,
+                      date: sessionDate,
+                    })
+                  }
+                  className="shrink-0 flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 text-red-700 border border-red-200 shadow-2xs"
+                  title="توليد كارت تقرير غياب وحضور الصالة للمشاركة على واتساب"
+                >
+                  <FileText className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                  <span>تقرير الحضور 📋</span>
+                </button>
+
                 {/* All */}
                 <button
                   type="button"
@@ -1337,6 +1356,23 @@ export default function Home() {
                       </button>
                     </div>
 
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMobileFilters(false);
+                          setBranchAttendanceReport({
+                            branchName: branch === "كل الصالات" ? (branches[0]?.name || "كل الصالات") : branch,
+                            date: sessionDate,
+                          });
+                        }}
+                        className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 text-xs font-black text-red-700 active:scale-95 transition cursor-pointer shadow-2xs"
+                      >
+                        <FileText className="h-4 w-4 text-red-600" />
+                        <span>كارت تقرير غياب وحضور الصالة 📋</span>
+                      </button>
+                    </div>
+
                     <div className="grid grid-cols-3 gap-1.5 pt-1">
                       <button
                         type="button"
@@ -1434,6 +1470,9 @@ export default function Home() {
                   setMobileTab("players");
                 }}
                 onMarkPresent={markBranchPresent}
+                onOpenAttendanceReport={(bName) =>
+                  setBranchAttendanceReport({ branchName: bName, date: sessionDate })
+                }
               />
             </div>
           )}
@@ -1651,6 +1690,9 @@ export default function Home() {
               busyBranch={busyBranch}
               onSelectBranch={handleSelectBranch}
               onMarkPresent={markBranchPresent}
+              onOpenAttendanceReport={(bName) =>
+                setBranchAttendanceReport({ branchName: bName, date: sessionDate })
+              }
             />
           </div>
         )}
@@ -1721,7 +1763,22 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBranchAttendanceReport({
+                        branchName: branch === "كل الصالات" ? (branches[0]?.name || "كل الصالات") : branch,
+                        date: sessionDate,
+                      })
+                    }
+                    className="flex items-center gap-1.5 rounded-xl border border-red-200/90 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 px-3.5 py-1.5 text-xs font-black text-red-700 transition active-press cursor-pointer shadow-2xs hover:shadow-xs"
+                    title="توليد كارت تقرير الحضور والغياب للصالة للمشاركة على جروب أولياء الأمور عبر واتساب"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                    <span>تقرير غياب وحضور 📋</span>
+                  </button>
+
                   <div className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-1.5 text-xs font-bold text-emerald-800">
                     <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />
                     <span>حاضر: {presentToday}</span>
@@ -2337,6 +2394,17 @@ export default function Home() {
           captainName={captainName}
           isOpen={Boolean(welcomePlayer)}
           onClose={() => setWelcomePlayer(null)}
+        />
+      )}
+
+      {branchAttendanceReport && (
+        <BranchAttendanceModal
+          branchName={branchAttendanceReport.branchName || branchAttendanceReport}
+          sessionDate={branchAttendanceReport.date || sessionDate}
+          players={players}
+          captainName={captainName}
+          isOpen={Boolean(branchAttendanceReport)}
+          onClose={() => setBranchAttendanceReport(null)}
         />
       )}
       {/* ━━━ Global Fixed Toast Notification Overlay ━━━
