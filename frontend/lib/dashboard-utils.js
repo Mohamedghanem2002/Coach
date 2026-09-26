@@ -499,7 +499,7 @@ export function openWhatsAppDirect(phone, text = "", preOpenedWindow = null) {
   // Desktop: WhatsApp Web
   const webUrl = cleanPhone
     ? (encodedText ? `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}` : `https://web.whatsapp.com/send?phone=${cleanPhone}`)
-    : (encodedText ? `https://web.whatsapp.com/send?text=${encodedText}` : `https://web.whatsapp.com`);
+    : `https://web.whatsapp.com`;
 
   if (preOpenedWindow && !preOpenedWindow.closed) {
     try {

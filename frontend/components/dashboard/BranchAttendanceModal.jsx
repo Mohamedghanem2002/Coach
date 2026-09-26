@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X, Download, MessageCircle, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Download, MessageCircle, FileText, AlertCircle } from "lucide-react";
 import {
   generateBranchAttendanceCardCanvas,
-  generateAttendanceWhatsAppText,
   formatArabicSessionDate,
 } from "../../lib/branch-attendance-card-utils";
 import { openWhatsAppDirect } from "../../lib/dashboard-utils";
@@ -117,6 +116,7 @@ export default function BranchAttendanceModal({
       /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
 
     // 1. Synchronously pre-open blank window on desktop inside the user click gesture
+    // This permanently prevents browsers from blocking the popup window
     let preWin = null;
     if (!isMobile) {
       try {
@@ -124,41 +124,11 @@ export default function BranchAttendanceModal({
       } catch (_) {}
     }
 
-    const messageText = generateAttendanceWhatsAppText({
-      branchName: branchName || "كل الصالات",
-      sessionDate,
-      presentCount,
-      absentCount,
-      totalCount: branchPlayers.length,
-      attendanceRate:
-        branchPlayers.length > 0
-          ? Math.round((presentCount / branchPlayers.length) * 100)
-          : 0,
-      captainName,
-    });
-
     try {
-      // 2. Try native mobile share with image file
-      const file = new File([blob], fileName, { type: "image/png" });
-      if (
-        isMobile &&
-        typeof navigator !== "undefined" &&
-        navigator.canShare &&
-        navigator.canShare({ files: [file] })
-      ) {
-        await navigator.share({
-          files: [file],
-          title: `كشف الحضور والغياب - ${branchName}`,
-          text: messageText,
-        });
-        setNotice("✓ تم فتح قائمة المشاركة لإرسال الكارت عبر واتساب!");
-        return;
-      }
-
-      // 3. Fast copy image to clipboard as PNG
+      // 2. Fast copy image to clipboard as PNG
       const copied = await copyBlobToClipboard(blob);
 
-      // 4. Fallback auto-save if clipboard is unsupported
+      // 3. Fallback auto-save if clipboard is unsupported
       if (!copied) {
         try {
           const url = URL.createObjectURL(blob);
@@ -172,18 +142,16 @@ export default function BranchAttendanceModal({
         } catch (_) {}
       }
 
-      // 5. Open WhatsApp directly with text message
-      openWhatsAppDirect("", messageText, preWin);
+      // 4. Open WhatsApp directly to chat or general selection
+      openWhatsAppDirect("", "", preWin);
 
-      const targetLink = isMobile
-        ? `whatsapp://send?text=${encodeURIComponent(messageText)}`
-        : `https://web.whatsapp.com/send?text=${encodeURIComponent(messageText)}`;
+      const targetLink = isMobile ? "whatsapp://send" : "https://web.whatsapp.com";
       setWhatsAppUrl(targetLink);
 
       setNotice(
         copied
-          ? "✓ تم نسخ كارت الحضور والغياب للحافظة وجاري فتح واتساب! ادخل لجروب أولياء الأمور واضغط لصق (Ctrl + V / Paste) لإرسال الصورة والكشف فوراً 🥋"
-          : "✓ تم تنزيل كارت الحضور والغياب بجهازك وجاري فتح واتساب! ادخل لجروب أولياء الأمور وأرفق الصورة 🥋"
+          ? "✓ تم نسخ كارت الحضور والغياب للحافظة وجاري فتح واتساب! اختر المحادثة المطلوبة ثم الصق الصورة (Paste) 🥋"
+          : "✓ تم حفظ كارت الحضور والغياب بجهازك وجاري فتح واتساب! اختر المحادثة المطلوبة لإرسالها 🥋"
       );
     } catch (err) {
       console.error(err);
@@ -245,25 +213,8 @@ export default function BranchAttendanceModal({
           </div>
         </div>
 
-        {/* Notice Message */}
-        {notice && (
-          <div className="mb-3 flex items-start justify-between gap-2 rounded-xl border border-emerald-500/40 bg-emerald-950/60 p-3 text-xs font-bold text-emerald-200">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
-              <span>{notice}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setNotice("")}
-              className="text-emerald-400 hover:text-white text-xs cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
         {/* Card Canvas Preview */}
-        <div className="relative mb-4 flex items-center justify-center rounded-2xl border border-slate-800 bg-slate-950/80 p-2 sm:p-3 min-h-[300px] overflow-hidden">
+        <div className="relative mb-3 flex items-center justify-center rounded-2xl border border-slate-800 bg-slate-950/80 p-2 sm:p-3 min-h-[300px] overflow-hidden">
           {isLoading && (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-400">
               <div className="h-9 w-9 rounded-full border-3 border-red-500/30 border-t-red-500 animate-spin" />
@@ -291,41 +242,74 @@ export default function BranchAttendanceModal({
           )}
         </div>
 
-        {/* Direct WhatsApp manual link fallback if opened */}
-        {whatsAppUrl && (
-          <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-950/40 p-2.5 text-center text-xs">
-            <span className="text-slate-300 font-medium">إذا لم يفتح واتساب تلقائياً: </span>
-            <a
-              href={whatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-black text-emerald-400 underline hover:text-emerald-300"
-            >
-              اضغط هنا لفتح واتساب مباشرة
-            </a>
+        {/* Notice feedback */}
+        {notice && (
+          <div
+            className={`mb-3 rounded-xl p-2.5 text-center text-xs font-bold transition leading-relaxed ${
+              notice.startsWith("❌")
+                ? "bg-rose-950/80 text-rose-200 border border-rose-800"
+                : notice.startsWith("⚠️")
+                ? "bg-amber-950/80 text-amber-200 border border-amber-800"
+                : "bg-emerald-950/80 text-emerald-200 border border-emerald-800"
+            }`}
+          >
+            <div>{notice}</div>
+            {whatsAppUrl && !notice.startsWith("❌") && (
+              <div className="mt-2 pt-2 border-t border-emerald-800/60 flex items-center justify-center">
+                <a
+                  href={whatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition active:scale-95 cursor-pointer"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span>إذا لم تفتح المحادثة تلقائياً، اضغط هنا لفتح واتساب مباشرة</span>
+                </a>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2.5 pt-1 border-t border-slate-800">
+        {/* Action Buttons: [ حفظ ] [ إرسال عبر واتساب ] */}
+        <div className="grid grid-cols-2 gap-2.5 pt-1">
           <button
             type="button"
+            disabled={isLoading || isDownloading || !blob}
             onClick={handleDownload}
-            disabled={!blob || isDownloading}
-            className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs sm:text-sm font-black text-white p-3 transition active:scale-95 cursor-pointer disabled:opacity-50 touch-manipulation shadow-xs"
+            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 p-3 text-xs font-black text-slate-100 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer min-h-[48px]"
+            title="تحميل وحفظ صورة كارت الحضور والغياب بجهازك"
           >
-            <Download className="h-4 w-4 text-slate-300" />
-            <span>{isDownloading ? "جاري الحفظ..." : "حفظ الصورة 📥"}</span>
+            {isDownloading ? (
+              <>
+                <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                <span>جاري الحفظ...</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>حفظ</span>
+              </>
+            )}
           </button>
 
           <button
             type="button"
+            disabled={isLoading || isSending || !blob}
             onClick={handleSendToWhatsApp}
-            disabled={!blob || isSending}
-            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-xs sm:text-sm font-black text-white p-3 transition active:scale-95 cursor-pointer disabled:opacity-50 touch-manipulation shadow-md ring-1 ring-emerald-400/30"
+            className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-3 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition active-press disabled:opacity-50 cursor-pointer min-h-[48px]"
+            title="نسخ كارت الحضور والغياب وفتح واتساب مباشرة لإرسالها"
           >
-            <MessageCircle className="h-4 w-4" />
-            <span>{isSending ? "جاري التجهيز..." : "إرسال للواتس 📲"}</span>
+            {isSending ? (
+              <>
+                <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
+                <span>جاري الإرسال...</span>
+              </>
+            ) : (
+              <>
+                <MessageCircle className="h-4 w-4 shrink-0" />
+                <span>إرسال عبر واتساب</span>
+              </>
+            )}
           </button>
         </div>
 
