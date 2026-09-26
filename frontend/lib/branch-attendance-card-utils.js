@@ -1,8 +1,7 @@
-import {
-  copyBlobToClipboard,
-  openWhatsAppDirect,
-} from "./dashboard-utils";
-import { BELT_HEX } from "./dashboard-utils";
+import { openWhatsAppDirect, BELT_HEX } from "./dashboard-utils";
+import { copyBlobToClipboard } from "./birthday-card-utils";
+
+export { copyBlobToClipboard, openWhatsAppDirect };
 
 /**
  * Formats a YYYY-MM-DD date into full Arabic text (e.g. السبت 27 سبتمبر 2026)

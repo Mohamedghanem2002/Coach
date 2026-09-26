@@ -6,7 +6,8 @@ import {
   generateAttendanceWhatsAppText,
   formatArabicSessionDate,
 } from "../../lib/branch-attendance-card-utils";
-import { copyBlobToClipboard, openWhatsAppDirect } from "../../lib/dashboard-utils";
+import { openWhatsAppDirect } from "../../lib/dashboard-utils";
+import { copyBlobToClipboard } from "../../lib/birthday-card-utils";
 
 export default function BranchAttendanceModal({
   branchName,
@@ -207,8 +208,8 @@ export default function BranchAttendanceModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-600/20 text-red-500 border border-red-500/30 text-lg">
-              📋
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-600/20 text-red-500 border border-red-500/30">
+              <FileText className="h-5 w-5" />
             </div>
             <div className="min-w-0">
               <h3 className="font-cairo text-sm sm:text-base font-black text-red-400 truncate">

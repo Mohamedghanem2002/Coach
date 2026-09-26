@@ -615,3 +615,19 @@ export function getBeltStyle(beltName = "أبيض") {
     }
   );
 }
+
+export async function copyBlobToClipboard(blob) {
+  if (!blob) return false;
+  if (typeof navigator === "undefined" || !navigator.clipboard?.write) {
+    return false;
+  }
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({ "image/png": blob }),
+    ]);
+    return true;
+  } catch (err) {
+    console.warn("Clipboard write failed:", err);
+    return false;
+  }
+}
