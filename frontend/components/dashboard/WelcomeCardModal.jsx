@@ -117,20 +117,19 @@ export default function WelcomeCardModal({
       }
 
       // 3. Open WhatsApp directly to player's chat (or manual contact selection)
-      const welcomeText = `أهلاً وسهلاً بالبطل / ${player.name} 🥋 في الأكاديمية! يسعدنا ويشرفنا انضمامك إلينا، ونتمنى لك مسيرة رياضية حافلة بالبطولات والإنجازات 🏆🥇`;
-      openWhatsAppDirect(cleanPhone, welcomeText);
+      openWhatsAppDirect(cleanPhone);
 
       if (cleanPhone) {
         setNotice(
           copied
-            ? `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) ونسخ كارت الترحيب للحافظة! الصق الصورة (Paste) ثم أرسلها 🥋`
-            : `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) وحفظ كارت الترحيب بجهازك لإرسالها فوراً 🥋`
+            ? `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) ونسخ كارت الترحيب للحافظة! الصق الصورة (Paste) ثم أرسلها كصورة 🥋`
+            : `✓ تم فتح محادثة ولي الأمر (${cleanPhone}) وحفظ كارت الترحيب بجهازك لإرسالها كصورة فوراً 🥋`
         );
       } else {
         setNotice(
           copied
             ? "✓ تم نسخ كارت الترحيب للحافظة وفتح واتساب! اختر المحادثة المطلوبة ثم الصق الصورة (Paste) 🥋"
-            : "✓ تم حفظ كارت الترحيب بجهازك وفتح واتساب! اختر المحادثة المطلوبة لإرسالها 🥋"
+            : "✓ تم حفظ كارت الترحيب بجهازك وفتح واتساب! اختر المحادثة المطلوبة لإرسالها كصورة 🥋"
         );
       }
     } catch (err) {
