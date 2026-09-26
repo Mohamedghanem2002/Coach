@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import { getLocalDbClient } from "./localdb";
+import { getLocalDbClient } from "./localdb.js";
 // Database client connection (MongoDB or LocalDB fallback)
 const uri = process.env.MONGODB_URI;
 

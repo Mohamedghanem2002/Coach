@@ -15,7 +15,7 @@ export async function GET() {
       return NextResponse.json({ error: "يجب تسجيل الدخول أولاً" }, { status: 401 });
     }
 
-    const snapshots = getAvailableSnapshots(ownerId);
+    const snapshots = await getAvailableSnapshots(ownerId);
     return NextResponse.json({ snapshots });
   } catch (error) {
     console.error("GET /api/backup/snapshots error:", error);
@@ -50,7 +50,7 @@ export async function POST(request) {
     console.error("POST /api/backup/snapshots error:", error);
     return NextResponse.json(
       {
-        error: "تعذر استرجاع النسخة السحابية",
+        error: error?.message || "تعذر معالجة طلب النسخة السحابية",
         details: error?.message || String(error),
       },
       { status: 400 }

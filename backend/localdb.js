@@ -8,12 +8,14 @@ const BAK_FILE = path.join(DATA_DIR, "local_db.bak.json");
 const BACKUP_DIR = path.join(DATA_DIR, "backups");
 
 function ensureDirs() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(BACKUP_DIR)) {
-    fs.mkdirSync(BACKUP_DIR, { recursive: true });
-  }
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(BACKUP_DIR)) {
+      fs.mkdirSync(BACKUP_DIR, { recursive: true });
+    }
+  } catch {}
 }
 
 function parseAndNormalizeData(raw) {
@@ -23,6 +25,7 @@ function parseAndNormalizeData(raw) {
   if (!Array.isArray(data.branches)) data.branches = [];
   if (!Array.isArray(data.players)) data.players = [];
   if (!Array.isArray(data.events)) data.events = [];
+  if (!Array.isArray(data.cloud_snapshots)) data.cloud_snapshots = [];
 
   // Ensure _id are ObjectId instances
   data.users.forEach((u) => {
@@ -36,6 +39,9 @@ function parseAndNormalizeData(raw) {
   });
   data.events.forEach((e) => {
     if (e._id && typeof e._id === "string") e._id = new ObjectId(e._id);
+  });
+  data.cloud_snapshots.forEach((s) => {
+    if (s._id && typeof s._id === "string") s._id = new ObjectId(s._id);
   });
 
   return data;
@@ -95,7 +101,7 @@ function loadData() {
   }
 
   // 4. Clean initial state if fresh install
-  const initialData = { users: [], branches: [], players: [], events: [] };
+  const initialData = { users: [], branches: [], players: [], events: [], cloud_snapshots: [] };
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), "utf-8");
   } catch {}
@@ -259,6 +265,12 @@ export function getLocalDbClient() {
                   if (filter._id && !matchId(e._id, filter._id)) return false;
                   return true;
                 });
+              } else if (collectionName === "cloud_snapshots") {
+                items = (currentData.cloud_snapshots || []).filter((s) => {
+                  if (filter.ownerId && s.ownerId !== filter.ownerId) return false;
+                  if (filter._id && !matchId(s._id, filter._id)) return false;
+                  return true;
+                });
               }
 
               return {
@@ -327,6 +339,16 @@ export function getLocalDbClient() {
                 );
               }
 
+              if (collectionName === "cloud_snapshots") {
+                return (
+                  (currentData.cloud_snapshots || []).find((s) => {
+                    if (filter.ownerId && s.ownerId !== filter.ownerId) return false;
+                    if (filter._id && !matchId(s._id, filter._id)) return false;
+                    return true;
+                  }) || null
+                );
+              }
+
               return null;
             },
 
@@ -343,6 +365,9 @@ export function getLocalDbClient() {
               } else if (collectionName === "events") {
                 if (!Array.isArray(currentData.events)) currentData.events = [];
                 currentData.events.push(newDoc);
+              } else if (collectionName === "cloud_snapshots") {
+                if (!Array.isArray(currentData.cloud_snapshots)) currentData.cloud_snapshots = [];
+                currentData.cloud_snapshots.push(newDoc);
               }
 
               saveData(currentData);
@@ -455,6 +480,7 @@ export function getLocalDbClient() {
               if (collectionName === "branches") list = currentData.branches;
               if (collectionName === "players") list = currentData.players;
               if (collectionName === "events") list = currentData.events || [];
+              if (collectionName === "cloud_snapshots") list = currentData.cloud_snapshots || [];
 
               const idx = list.findIndex((item) => {
                 if (filter.ownerId && item.ownerId !== filter.ownerId) return false;
@@ -477,6 +503,7 @@ export function getLocalDbClient() {
               else if (collectionName === "players") list = currentData.players;
               else if (collectionName === "events") list = currentData.events || [];
               else if (collectionName === "users") list = currentData.users;
+              else if (collectionName === "cloud_snapshots") list = currentData.cloud_snapshots || [];
 
               const initialCount = list.length;
               const remaining = list.filter((item) => {
@@ -490,6 +517,7 @@ export function getLocalDbClient() {
               else if (collectionName === "players") currentData.players = remaining;
               else if (collectionName === "events") currentData.events = remaining;
               else if (collectionName === "users") currentData.users = remaining;
+              else if (collectionName === "cloud_snapshots") currentData.cloud_snapshots = remaining;
 
               if (deletedCount > 0) {
                 saveData(currentData);
