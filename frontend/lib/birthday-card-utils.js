@@ -57,13 +57,13 @@ export function openWhatsAppDirect(cleanPhone, text = "", preOpenedWindow = null
           preOpenedWindow.location.href = webUrl;
           preOpenedWindow.focus();
           return;
-        } catch (_) {}
+        } catch (_) { }
       }
 
       let win = null;
       try {
         win = window.open(webUrl, "_blank", "noopener,noreferrer");
-      } catch (_) {}
+      } catch (_) { }
 
       if (!win || win.closed || typeof win.closed === "undefined") {
         try {
@@ -91,12 +91,12 @@ export function openWhatsAppDirect(cleanPhone, text = "", preOpenedWindow = null
           preOpenedWindow.location.href = webUrl;
           preOpenedWindow.focus();
           return;
-        } catch (_) {}
+        } catch (_) { }
       }
       let win = null;
       try {
         win = window.open(webUrl, "_blank", "noopener,noreferrer");
-      } catch (_) {}
+      } catch (_) { }
       if (!win || win.closed || typeof win.closed === "undefined") {
         window.location.href = webUrl;
       }
@@ -762,7 +762,7 @@ export async function shareBirthdayCard(
           new ClipboardItem({ "image/png": blob }),
         ]);
         copied = true;
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // Auto-save / download
@@ -883,7 +883,7 @@ export async function sendBirthdayCardViaWhatsApp(
         link.click();
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 2500);
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // 4. Open WhatsApp directly (to player's chat or general selection)
