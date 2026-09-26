@@ -44,6 +44,7 @@ import {
   Eye,
   Cake,
   Sparkles,
+  Maximize2,
 } from "lucide-react";
 
 
@@ -246,6 +247,7 @@ export default function Profile({
   const [cachedBirthdayBlob, setCachedBirthdayBlob] = useState(null);
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
   const [showWelcomeCardModal, setShowWelcomeCardModal] = useState(false);
+  const [showZoomPhoto, setShowZoomPhoto] = useState(false);
 
   // Confirm delete player
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -605,13 +607,17 @@ export default function Profile({
     // Athlete Banner Box
     context.fillStyle = "#f8fafc";
     context.beginPath();
-    context.roundRect(72, 245, canvas.width - 144, 290, 24);
+    context.roundRect(72, 245, canvas.width - 144, 295, 24);
     context.fill();
     context.strokeStyle = "#e2e8f0";
     context.lineWidth = 2;
     context.stroke();
 
-    // Photo / Monogram Avatar
+    // Photo / Monogram Avatar (Enlarged and well-proportioned: Center 215, 392, Radius 115, Diameter 230px)
+    const avatarCenterX = 215;
+    const avatarCenterY = 392;
+    const avatarRadius = 115;
+
     let photoDrawn = false;
     if (player.photo) {
       const photo = await new Promise((resolve) => {
@@ -619,40 +625,51 @@ export default function Profile({
         image.crossOrigin = "anonymous";
         image.onload = () => resolve(image);
         image.onerror = () => resolve(null);
-        setTimeout(() => resolve(null), 250);
+        setTimeout(() => resolve(null), 300);
         image.src = player.photo;
       });
       if (photo) {
         context.save();
         context.beginPath();
-        context.arc(220, 390, 95, 0, Math.PI * 2);
+        context.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
         context.clip();
-        context.drawImage(photo, 125, 295, 190, 190);
+        context.drawImage(
+          photo,
+          avatarCenterX - avatarRadius,
+          avatarCenterY - avatarRadius,
+          avatarRadius * 2,
+          avatarRadius * 2,
+        );
         context.restore();
 
         context.beginPath();
-        context.arc(220, 390, 95, 0, Math.PI * 2);
+        context.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
         context.strokeStyle = "#dc2626";
-        context.lineWidth = 5;
+        context.lineWidth = 6;
         context.stroke();
         photoDrawn = true;
       }
     }
 
     if (!photoDrawn) {
-      const avatarGrad = context.createLinearGradient(125, 295, 315, 485);
+      const avatarGrad = context.createLinearGradient(
+        avatarCenterX - avatarRadius,
+        avatarCenterY - avatarRadius,
+        avatarCenterX + avatarRadius,
+        avatarCenterY + avatarRadius,
+      );
       avatarGrad.addColorStop(0, "#dc2626");
       avatarGrad.addColorStop(1, "#991b1b");
       context.fillStyle = avatarGrad;
       context.beginPath();
-      context.arc(220, 390, 95, 0, Math.PI * 2);
+      context.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
       context.fill();
 
       drawCenter(
         player.name ? player.name.charAt(0) : "ك",
-        220,
-        425,
-        "900 80px Cairo, sans-serif",
+        avatarCenterX,
+        avatarCenterY + 36,
+        "900 95px Cairo, sans-serif",
         "#ffffff",
       );
     }
@@ -1083,7 +1100,11 @@ export default function Profile({
 
             {/* Desktop Header Identity Badge */}
             <div className="hidden sm:flex items-center gap-2.5 min-w-0">
-              <div className={`relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-cairo text-xs font-black text-white ring-2 ${beltStyle.border}`}>
+              <div
+                onClick={() => player.photo && setShowZoomPhoto(true)}
+                className={`relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-cairo text-xs font-black text-white ring-2 ${beltStyle.border} ${player.photo ? "cursor-pointer hover:ring-2 hover:ring-red-400 transition" : ""}`}
+                title={player.photo ? "انقر لتكبير صورة اللاعب" : player.name}
+              >
                 {player.photo ? (
                   <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
                 ) : (
@@ -1410,9 +1431,26 @@ export default function Profile({
               <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3.5">
                 <div className="flex items-start gap-3 sm:gap-4">
                   {/* صورة / أفاتار اللاعب بحزام الكاراتيه المشع */}
-                  <div className={`relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-xl sm:text-2xl font-black text-white shadow-xs ring-2 ${beltStyle.border}`}>
+                  <div
+                    onClick={() => {
+                      if (player.photo) setShowZoomPhoto(true);
+                    }}
+                    className={`relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-xl sm:text-2xl font-black text-white shadow-xs ring-2 ${beltStyle.border} ${
+                      player.photo ? "cursor-pointer hover:ring-4 hover:ring-red-400/70 transition active-press group" : ""
+                    }`}
+                    title={player.photo ? "انقر لتكبير صورة اللاعب 🔍" : player.name}
+                  >
                     {player.photo ? (
-                      <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
+                      <>
+                        <img
+                          src={player.photo}
+                          alt={player.name}
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                          <Maximize2 className="h-5 w-5 text-white drop-shadow" />
+                        </div>
+                      </>
                     ) : (
                       <span>{player.name.charAt(0)}</span>
                     )}
@@ -2653,6 +2691,62 @@ export default function Profile({
         onConfirm={handleDeletePurchase}
         onCancel={() => setPurchaseToDelete(null)}
       />
+
+      {/* ════════════ نافذة تكبير صورة اللاعب (Photo Zoom Lightbox) ════════════ */}
+      {showZoomPhoto && player.photo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-3 sm:p-5 backdrop-blur-md animate-fade-in-scale"
+          dir="rtl"
+          onMouseDown={(e) => e.target === e.currentTarget && setShowZoomPhoto(false)}
+        >
+          <div className="relative max-h-[94vh] max-w-md sm:max-w-lg w-full overflow-hidden rounded-3xl border border-slate-700 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 p-4 sm:p-5 text-white shadow-2xl flex flex-col items-center">
+            {/* Modal Header */}
+            <div className="w-full flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🥋</span>
+                <div>
+                  <h3 className="font-cairo text-xs sm:text-sm font-black text-red-400">
+                    صورة البطل / {player.name}
+                  </h3>
+                  <p className="text-[10px] text-slate-400">
+                    حزام {player.belt || "أبيض"} • فرع {player.branch}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowZoomPhoto(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white cursor-pointer transition"
+                title="إغلاق"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Enlarged Photo Display */}
+            <div className="relative flex items-center justify-center max-h-[68vh] w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={player.photo}
+                alt={player.name}
+                className="max-h-[64vh] w-auto max-w-full rounded-xl object-contain shadow-2xl ring-1 ring-white/10"
+              />
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="mt-3 flex w-full items-center justify-between text-xs text-slate-400 px-1 pt-1 shrink-0">
+              <span className="text-[10px] text-slate-400">انقر في أي مكان خارج الصورة للإغلاق</span>
+              <button
+                type="button"
+                onClick={() => setShowZoomPhoto(false)}
+                className="rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2 text-xs font-bold text-slate-200 transition cursor-pointer"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

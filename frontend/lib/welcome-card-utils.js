@@ -1,18 +1,19 @@
 import {
-  getBeltStyle,
   formatWhatsAppPhone,
   calculateAge,
   openWhatsAppDirect,
 } from "./dashboard-utils";
 import { copyBlobToClipboard } from "./birthday-card-utils";
 
-export { formatWhatsAppPhone, copyBlobToClipboard };
+export { formatWhatsAppPhone, copyBlobToClipboard, openWhatsAppDirect };
 
 /**
- * Generates an ultra-stylish, modern, energetic Karate Welcome Card (كارت ترحيب بطل جديد)
- * Dimensions: 1080 x 1350 (Standard 4:5 social media portrait)
- * Aesthetic: Dark obsidian & deep navy with radiant athletic gold, crimson flame accents,
- * geometric speed slashes, glowing multi-layer avatar frame, and professional typography.
+ * Generates an ultra-luxurious, official Karate Welcome Card Canvas
+ * Identical in styling, colors, and branding to the Official Player Profile Card (Re_action PRO).
+ * Dimensions: 1080 x 1920 (Standard 9:16 portrait)
+ * Color Palette: Deep Slate Obsidian (#090d16) outer frame, Crisp Pure White (#ffffff) surface,
+ * Imperial Crimson & Ruby Red gradient header (#dc2626 -> #b91c1c -> #881337),
+ * Athlete Banner Box (#f8fafc), Emerald & Amber side-by-side welcome cards, and sharp typography.
  */
 export async function generateWelcomeCardCanvas(
   player,
@@ -24,7 +25,7 @@ export async function generateWelcomeCardCanvas(
     try {
       await Promise.race([
         document.fonts.ready,
-        new Promise((resolve) => setTimeout(resolve, 250)),
+        new Promise((resolve) => setTimeout(resolve, 200)),
       ]);
     } catch (_) {
       // Continue even if fonts take longer
@@ -33,12 +34,18 @@ export async function generateWelcomeCardCanvas(
 
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
-  canvas.height = 1350;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
+  canvas.height = 1920;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
 
-  const dynamicAge = calculateAge(player.dateOfBirth) ?? player.age ?? 0;
-  const beltStyle = getBeltStyle(player.belt);
+  const currentAge = calculateAge(player.dateOfBirth) ?? player.age ?? 0;
+  const guardianPhone =
+    player.guardianPhone ||
+    player.parentPhone ||
+    player.guardianMobile ||
+    player.mobile ||
+    player.phone ||
+    "";
   const joinDate = player.createdAt
     ? new Date(player.createdAt).toLocaleDateString("ar-EG", {
         year: "numeric",
@@ -51,715 +58,370 @@ export async function generateWelcomeCardCanvas(
         day: "numeric",
       });
 
-  // ── Helper functions ──
-  const drawCenter = (text, x, y, font, color, shadow = null) => {
-    ctx.save();
-    ctx.font = font;
-    ctx.fillStyle = color;
-    ctx.textAlign = "center";
-    ctx.direction = "rtl";
-    if (shadow) {
-      ctx.shadowColor = shadow.color || "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = shadow.blur || 12;
-      ctx.shadowOffsetX = shadow.x || 0;
-      ctx.shadowOffsetY = shadow.y || 4;
-    }
-    ctx.fillText(text, x, y);
-    ctx.restore();
+  // Helper text drawing functions (exact match to Profile Card)
+  const drawRight = (text, x, y, font, color) => {
+    context.font = font;
+    context.fillStyle = color;
+    context.textAlign = "right";
+    context.direction = "rtl";
+    context.fillText(text, x, y);
   };
 
-  const drawBadge = (
-    text,
-    cx,
-    cy,
-    width,
-    height,
-    bgColor,
-    textColor,
-    borderColor = null,
-    font = "800 22px Cairo, sans-serif",
-    shadow = null
-  ) => {
-    ctx.save();
-    const x = cx - width / 2;
-    const y = cy - height / 2;
-    if (shadow) {
-      ctx.shadowColor = shadow.color || "rgba(0,0,0,0.3)";
-      ctx.shadowBlur = shadow.blur || 10;
-      ctx.shadowOffsetY = shadow.y || 4;
-    }
-    ctx.beginPath();
-    ctx.roundRect(x, y, width, height, height / 2);
-    ctx.fillStyle = bgColor;
-    ctx.fill();
-    if (borderColor) {
-      ctx.shadowColor = "transparent";
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    ctx.font = font;
-    ctx.fillStyle = textColor;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.direction = "rtl";
-    ctx.fillText(text, cx, cy);
-    ctx.restore();
+  const drawLeft = (text, x, y, font, color) => {
+    context.font = font;
+    context.fillStyle = color;
+    context.textAlign = "left";
+    context.direction = "rtl";
+    context.fillText(text, x, y);
   };
 
-  // ── 1. Background (Deep Athletic Obsidian & Midnight Mesh) ──
-  const bg = ctx.createLinearGradient(0, 0, 1080, 1350);
-  bg.addColorStop(0, "#060913");
-  bg.addColorStop(0.25, "#0b1222");
-  bg.addColorStop(0.55, "#0f172a");
-  bg.addColorStop(0.85, "#15102a");
-  bg.addColorStop(1, "#080b14");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, 1080, 1350);
+  const drawCenter = (text, x, y, font, color) => {
+    context.font = font;
+    context.fillStyle = color;
+    context.textAlign = "center";
+    context.direction = "rtl";
+    context.fillText(text, x, y);
+  };
 
-  // ── 2. Ambient Energy Glows ──
-  // Top Flame Glow
-  const topGlow = ctx.createRadialGradient(540, 120, 20, 540, 120, 480);
-  topGlow.addColorStop(0, "rgba(239, 68, 68, 0.28)");
-  topGlow.addColorStop(0.45, "rgba(245, 158, 11, 0.16)");
-  topGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = topGlow;
-  ctx.fillRect(0, 0, 1080, 500);
+  // 1. Outer luxury frame (Matching Profile Card #090d16)
+  context.fillStyle = "#090d16";
+  context.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Hero Avatar Glow
-  const heroGlow = ctx.createRadialGradient(540, 450, 40, 540, 450, 360);
-  heroGlow.addColorStop(0, "rgba(245, 158, 11, 0.32)");
-  heroGlow.addColorStop(0.4, "rgba(220, 38, 38, 0.18)");
-  heroGlow.addColorStop(0.8, "rgba(59, 130, 246, 0.08)");
-  heroGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = heroGlow;
-  ctx.fillRect(100, 150, 880, 600);
+  // 2. Main Card Surface (Pure White with 40px rounded corners)
+  context.fillStyle = "#ffffff";
+  context.beginPath();
+  context.roundRect(36, 36, canvas.width - 72, canvas.height - 72, 40);
+  context.fill();
 
-  // Bottom Ambient Neon
-  const bottomGlow = ctx.createRadialGradient(540, 1250, 30, 540, 1250, 450);
-  bottomGlow.addColorStop(0, "rgba(99, 102, 241, 0.2)");
-  bottomGlow.addColorStop(0.6, "rgba(239, 68, 68, 0.1)");
-  bottomGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = bottomGlow;
-  ctx.fillRect(0, 950, 1080, 400);
+  // 3. Top Header Banner (Imperial Crimson & Ruby Red gradient)
+  const gradHeader = context.createLinearGradient(0, 36, canvas.width, 220);
+  gradHeader.addColorStop(0, "#dc2626");
+  gradHeader.addColorStop(0.5, "#b91c1c");
+  gradHeader.addColorStop(1, "#881337");
+  context.fillStyle = gradHeader;
+  context.beginPath();
+  context.roundRect(36, 36, canvas.width - 72, 184, [40, 40, 0, 0]);
+  context.fill();
 
-  // ── 3. Dynamic Sports Geometric Speed Slashes ──
-  ctx.save();
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
-  ctx.lineWidth = 1.5;
-  for (let i = -200; i < 1200; i += 70) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i + 400, 1350);
-    ctx.stroke();
-  }
-  // Subtle energetic red/gold slash lines
-  ctx.strokeStyle = "rgba(239, 68, 68, 0.18)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(80, 260);
-  ctx.lineTo(380, 560);
-  ctx.stroke();
+  // Embellishment badge on the left (Re_action PRO)
+  context.fillStyle = "rgba(255, 255, 255, 0.15)";
+  context.beginPath();
+  context.roundRect(72, 65, 160, 52, 16);
+  context.fill();
+  drawCenter("Re_action PRO", 152, 100, "900 22px Cairo, sans-serif", "#ffffff");
 
-  ctx.strokeStyle = "rgba(245, 158, 11, 0.2)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(1000, 320);
-  ctx.lineTo(700, 620);
-  ctx.stroke();
-  ctx.restore();
-
-  // ── 4. Luxury Multi-Layer Frame & Corner Accents ──
-  ctx.save();
-  const goldBorderGrad = ctx.createLinearGradient(0, 0, 1080, 1350);
-  goldBorderGrad.addColorStop(0, "#fbbf24");
-  goldBorderGrad.addColorStop(0.25, "#d97706");
-  goldBorderGrad.addColorStop(0.5, "#ef4444");
-  goldBorderGrad.addColorStop(0.75, "#f59e0b");
-  goldBorderGrad.addColorStop(1, "#fbbf24");
-
-  // Outer border
-  ctx.strokeStyle = goldBorderGrad;
-  ctx.lineWidth = 3.5;
-  ctx.beginPath();
-  ctx.roundRect(38, 38, 1004, 1274, 34);
-  ctx.stroke();
-
-  // Inner subtle border
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.roundRect(50, 50, 980, 1250, 26);
-  ctx.stroke();
-
-  // Corner brackets
-  const cornerBrackets = [
-    { x: 42, y: 42, dx: 1, dy: 1 },
-    { x: 1038, y: 42, dx: -1, dy: 1 },
-    { x: 42, y: 1308, dx: 1, dy: -1 },
-    { x: 1038, y: 1308, dx: -1, dy: -1 },
-  ];
-  cornerBrackets.forEach((c) => {
-    ctx.strokeStyle = "#fbbf24";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(c.x, c.y + c.dy * 26);
-    ctx.lineTo(c.x, c.y);
-    ctx.lineTo(c.x + c.dx * 26, c.y);
-    ctx.stroke();
-  });
-  ctx.restore();
-
-  // ── 5. Top Header Banner ──
-  // Header Badge Pill
-  drawBadge(
-    "🥋  إعــلان انـضـمـام بـطـل جـديـد  🥋",
-    540,
-    104,
-    460,
-    46,
-    "rgba(239, 68, 68, 0.2)",
-    "#fecaca",
-    "rgba(239, 68, 68, 0.5)",
-    "900 21px Cairo, sans-serif"
+  // Header Title & Captain subtitle
+  drawRight(
+    "بطاقة ترحيب بالبطل الجديد 🥋",
+    canvas.width - 80,
+    105,
+    "900 42px Cairo, sans-serif",
+    "#ffffff"
+  );
+  drawRight(
+    `إشراف وتدريب الكابتن: ${captainName}`,
+    canvas.width - 80,
+    160,
+    "700 26px Cairo, sans-serif",
+    "#fecaca"
   );
 
-  // Academy Name
-  drawCenter(
-    "أَكَـادِيـمِـيَّـة الأَبْـطَـال لِـلْـكَـارَاتِـيـه",
-    540,
-    168,
-    "900 34px Cairo, sans-serif",
-    "#ffffff",
-    { color: "rgba(245, 158, 11, 0.6)", blur: 18, y: 3 }
-  );
+  // 4. Athlete Banner Box (#f8fafc with #e2e8f0 border)
+  context.fillStyle = "#f8fafc";
+  context.beginPath();
+  context.roundRect(72, 245, canvas.width - 144, 295, 24);
+  context.fill();
+  context.strokeStyle = "#e2e8f0";
+  context.lineWidth = 2;
+  context.stroke();
 
-  // Subtitle / Stars
-  drawCenter(
-    "★  ★  ★   WELCOME TO THE SQUAD   ★  ★  ★",
-    540,
-    205,
-    "800 16px Cairo, sans-serif",
-    "#f59e0b"
-  );
+  // 5. Athlete Photo / Avatar (Enlarged and well-proportioned: Center 215, 392, Radius 115, Diameter 230px!)
+  const avatarCenterX = 215;
+  const avatarCenterY = 392;
+  const avatarRadius = 115;
 
-  // ── 6. Player Hero Avatar / Photo Section ──
-  const avatarX = 540;
-  const avatarY = 445;
-  const avatarRadius = 165;
-
-  // Outer glowing aura rings
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(avatarX, avatarY, avatarRadius + 18, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(245, 158, 11, 0.35)";
-  ctx.lineWidth = 3;
-  ctx.setLineDash([12, 10]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
-
-  // Main metallic avatar border
-  ctx.save();
-  const avatarRingGrad = ctx.createLinearGradient(
-    avatarX - avatarRadius,
-    avatarY - avatarRadius,
-    avatarX + avatarRadius,
-    avatarY + avatarRadius
-  );
-  avatarRingGrad.addColorStop(0, "#fbbf24");
-  avatarRingGrad.addColorStop(0.3, "#f97316");
-  avatarRingGrad.addColorStop(0.7, "#dc2626");
-  avatarRingGrad.addColorStop(1, "#fbbf24");
-
-  ctx.beginPath();
-  ctx.arc(avatarX, avatarY, avatarRadius + 6, 0, Math.PI * 2);
-  ctx.strokeStyle = avatarRingGrad;
-  ctx.lineWidth = 8;
-  ctx.shadowColor = "rgba(245, 158, 11, 0.6)";
-  ctx.shadowBlur = 24;
-  ctx.stroke();
-  ctx.restore();
-
-  // Draw Player Photo or Athletic Avatar
-  let photoLoaded = false;
+  let photoDrawn = false;
   if (player.photo) {
-    try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = player.photo;
-      await new Promise((resolve) => {
-        img.onload = () => {
-          photoLoaded = true;
-          resolve();
-        };
-        img.onerror = () => resolve();
-        setTimeout(resolve, 350);
-      });
+    const photo = await new Promise((resolve) => {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.onload = () => resolve(image);
+      image.onerror = () => resolve(null);
+      setTimeout(() => resolve(null), 300);
+      image.src = player.photo;
+    });
 
-      if (photoLoaded) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(
-          img,
-          avatarX - avatarRadius,
-          avatarY - avatarRadius,
-          avatarRadius * 2,
-          avatarRadius * 2
-        );
-        ctx.restore();
-      }
-    } catch (_) {
-      photoLoaded = false;
+    if (photo) {
+      context.save();
+      context.beginPath();
+      context.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
+      context.clip();
+      context.drawImage(
+        photo,
+        avatarCenterX - avatarRadius,
+        avatarCenterY - avatarRadius,
+        avatarRadius * 2,
+        avatarRadius * 2
+      );
+      context.restore();
+
+      // Bold Crimson border ring
+      context.beginPath();
+      context.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
+      context.strokeStyle = "#dc2626";
+      context.lineWidth = 6;
+      context.stroke();
+      photoDrawn = true;
     }
   }
 
-  if (!photoLoaded) {
-    // Stylish Athletic Martial Arts Gradient Avatar
-    ctx.save();
-    const avatarBg = ctx.createRadialGradient(
-      avatarX,
-      avatarY - 30,
-      20,
-      avatarX,
-      avatarY,
-      avatarRadius
+  if (!photoDrawn) {
+    const avatarGrad = context.createLinearGradient(
+      avatarCenterX - avatarRadius,
+      avatarCenterY - avatarRadius,
+      avatarCenterX + avatarRadius,
+      avatarCenterY + avatarRadius
     );
-    avatarBg.addColorStop(0, "#1e293b");
-    avatarBg.addColorStop(0.7, "#0f172a");
-    avatarBg.addColorStop(1, "#020617");
+    avatarGrad.addColorStop(0, "#dc2626");
+    avatarGrad.addColorStop(1, "#991b1b");
+    context.fillStyle = avatarGrad;
+    context.beginPath();
+    context.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
+    context.fill();
 
-    ctx.beginPath();
-    ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-    ctx.fillStyle = avatarBg;
-    ctx.fill();
-
-    // Karate Gi / Kimono graphical silhouette
-    // Head / Face
-    ctx.fillStyle = "#fbcfe8";
-    ctx.beginPath();
-    ctx.arc(avatarX, avatarY - 32, 42, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Red Headband
-    ctx.fillStyle = "#dc2626";
-    ctx.fillRect(avatarX - 44, avatarY - 60, 88, 16);
-    // Headband ribbon tails
-    ctx.beginPath();
-    ctx.moveTo(avatarX - 42, avatarY - 52);
-    ctx.lineTo(avatarX - 70, avatarY - 35);
-    ctx.lineTo(avatarX - 65, avatarY - 25);
-    ctx.lineTo(avatarX - 40, avatarY - 44);
-    ctx.fill();
-
-    // White Karate Kimono Body
-    ctx.fillStyle = "#f8fafc";
-    ctx.beginPath();
-    ctx.moveTo(avatarX, avatarY + 12);
-    ctx.lineTo(avatarX - 85, avatarY + 155);
-    ctx.lineTo(avatarX + 85, avatarY + 155);
-    ctx.closePath();
-    ctx.fill();
-
-    // Kimono V-neck black inner
-    ctx.fillStyle = "#0f172a";
-    ctx.beginPath();
-    ctx.moveTo(avatarX, avatarY + 55);
-    ctx.lineTo(avatarX - 22, avatarY + 12);
-    ctx.lineTo(avatarX + 22, avatarY + 12);
-    ctx.closePath();
-    ctx.fill();
-
-    // Kimono fold lines
-    ctx.strokeStyle = "#cbd5e1";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(avatarX - 22, avatarY + 12);
-    ctx.lineTo(avatarX + 32, avatarY + 105);
-    ctx.moveTo(avatarX + 22, avatarY + 12);
-    ctx.lineTo(avatarX - 32, avatarY + 105);
-    ctx.stroke();
-
-    // Belt around waist
-    ctx.fillStyle = beltStyle?.bg || "#dc2626";
-    ctx.fillRect(avatarX - 65, avatarY + 105, 130, 20);
-    // Belt knot
-    ctx.fillStyle = "#1e293b";
-    ctx.fillRect(avatarX - 12, avatarY + 102, 24, 26);
-    ctx.restore();
+    drawCenter(
+      player.name ? player.name.charAt(0) : "ك",
+      avatarCenterX,
+      avatarCenterY + 36,
+      "900 95px Cairo, sans-serif",
+      "#ffffff"
+    );
   }
 
-  // Floating Hero Badge (Over Avatar Bottom-Right)
-  drawBadge(
-    "🔥 بـطـل جـديـد",
-    avatarX + 115,
-    avatarY + 130,
-    170,
-    42,
-    "linear-gradient(90deg, #dc2626, #f59e0b)",
-    "#ffffff",
-    "#fef08a",
-    "900 18px Cairo, sans-serif",
-    { color: "rgba(0,0,0,0.6)", blur: 12, y: 4 }
+  // 6. Athlete Details (Exact font, colors, and line spacing as Profile Card)
+  drawRight(`البطل / ${player.name}`, 940, 310, "900 42px Cairo, sans-serif", "#0f172a");
+  drawRight(
+    `🥋 الحزام: ${player.belt || "أبيض"}  •  المستوى: ${player.level || "A"}`,
+    940,
+    355,
+    "800 25px Cairo, sans-serif",
+    "#b91c1c"
+  );
+  drawRight(`🏢 الصالة: ${player.branch}`, 940, 396, "700 23px Cairo, sans-serif", "#334155");
+  drawRight(`🎂 السن: ${currentAge} سنة`, 940, 436, "700 23px Cairo, sans-serif", "#334155");
+  if (guardianPhone) {
+    drawRight(`📞 ولي الأمر: ${guardianPhone}`, 940, 475, "700 23px Cairo, sans-serif", "#047857");
+  }
+  drawRight(
+    `📅 تاريخ الانضمام: ${joinDate}`,
+    940,
+    512,
+    "600 20px Cairo, sans-serif",
+    "#94a3b8"
   );
 
-  // ── 7. Player Name ──
-  drawCenter(
-    `البطل / ${player.name}`,
-    540,
-    695,
-    "900 50px Cairo, sans-serif",
-    "#ffffff",
-    { color: "rgba(245, 158, 11, 0.7)", blur: 20, y: 4 }
-  );
+  // 7. Welcome Status Cards: 2 Side-by-Side Cards (Width: 456px each, matching Profile Card y=555)
+  // Card 1 (Right): عضوية رسمية جديدة
+  context.fillStyle = "#f0fdf4";
+  context.beginPath();
+  context.roundRect(552, 555, 456, 160, 20);
+  context.fill();
+  context.strokeStyle = "#86efac";
+  context.lineWidth = 2.5;
+  context.stroke();
 
-  // ── 8. Badges Row (Belt, Branch, Age) ──
-  const badgeY = 762;
-  const beltLabel = `🥋 حزام ${player.belt || "أبيض"} (${player.level || "A"})`;
-  const branchLabel = `🏢 فرع ${player.branch || "الرئيسي"}`;
-  const ageLabel = `⚡ ${dynamicAge} سنة`;
+  drawRight("🌟 عضوية وبطاقة بطل رسمية", 552 + 456 - 22, 595, "800 23px Cairo, sans-serif", "#065f46");
+  drawCenter("أهلاً بك يا بطل! 🥋", 552 + 228, 646, "900 34px Cairo, sans-serif", "#047857");
+  drawCenter("تم قيد وتسجيل اللاعب بالأكاديمية بنجاح ✓", 552 + 228, 690, "700 21px Cairo, sans-serif", "#065f46");
 
-  drawBadge(
-    beltLabel,
-    260,
-    badgeY,
-    240,
-    46,
-    "rgba(30, 41, 59, 0.85)",
-    "#fbbf24",
-    "rgba(245, 158, 11, 0.4)",
-    "800 20px Cairo, sans-serif"
-  );
+  // Card 2 (Left): مسيرة صناعة الأبطال
+  context.fillStyle = "#fffbeb";
+  context.beginPath();
+  context.roundRect(72, 555, 456, 160, 20);
+  context.fill();
+  context.strokeStyle = "#fde68a";
+  context.lineWidth = 2.5;
+  context.stroke();
 
-  drawBadge(
-    branchLabel,
-    540,
-    badgeY,
-    240,
-    46,
-    "rgba(30, 41, 59, 0.85)",
-    "#38bdf8",
-    "rgba(56, 189, 248, 0.4)",
-    "800 20px Cairo, sans-serif"
-  );
+  drawRight("🏆 مسيرة صناعة الأبطال", 72 + 456 - 22, 595, "800 23px Cairo, sans-serif", "#92400e");
+  drawCenter("نحو منصات التتويج 🥇", 72 + 228, 646, "900 32px Cairo, sans-serif", "#b45309");
+  drawCenter("تدريب احترافي وتأسيس بدني وبطولات", 72 + 228, 690, "700 21px Cairo, sans-serif", "#92400e");
 
-  drawBadge(
-    ageLabel,
-    800,
-    badgeY,
-    180,
-    46,
-    "rgba(30, 41, 59, 0.85)",
-    "#4ade80",
-    "rgba(74, 222, 128, 0.4)",
-    "800 20px Cairo, sans-serif"
-  );
+  // 8. Academy Motto Chips (Side-by-Side Chips, matching Profile Card y=730)
+  context.fillStyle = "#ecfdf5";
+  context.beginPath();
+  context.roundRect(552, 730, 456, 68, 16);
+  context.fill();
+  context.strokeStyle = "#a7f3d0";
+  context.lineWidth = 1.5;
+  context.stroke();
+  drawCenter("✅ الشعار: عزيمة • قوة • انضباط • احترام", 552 + 228, 772, "800 22px Cairo, sans-serif", "#047857");
 
-  // ── 9. Welcoming Inspirational Quote Card ──
-  const quoteBoxY = 825;
-  const quoteBoxHeight = 220;
-  const quoteBoxWidth = 920;
-  const quoteBoxX = 540 - quoteBoxWidth / 2;
+  context.fillStyle = "#f1f5f9";
+  context.beginPath();
+  context.roundRect(72, 730, 456, 68, 16);
+  context.fill();
+  context.strokeStyle = "#cbd5e1";
+  context.lineWidth = 1.5;
+  context.stroke();
+  drawCenter("📋 تصنيف البطل: واعد ومؤهل للبطولات 🌟", 72 + 228, 772, "800 22px Cairo, sans-serif", "#1e293b");
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(quoteBoxX, quoteBoxY, quoteBoxWidth, quoteBoxHeight, 24);
-  const quoteGrad = ctx.createLinearGradient(0, quoteBoxY, 0, quoteBoxY + quoteBoxHeight);
-  quoteGrad.addColorStop(0, "rgba(255, 255, 255, 0.08)");
-  quoteGrad.addColorStop(1, "rgba(255, 255, 255, 0.02)");
-  ctx.fillStyle = quoteGrad;
-  ctx.fill();
+  // 9. Welcome Message Card (Matching Attendance Table style in Profile Card)
+  drawRight("🥋 رسالة ترحيبية من إدارة الأكاديمية", 1008, 830, "900 28px Cairo, sans-serif", "#0f172a");
 
-  ctx.strokeStyle = "rgba(245, 158, 11, 0.35)";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Quote Icon
-  ctx.font = "900 50px Cairo, sans-serif";
-  ctx.fillStyle = "rgba(245, 158, 11, 0.45)";
-  ctx.textAlign = "center";
-  ctx.fillText("❝", 540, quoteBoxY + 50);
-
-  // Motivational message
-  drawCenter(
-    "أهـلاً بـك فـي عـريـن الأَبْـطَـال!",
-    540,
-    quoteBoxY + 98,
-    "900 29px Cairo, sans-serif",
-    "#fef08a",
-    { color: "rgba(0,0,0,0.5)", blur: 8, y: 2 }
-  );
+  context.fillStyle = "#f8fafc";
+  context.beginPath();
+  context.roundRect(72, 855, 936, 175, 20);
+  context.fill();
+  context.strokeStyle = "#e2e8f0";
+  context.lineWidth = 2;
+  context.stroke();
 
   drawCenter(
-    "رحلة صناعة البطل والتميز تبدأ بخطوة وعزيمة لا تلين..",
-    540,
-    quoteBoxY + 144,
-    "700 23px Cairo, sans-serif",
-    "#e2e8f0"
+    `يسعدنا ويشرفنا انضمام البطل / ${player.name} إلى أسرة وعائلة الأكاديمية!`,
+    72 + 468,
+    907,
+    "800 24px Cairo, sans-serif",
+    "#0f172a"
   );
+  drawCenter(
+    "رياضة الكاراتيه ليست مجرد حركات، بل هي بناء للشخصية القيادية والانضباط العالي.",
+    72 + 468,
+    955,
+    "700 21px Cairo, sans-serif",
+    "#334155"
+  );
+  drawCenter(
+    "نعدك بتقديم كل الدعم والرعاية لنرى بطلنا متألقاً على منصات التتويج العالمية 🏆🥇",
+    72 + 468,
+    1001,
+    "800 22px Cairo, sans-serif",
+    "#b91c1c"
+  );
+
+  // 10. Training Program Pillars (Matching Purchases List style in Profile Card)
+  drawRight("🥊 مميزات التدريب والبرنامج الرياضي للأكاديمية", 1008, 1065, "900 28px Cairo, sans-serif", "#0f172a");
+
+  const pillars = [
+    {
+      title: "🥋 تدريب كاتا وكوميتيه متقدم وفقاً لقواعد الاتحاد الدولي للكاراتيه (WKF)",
+      badge: "معتمد دولياً ✓",
+      isHighlight: true,
+    },
+    {
+      title: "⚡ برامج إعداد بدني ولياقة حركية وتنمية سرعة رد الفعل والانضباط الذاتي",
+      badge: "تأسيس بدني شامل ✓",
+      isHighlight: false,
+    },
+    {
+      title: "📜 اختبارات أحزمة دورية وشهادات رسمية ومشاركات مستمرة في البطولات",
+      badge: "تدرج الأحزمة والترقي ✓",
+      isHighlight: false,
+    },
+    {
+      title: "🥇 خطة تطوير ومتابعة فنية فردية لمستوى وأداء البطل مع الكابتن",
+      badge: "متابعة دورية ✓",
+      isHighlight: true,
+    },
+  ];
+
+  let pillarY = 1090;
+  for (const item of pillars) {
+    context.fillStyle = item.isHighlight ? "#f0fdf4" : "#f8fafc";
+    context.beginPath();
+    context.roundRect(72, pillarY, 936, 52, 14);
+    context.fill();
+    context.strokeStyle = item.isHighlight ? "#86efac" : "#e2e8f0";
+    context.lineWidth = 1.8;
+    context.stroke();
+
+    // Right: Pillar text
+    drawRight(item.title, 1008 - 20, pillarY + 34, "800 22px Cairo, sans-serif", item.isHighlight ? "#065f46" : "#1e293b");
+
+    // Left: Badge
+    drawLeft(item.badge, 72 + 20, pillarY + 34, "900 20px Cairo, sans-serif", item.isHighlight ? "#047857" : "#475569");
+
+    pillarY += 64;
+  }
+
+  // 11. Section 3: Values & Karate Athlete Charter
+  drawRight("📜 ميثاق وقيم بطل الكاراتيه بالأكاديمية", 1008, pillarY + 25, "900 28px Cairo, sans-serif", "#0f172a");
+  pillarY += 50;
+
+  const charterItems = [
+    {
+      title: "🥋 احترام المدرب والزملاء والالتزام التام بمواعيد الحصص والتدريبات",
+      badge: "انضباط تام ✓",
+      isHighlight: false,
+    },
+    {
+      title: "⚡ الروح القتالية العالية والإصرار الدائم على تطوير المستوى وتحقيق الأفضل",
+      badge: "عزيمة بطل ✓",
+      isHighlight: true,
+    },
+    {
+      title: "🛡️ استخدام مهارات الدفاع عن النفس في الخير وحماية النفس والضعفاء فقط",
+      badge: "أخلاق الفرسان ✓",
+      isHighlight: false,
+    },
+    {
+      title: "🥇 الاستعداد المستمر لاختبارات الأحزمة القادمة والمنافسة في البطولات",
+      badge: "طريق الذهب ✓",
+      isHighlight: true,
+    },
+  ];
+
+  for (const item of charterItems) {
+    context.fillStyle = item.isHighlight ? "#fffbeb" : "#f8fafc";
+    context.beginPath();
+    context.roundRect(72, pillarY, 936, 52, 14);
+    context.fill();
+    context.strokeStyle = item.isHighlight ? "#fde68a" : "#e2e8f0";
+    context.lineWidth = 1.8;
+    context.stroke();
+
+    drawRight(item.title, 1008 - 20, pillarY + 34, "800 22px Cairo, sans-serif", item.isHighlight ? "#92400e" : "#1e293b");
+    drawLeft(item.badge, 72 + 20, pillarY + 34, "900 20px Cairo, sans-serif", item.isHighlight ? "#b45309" : "#475569");
+
+    pillarY += 64;
+  }
+
+  // Motivational quote pill at bottom of section
+  context.fillStyle = "#fef2f2";
+  context.beginPath();
+  context.roundRect(72, pillarY + 10, 936, 56, 16);
+  context.fill();
+  context.strokeStyle = "#fca5a5";
+  context.lineWidth = 1.8;
+  context.stroke();
 
   drawCenter(
-    "كل الدعم والتشجيع لتصل إلى منصات التتويج والذهب 🥋🏆",
-    540,
-    quoteBoxY + 184,
-    "800 23px Cairo, sans-serif",
-    "#fca5a5"
-  );
-  ctx.restore();
-
-  // ── 10. Coach Leadership & Date Strip ──
-  const infoY = 1115;
-  // Coach badge
-  drawBadge(
-    `👤 قيادة وإشراف: كابتن ${captainName}`,
-    370,
-    infoY,
-    440,
-    52,
-    "rgba(15, 23, 42, 0.9)",
-    "#f1f5f9",
-    "rgba(245, 158, 11, 0.3)",
-    "800 21px Cairo, sans-serif"
+    `مع تحيات أسرة الأكاديمية والكابتن / ${captainName} ❤️`,
+    72 + 468,
+    pillarY + 46,
+    "900 23px Cairo, sans-serif",
+    "#991b1b"
   );
 
-  // Join Date badge
-  drawBadge(
-    `📅 انضم بتاريخ: ${joinDate}`,
-    770,
-    infoY,
-    300,
-    52,
-    "rgba(15, 23, 42, 0.9)",
-    "#94a3b8",
-    "rgba(255, 255, 255, 0.15)",
-    "700 19px Cairo, sans-serif"
+  // 12. Footer (Exact match to Profile Card footer)
+  context.fillStyle = "#e2e8f0";
+  context.fillRect(72, canvas.height - 110, canvas.width - 144, 2);
+
+  drawRight(
+    `تم استخراج بطاقة الترحيب رسميًا من نظام Re_action PRO  •  ${new Date().toLocaleDateString("ar-EG")}`,
+    canvas.width - 80,
+    canvas.height - 65,
+    "600 22px Cairo, sans-serif",
+    "#94a3b8"
   );
 
-  // ── 11. Bottom Academy Motto ──
-  drawCenter(
-    "🔥  عَــزِيـمَــة  •  قُــوَّة  •  انْـضِـبَــاط  •  تَـمَـيُّــز  🔥",
-    540,
-    1220,
-    "900 22px Cairo, sans-serif",
-    "#f59e0b",
-    { color: "rgba(245, 158, 11, 0.5)", blur: 14, y: 2 }
-  );
-
-  drawCenter(
-    "DETERMINATION • STRENGTH • DISCIPLINE • EXCELLENCE",
-    540,
-    1255,
-    "800 14px Cairo, sans-serif",
-    "#64748b"
+  drawLeft(
+    "أكاديمية الكاراتيه والرياضات القتالية",
+    80,
+    canvas.height - 65,
+    "800 22px Cairo, sans-serif",
+    "#b91c1c"
   );
 
   return canvas;
-}
-
-/**
- * Prepares pre-written exciting social media / WhatsApp message
- */
-export function generateWelcomeText(player, captainName = "كابتن الأكاديمية") {
-  return `🥋🔥 *إعلان انضمام بطل جديد للأكاديمية!* 🔥🥋
-
-يسعدنا أن نرحب بالبطل / *${player.name}* 🌟
-📍 *الفرع:* ${player.branch}
-🥋 *الحزام:* ${player.belt || "أبيض"} (المستوى ${player.level || "A"})
-
-مرحباً بك في أسرة الأكاديمية وعالم صناعة الأبطال! نتمنى لك مسيرة رياضية حافلة بالإنجازات والبطولات ومنصات التتويج 🏆🥇
-
-تحت إشراف وتدريب الكابتن / *${captainName}* 🥋❤️`;
-}
-
-/**
- * Downloads high quality PNG of the Welcome Card
- */
-export async function downloadWelcomeCard(
-  player,
-  captainName = "كابتن الأكاديمية",
-  options = {}
-) {
-  const { onProgress, onNotice, existingBlob } = options;
-
-  if (onProgress) onProgress(true);
-  if (onNotice) onNotice("⏳ جاري إنشاء كارت الترحيب عالي الدقة...");
-
-  try {
-    let blob = existingBlob;
-    if (!blob) {
-      const canvas = await generateWelcomeCardCanvas(player, captainName);
-      if (!canvas) throw new Error("Canvas generation failed");
-      blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-      if (!blob) throw new Error("Blob creation failed");
-    }
-
-    const fileName = `كارت_ترحيب_البطل_${(player.name || "اللاعب").replace(/\s+/g, "_")}.png`;
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-
-    if (onNotice) onNotice("✓ تم تحميل كارت الترحيب بجهازك بنجاح!");
-    return blob;
-  } catch (err) {
-    console.error("Error downloading welcome card:", err);
-    if (onNotice) onNotice("❌ تعذر تحميل الكارت. حاول مرة أخرى.");
-    throw err;
-  } finally {
-    if (onProgress) onProgress(false);
-  }
-}
-
-/**
- * Native Social Media share via Web Share API
- */
-export async function shareWelcomeCardSocial(
-  player,
-  captainName = "كابتن الأكاديمية",
-  options = {}
-) {
-  const { onProgress, onNotice, existingBlob } = options;
-
-  if (onProgress) onProgress(true);
-  if (onNotice) onNotice("⏳ جاري تجهيز كارت الترحيب للمشاركة...");
-
-  try {
-    let blob = existingBlob;
-    if (!blob) {
-      const canvas = await generateWelcomeCardCanvas(player, captainName);
-      if (!canvas) throw new Error("Canvas failed");
-      blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-      if (!blob) throw new Error("Blob failed");
-    }
-
-    const fileName = `كارت_ترحيب_${(player.name || "البطل").replace(/\s+/g, "_")}.png`;
-    const file = new File([blob], fileName, { type: "image/png" });
-    const text = generateWelcomeText(player, captainName);
-
-    if (
-      typeof navigator !== "undefined" &&
-      navigator.canShare &&
-      navigator.canShare({ files: [file] })
-    ) {
-      await navigator.share({
-        files: [file],
-        title: `كارت ترحيب البطل ${player.name}`,
-        text,
-      });
-      if (onNotice) onNotice("✓ تم فتح نافذة المشاركة بنجاح!");
-      return;
-    }
-
-    // Fallback: Copy to clipboard & trigger download
-    await copyBlobToClipboard(blob);
-    await downloadWelcomeCard(player, captainName, { existingBlob: blob });
-    if (onNotice) {
-      onNotice("✓ تم نسخ الصورة وحفظها! يمكنك لصقها الآن في فيسبوك، انستجرام، أو أي تطبيق.");
-    }
-  } catch (err) {
-    if (err?.name !== "AbortError") {
-      console.error("Share error:", err);
-      if (onNotice) onNotice("❌ تعذر المشاركة المباشرة.");
-    }
-  } finally {
-    if (onProgress) onProgress(false);
-  }
-}
-
-/**
- * Sends Welcome Card via WhatsApp to player's guardian or general chat
- */
-export async function sendWelcomeCardViaWhatsApp(
-  player,
-  captainName = "كابتن الأكاديمية",
-  options = {}
-) {
-  const { onProgress, onNotice, existingBlob } = options;
-
-  if (onProgress) onProgress(true);
-  if (onNotice) onNotice("⏳ جاري تجهيز الكارت والرسالة للواتساب...");
-
-  try {
-    let blob = existingBlob;
-    if (!blob) {
-      const canvas = await generateWelcomeCardCanvas(player, captainName);
-      if (!canvas) throw new Error("Canvas generation failed");
-      blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-      if (!blob) throw new Error("Blob creation failed");
-    }
-
-    const fileName = `كارت_ترحيب_${player.name.replace(/\s+/g, "_")}.png`;
-    const file = new File([blob], fileName, { type: "image/png" });
-    const message = generateWelcomeText(player, captainName);
-
-    // Try web share if available
-    if (
-      typeof navigator !== "undefined" &&
-      navigator.canShare &&
-      navigator.canShare({ files: [file] })
-    ) {
-      await navigator.share({
-        files: [file],
-        title: `كارت ترحيب البطل ${player.name}`,
-        text: message,
-      });
-      if (onNotice) onNotice("✓ تم فتح المشاركة كصورة ورسالة بنجاح!");
-      return;
-    }
-
-    // Fallback on desktop / devices without file sharing:
-    // Copy image to clipboard so coach can simply paste (Ctrl+V) in WhatsApp!
-    let copied = false;
-    if (typeof navigator !== "undefined" && navigator.clipboard?.write) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob }),
-        ]);
-        copied = true;
-      } catch (_) {}
-    }
-
-    // Trigger download
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-
-    const phone =
-      player.guardianPhone ||
-      player.parentPhone ||
-      player.guardianMobile ||
-      player.mobile ||
-      player.phone ||
-      "";
-    const cleanPhone = phone ? formatWhatsAppPhone(phone) : "";
-
-    openWhatsAppDirect(cleanPhone, message);
-
-    if (onNotice) {
-      onNotice(
-        copied
-          ? `✓ تم نسخ الكارت للحافظة وفتح شات واتساب! اضغط (لصق / Paste) لإرسال الصورة فوراً 🖼️`
-          : "✓ تم تنزيل كارت الترحيب وفتح شات واتساب!"
-      );
-    }
-  } catch (err) {
-    if (err?.name !== "AbortError") {
-      console.error("WhatsApp share error:", err);
-      if (onNotice) onNotice("❌ تعذر إرسال الكارت عبر واتساب.");
-    }
-  } finally {
-    if (onProgress) onProgress(false);
-  }
 }
