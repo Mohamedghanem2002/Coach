@@ -77,10 +77,6 @@
         {
           "date": "2026-09-26",
           "status": "present"
-        },
-        {
-          "date": "2026-09-27",
-          "status": "present"
         }
       ],
       "createdAt": "2026-09-10T11:14:13.116Z",
@@ -121,10 +117,6 @@
         },
         {
           "date": "2026-09-26",
-          "status": "present"
-        },
-        {
-          "date": "2026-09-27",
           "status": "present"
         }
       ],
@@ -183,10 +175,6 @@
         },
         {
           "date": "2026-09-26",
-          "status": "present"
-        },
-        {
-          "date": "2026-09-27",
           "status": "present"
         }
       ],
