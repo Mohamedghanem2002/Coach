@@ -31,7 +31,6 @@ import {
   Cake,
   Clock,
   ArrowUpDown,
-  FileSpreadsheet,
   CheckCircle2,
   AlertCircle,
   Info,
@@ -40,6 +39,8 @@ import {
   ShoppingBag,
   ShieldCheck,
   RotateCcw,
+  Mail,
+  Sparkles,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -57,7 +58,9 @@ import AddEventModal from "../components/dashboard/AddEventModal";
 import AddParticipantsModal from "../components/dashboard/AddParticipantsModal";
 import EventPaymentModal from "../components/dashboard/EventPaymentModal";
 import Footer from "../components/dashboard/Footer";
-import { exportPlayersToCSV } from "../lib/export-utils";
+import EmailBackupModal from "../components/dashboard/EmailBackupModal";
+import RestoreModal from "../components/dashboard/RestoreModal";
+import WelcomeCardModal from "../components/dashboard/WelcomeCardModal";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 
@@ -88,6 +91,10 @@ export default function Home() {
   const [congratulatedTick, setCongratulatedTick] = useState(0);
   const [mobileTab, setMobileTab] = useState("players");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showEmailBackupModal, setShowEmailBackupModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [isCloudBackingUp, setIsCloudBackingUp] = useState(false);
+  const [welcomePlayer, setWelcomePlayer] = useState(null);
 
   // Events management state
   const [events, setEvents] = useState([]);
@@ -118,6 +125,10 @@ export default function Home() {
       return;
     }
     let cancelled = false;
+
+    // Trigger daily background backup check silently
+    fetch("/api/backup/email").catch(() => {});
+
     Promise.all([
       fetch("/api/players", { cache: "no-store" }),
       fetch("/api/branches", { cache: "no-store" }),
@@ -297,38 +308,33 @@ export default function Home() {
     return sortedFilteredPlayers.slice(start, start + pageSize);
   }, [sortedFilteredPlayers, currentPage, pageSize]);
 
-  function handleExportAll() {
-    if (!sortedFilteredPlayers.length) {
-      showToast("لا توجد بيانات لتصديرها وفق الفرز والتصفية الحالية.", "info");
-      return;
-    }
-    const branchLabel = branch === "كل الصالات" ? "الكل" : branch;
-    const success = exportPlayersToCSV(
-      sortedFilteredPlayers,
-      paymentMonth,
-      `كشف_لاعبي_الأكاديمية_${branchLabel}_${paymentMonth}.csv`
-    );
-    if (success) {
-      showToast(`تم تصدير (${sortedFilteredPlayers.length}) لاعب بنجاح إلى ملف Excel / CSV.`);
-    }
-  }
-
-  function handleExportSelected() {
-    const selectedList = players.filter((p) => selectedPlayerIds.includes(p._id));
-    if (!selectedList.length) return;
-    const success = exportPlayersToCSV(
-      selectedList,
-      paymentMonth,
-      `كشف_اللاعبين_المحددين_${paymentMonth}.csv`
-    );
-    if (success) {
-      showToast(`تم تصدير (${selectedList.length}) لاعب محدد بنجاح إلى ملف Excel / CSV.`);
-    }
-  }
-
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const restoreFileRef = useRef(null);
+
+  async function handleInstantCloudBackup() {
+    if (isCloudBackingUp) return;
+    setIsCloudBackingUp(true);
+    try {
+      const res = await fetch("/api/backup/snapshots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create_snapshot" }),
+      });
+
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(result.error || result.details || "تعذر حفظ النسخة السحابية", "error");
+        return;
+      }
+
+      showToast(`✓ تم حفظ النسخة السحابية بنجاح! تم تأمين بيانات (${result.stats?.playersCount ?? players.length}) لاعب.`);
+    } catch {
+      showToast("تعذر الاتصال بالخادم لحفظ النسخة السحابية", "error");
+    } finally {
+      setIsCloudBackingUp(false);
+    }
+  }
 
   async function handleDownloadBackup() {
     if (isBackingUp) return;
@@ -351,6 +357,30 @@ export default function Home() {
       showToast("تعذر تنزيل النسخة الاحتياطية. حاول مرة أخرى.", "error");
     } finally {
       setIsBackingUp(false);
+    }
+  }
+
+  async function reloadAllData() {
+    try {
+      const [pRes, bRes, eRes] = await Promise.all([
+        fetch("/api/players", { cache: "no-store" }),
+        fetch("/api/branches", { cache: "no-store" }),
+        fetch("/api/events", { cache: "no-store" }),
+      ]);
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        setPlayers(Array.isArray(pData) ? pData.map((p) => normalizePlayer(p)) : []);
+      }
+      if (bRes.ok) {
+        const bData = await bRes.json();
+        setBranches(Array.isArray(bData) ? bData : []);
+      }
+      if (eRes.ok) {
+        const eData = await eRes.json();
+        setEvents(Array.isArray(eData) ? eData : []);
+      }
+    } catch (err) {
+      console.error("Error reloading all data:", err);
     }
   }
 
@@ -548,9 +578,11 @@ export default function Home() {
         setNotice(result.error || "راجع بيانات اللاعب وحاول مرة أخرى.");
         return;
       }
-      setPlayers((current) => [normalizePlayer(result), ...current]);
+      const newPlayer = normalizePlayer(result);
+      setPlayers((current) => [newPlayer, ...current]);
       setShowForm(false);
-      setNotice("تمت إضافة اللاعب بنجاح.");
+      setNotice("تمت إضافة اللاعب بنجاح! تم تجهيز كارت الترحيب 🥋");
+      setWelcomePlayer(newPlayer);
     } catch (_error) {
       setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
     }
@@ -721,6 +753,44 @@ export default function Home() {
       setNotice(
         `تم ${status === "paid" ? "تسجيل دفع" : "إلغاء دفع"} ${savedCount} لاعب.`,
       );
+    }
+  }
+
+  async function deleteSelectedPlayers() {
+    if (!selectedPlayerIds.length || bulkAttendanceBusy) return;
+    const count = selectedPlayerIds.length;
+    const confirmMessage =
+      count === 1
+        ? "هل أنت متأكد من حذف هذا اللاعب نهائياً؟ لا يمكن التراجع عن هذا الإجراء."
+        : `هل أنت متأكد من حذف ${count} لاعبين محددين نهائياً؟ لا يمكن التراجع عن هذا الإجراء.`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setBulkAttendanceBusy(true);
+    try {
+      const response = await fetch("/api/players", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedPlayerIds }),
+      });
+      if (!response.ok) {
+        setNotice("تعذر حذف اللاعبين المحددين.");
+        return;
+      }
+      const data = await response.json();
+      const deletedCount = data.deletedCount || count;
+      setPlayers((current) =>
+        current.filter((p) => !selectedPlayerIds.includes(p._id)),
+      );
+      if (selected && selectedPlayerIds.includes(selected._id)) {
+        setSelected(null);
+      }
+      setSelectedPlayerIds([]);
+      setNotice(`✓ تم حذف ${deletedCount} لاعب بنجاح.`);
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      setNotice("حدث خطأ أثناء حذف اللاعبين.");
+    } finally {
+      setBulkAttendanceBusy(false);
     }
   }
 
@@ -911,34 +981,35 @@ export default function Home() {
           <div className="grid grid-cols-3 gap-2 mb-3">
             <button
               type="button"
-              onClick={handleDownloadBackup}
-              disabled={isBackingUp || isRestoring}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl border border-blue-200/90 bg-white hover:bg-blue-50 text-blue-700 text-xs font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
-              title="تنزيل نسخة احتياطية آمنة وشاملة (JSON)"
+              onClick={handleInstantCloudBackup}
+              disabled={isCloudBackingUp || isBackingUp || isRestoring}
+              className="flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-2xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
+              title="حفظ نسخة سحابية فورية بضغطة واحدة"
             >
-              <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
-              <span className="truncate">{isBackingUp ? "جار النسخ..." : "نسخ احتياطي"}</span>
+              <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span className="truncate">{isCloudBackingUp ? "جارٍ..." : "نسخ سحابي"}</span>
             </button>
 
             <button
               type="button"
-              onClick={() => restoreFileRef.current?.click()}
-              disabled={isRestoring || isBackingUp}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl border border-amber-200/90 bg-white hover:bg-amber-50 text-amber-800 text-xs font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
-              title="استعادة اللاعبين والبيانات من ملف نسخة احتياطية"
+              onClick={() => setShowRestoreModal(true)}
+              disabled={isRestoring || isBackingUp || isCloudBackingUp}
+              className="flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-2xl border border-amber-200/90 bg-white hover:bg-amber-50 text-amber-800 text-[11px] font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
+              title="استعادة اللاعبين والبيانات سحابياً بضغطة واحدة"
             >
               <RotateCcw className="h-4 w-4 text-amber-600 shrink-0" />
-              <span className="truncate">{isRestoring ? "جار الاستعادة..." : "استعادة نسخة"}</span>
+              <span className="truncate">{isRestoring ? "جارٍ..." : "استعادة"}</span>
             </button>
 
             <button
               type="button"
-              onClick={handleExportAll}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-2xl border border-emerald-200/90 bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
-              title="تصدير كشف اللاعبين إلى Excel"
+              onClick={handleDownloadBackup}
+              disabled={isBackingUp || isRestoring}
+              className="flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
+              title="تنزيل نسخة احتياطية محلية (ملف JSON)"
             >
-              <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span className="truncate">تصدير Excel</span>
+              <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
+              <span className="truncate">{isBackingUp ? "جارٍ..." : "نسخ محلي"}</span>
             </button>
           </div>
 
@@ -1252,32 +1323,45 @@ export default function Home() {
                       </label>
                     </div>
 
-                    <div className="flex items-center gap-2.5 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleExportAll();
-                          setShowMobileFilters(false);
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-black text-emerald-700 active:scale-95 transition cursor-pointer"
-                      >
-                        <FileSpreadsheet className="h-4 w-4" />
-                        <span>تصدير كشف Excel</span>
-                      </button>
+                    <div className="pt-2">
                       <button
                         type="button"
                         onClick={() => {
                           toggleFilteredSelection();
                           setShowMobileFilters(false);
                         }}
-                        className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 bg-slate-50 text-xs font-black text-slate-700 active:scale-95 transition cursor-pointer"
+                        className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-black text-slate-800 active:scale-95 transition cursor-pointer"
                       >
-                        <CheckCircle2 className="h-4 w-4" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                         <span>تحديد كل المعروض</span>
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="grid grid-cols-3 gap-1.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMobileFilters(false);
+                          handleInstantCloudBackup();
+                        }}
+                        disabled={isCloudBackingUp || isBackingUp || isRestoring}
+                        className="flex items-center justify-center gap-1 h-11 rounded-xl border border-emerald-300 bg-emerald-50 text-xs font-black text-emerald-800 active:scale-95 transition cursor-pointer"
+                      >
+                        <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="truncate">{isCloudBackingUp ? "جارٍ..." : "نسخ سحابي"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMobileFilters(false);
+                          setShowRestoreModal(true);
+                        }}
+                        disabled={isRestoring || isBackingUp || isCloudBackingUp}
+                        className="flex items-center justify-center gap-1 h-11 rounded-xl border border-amber-200 bg-amber-50 text-xs font-black text-amber-800 active:scale-95 transition cursor-pointer"
+                      >
+                        <RotateCcw className="h-4 w-4 text-amber-600 shrink-0" />
+                        <span className="truncate">{isRestoring ? "جارٍ..." : "استعادة"}</span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
@@ -1285,22 +1369,10 @@ export default function Home() {
                           setShowMobileFilters(false);
                         }}
                         disabled={isBackingUp || isRestoring}
-                        className="flex items-center justify-center gap-1.5 h-11 rounded-xl border border-blue-200 bg-blue-50 text-xs font-black text-blue-700 active:scale-95 transition cursor-pointer"
+                        className="flex items-center justify-center gap-1 h-11 rounded-xl border border-slate-200 bg-slate-50 text-xs font-black text-slate-700 active:scale-95 transition cursor-pointer"
                       >
-                        <ShieldCheck className="h-4 w-4 text-blue-600" />
-                        <span>{isBackingUp ? "جار النسخ..." : "نسخ احتياطي"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowMobileFilters(false);
-                          setTimeout(() => restoreFileRef.current?.click(), 150);
-                        }}
-                        disabled={isRestoring || isBackingUp}
-                        className="flex items-center justify-center gap-1.5 h-11 rounded-xl border border-amber-200 bg-amber-50 text-xs font-black text-amber-800 active:scale-95 transition cursor-pointer"
-                      >
-                        <RotateCcw className="h-4 w-4 text-amber-600" />
-                        <span>استعادة نسخة</span>
+                        <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
+                        <span className="truncate">{isBackingUp ? "جارٍ..." : "نسخ محلي"}</span>
                       </button>
                     </div>
 
@@ -1515,32 +1587,33 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleDownloadBackup}
-              disabled={isBackingUp || isRestoring}
-              title="تنزيل نسخة احتياطية آمنة وشاملة لكافة بيانات الأكاديمية (JSON)"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs cursor-pointer active-press transition"
+              onClick={handleInstantCloudBackup}
+              disabled={isCloudBackingUp || isBackingUp || isRestoring}
+              title="حفظ نسخة سحابية فورية بضغطة واحدة لحسابك (دون الحاجة لكلمات مرور)"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-black text-emerald-900 shadow-xs cursor-pointer active-press transition"
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
-              <span>{isBackingUp ? "جار النسخ..." : "نسخ احتياطي"}</span>
+              <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+              <span>{isCloudBackingUp ? "جار الحفظ السحابي..." : "نسخ سحابي (Gmail)"}</span>
             </button>
             <button
               type="button"
-              onClick={() => restoreFileRef.current?.click()}
-              disabled={isRestoring || isBackingUp}
-              title="استعادة اللاعبين والبيانات من ملف نسخة احتياطية سابقة"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs cursor-pointer active-press transition"
+              onClick={() => setShowRestoreModal(true)}
+              disabled={isRestoring || isBackingUp || isCloudBackingUp}
+              title="استعادة اللاعبين والبيانات سحابياً بضغطة واحدة أو من ملف"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-xs font-bold text-amber-900 shadow-xs cursor-pointer active-press transition"
             >
               <RotateCcw className="h-3.5 w-3.5 text-amber-600" />
               <span>{isRestoring ? "جار الاستعادة..." : "استعادة نسخة"}</span>
             </button>
             <button
               type="button"
-              onClick={handleExportAll}
-              title="تصدير كشف اللاعبين الحالي إلى Excel / CSV"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs cursor-pointer active-press transition"
+              onClick={handleDownloadBackup}
+              disabled={isBackingUp || isRestoring}
+              title="تنزيل نسخة احتياطية محلية إلى ملف على جهازك (JSON)"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs cursor-pointer active-press transition"
             >
-              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-              <span>تصدير Excel</span>
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+              <span>{isBackingUp ? "جار النسخ..." : "نسخ محلي"}</span>
             </button>
             <button
               type="button"
@@ -1986,12 +2059,13 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                onClick={handleExportSelected}
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 px-2.5 text-xs font-bold text-white shadow-xs transition-all active-press cursor-pointer"
-                title="تصدير كشف Excel"
+                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-red-600 hover:bg-red-700 px-3 text-xs font-black text-white shadow-xs active-press disabled:opacity-60 cursor-pointer"
+                disabled={bulkAttendanceBusy}
+                onClick={deleteSelectedPlayers}
+                title="حذف اللاعبين المحددين نهائياً"
               >
-                <FileSpreadsheet className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Excel</span>
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>حذف</span>
               </button>
               <button
                 type="button"
@@ -2236,6 +2310,33 @@ export default function Home() {
           onClose={() => setPaymentParticipantData(null)}
           onSavePayment={handleSaveParticipantPayment}
           isSubmitting={eventActionBusy}
+        />
+      )}
+
+      {showEmailBackupModal && (
+        <EmailBackupModal
+          isOpen={showEmailBackupModal}
+          onClose={() => setShowEmailBackupModal(false)}
+          showToast={showToast}
+          userEmail={session?.user?.email}
+        />
+      )}
+
+      {showRestoreModal && (
+        <RestoreModal
+          isOpen={showRestoreModal}
+          onClose={() => setShowRestoreModal(false)}
+          showToast={showToast}
+          onRestoreSuccess={reloadAllData}
+        />
+      )}
+
+      {welcomePlayer && (
+        <WelcomeCardModal
+          player={welcomePlayer}
+          captainName={captainName}
+          isOpen={Boolean(welcomePlayer)}
+          onClose={() => setWelcomePlayer(null)}
         />
       )}
       {/* ━━━ Global Fixed Toast Notification Overlay ━━━

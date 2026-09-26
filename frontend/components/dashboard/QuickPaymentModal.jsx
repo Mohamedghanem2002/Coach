@@ -38,8 +38,16 @@ export default function QuickPaymentModal({
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // ─── اشتراك الشهر State ───────────────────────────────────────────────────
+  const fallbackDefaultTotal = player?.defaultTotalAmount ?? player?.totalAmount ?? (
+    Array.isArray(player?.paymentHistory) && player.paymentHistory.length > 0
+      ? [...player.paymentHistory].sort((a, b) => (b.month || "").localeCompare(a.month || ""))[0]?.totalAmount
+      : 100
+  ) ?? 100;
+
   const [totalAmount, setTotalAmount] = useState(
-    initialDetails?.totalAmount !== undefined ? String(initialDetails.totalAmount) : "100"
+    initialDetails?.totalAmount !== undefined
+      ? String(initialDetails.totalAmount)
+      : String(fallbackDefaultTotal)
   );
   const [paidAmount, setPaidAmount] = useState(
     initialDetails?.paidAmount !== undefined ? String(initialDetails.paidAmount) : "0"

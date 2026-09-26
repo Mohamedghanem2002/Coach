@@ -9,9 +9,25 @@ export function getPaymentDetailsFor(player, month) {
     Array.isArray(player?.paymentHistory) ? player.paymentHistory : []
   ).find((payment) => payment.month === month);
 
+  // Compute default subscription fee for this player:
+  let latestHistoryAmount = undefined;
+  if (Array.isArray(player?.paymentHistory) && player.paymentHistory.length > 0) {
+    const sorted = [...player.paymentHistory].sort((a, b) =>
+      (b.month || "").localeCompare(a.month || ""),
+    );
+    const latestWithAmount = sorted.find(
+      (p) => p.totalAmount !== undefined && p.totalAmount !== null,
+    );
+    if (latestWithAmount) latestHistoryAmount = Number(latestWithAmount.totalAmount);
+  }
+
+  const defaultTotal = Number(
+    player?.defaultTotalAmount ?? player?.totalAmount ?? latestHistoryAmount ?? 100,
+  );
+
   if (record) {
     const totalAmount = Number(
-      record.totalAmount ?? record.amount ?? player?.totalAmount ?? 100,
+      record.totalAmount ?? record.amount ?? defaultTotal,
     );
     const paidAmount = Number(
       record.paidAmount ?? (record.status === "paid" ? totalAmount : 0),
@@ -36,7 +52,7 @@ export function getPaymentDetailsFor(player, month) {
   }
 
   if (month === currentMonth) {
-    const totalAmount = Number(player?.totalAmount ?? 100);
+    const totalAmount = Number(player?.totalAmount ?? defaultTotal);
     const paidAmount = Number(
       player?.paidAmount ??
         (player?.paymentStatus === "paid" ? totalAmount : 0),
@@ -61,9 +77,9 @@ export function getPaymentDetailsFor(player, month) {
 
   return {
     status: "unpaid",
-    totalAmount: 100,
+    totalAmount: defaultTotal,
     paidAmount: 0,
-    remainingAmount: 100,
+    remainingAmount: defaultTotal,
   };
 }
 

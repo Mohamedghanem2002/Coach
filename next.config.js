@@ -7,5 +7,6 @@ const nextConfig = {
     "192.168.1.*",
     "192.168.*.*",
   ],
+  serverExternalPackages: ["nodemailer"],
 };
 export default nextConfig;

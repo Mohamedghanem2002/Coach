@@ -61,8 +61,23 @@ function serializePlayer(player) {
     ? player.paymentHistory.find((payment) => payment.month === currentMonth)
     : undefined;
 
+  let latestHistoryAmount = undefined;
+  if (Array.isArray(player.paymentHistory) && player.paymentHistory.length > 0) {
+    const sorted = [...player.paymentHistory].sort((a, b) =>
+      (b.month || "").localeCompare(a.month || ""),
+    );
+    const latestWithAmount = sorted.find(
+      (p) => p.totalAmount !== undefined && p.totalAmount !== null,
+    );
+    if (latestWithAmount) latestHistoryAmount = Number(latestWithAmount.totalAmount);
+  }
+
+  const defaultTotalAmount = Number(
+    player.defaultTotalAmount ?? player.totalAmount ?? latestHistoryAmount ?? 100,
+  );
+
   const totalAmount = Number(
-    monthlyPayment?.totalAmount ?? player.totalAmount ?? 100,
+    monthlyPayment?.totalAmount ?? defaultTotalAmount,
   );
   const paidAmount = Number(
     monthlyPayment?.paidAmount ?? (
@@ -91,13 +106,14 @@ function serializePlayer(player) {
       : [],
     purchases: Array.isArray(player.purchases) ? player.purchases : [],
     paymentStatus: status,
+    defaultTotalAmount,
     totalAmount,
     paidAmount,
     remainingAmount,
     belt: player.belt || "أبيض",
     level: player.level || "A",
     lastBirthdayWishedYear: player.lastBirthdayWishedYear || null,
-    _id: player._id.toString(),
+    _id: player._id ? player._id.toString() : "",
   });
 }
 export async function GET() {
@@ -151,9 +167,17 @@ export async function POST(request) {
     const body = await request.json();
     if (body?.action === "restore_backup") {
       const backupData = body?.data || body;
-      const players = Array.isArray(backupData.players) ? backupData.players : [];
-      const branches = Array.isArray(backupData.branches) ? backupData.branches : [];
-      const events = Array.isArray(backupData.events) ? backupData.events : [];
+      let players = [];
+      let branches = [];
+      let events = [];
+
+      if (Array.isArray(backupData)) {
+        players = backupData;
+      } else if (backupData && typeof backupData === "object") {
+        players = Array.isArray(backupData.players) ? backupData.players : [];
+        branches = Array.isArray(backupData.branches) ? backupData.branches : [];
+        events = Array.isArray(backupData.events) ? backupData.events : [];
+      }
 
       if (!players.length && !branches.length && !events.length) {
         return NextResponse.json(
@@ -236,6 +260,7 @@ export async function POST(request) {
         },
       });
     }
+
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const branch = typeof body.branch === "string" ? body.branch.trim() : "";
     const dateOfBirth =
@@ -605,10 +630,25 @@ export async function PATCH(request) {
         (p) => p.month === month,
       );
 
+      let latestHistoryAmount = undefined;
+      if (Array.isArray(existing.paymentHistory) && existing.paymentHistory.length > 0) {
+        const sorted = [...existing.paymentHistory].sort((a, b) =>
+          (b.month || "").localeCompare(a.month || ""),
+        );
+        const latestWithAmount = sorted.find(
+          (p) => p.totalAmount !== undefined && p.totalAmount !== null,
+        );
+        if (latestWithAmount) latestHistoryAmount = Number(latestWithAmount.totalAmount);
+      }
+
+      const defaultAmount = Number(
+        existing.defaultTotalAmount ?? existing.totalAmount ?? latestHistoryAmount ?? 100,
+      );
+
       const totalAmount =
         body.totalAmount !== undefined
           ? Math.max(0, Number(body.totalAmount) || 0)
-          : (existingMonthPayment?.totalAmount ?? existing.totalAmount ?? 100);
+          : (existingMonthPayment?.totalAmount ?? defaultAmount);
 
       let paidAmount;
       if (body.paidAmount !== undefined) {
@@ -651,6 +691,10 @@ export async function PATCH(request) {
       const updateSet = {
         paymentHistory: history,
       };
+      if (body.totalAmount !== undefined) {
+        updateSet.totalAmount = totalAmount;
+        updateSet.defaultTotalAmount = totalAmount;
+      }
       if (month === currentMonth) {
         updateSet.paymentStatus = status;
         updateSet.totalAmount = totalAmount;
@@ -691,22 +735,47 @@ export async function DELETE(request) {
         { status: 401 },
       );
     const body = await request.json();
+    const client = await clientPromise;
+    const collection = client.db(process.env.MONGODB_DB).collection("players");
+
+    // Support bulk deletion via ids array
+    if (Array.isArray(body.ids)) {
+      const validIds = body.ids
+        .filter((id) => typeof id === "string" && ObjectId.isValid(id))
+        .map((id) => new ObjectId(id));
+
+      if (validIds.length === 0) {
+        return NextResponse.json(
+          { error: "لا توجد معرفات لاعبين صالحة للحذف" },
+          { status: 400 },
+        );
+      }
+
+      const result = await collection.deleteMany({
+        _id: { $in: validIds },
+        ownerId,
+      });
+
+      return NextResponse.json({
+        deleted: (result.deletedCount || 0) > 0,
+        deletedCount: result.deletedCount || 0,
+      });
+    }
+
+    // Single deletion via body.id
     if (typeof body.id !== "string" || !ObjectId.isValid(body.id)) {
       return NextResponse.json(
         { error: "معرف اللاعب غير صحيح" },
         { status: 400 },
       );
     }
-    const client = await clientPromise;
-    const result = await client
-      .db(process.env.MONGODB_DB)
-      .collection("players")
-      .deleteOne({
-        _id: new ObjectId(body.id),
-        ownerId,
-      });
+    const result = await collection.deleteOne({
+      _id: new ObjectId(body.id),
+      ownerId,
+    });
     return NextResponse.json({
       deleted: result.deletedCount === 1,
+      deletedCount: result.deletedCount || 0,
     });
   } catch (error) {
     console.error("DELETE /api/players failed:", error);

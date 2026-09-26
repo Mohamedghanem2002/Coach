@@ -21,6 +21,7 @@ import {
 import QuickPaymentModal from "./QuickPaymentModal";
 import ProfileCardModal from "./ProfileCardModal";
 import BirthdayCardModal from "./BirthdayCardModal";
+import WelcomeCardModal from "./WelcomeCardModal";
 import PurchaseModal from "./PurchaseModal";
 import {
   ArrowRight,
@@ -42,6 +43,7 @@ import {
   PartyPopper,
   Eye,
   Cake,
+  Sparkles,
 } from "lucide-react";
 
 
@@ -243,6 +245,7 @@ export default function Profile({
   const [showCardModal, setShowCardModal] = useState(false);
   const [cachedBirthdayBlob, setCachedBirthdayBlob] = useState(null);
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+  const [showWelcomeCardModal, setShowWelcomeCardModal] = useState(false);
 
   // Confirm delete player
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -378,7 +381,7 @@ export default function Profile({
     const paymentText = paymentHistory.length
       ? paymentHistory
         .map((item) => {
-          const total = item.totalAmount ?? 100;
+          const total = item.totalAmount ?? player?.defaultTotalAmount ?? player?.totalAmount ?? 100;
           const paid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? total : 0);
           const rem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, total - paid);
           if (paid >= total && total > 0) return `• ${item.month}: مدفوع بالكامل (${paid} ج.م) ✓`;
@@ -523,7 +526,7 @@ export default function Profile({
 
     const targetPayment = getPaymentDetailsFor(player, paymentMonth);
     const mStatus = targetPayment.status;
-    const mTotal = targetPayment.totalAmount ?? 100;
+    const mTotal = targetPayment.totalAmount ?? player?.defaultTotalAmount ?? player?.totalAmount ?? 100;
     const mPaid = targetPayment.paidAmount ?? 0;
     const mRemaining = targetPayment.remainingAmount ?? 0;
 
@@ -783,7 +786,7 @@ export default function Profile({
       y += 56;
     } else {
       for (const item of pHistoryList) {
-        const total = item.totalAmount ?? 100;
+        const total = item.totalAmount ?? player?.defaultTotalAmount ?? player?.totalAmount ?? 100;
         const paid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? total : 0);
         const rem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, total - paid);
         const isP = paid >= total && total > 0;
@@ -1468,6 +1471,17 @@ export default function Profile({
                     <span className="truncate">بطاقة اللاعب 🖼️</span>
                   </button>
 
+                  {/* إجراء 3: كارت الترحيب (روش للسوشيال ميديا) */}
+                  <button
+                    type="button"
+                    onClick={() => setShowWelcomeCardModal(true)}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs"
+                    title="معاينة كارت الترحيب بالبطل ومشاركته على السوشيال ميديا"
+                  >
+                    <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                    <span className="truncate">كارت الترحيب 🥋</span>
+                  </button>
+
                   {/* إجراء 3: محادثة شات واتساب ولي الأمر */}
                   {guardianPhone ? (
                     <button
@@ -2150,7 +2164,7 @@ export default function Profile({
                       ) : (
                         <div className="space-y-2 max-h-60 sm:max-h-80 lg:max-h-[380px] overflow-y-auto pr-1">
                           {[...player.paymentHistory].reverse().map((item) => {
-                            const itemTotal = item.totalAmount ?? 100;
+                            const itemTotal = item.totalAmount ?? player?.defaultTotalAmount ?? player?.totalAmount ?? 100;
                             const itemPaid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? itemTotal : 0);
                             const itemRem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, itemTotal - itemPaid);
                             const isItemPaid = itemPaid >= itemTotal && itemTotal > 0;
@@ -2601,6 +2615,15 @@ export default function Profile({
           cachedBlob={cachedBirthdayBlob}
           isOpen={showBirthdayModal}
           onClose={() => setShowBirthdayModal(false)}
+        />
+      )}
+
+      {showWelcomeCardModal && (
+        <WelcomeCardModal
+          player={player}
+          captainName={captainName}
+          isOpen={showWelcomeCardModal}
+          onClose={() => setShowWelcomeCardModal(false)}
         />
       )}
 

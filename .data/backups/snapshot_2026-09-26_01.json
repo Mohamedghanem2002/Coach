@@ -1,0 +1,160 @@
+{
+  "users": [
+    {
+      "name": "Mohamed Ghanem",
+      "email": "mg0447837@gmail.com",
+      "passwordHash": "$2b$12$py0pcRQZtjkY0hrzqtLPQ.kdhQPjX6bXIvE3HQMr5SscxLFaS.AAq",
+      "createdAt": "2026-09-09T21:42:04.392Z",
+      "_id": "6aa1d2acc20ba8a6e482c3a3"
+    }
+  ],
+  "branches": [
+    {
+      "_id": "6ab6feeb39e4b81002b51ffe",
+      "ownerId": "test_owner_123",
+      "name": "صالة الكاتا الرئيسية",
+      "createdAt": "2026-09-25T23:08:27.120Z"
+    },
+    {
+      "_id": "6ab6feeb39e4b81002b51fff",
+      "ownerId": "test_owner_123",
+      "name": "دوجو الكوميتيه للأبطال",
+      "createdAt": "2026-09-25T23:08:27.120Z"
+    },
+    {
+      "_id": "6aa28a77131cd6a66b5f1ae9",
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "صالة الكاتا الرئيسية",
+      "createdAt": "2026-09-10T10:46:15.057Z"
+    },
+    {
+      "_id": "6aa28a77131cd6a66b5f1aea",
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "دوجو الكوميتيه للأبطال",
+      "createdAt": "2026-09-10T10:46:15.057Z"
+    }
+  ],
+  "players": [
+    {
+      "name": "Test Player",
+      "branch": "صالة 1",
+      "age": 10,
+      "_id": "6ab718f1378442cb19246d39",
+      "ownerId": "test_owner_restore"
+    }
+  ],
+  "events": [
+    {
+      "_id": "6aa42baa15e16b5a77c01ee0",
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "title": "حمام سباحه",
+      "type": "trip",
+      "date": "2026-09-12",
+      "time": "08:00 ص",
+      "location": "",
+      "fee": 100,
+      "description": "",
+      "status": "upcoming",
+      "participants": [
+        {
+          "playerId": "6aa29105131cd6a66b5f1aeb",
+          "name": "rrrrr",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 100,
+          "paidAmount": 100,
+          "remainingAmount": 0,
+          "paymentStatus": "paid",
+          "paymentDate": "2026-09-11",
+          "notes": "",
+          "attended": true
+        },
+        {
+          "playerId": "6aa3f720ec0323d6dd6fe90b",
+          "name": "mahmoud",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "أزرق 3",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 100,
+          "paidAmount": 50,
+          "remainingAmount": 50,
+          "paymentStatus": "partially_paid",
+          "paymentDate": "2026-09-13",
+          "notes": "",
+          "attended": true
+        }
+      ],
+      "createdAt": "2026-09-11T16:26:18.055Z",
+      "updatedAt": "2026-09-13T15:28:20.978Z"
+    },
+    {
+      "_id": "6aa6bfd347c60e0700594888",
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "title": "اختبار حزام",
+      "type": "belt_exam",
+      "date": "2026-09-13",
+      "time": "08:00 ص",
+      "location": "",
+      "fee": 150,
+      "description": "",
+      "status": "upcoming",
+      "participants": [
+        {
+          "playerId": "6aa29105131cd6a66b5f1aeb",
+          "name": "rrrrr",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 150,
+          "paidAmount": 150,
+          "remainingAmount": 0,
+          "paymentStatus": "paid",
+          "paymentDate": "2026-09-13",
+          "notes": "",
+          "attended": true
+        },
+        {
+          "playerId": "6aa3f720ec0323d6dd6fe90b",
+          "name": "mahmoud",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "أزرق 3",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 150,
+          "paidAmount": 0,
+          "remainingAmount": 150,
+          "paymentStatus": "unpaid",
+          "paymentDate": "",
+          "notes": "",
+          "attended": false
+        },
+        {
+          "playerId": "6aa42d4c15e16b5a77c01ee1",
+          "name": "ببببب",
+          "photo": "",
+          "branch": "صالة الكاتا الرئيسية",
+          "belt": "أبيض",
+          "parentPhone": "",
+          "phone": "",
+          "totalAmount": 150,
+          "paidAmount": 0,
+          "remainingAmount": 150,
+          "paymentStatus": "unpaid",
+          "paymentDate": "",
+          "notes": "",
+          "attended": false
+        }
+      ],
+      "createdAt": "2026-09-13T15:22:59.479Z",
+      "updatedAt": "2026-09-13T15:29:27.436Z"
+    }
+  ]
+}

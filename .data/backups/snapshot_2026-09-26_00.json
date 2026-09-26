@@ -36,13 +36,6 @@
   ],
   "players": [
     {
-      "name": "Test Player",
-      "branch": "صالة 1",
-      "age": 10,
-      "_id": "6ab718f1378442cb19246d39",
-      "ownerId": "test_owner_restore"
-    },
-    {
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",
       "name": "rrrrr",
       "age": 25,
@@ -58,7 +51,7 @@
           "totalAmount": 200,
           "paidAmount": 200,
           "remainingAmount": 0,
-          "updatedAt": "2026-09-26T01:40:21.605Z"
+          "updatedAt": "2026-09-13T18:19:25.610Z"
         }
       ],
       "attendance": [
@@ -72,10 +65,6 @@
         },
         {
           "date": "2026-09-13",
-          "status": "present"
-        },
-        {
-          "date": "2026-09-26",
           "status": "present"
         }
       ],
@@ -95,15 +84,15 @@
       "belt": "أزرق 3",
       "level": "C",
       "photo": "",
-      "paymentStatus": "paid",
+      "paymentStatus": "unpaid",
       "paymentHistory": [
         {
           "month": "2026-09",
-          "status": "paid",
+          "status": "unpaid",
           "totalAmount": 100,
-          "paidAmount": 100,
-          "remainingAmount": 0,
-          "updatedAt": "2026-09-26T01:40:21.599Z"
+          "paidAmount": 0,
+          "remainingAmount": 100,
+          "updatedAt": "2026-09-11T18:18:05.338Z"
         }
       ],
       "attendance": [
@@ -114,17 +103,13 @@
         {
           "date": "2026-09-13",
           "status": "present"
-        },
-        {
-          "date": "2026-09-26",
-          "status": "present"
         }
       ],
       "createdAt": "2026-09-11T12:42:08.498Z",
       "_id": "6aa3f720ec0323d6dd6fe90b",
       "totalAmount": 100,
-      "paidAmount": 100,
-      "remainingAmount": 0,
+      "paidAmount": 0,
+      "remainingAmount": 100,
       "purchases": [
         {
           "id": "prc_mu02oim8_jzved",
@@ -140,93 +125,11 @@
       ]
     },
     {
-      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
-      "name": "ببببب",
+      "name": "Test Player",
+      "branch": "صالة 1",
       "age": 10,
-      "dateOfBirth": "2015-09-12",
-      "guardianPhone": "",
-      "branch": "صالة الكاتا الرئيسية",
-      "belt": "أبيض",
-      "level": "A",
-      "photo": "",
-      "paymentStatus": "paid",
-      "paymentHistory": [
-        {
-          "month": "2026-09",
-          "status": "paid",
-          "totalAmount": 200,
-          "paidAmount": 200,
-          "remainingAmount": 0,
-          "updatedAt": "2026-09-26T01:40:21.594Z"
-        }
-      ],
-      "attendance": [
-        {
-          "date": "2026-09-11",
-          "status": "present"
-        },
-        {
-          "date": "2026-09-12",
-          "status": "present"
-        },
-        {
-          "date": "2026-09-13",
-          "status": "present"
-        },
-        {
-          "date": "2026-09-26",
-          "status": "present"
-        }
-      ],
-      "createdAt": "2026-09-11T16:33:16.793Z",
-      "_id": "6aa42d4c15e16b5a77c01ee1",
-      "totalAmount": 200,
-      "paidAmount": 200,
-      "remainingAmount": 0,
-      "lastBirthdayWishedYear": 2026,
-      "purchases": [
-        {
-          "id": "prc_mtytyy1e_verj5",
-          "title": "بدلة كاراتيه",
-          "totalAmount": 450,
-          "paidAmount": 200,
-          "remainingAmount": 250,
-          "status": "partially_paid",
-          "date": "2026-09-12",
-          "notes": "",
-          "createdAt": "2026-09-12T20:21:27.122Z"
-        }
-      ]
-    },
-    {
-      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
-      "name": "محمود",
-      "age": 1,
-      "dateOfBirth": "2025-05-04",
-      "guardianPhone": "",
-      "branch": "دوجو الكوميتيه للأبطال",
-      "belt": "أبيض",
-      "level": "A",
-      "photo": "",
-      "paymentStatus": "partially_paid",
-      "paymentHistory": [
-        {
-          "month": "2026-09",
-          "status": "partially_paid",
-          "totalAmount": 300,
-          "paidAmount": 150,
-          "remainingAmount": 150,
-          "updatedAt": "2026-09-26T01:56:17.577Z"
-        }
-      ],
-      "purchases": [],
-      "attendance": [],
-      "createdAt": "2026-09-26T01:55:49.579Z",
-      "_id": "6ab72625ef43b032db5fcda7",
-      "totalAmount": 300,
-      "defaultTotalAmount": 300,
-      "paidAmount": 150,
-      "remainingAmount": 150
+      "_id": "6ab718f1378442cb19246d39",
+      "ownerId": "test_owner_restore"
     }
   ],
   "events": [

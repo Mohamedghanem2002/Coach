@@ -123,9 +123,17 @@ export async function POST(request) {
     const body = await request.json();
     const backupData = body?.data || body;
 
-    const players = Array.isArray(backupData.players) ? backupData.players : [];
-    const branches = Array.isArray(backupData.branches) ? backupData.branches : [];
-    const events = Array.isArray(backupData.events) ? backupData.events : [];
+    let players = [];
+    let branches = [];
+    let events = [];
+
+    if (Array.isArray(backupData)) {
+      players = backupData;
+    } else if (backupData && typeof backupData === "object") {
+      players = Array.isArray(backupData.players) ? backupData.players : [];
+      branches = Array.isArray(backupData.branches) ? backupData.branches : [];
+      events = Array.isArray(backupData.events) ? backupData.events : [];
+    }
 
     if (!players.length && !branches.length && !events.length) {
       return NextResponse.json(
