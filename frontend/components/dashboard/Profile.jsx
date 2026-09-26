@@ -17,6 +17,8 @@ import {
   openWhatsAppDirect,
   generateBirthdayWishText,
   markBirthdayCongratulated,
+  isNewPlayer,
+  isWelcomeCardVisible,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 import ProfileCardModal from "./ProfileCardModal";
@@ -271,6 +273,25 @@ export default function Profile({
     return () =>
       window.removeEventListener("birthday_congratulated", handleCongratulated);
   }, [player?._id]);
+
+  const [welcomeCardHandledTick, setWelcomeCardHandledTick] = useState(0);
+
+  useEffect(() => {
+    const handleWelcomeCardHandled = (e) => {
+      if (!e.detail?.playerId || e.detail?.playerId === player?._id) {
+        setWelcomeCardHandledTick((v) => v + 1);
+      }
+    };
+    window.addEventListener("welcome_card_handled", handleWelcomeCardHandled);
+    return () =>
+      window.removeEventListener("welcome_card_handled", handleWelcomeCardHandled);
+  }, [player?._id]);
+
+  const isNew = useMemo(() => isNewPlayer(player), [player]);
+  const showWelcomeCardButton = useMemo(() => {
+    if (welcomeCardHandledTick < 0) return false;
+    return isWelcomeCardVisible(player);
+  }, [player, welcomeCardHandledTick]);
 
   const [updatingPaymentMonth, setUpdatingPaymentMonth] = useState(null);
   const [deletingPaymentMonth, setDeletingPaymentMonth] = useState(null);
@@ -1112,10 +1133,16 @@ export default function Profile({
                 )}
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="truncate font-cairo text-sm sm:text-base font-black text-slate-900 leading-tight">
                     {player.name}
                   </h1>
+                  {isNew && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs ring-1 ring-emerald-300/50 animate-pulse shrink-0">
+                      <Sparkles className="h-3 w-3 text-amber-200 shrink-0" />
+                      <span>لاعب جديد ✨</span>
+                    </span>
+                  )}
                   <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.2 text-[10px] font-bold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
                     🥋 {player.belt || "أبيض"}
                   </span>
@@ -1131,9 +1158,16 @@ export default function Profile({
 
             {/* Mobile Player Title */}
             <div className="sm:hidden min-w-0">
-              <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                ملف بطل الكاراتيه
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  ملف بطل الكاراتيه
+                </span>
+                {isNew && (
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-1.5 py-0.2 text-[9px] font-black text-white shadow-2xs animate-pulse">
+                    ✨ جديد
+                  </span>
+                )}
+              </div>
               <h1 className="truncate font-cairo text-sm sm:text-base font-black text-slate-900 leading-tight">
                 {player.name}
               </h1>
@@ -1457,9 +1491,17 @@ export default function Profile({
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h2 className="truncate font-cairo text-base sm:text-xl font-black text-slate-900 leading-tight">
-                      {player.name}
-                    </h2>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="truncate font-cairo text-base sm:text-xl font-black text-slate-900 leading-tight">
+                        {player.name}
+                      </h2>
+                      {isNew && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 px-3 py-0.5 text-xs font-black text-white shadow-sm ring-2 ring-emerald-300/40 animate-pulse shrink-0">
+                          <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-spin-slow shrink-0" />
+                          <span>لاعب جديد ✨</span>
+                        </span>
+                      )}
+                    </div>
 
                     {/* أشرطة وشارات الهوية */}
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -1479,10 +1521,45 @@ export default function Profile({
                     </div>
 
                     <span className="mt-1.5 block text-[10px] sm:text-[11px] font-semibold text-slate-400">
-                      عضو مسجل منذ: {registrationDate}
+                      عضو مسجل منذ: {registrationDate} {isNew ? "• (خلال أسبوع الانضمام ⭐)" : ""}
                     </span>
                   </div>
                 </div>
+
+                {/* بانر ترحيبي فخم للاعبين الجدد (خلال الأسبوع الأول) */}
+                {isNew && (
+                  <div className="rounded-xl border border-emerald-300/80 bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 p-3 shadow-2xs flex items-center justify-between gap-3 animate-fade-in">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs text-base">
+                        🥋
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-cairo text-xs sm:text-sm font-black text-emerald-950">
+                            بطل جديد انضم للأكاديمية حديثاً!
+                          </span>
+                          <span className="rounded-md bg-emerald-200/70 border border-emerald-300 px-1.5 py-0.2 text-[10px] font-black text-emerald-900">
+                            أسبوع الترحيب ✨
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-emerald-800 font-medium truncate mt-0.5">
+                          تاريخ التسجيل: {registrationDate} • مرحباً ببطلنا في مسيرة التدريب وصناعة الأبطال 🏆
+                        </p>
+                      </div>
+                    </div>
+                    {showWelcomeCardButton && (
+                      <button
+                        type="button"
+                        onClick={() => setShowWelcomeCardModal(true)}
+                        className="shrink-0 flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-black shadow-xs transition active:scale-95 cursor-pointer"
+                        title="معاينة كارت الترحيب بالبطل"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                        <span className="hidden xs:inline">كارت الترحيب</span>
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* شبكة الإجراءات السريعة بأسلوب تطبيقات الموبايل الفاخرة */}
                 <div className="pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1509,16 +1586,18 @@ export default function Profile({
                     <span className="truncate">بطاقة اللاعب 🖼️</span>
                   </button>
 
-                  {/* إجراء 3: كارت الترحيب (روش للسوشيال ميديا) */}
-                  <button
-                    type="button"
-                    onClick={() => setShowWelcomeCardModal(true)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs"
-                    title="معاينة كارت الترحيب بالبطل ومشاركته على السوشيال ميديا"
-                  >
-                    <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-                    <span className="truncate">كارت الترحيب 🥋</span>
-                  </button>
+                  {/* إجراء 3: كارت الترحيب (روش للسوشيال ميديا) - يظهر فقط إذا كان متاحاً */}
+                  {showWelcomeCardButton && (
+                    <button
+                      type="button"
+                      onClick={() => setShowWelcomeCardModal(true)}
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs animate-fade-in"
+                      title="معاينة كارت الترحيب بالبطل ومشاركته على السوشيال ميديا"
+                    >
+                      <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                      <span className="truncate">كارت الترحيب 🥋</span>
+                    </button>
+                  )}
 
                   {/* إجراء 3: محادثة شات واتساب ولي الأمر */}
                   {guardianPhone ? (

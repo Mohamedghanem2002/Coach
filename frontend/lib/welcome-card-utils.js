@@ -2,10 +2,20 @@ import {
   formatWhatsAppPhone,
   calculateAge,
   openWhatsAppDirect,
+  markWelcomeCardHandled,
+  isNewPlayer,
+  isWelcomeCardVisible,
 } from "./dashboard-utils";
 import { copyBlobToClipboard } from "./birthday-card-utils";
 
-export { formatWhatsAppPhone, copyBlobToClipboard, openWhatsAppDirect };
+export {
+  formatWhatsAppPhone,
+  copyBlobToClipboard,
+  openWhatsAppDirect,
+  markWelcomeCardHandled,
+  isNewPlayer,
+  isWelcomeCardVisible,
+};
 
 /**
  * Generates an ultra-luxurious, official Karate Welcome Card Canvas

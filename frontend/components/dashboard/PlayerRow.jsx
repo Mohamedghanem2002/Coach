@@ -22,6 +22,7 @@ import {
   formatWhatsAppPhone,
   calculateAge,
   getPurchasesSummary,
+  isNewPlayer,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 
@@ -56,6 +57,8 @@ function PlayerRow({
       (p) => (Number(p.remainingAmount) || 0) > 0
     );
   }, [purchasesSummary.purchases]);
+
+  const isNew = useMemo(() => isNewPlayer(player), [player]);
 
   const purchaseDebtLabel = useMemo(() => {
     if (purchasesSummary.count === 0) return null;
@@ -179,6 +182,11 @@ function PlayerRow({
                   {birthdayInfo?.daysLeft === 1 && (
                     <span className="shrink-0 rounded-md bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[9px] font-black text-amber-800">
                       🎂 غداً
+                    </span>
+                  )}
+                  {isNew && (
+                    <span className="shrink-0 rounded-md bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-emerald-800 shadow-2xs">
+                      ✨ جديد
                     </span>
                   )}
                 </div>

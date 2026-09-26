@@ -113,6 +113,7 @@ function serializePlayer(player) {
     belt: player.belt || "أبيض",
     level: player.level || "A",
     lastBirthdayWishedYear: player.lastBirthdayWishedYear || null,
+    welcomeCardHandledAt: player.welcomeCardHandledAt || null,
     _id: player._id ? player._id.toString() : "",
   });
 }
@@ -331,6 +332,14 @@ export async function PATCH(request) {
     }
     const client = await clientPromise;
     const collection = client.db(process.env.MONGODB_DB).collection("players");
+    if (body.action === "mark_welcome_card") {
+      const player = await collection.findOneAndUpdate(
+        { _id: new ObjectId(body.id), ownerId },
+        { $set: { welcomeCardHandledAt: new Date() } },
+        { returnDocument: "after" }
+      );
+      return NextResponse.json(player ? serializePlayer(player) : null);
+    }
     if (body.updateInfo === true || body.updateInfo === "true") {
       const name = typeof body.name === "string" ? body.name.trim() : "";
       const branch = typeof body.branch === "string" ? body.branch.trim() : "";

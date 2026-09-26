@@ -6,6 +6,7 @@ import {
   formatWhatsAppPhone,
   copyBlobToClipboard,
   openWhatsAppDirect,
+  markWelcomeCardHandled,
 } from "../../lib/welcome-card-utils";
 
 export default function WelcomeCardModal({
@@ -86,6 +87,7 @@ export default function WelcomeCardModal({
       link.click();
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(url), 2500);
+      markWelcomeCardHandled(player._id || player.id);
       setNotice("✓ تم حفظ وتحميل كارت الترحيب بجهازك بنجاح!");
     } catch (e) {
       console.error(e);
@@ -135,6 +137,7 @@ export default function WelcomeCardModal({
 
       // 4. Open WhatsApp directly to player's chat (or manual contact selection)
       openWhatsAppDirect(cleanPhone, "", preWin);
+      markWelcomeCardHandled(player._id || player.id);
 
       const targetLink = cleanPhone
         ? (isMobile ? `whatsapp://send?phone=${cleanPhone}` : `https://web.whatsapp.com/send?phone=${cleanPhone}`)

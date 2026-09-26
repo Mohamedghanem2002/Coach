@@ -285,6 +285,102 @@ export function markBirthdayCongratulated(playerId, referenceDate = new Date()) 
   }
 }
 
+/**
+ * Checks if a player was registered within the last N days (defaults to 7 days / 1 week)
+ */
+export function isNewPlayer(player, maxDays = 7) {
+  if (!player || !player.createdAt) return false;
+  const createdTime = new Date(player.createdAt).getTime();
+  if (isNaN(createdTime)) return false;
+  const maxMs = maxDays * 24 * 60 * 60 * 1000;
+  const diff = Date.now() - createdTime;
+  return diff >= 0 && diff < maxMs;
+}
+
+/**
+ * Gets the timestamp when the welcome card was downloaded or shared
+ */
+export function getWelcomeCardHandledTime(player) {
+  if (!player) return null;
+  if (player.welcomeCardHandledAt) {
+    const t = new Date(player.welcomeCardHandledAt).getTime();
+    if (!isNaN(t)) return t;
+  }
+  if (typeof window !== "undefined") {
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem("reaction_welcome_cards_handled") || "{}"
+      );
+      const localTime = stored[player._id || player.id];
+      if (localTime) return Number(localTime);
+    } catch (_) {}
+  }
+  return null;
+}
+
+/**
+ * Marks that the welcome card has been downloaded or shared
+ * Stores in localStorage for instant reactive UI + fires custom event + syncs to API
+ */
+export function markWelcomeCardHandled(playerId) {
+  if (!playerId) return;
+  const now = Date.now();
+  if (typeof window !== "undefined") {
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem("reaction_welcome_cards_handled") || "{}"
+      );
+      if (!stored[playerId]) {
+        stored[playerId] = now;
+        localStorage.setItem(
+          "reaction_welcome_cards_handled",
+          JSON.stringify(stored)
+        );
+      }
+      window.dispatchEvent(
+        new CustomEvent("welcome_card_handled", {
+          detail: { playerId, timestamp: stored[playerId] || now },
+        })
+      );
+    } catch (e) {
+      console.warn("Failed to set welcome card handled in localStorage:", e);
+    }
+
+    // Persist to backend silently
+    fetch("/api/players", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: playerId, action: "mark_welcome_card" }),
+    }).catch(() => {});
+  }
+}
+
+/**
+ * Determines whether the "كارت الترحيب" button should appear on the player's profile:
+ * - If already downloaded/shared: stays visible for exactly 24 hours (1 day), then disappears permanently.
+ * - If not yet downloaded/shared: stays visible during the first 7 days of registration.
+ */
+export function isWelcomeCardVisible(player) {
+  if (!player) return false;
+
+  const handledTime = getWelcomeCardHandledTime(player);
+  if (handledTime) {
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    return Date.now() - handledTime < ONE_DAY_MS;
+  }
+
+  // Not handled yet: visible if registered within 7 days (or if createdAt is missing)
+  if (player.createdAt) {
+    const createdTime = new Date(player.createdAt).getTime();
+    if (!isNaN(createdTime)) {
+      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+      return Date.now() - createdTime < SEVEN_DAYS_MS;
+    }
+  }
+
+  return true;
+}
+
 export function getTodayBirthdays(players, referenceDate = new Date()) {
   if (!Array.isArray(players)) return [];
   return players
