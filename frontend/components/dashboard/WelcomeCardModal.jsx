@@ -146,7 +146,7 @@ export default function WelcomeCardModal({
       dir="rtl"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative max-h-[94vh] w-full max-w-sm sm:max-w-md overflow-y-auto rounded-3xl border border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 p-4 sm:p-5 text-white shadow-2xl">
+      <div className="relative max-h-[94vh] w-full max-w-md sm:max-w-lg overflow-y-auto rounded-3xl border border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 p-4 sm:p-5 text-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
           <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export default function WelcomeCardModal({
                 معاينة كارت الترحيب بالبطل
               </h3>
               <p className="text-[10px] text-slate-400">
-                للبطل: {player.name} {guardianPhone ? `• (${guardianPhone})` : ""}
+                للبطل: {player.name}
               </p>
             </div>
           </div>
@@ -170,7 +170,7 @@ export default function WelcomeCardModal({
         </div>
 
         {/* Card Image Display Preview */}
-        <div className="relative mb-3 flex items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 p-2 min-h-[300px]">
+        <div className="relative mb-3 flex items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 p-2 min-h-[320px]">
           {isLoading ? (
             <div className="flex flex-col items-center gap-2.5 py-14">
               <span className="h-8 w-8 rounded-full border-3 border-red-500 border-t-transparent animate-spin" />
@@ -183,7 +183,7 @@ export default function WelcomeCardModal({
             <img
               src={dataUrl}
               alt={`كارت ترحيب ${player.name}`}
-              className="max-h-[52vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
+              className="max-h-[58vh] sm:max-h-[64vh] w-auto rounded-xl shadow-2xl object-contain ring-1 ring-white/10"
             />
           ) : (
             <span className="text-xs text-rose-400">تعذر إنشاء كارت الترحيب</span>
