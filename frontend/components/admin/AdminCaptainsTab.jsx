@@ -46,9 +46,12 @@ export default function AdminCaptainsTab({
 }) {
   const statusOptions = [
     { id: "all", label: "جميع الحسابات" },
-    { id: "active", label: "حسابات نشطة" },
+    { id: "active", label: "نشطة" },
+    { id: "has_players", label: "بها لاعبون 🥋" },
+    { id: "has_halls", label: "بها صالات 🏟️" },
+    { id: "has_events", label: "بها فعاليات 🏆" },
     { id: "suspended", label: "موقوفة مؤقتاً" },
-    { id: "expired", label: "منتهية الصلاحية" },
+    { id: "expired", label: "منتهية" },
     { id: "pending", label: "غير مسددة" },
   ];
 
@@ -69,6 +72,8 @@ export default function AdminCaptainsTab({
     { id: "halls_asc", label: "الأقل صالات 🏟️ (تصاعدي)" },
     { id: "events_desc", label: "الأكثر فعاليات 🏆 (تنازلي)" },
     { id: "events_asc", label: "الأقل فعاليات 🏆 (تصاعدي)" },
+    { id: "name_asc", label: "الاسم (أ - ي) 🔤" },
+    { id: "name_desc", label: "الاسم (ي - أ)" },
   ];
 
   return (
@@ -78,16 +83,16 @@ export default function AdminCaptainsTab({
         {/* Total Captains */}
         <div className="relative overflow-hidden rounded-3xl border border-red-100 bg-linear-to-br from-red-500/10 via-white to-white p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black text-slate-600">إجمالي الكباتن والمدربين</span>
+            <span className="text-xs font-black text-slate-600">إجمالي الحسابات المسجلة</span>
             <div className="w-10 h-10 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-md shadow-red-500/20">
               <User className="w-5 h-5" />
             </div>
           </div>
           <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {summary.totalCaptains ?? 0}
+            {summary.totalAccounts ?? summary.totalCaptains ?? 0}
           </span>
           <span className="block text-[11px] font-bold text-slate-400 mt-0.5">
-            حسابات كباتن مسجلة بالمنصة
+            حساب مسجل بالمنصة
           </span>
         </div>
 
@@ -319,13 +324,20 @@ export default function AdminCaptainsTab({
                               {(c.name || "C").charAt(0)}
                             </div>
                             <div className="min-w-0">
-                              <button
-                                type="button"
-                                onClick={() => onSelectCaptain(c.id || c._id)}
-                                className="font-black text-slate-900 hover:text-red-600 transition text-sm text-right truncate max-w-[220px] cursor-pointer block"
-                              >
-                                {c.name}
-                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => onSelectCaptain(c.id || c._id)}
+                                  className="font-black text-slate-900 hover:text-red-600 transition text-sm text-right truncate max-w-[200px] cursor-pointer block"
+                                >
+                                  {c.name}
+                                </button>
+                                {c.isAdmin && (
+                                  <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[9px] font-black text-amber-800 border border-amber-200 shrink-0">
+                                    ADMIN 👑
+                                  </span>
+                                )}
+                              </div>
                               <span className="block text-[11px] text-red-600 font-bold truncate">
                                 🏟️ {c.academyName}
                               </span>
@@ -471,9 +483,16 @@ export default function AdminCaptainsTab({
                         {(c.name || "C").charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <strong className="block text-sm font-black text-slate-900 truncate">
-                          {c.name}
-                        </strong>
+                        <div className="flex items-center gap-1.5">
+                          <strong className="block text-sm font-black text-slate-900 truncate">
+                            {c.name}
+                          </strong>
+                          {c.isAdmin && (
+                            <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[9px] font-black text-amber-800 border border-amber-200 shrink-0">
+                              ADMIN 👑
+                            </span>
+                          )}
+                        </div>
                         <span className="block text-[11px] text-red-600 font-bold truncate">
                           🏟️ {c.academyName}
                         </span>

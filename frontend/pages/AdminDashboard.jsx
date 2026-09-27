@@ -6,6 +6,9 @@ import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminOverviewTab from "../components/admin/AdminOverviewTab";
 import AdminAcademiesTab from "../components/admin/AdminAcademiesTab";
 import AdminCaptainsTab from "../components/admin/AdminCaptainsTab";
+import AdminPlayersTab from "../components/admin/AdminPlayersTab";
+import AdminHallsTab from "../components/admin/AdminHallsTab";
+import AdminEventsTab from "../components/admin/AdminEventsTab";
 import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
 import AcademyDetailsModal from "../components/admin/AcademyDetailsModal";
 import CaptainDetailsModal from "../components/admin/CaptainDetailsModal";
@@ -328,7 +331,10 @@ export default function AdminDashboard() {
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         adminUser={session?.user}
-        captainsCount={overviewData?.stats?.totalCaptains || overviewData?.stats?.totalAcademies || captainsData?.summary?.totalCaptains || 0}
+        accountsCount={overviewData?.stats?.totalAccounts ?? overviewData?.stats?.totalAcademies ?? captainsData?.summary?.totalAccounts ?? 0}
+        playersCount={overviewData?.stats?.totalPlayers ?? 0}
+        hallsCount={overviewData?.stats?.totalHalls ?? overviewData?.stats?.totalBranches ?? 0}
+        eventsCount={overviewData?.stats?.totalEvents ?? 0}
       />
 
       {/* Main Content Area */}
@@ -337,14 +343,15 @@ export default function AdminDashboard() {
           {activeTab === "overview" && (
             <AdminOverviewTab
               stats={overviewData?.stats}
-              recentAcademies={overviewData?.recentAcademies || []}
+              analytics={overviewData?.analytics}
+              recentAccounts={overviewData?.recentAccounts || overviewData?.recentAcademies || []}
               recentAuditLogs={overviewData?.recentAuditLogs || []}
-              onSelectAcademy={(id) => setInspectCaptainId(id)}
-              onNavigateToAcademies={() => setActiveTab("captains")}
+              onSelectAccount={(id) => setInspectCaptainId(id)}
+              onNavigateToTab={(tab) => setActiveTab(tab)}
             />
           )}
 
-          {(activeTab === "captains" || activeTab === "academies") && (
+          {(activeTab === "accounts" || activeTab === "captains" || activeTab === "academies") && (
             <AdminCaptainsTab
               captains={captainsData.captains}
               summary={captainsData.summary}
@@ -376,6 +383,18 @@ export default function AdminDashboard() {
                 refreshCaptains();
               }}
             />
+          )}
+
+          {activeTab === "players" && (
+            <AdminPlayersTab onSelectCaptain={(id) => setInspectCaptainId(id)} />
+          )}
+
+          {activeTab === "halls" && (
+            <AdminHallsTab onSelectCaptain={(id) => setInspectCaptainId(id)} />
+          )}
+
+          {activeTab === "events" && (
+            <AdminEventsTab onSelectCaptain={(id) => setInspectCaptainId(id)} />
           )}
 
           {activeTab === "audit" && <AdminAuditLogsTab />}

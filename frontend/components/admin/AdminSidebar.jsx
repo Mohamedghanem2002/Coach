@@ -3,12 +3,15 @@ import React from "react";
 import {
   LayoutDashboard,
   Users,
+  Building2,
+  Trophy,
   History,
   ShieldCheck,
   LogOut,
   ExternalLink,
   Crown,
   ChevronLeft,
+  UserCheck,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -17,10 +20,14 @@ export default function AdminSidebar({
   activeTab,
   onSelectTab,
   adminUser,
+  accountsCount = 0,
+  playersCount = 0,
+  hallsCount = 0,
+  eventsCount = 0,
   captainsCount = 0,
   academiesCount = 0,
 }) {
-  const displayCount = captainsCount || academiesCount || 0;
+  const displayAccounts = accountsCount || captainsCount || academiesCount || 0;
 
   const navItems = [
     {
@@ -30,10 +37,29 @@ export default function AdminSidebar({
       badge: null,
     },
     {
-      id: "captains",
-      label: "إدارة الكباتن",
+      id: "accounts",
+      label: "إدارة الحسابات",
       icon: Users,
-      badge: displayCount ? String(displayCount) : null,
+      badge: displayAccounts ? String(displayAccounts) : null,
+      aliases: ["captains", "academies"],
+    },
+    {
+      id: "players",
+      label: "إدارة اللاعبين",
+      icon: UserCheck,
+      badge: playersCount ? String(playersCount) : null,
+    },
+    {
+      id: "halls",
+      label: "الصالات والملاعب",
+      icon: Building2,
+      badge: hallsCount ? String(hallsCount) : null,
+    },
+    {
+      id: "events",
+      label: "إدارة الفعاليات",
+      icon: Trophy,
+      badge: eventsCount ? String(eventsCount) : null,
     },
     {
       id: "audit",
@@ -66,7 +92,7 @@ export default function AdminSidebar({
                 </span>
               </div>
               <p className="text-[11px] font-bold text-slate-400">
-                إدارة الأكاديميات والاشتراكات
+                إدارة شاملة لكافة البيانات
               </p>
             </div>
           </div>
@@ -90,7 +116,8 @@ export default function AdminSidebar({
           <nav className="space-y-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const active = activeTab === item.id || (item.id === "captains" && activeTab === "academies");
+              const active =
+                activeTab === item.id || (item.aliases && item.aliases.includes(activeTab));
               return (
                 <button
                   key={item.id}
@@ -147,14 +174,17 @@ export default function AdminSidebar({
       {/* 2. Mobile Top Bar + Bottom Navigation */}
       <div className="lg:hidden">
         {/* Top Header */}
-        <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-slate-200" dir="rtl">
+        <div
+          className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-slate-200"
+          dir="rtl"
+        >
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-linear-to-br from-red-600 to-amber-600 flex items-center justify-center text-white shadow-xs">
               <Crown className="w-5 h-5 fill-white/20 stroke-white" />
             </div>
             <div>
-              <span className="block text-xs font-black text-slate-900">لوحة تحكم المنصة 👑</span>
-              <span className="block text-[10px] text-slate-400 font-mono truncate max-w-[170px]" dir="ltr">
+              <span className="block text-xs font-black text-slate-900">تحكم المنصة 👑</span>
+              <span className="block text-[10px] text-slate-400 font-mono truncate max-w-[160px]" dir="ltr">
                 {adminUser?.email || "mg0447837@gmail.com"}
               </span>
             </div>
@@ -179,24 +209,25 @@ export default function AdminSidebar({
           </div>
         </div>
 
-        {/* Mobile Bottom Navigation Bar (Rule 23) */}
+        {/* Mobile Bottom Navigation Bar */}
         <nav
-          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-2 px-3 shadow-lg"
+          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-1.5 px-2 shadow-lg"
           dir="rtl"
         >
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = activeTab === item.id || (item.id === "captains" && activeTab === "academies");
+            const active =
+              activeTab === item.id || (item.aliases && item.aliases.includes(activeTab));
             return (
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition cursor-pointer ${
+                className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition cursor-pointer ${
                   active ? "text-red-600 font-black" : "text-slate-500 font-bold"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${active ? "stroke-[2.5]" : ""}`} />
-                <span className="text-[10px]">{item.label}</span>
+                <Icon className={`w-4 h-4 ${active ? "stroke-[2.5]" : ""}`} />
+                <span className="text-[9px] truncate max-w-[55px]">{item.label}</span>
               </button>
             );
           })}

@@ -77,17 +77,30 @@ export async function GET(request, context) {
       daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     }
 
-    // Query real DB records belonging to this captain
-    const [players, branches, events, auditLogs] = await Promise.all([
-      db.collection("players").find({ ownerId: user._id }).toArray(),
-      db.collection("branches").find({ ownerId: user._id }).toArray(),
-      db.collection("events").find({ ownerId: user._id }).toArray(),
+    // Query real DB records belonging to this account
+    const uOId = user._id;
+    const uStrId = user._id.toString();
+
+    const [allP, allB, allE, auditLogs] = await Promise.all([
+      db.collection("players").find({}).toArray(),
+      db.collection("branches").find({}).toArray(),
+      db.collection("events").find({}).toArray(),
       db.collection("audit_logs")
-        .find({ targetAcademyId: user._id.toString() })
+        .find({ targetAcademyId: uStrId })
         .sort({ createdAt: -1 })
         .limit(20)
         .toArray(),
     ]);
+
+    const players = allP.filter(
+      (p) => p.ownerId && (p.ownerId.toString() === uStrId || String(p.ownerId) === String(uOId))
+    );
+    const branches = allB.filter(
+      (b) => b.ownerId && (b.ownerId.toString() === uStrId || String(b.ownerId) === String(uOId))
+    );
+    const events = allE.filter(
+      (e) => e.ownerId && (e.ownerId.toString() === uStrId || String(e.ownerId) === String(uOId))
+    );
 
     // Build halls with player breakdowns
     const hallsWithDetails = branches.map((b) => {

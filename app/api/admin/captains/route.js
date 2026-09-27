@@ -22,11 +22,8 @@ export async function GET(request) {
 
     const now = new Date();
 
-    // 1. Query all non-admin captain accounts from actual database
-    const allUsers = await db
-      .collection("users")
-      .find({ role: { $ne: "admin" } })
-      .toArray();
+    // 1. Query ALL accounts from actual database (including admin and test accounts)
+    const allUsers = await db.collection("users").find({}).toArray();
 
     // 2. Fetch all real data to calculate exact counts and platform totals
     const [allPlayers, allBranches, allEvents] = await Promise.all([
@@ -57,7 +54,7 @@ export async function GET(request) {
       eventsByOwner.get(oId).push(e);
     }
 
-    // 3. Process every captain account with actual database relationships
+    // 3. Process every account with actual database relationships
     const processedCaptains = allUsers.map((u) => {
       const uId = u._id.toString();
       const uPlayers = playersByOwner.get(uId) || [];
@@ -95,13 +92,15 @@ export async function GET(request) {
       return {
         id: uId,
         _id: uId,
-        name: u.name || "كابتن غير محدد",
+        name: u.name || "مستخدم غير محدد",
         academyName: u.academyName || "أكاديمية جديدة",
         email: u.email,
         phone: u.phone || "",
+        role: u.role || "user",
+        isAdmin: u.role === "admin",
         status: u.status || "active",
         subscriptionStatus: computedStatus,
-        subscriptionPlan: u.subscriptionPlan || "trial",
+        subscriptionPlan: u.subscriptionPlan || "Standard",
         subscriptionStartedAt: u.subscriptionStartedAt || u.createdAt,
         subscriptionExpiresAt: u.subscriptionExpiresAt || null,
         subscriptionPaid: u.subscriptionPaid !== false,
@@ -122,12 +121,13 @@ export async function GET(request) {
       };
     });
 
-    // 4. Platform-wide summary statistics (Real database totals for all captains)
+    // 4. Platform-wide summary statistics (Real database totals for all accounts)
     const summary = {
       totalCaptains: processedCaptains.length,
-      totalPlayers: processedCaptains.reduce((sum, c) => sum + c.stats.players, 0),
-      totalHalls: processedCaptains.reduce((sum, c) => sum + c.stats.halls, 0),
-      totalEvents: processedCaptains.reduce((sum, c) => sum + c.stats.events, 0),
+      totalAccounts: processedCaptains.length,
+      totalPlayers: allPlayers.length,
+      totalHalls: allBranches.length,
+      totalEvents: allEvents.length,
     };
 
     // 5. Apply Search & Filters
@@ -144,11 +144,16 @@ export async function GET(request) {
         }
       }
 
-      // 5.2 Status filter
+      // 5.2 Status and Resource filters
       if (statusFilter === "active" && c.subscriptionStatus !== "active") return false;
       if (statusFilter === "suspended" && c.subscriptionStatus !== "suspended") return false;
       if (statusFilter === "expired" && c.subscriptionStatus !== "expired") return false;
       if (statusFilter === "pending" && c.subscriptionPaid !== false) return false;
+      if (statusFilter === "has_players" && c.stats.players === 0) return false;
+      if (statusFilter === "has_halls" && c.stats.halls === 0) return false;
+      if (statusFilter === "has_events" && c.stats.events === 0) return false;
+      if (statusFilter === "admin" && !c.isAdmin) return false;
+      if (statusFilter === "user" && c.isAdmin) return false;
 
       // 5.3 Registration Date Filter
       if (dateFilter && dateFilter !== "all" && c.createdAt) {
@@ -194,6 +199,12 @@ export async function GET(request) {
       }
       if (sortBy === "events_asc") {
         return a.stats.events - b.stats.events;
+      }
+      if (sortBy === "name_asc") {
+        return (a.name || "").localeCompare(b.name || "", "ar");
+      }
+      if (sortBy === "name_desc") {
+        return (b.name || "").localeCompare(a.name || "", "ar");
       }
       // Default: newest joined
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);

@@ -13,103 +13,202 @@ export async function GET() {
     const db = client.db(process.env.MONGODB_DB);
 
     const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-    // Query non-admin academies
-    const allUsers = await db
-      .collection("users")
-      .find({ role: { $ne: "admin" } })
-      .toArray();
+    // 1. Query ALL users from database (including admin and test accounts)
+    const allUsers = await db.collection("users").find({}).toArray();
 
-    // Query all players, branches, events
-    const [totalPlayers, totalBranches, totalEvents] = await Promise.all([
-      db.collection("players").countDocuments({}),
-      db.collection("branches").countDocuments({}),
-      db.collection("events").countDocuments({}),
+    // 2. Query all players, branches, events, and audit logs
+    const [allPlayers, allBranches, allEvents, recentAuditLogs] = await Promise.all([
+      db.collection("players").find({}).toArray(),
+      db.collection("branches").find({}).toArray(),
+      db.collection("events").find({}).toArray(),
+      db.collection("audit_logs").find({}).sort({ createdAt: -1 }).limit(10).toArray(),
     ]);
 
-    let activeAcademies = 0;
-    let suspendedAcademies = 0;
-    let expiredAcademies = 0;
-    let pendingPaymentAcademies = 0;
+    // Build lookup maps by ownerId
+    const playersByOwner = new Map();
+    for (const p of allPlayers) {
+      const oId = p.ownerId ? p.ownerId.toString() : "";
+      if (!playersByOwner.has(oId)) playersByOwner.set(oId, []);
+      playersByOwner.get(oId).push(p);
+    }
+
+    const branchesByOwner = new Map();
+    for (const b of allBranches) {
+      const oId = b.ownerId ? b.ownerId.toString() : "";
+      if (!branchesByOwner.has(oId)) branchesByOwner.set(oId, []);
+      branchesByOwner.get(oId).push(b);
+    }
+
+    const eventsByOwner = new Map();
+    for (const e of allEvents) {
+      const oId = e.ownerId ? e.ownerId.toString() : "";
+      if (!eventsByOwner.has(oId)) eventsByOwner.set(oId, []);
+      eventsByOwner.get(oId).push(e);
+    }
+
+    // Event calculations (Upcoming vs Completed)
+    let upcomingEvents = 0;
+    let completedEvents = 0;
+    for (const e of allEvents) {
+      let isUpcoming = false;
+      if (e.date) {
+        const eDate = new Date(e.date);
+        if (!isNaN(eDate.getTime()) && eDate >= startOfToday) {
+          isUpcoming = true;
+        }
+      }
+      if (isUpcoming) upcomingEvents++;
+      else completedEvents++;
+    }
+
+    // Account status & distribution calculations
+    let activeAccounts = 0;
+    let suspendedAccounts = 0;
+    let expiredAccounts = 0;
+    let pendingPaymentAccounts = 0;
+    let newAccounts7d = 0;
+    let newAccounts30d = 0;
+    let accountsWithPlayers = 0;
+    let accountsWithHalls = 0;
+    let accountsWithEvents = 0;
 
     for (const u of allUsers) {
+      const uId = u._id.toString();
+      const pCount = (playersByOwner.get(uId) || []).length;
+      const bCount = (branchesByOwner.get(uId) || []).length;
+      const eCount = (eventsByOwner.get(uId) || []).length;
+
+      if (pCount > 0) accountsWithPlayers++;
+      if (bCount > 0) accountsWithHalls++;
+      if (eCount > 0) accountsWithEvents++;
+
       const isSuspended = u.status === "suspended" || u.subscriptionStatus === "suspended";
       const isExpired = u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt).getTime() < now.getTime();
 
       if (isSuspended) {
-        suspendedAcademies++;
+        suspendedAccounts++;
       } else if (isExpired) {
-        expiredAcademies++;
+        expiredAccounts++;
       } else {
-        activeAcademies++;
+        activeAccounts++;
       }
 
       if (u.subscriptionPaid === false) {
-        pendingPaymentAcademies++;
+        pendingPaymentAccounts++;
+      }
+
+      if (u.createdAt) {
+        const cDate = new Date(u.createdAt);
+        if (cDate >= sevenDaysAgo) newAccounts7d++;
+        if (cDate >= thirtyDaysAgo) newAccounts30d++;
       }
     }
 
-    // Recent 5 academies with real player counts
+    // Recent 5 accounts with exact counts
     const sortedUsers = [...allUsers].sort(
-      (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-    );
-    const recentUsersSlice = sortedUsers.slice(0, 5);
-
-    const recentAcademies = await Promise.all(
-      recentUsersSlice.map(async (u) => {
-        const uId = u._id.toString();
-        const playersCount = await db
-          .collection("players")
-          .countDocuments({ ownerId: u._id });
-        const branchesCount = await db
-          .collection("branches")
-          .countDocuments({ ownerId: u._id });
-
-        const isSuspended = u.status === "suspended" || u.subscriptionStatus === "suspended";
-        const isExpired = u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt).getTime() < now.getTime();
-        let computedStatus = "active";
-        if (isSuspended) computedStatus = "suspended";
-        else if (isExpired) computedStatus = "expired";
-
-        return {
-          id: uId,
-          name: u.name,
-          academyName: u.academyName || "أكاديمية جديدة",
-          email: u.email,
-          phone: u.phone || "",
-          status: u.status || "active",
-          subscriptionStatus: computedStatus,
-          subscriptionPlan: u.subscriptionPlan || "trial",
-          subscriptionExpiresAt: u.subscriptionExpiresAt || null,
-          subscriptionPaid: u.subscriptionPaid !== false,
-          playersCount,
-          branchesCount,
-          createdAt: u.createdAt,
-        };
-      })
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
 
-    // Recent audit logs
-    const recentAuditLogs = await db
-      .collection("audit_logs")
-      .find({})
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .toArray();
+    const recentAccounts = sortedUsers.slice(0, 6).map((u) => {
+      const uId = u._id.toString();
+      const playersCount = (playersByOwner.get(uId) || []).length;
+      const branchesCount = (branchesByOwner.get(uId) || []).length;
+      const eventsCount = (eventsByOwner.get(uId) || []).length;
+
+      const isSuspended = u.status === "suspended" || u.subscriptionStatus === "suspended";
+      const isExpired = u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt).getTime() < now.getTime();
+      let computedStatus = "active";
+      if (isSuspended) computedStatus = "suspended";
+      else if (isExpired) computedStatus = "expired";
+
+      return {
+        id: uId,
+        _id: uId,
+        name: u.name || "مستخدم",
+        academyName: u.academyName || "أكاديمية جديدة",
+        email: u.email,
+        phone: u.phone || "",
+        role: u.role || "user",
+        isAdmin: u.role === "admin",
+        status: u.status || "active",
+        subscriptionStatus: computedStatus,
+        subscriptionPlan: u.subscriptionPlan || "Standard",
+        subscriptionExpiresAt: u.subscriptionExpiresAt || null,
+        subscriptionPaid: u.subscriptionPaid !== false,
+        playersCount,
+        branchesCount,
+        hallsCount: branchesCount,
+        eventsCount,
+        createdAt: u.createdAt,
+      };
+    });
+
+    // Real Analytics Data based strictly on DB timestamps
+    const usersGrowth = {
+      last7Days: newAccounts7d,
+      last30Days: newAccounts30d,
+      last90Days: allUsers.filter((u) => u.createdAt && new Date(u.createdAt) >= ninetyDaysAgo).length,
+      total: allUsers.length,
+    };
+
+    const playersGrowth = {
+      last7Days: allPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= sevenDaysAgo).length,
+      last30Days: allPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= thirtyDaysAgo).length,
+      total: allPlayers.length,
+    };
+
+    const eventsGrowth = {
+      upcoming: upcomingEvents,
+      completed: completedEvents,
+      total: allEvents.length,
+    };
+
+    const distribution = {
+      accountsWithPlayers,
+      accountsWithHalls,
+      accountsWithEvents,
+      totalAccounts: allUsers.length,
+    };
 
     return NextResponse.json({
       success: true,
       stats: {
-        totalAcademies: allUsers.length,
-        activeAcademies,
-        suspendedAcademies,
-        expiredAcademies,
-        pendingPaymentAcademies,
-        totalPlayers,
-        totalBranches,
-        totalEvents,
+        totalAccounts: allUsers.length,
+        totalAcademies: allUsers.length, // backward-compatibility
+        totalCaptains: allUsers.length,
+        activeAccounts,
+        activeAcademies: activeAccounts,
+        suspendedAccounts,
+        suspendedAcademies: suspendedAccounts,
+        expiredAccounts,
+        expiredAcademies: expiredAccounts,
+        pendingPaymentAccounts,
+        pendingPaymentAcademies: pendingPaymentAccounts,
+        newAccounts7d,
+        newAccounts30d,
+        totalPlayers: allPlayers.length,
+        totalBranches: allBranches.length,
+        totalHalls: allBranches.length,
+        totalEvents: allEvents.length,
+        upcomingEvents,
+        completedEvents,
+        accountsWithPlayers,
+        accountsWithHalls,
+        accountsWithEvents,
       },
-      recentAcademies,
+      analytics: {
+        usersGrowth,
+        playersGrowth,
+        eventsGrowth,
+        distribution,
+      },
+      recentAccounts,
+      recentAcademies: recentAccounts, // backward-compatibility
       recentAuditLogs: recentAuditLogs.map((log) => ({
         ...log,
         _id: log._id?.toString(),

@@ -7,57 +7,57 @@ import {
   Clock,
   CreditCard,
   Calendar,
-  ArrowUpRight,
   Sparkles,
   CheckCircle2,
   AlertCircle,
   Activity,
   ChevronLeft,
+  Trophy,
+  UserCheck,
+  TrendingUp,
+  PieChart,
+  ShieldCheck,
+  User,
 } from "lucide-react";
 
 export default function AdminOverviewTab({
   stats,
-  recentAcademies = [],
+  analytics,
+  recentAccounts = [],
   recentAuditLogs = [],
-  onSelectAcademy,
-  onNavigateToAcademies,
+  onSelectAccount,
+  onNavigateToTab,
 }) {
   const statCards = [
     {
-      title: "إجمالي الأكاديميات",
-      value: stats?.totalAcademies ?? 0,
-      icon: Building2,
+      title: "إجمالي الحسابات",
+      value: stats?.totalAccounts ?? stats?.totalAcademies ?? 0,
+      icon: Users,
       color: "from-blue-600 to-indigo-600",
       textColor: "text-blue-600",
       bgColor: "bg-blue-50 border-blue-200/80",
-      description: "المسجلة على المنصة",
+      description: "المسجلة في المنصة بالكامل",
+      tab: "accounts",
     },
     {
-      title: "أكاديميات نشطة",
-      value: stats?.activeAcademies ?? 0,
+      title: "حسابات نشطة",
+      value: stats?.activeAccounts ?? stats?.activeAcademies ?? 0,
       icon: CheckCircle2,
       color: "from-emerald-600 to-teal-600",
       textColor: "text-emerald-600",
       bgColor: "bg-emerald-50 border-emerald-200/80",
-      description: "اشتراك سارٍ وتعمل",
+      description: "سارية الصلاحية وتعمل",
+      tab: "accounts",
     },
     {
-      title: "أكاديميات موقوفة",
-      value: stats?.suspendedAcademies ?? 0,
-      icon: ShieldAlert,
-      color: "from-red-600 to-rose-600",
-      textColor: "text-red-600",
-      bgColor: "bg-red-50 border-red-200/80",
-      description: "معلقة بقرار الإدارة",
-    },
-    {
-      title: "اشتراكات منتهية",
-      value: stats?.expiredAcademies ?? 0,
-      icon: Clock,
-      color: "from-amber-600 to-orange-600",
-      textColor: "text-amber-600",
-      bgColor: "bg-amber-50 border-amber-200/80",
-      description: "تحتاج للتجديد",
+      title: "حسابات جديدة (30 يوم)",
+      value: stats?.newAccounts30d ?? 0,
+      icon: UserCheck,
+      color: "from-indigo-600 to-violet-600",
+      textColor: "text-indigo-600",
+      bgColor: "bg-indigo-50 border-indigo-200/80",
+      description: `منهم ${stats?.newAccounts7d ?? 0} بآخر أسبوع`,
+      tab: "accounts",
     },
     {
       title: "إجمالي اللاعبين",
@@ -66,40 +66,54 @@ export default function AdminOverviewTab({
       color: "from-violet-600 to-purple-600",
       textColor: "text-violet-600",
       bgColor: "bg-violet-50 border-violet-200/80",
-      description: "عبر كافة الأكاديميات",
+      description: "أبطال مسجلين بالأكاديميات",
+      tab: "players",
     },
     {
-      title: "معلقة الدفع",
-      value: stats?.pendingPaymentAcademies ?? 0,
-      icon: CreditCard,
-      color: "from-rose-600 to-pink-600",
-      textColor: "text-rose-600",
-      bgColor: "bg-rose-50 border-rose-200/80",
-      description: "بانتظار سداد الرسوم",
-    },
-    {
-      title: "إجمالي الصالات",
-      value: stats?.totalBranches ?? 0,
+      title: "إجمالي الصالات والملاعب",
+      value: stats?.totalHalls ?? stats?.totalBranches ?? 0,
       icon: Building2,
       color: "from-cyan-600 to-blue-600",
       textColor: "text-cyan-600",
       bgColor: "bg-cyan-50 border-cyan-200/80",
-      description: "الفروع والدوجو",
+      description: "صالات ومقرات تدريب",
+      tab: "halls",
     },
     {
       title: "إجمالي الفعاليات",
       value: stats?.totalEvents ?? 0,
-      icon: Calendar,
-      color: "from-fuchsia-600 to-pink-600",
-      textColor: "text-fuchsia-600",
-      bgColor: "bg-fuchsia-50 border-fuchsia-200/80",
-      description: "بطولات ورحلات",
+      icon: Trophy,
+      color: "from-amber-600 to-orange-600",
+      textColor: "text-amber-600",
+      bgColor: "bg-amber-50 border-amber-200/80",
+      description: "بطولات ورحلات منظمة",
+      tab: "events",
+    },
+    {
+      title: "فعاليات قادمة ⏱️",
+      value: stats?.upcomingEvents ?? 0,
+      icon: Clock,
+      color: "from-blue-600 to-cyan-600",
+      textColor: "text-blue-600",
+      bgColor: "bg-blue-50 border-blue-200/80",
+      description: "مواعيدها سارية للمستقبل",
+      tab: "events",
+    },
+    {
+      title: "فعاليات منتهية ✓",
+      value: stats?.completedEvents ?? 0,
+      icon: CheckCircle2,
+      color: "from-emerald-600 to-teal-600",
+      textColor: "text-emerald-600",
+      bgColor: "bg-emerald-50 border-emerald-200/80",
+      description: "فعاليات وبطولات مكتملة",
+      tab: "events",
     },
   ];
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in" dir="rtl">
-      {/* Welcome Banner */}
+      {/* 1. Welcome Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-slate-900 via-slate-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl shadow-slate-950/10">
         <div className="absolute top-0 -left-10 w-72 h-72 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -109,31 +123,40 @@ export default function AdminOverviewTab({
               <span>لوحة التحكم الرئيسية للمنصة</span>
             </div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white">
-              مرحباً بك في مركز إدارة الكباتن والأكاديميات بالمنصة 👑
+              مركز إدارة المنصة وبيانات النظام الفورية 👑
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 font-bold mt-1 max-w-xl">
-              إحصائيات فورية حية من قاعدة البيانات، مراقبة جميع حسابات الكباتن، حساب أعداد اللاعبين والصالات والفعاليات بدقة، وإدارة الاشتراكات والتعليق الفوري.
+              إحصائيات متزامنة حية من قاعدة البيانات الحالية، تغطي كافة الحسابات واللاعبين والصالات والفعاليات وسجلات العمليات بدقة متناهية.
             </p>
           </div>
 
-          <button
-            onClick={onNavigateToAcademies}
-            className="self-start sm:self-auto flex items-center gap-2 px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-red-600/30 transition cursor-pointer active:scale-95"
-          >
-            <span>إدارة جميع الكباتن</span>
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button
+              onClick={() => onNavigateToTab && onNavigateToTab("accounts")}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs shadow-lg shadow-red-600/30 transition cursor-pointer active:scale-95"
+            >
+              <span>إدارة الحسابات</span>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onNavigateToTab && onNavigateToTab("players")}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs border border-slate-700 transition cursor-pointer"
+            >
+              <span>اللاعبين</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Statistics Grid */}
+      {/* 2. Real Database Top Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statCards.map((item, idx) => {
           const Icon = item.icon;
           return (
             <div
               key={idx}
-              className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200"
+              onClick={() => item.tab && onNavigateToTab && onNavigateToTab(item.tab)}
+              className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 cursor-pointer"
             >
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div
@@ -149,74 +172,178 @@ export default function AdminOverviewTab({
               <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                 {item.value.toLocaleString("ar-EG")}
               </div>
-              <div className="text-xs font-bold text-slate-500 mt-1">
-                {item.title}
+              <div className="text-xs font-bold text-slate-500 mt-1 flex items-center justify-between">
+                <span>{item.title}</span>
+                <ChevronLeft className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition" />
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Two Column Layout: Recent Academies & Recent Audit Activity */}
+      {/* 3. Real Database Analytics & Distribution Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* User Growth Card */}
+        <div className="p-5 rounded-3xl border border-slate-200/90 bg-white shadow-xs space-y-3">
+          <div className="flex items-center gap-2 text-slate-800 font-black text-xs">
+            <TrendingUp className="w-4 h-4 text-blue-600" />
+            <span>نمو الحسابات (User Growth)</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="p-2.5 rounded-2xl bg-blue-50/60 border border-blue-100">
+              <span className="block text-[10px] font-bold text-slate-500">آخر 7 أيام</span>
+              <strong className="text-base font-black text-blue-900">
+                {analytics?.usersGrowth?.last7Days ?? stats?.newAccounts7d ?? 0}
+              </strong>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-blue-50/60 border border-blue-100">
+              <span className="block text-[10px] font-bold text-slate-500">آخر 30 يوماً</span>
+              <strong className="text-base font-black text-blue-900">
+                {analytics?.usersGrowth?.last30Days ?? stats?.newAccounts30d ?? 0}
+              </strong>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
+              <span className="block text-[10px] font-bold text-slate-500">الإجمالي</span>
+              <strong className="text-base font-black text-slate-800">
+                {stats?.totalAccounts ?? stats?.totalAcademies ?? 0}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Players Growth Card */}
+        <div className="p-5 rounded-3xl border border-slate-200/90 bg-white shadow-xs space-y-3">
+          <div className="flex items-center gap-2 text-slate-800 font-black text-xs">
+            <Users className="w-4 h-4 text-violet-600" />
+            <span>تسجيل اللاعبين (Players Growth)</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="p-2.5 rounded-2xl bg-violet-50/60 border border-violet-100">
+              <span className="block text-[10px] font-bold text-slate-500">آخر 7 أيام</span>
+              <strong className="text-base font-black text-violet-900">
+                {analytics?.playersGrowth?.last7Days ?? 0}
+              </strong>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-violet-50/60 border border-violet-100">
+              <span className="block text-[10px] font-bold text-slate-500">آخر 30 يوماً</span>
+              <strong className="text-base font-black text-violet-900">
+                {analytics?.playersGrowth?.last30Days ?? 0}
+              </strong>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
+              <span className="block text-[10px] font-bold text-slate-500">إجمالي الأبطال</span>
+              <strong className="text-base font-black text-slate-800">
+                {stats?.totalPlayers ?? 0}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Accounts Distribution Card */}
+        <div className="p-5 rounded-3xl border border-slate-200/90 bg-white shadow-xs space-y-3">
+          <div className="flex items-center gap-2 text-slate-800 font-black text-xs">
+            <PieChart className="w-4 h-4 text-emerald-600" />
+            <span>توزيع الحسابات (Accounts Distribution)</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="p-2.5 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+              <span className="block text-[10px] font-bold text-slate-500">بها لاعبون</span>
+              <strong className="text-base font-black text-emerald-900">
+                {stats?.accountsWithPlayers ?? 0}
+              </strong>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-blue-50/60 border border-blue-100">
+              <span className="block text-[10px] font-bold text-slate-500">بها صالات</span>
+              <strong className="text-base font-black text-blue-900">
+                {stats?.accountsWithHalls ?? 0}
+              </strong>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-amber-50/60 border border-amber-100">
+              <span className="block text-[10px] font-bold text-slate-500">بها فعاليات</span>
+              <strong className="text-base font-black text-amber-900">
+                {stats?.accountsWithEvents ?? 0}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Two Column Layout: Recent Accounts & Recent Audit Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Recent Academies (8 cols on desktop) */}
+        {/* Recent Accounts (7 cols on desktop) */}
         <div className="lg:col-span-7 rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-                  <Building2 className="w-4 h-4" />
+                  <Users className="w-4 h-4" />
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-black text-slate-900">
-                    أحدث الأكاديميات المسجلة
+                    أحدث الحسابات المسجلة بالنظام (Recently Joined)
                   </h2>
                   <p className="text-[11px] font-bold text-slate-400">
-                    آخر الحسابات المنضمة للمنصة
+                    كافة الحسابات بالمنصة مرتبة من الأحدث إلى الأقدم
                   </p>
                 </div>
               </div>
 
               <button
-                onClick={onNavigateToAcademies}
+                onClick={() => onNavigateToTab && onNavigateToTab("accounts")}
                 className="text-xs font-black text-red-600 hover:text-red-700 hover:underline cursor-pointer"
               >
-                عرض الكل ({stats?.totalAcademies ?? 0})
+                عرض كل الحسابات ({stats?.totalAccounts ?? stats?.totalAcademies ?? 0})
               </button>
             </div>
 
-            {recentAcademies.length === 0 ? (
+            {recentAccounts.length === 0 ? (
               <div className="text-center py-12 text-slate-400 text-xs font-bold">
-                لا توجد أكاديميات مسجلة حتى الآن
+                لا توجد حسابات مسجلة حتى الآن
               </div>
             ) : (
               <div className="space-y-2.5">
-                {recentAcademies.map((ac) => (
+                {recentAccounts.map((ac) => (
                   <div
-                    key={ac.id}
-                    onClick={() => onSelectAcademy(ac.id)}
+                    key={ac.id || ac._id}
+                    onClick={() => onSelectAccount && onSelectAccount(ac.id || ac._id)}
                     className="group flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-red-50/50 hover:border-red-200 transition cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 font-black text-xs shrink-0 shadow-2xs group-hover:border-red-300">
-                        {ac.academyName.charAt(0)}
+                        {(ac.name || ac.academyName || "U").charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <strong className="block text-xs sm:text-sm font-black text-slate-900 truncate">
-                          {ac.academyName}
-                        </strong>
+                        <div className="flex items-center gap-1.5">
+                          <strong className="block text-xs sm:text-sm font-black text-slate-900 truncate">
+                            {ac.name}
+                          </strong>
+                          {ac.isAdmin && (
+                            <span className="rounded-md bg-amber-100 px-1 py-0.2 text-[9px] font-black text-amber-800 border border-amber-200">
+                              ADMIN
+                            </span>
+                          )}
+                        </div>
                         <span className="block text-[11px] font-bold text-slate-400 truncate">
-                          المالك: {ac.name} &bull; {ac.email}
+                          {ac.academyName} &bull; {ac.email}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-left hidden sm:block">
-                        <span className="block text-xs font-black text-slate-800">
+                      <div className="text-left hidden sm:block text-xs font-bold">
+                        <span className="block text-slate-800 font-black">
                           {ac.playersCount ?? 0} لاعب
                         </span>
-                        <span className="block text-[10px] font-bold text-slate-400">
+                        <span className="block text-[10px] text-slate-400">
                           {ac.branchesCount ?? ac.hallsCount ?? 0} صالات &bull; {ac.eventsCount ?? 0} فعاليات
                         </span>
                       </div>
@@ -231,10 +358,10 @@ export default function AdminOverviewTab({
                         }`}
                       >
                         {ac.subscriptionStatus === "suspended"
-                          ? "موقوفة"
+                          ? "موقوف"
                           : ac.subscriptionStatus === "expired"
-                          ? "منتهية"
-                          : "نشطة"}
+                          ? "منتهي"
+                          : "نشط"}
                       </span>
                     </div>
                   </div>
@@ -261,6 +388,13 @@ export default function AdminOverviewTab({
                   </p>
                 </div>
               </div>
+
+              <button
+                onClick={() => onNavigateToTab && onNavigateToTab("audit")}
+                className="text-xs font-black text-indigo-600 hover:underline cursor-pointer"
+              >
+                عرض السجل الكامل
+              </button>
             </div>
 
             {recentAuditLogs.length === 0 ? (
@@ -274,7 +408,7 @@ export default function AdminOverviewTab({
                   let actionText = log.action;
                   if (log.action === "suspend_academy") {
                     badgeColor = "bg-red-100 text-red-700 border border-red-200";
-                    actionText = "تعليق أكاديمية";
+                    actionText = "تعليق حساب";
                   } else if (log.action === "reactivate_academy") {
                     badgeColor = "bg-emerald-100 text-emerald-700 border border-emerald-200";
                     actionText = "إعادة تفعيل";
@@ -283,7 +417,7 @@ export default function AdminOverviewTab({
                     actionText = "تمديد اشتراك";
                   } else if (log.action === "register_academy") {
                     badgeColor = "bg-blue-100 text-blue-700 border border-blue-200";
-                    actionText = "تسجيل أكاديمية";
+                    actionText = "تسجيل حساب";
                   } else if (log.action === "mark_subscription_paid") {
                     badgeColor = "bg-emerald-100 text-emerald-800";
                     actionText = "سداد اشتراك";
