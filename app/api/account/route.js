@@ -138,6 +138,20 @@ export async function PUT(request) {
       );
     }
 
+    if (user.role !== "admin") {
+      const isSuspended =
+        user.status === "suspended" ||
+        user.status === "disabled" ||
+        user.subscriptionStatus === "suspended" ||
+        user.subscriptionStatus === "disabled";
+      if (isSuspended) {
+        return NextResponse.json(
+          { error: "لا يمكن تعديل الحساب وهو موقوف من قِبل إدارة المنصة" },
+          { status: 403 }
+        );
+      }
+    }
+
     // Check if email changed and if another user has it
     if (email !== user.email?.toLowerCase()) {
       const existing = await users.findOne({

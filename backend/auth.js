@@ -91,12 +91,31 @@ export const { handlers, auth } = NextAuth({
 
         const role = user.role || (user.email.toLowerCase() === adminEmail ? "admin" : "user");
 
+        // CRITICAL SECURITY ENFORCEMENT:
+        // Prevent suspended / disabled accounts from logging in
+        if (role !== "admin") {
+          const isSuspended =
+            user.status === "suspended" ||
+            user.status === "disabled" ||
+            user.subscriptionStatus === "suspended" ||
+            user.subscriptionStatus === "disabled";
+
+          if (isSuspended) {
+            console.warn(`[AUTH] Blocked sign-in attempt for suspended account: ${user.email}`);
+            throw new Error(
+              `ACCOUNT_SUSPENDED: ${user.suspensionReason || "تم إيقاف هذا الحساب من قِبل إدارة المنصة. يرجى التواصل مع إدارة النظام."}`
+            );
+          }
+        }
+
         return {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
           academyName: user.academyName || "Re_action DOJO",
           role,
+          status: user.status || "active",
+          suspensionReason: user.suspensionReason || null,
         };
       },
     }),
@@ -112,6 +131,8 @@ export const { handlers, auth } = NextAuth({
         token.email = user.email;
         token.academyName = user.academyName || "Re_action DOJO";
         token.role = user.role || "user";
+        token.status = user.status || "active";
+        token.suspensionReason = user.suspensionReason || null;
       }
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
@@ -122,6 +143,10 @@ export const { handlers, auth } = NextAuth({
         if (session.user?.email) token.email = session.user.email;
         if (session.role) token.role = session.role;
         if (session.user?.role) token.role = session.user.role;
+        if (session.status) token.status = session.status;
+        if (session.user?.status) token.status = session.user.status;
+        if (session.suspensionReason) token.suspensionReason = session.suspensionReason;
+        if (session.user?.suspensionReason) token.suspensionReason = session.user.suspensionReason;
       }
       return token;
     },
@@ -132,6 +157,8 @@ export const { handlers, auth } = NextAuth({
         if (token.email) session.user.email = token.email;
         session.user.academyName = token.academyName || "Re_action DOJO";
         session.user.role = token.role || "user";
+        session.user.status = token.status || "active";
+        session.user.suspensionReason = token.suspensionReason || null;
       }
       return session;
     },

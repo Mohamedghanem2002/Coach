@@ -247,8 +247,8 @@ export async function PATCH(request, context) {
 
     const now = new Date();
 
-    // 1. Suspend Captain
-    if (action === "suspend") {
+    // 1. Suspend / Disable Captain
+    if (action === "suspend" || action === "disable") {
       const reason = (body.reason || "تم تعليق الحساب بقرار من إدارة المنصة").trim();
       updateFields.status = "suspended";
       updateFields.subscriptionStatus = "suspended";
@@ -256,11 +256,11 @@ export async function PATCH(request, context) {
 
       auditAction = "suspend_academy";
       auditDetails = { reason };
-      successMessage = `تم تعليق حساب الكابتن "${user.name}" بنجاح.`;
+      successMessage = `تم إيقاف حساب الكابتن "${user.name}" بنجاح.`;
     }
 
-    // 2. Reactivate / Activate Captain
-    else if (action === "activate" || action === "reactivate") {
+    // 2. Reactivate / Activate / Enable Captain
+    else if (action === "activate" || action === "reactivate" || action === "enable") {
       updateFields.status = "active";
       updateFields.subscriptionStatus = "active";
       updateFields.suspensionReason = null;
@@ -274,7 +274,7 @@ export async function PATCH(request, context) {
       auditDetails = {
         restoredExpiresAt: updateFields.subscriptionExpiresAt || user.subscriptionExpiresAt,
       };
-      successMessage = `تمت إعادة تفعيل حساب الكابتن "${user.name}" واستئناف الخدمة.`;
+      successMessage = `تمت إعادة تفعيل حساب الكابتن "${user.name}" واستئناف الخدمة بنجاح.`;
     }
 
     // 3. Extend Subscription
@@ -376,58 +376,105 @@ export async function DELETE(request, context) {
     const db = client.db(process.env.MONGODB_DB);
 
     const queryId = parseQueryId(id);
-    const user = await db.collection("users").findOne({ _id: queryId });
+    let user = await db.collection("users").findOne({ _id: queryId });
+    if (!user && typeof id === "string") {
+      user = await db.collection("users").findOne({ _id: id });
+    }
+    if (!user && typeof id === "string") {
+      user = await db.collection("users").findOne({ email: id.toLowerCase().trim() });
+    }
 
     if (!user) {
       return NextResponse.json(
-        { error: "حساب الكابتن غير موجود", code: "NOT_FOUND" },
+        { error: "حساب الكابتن غير موجود في قاعدة البيانات", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
-    // Protect system admin account
-    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase().trim();
-    if (user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail)) {
+    // Protect currently logged-in administrator from self-destructive deletion
+    const currentAdminId = adminCheck.admin.id;
+    if (
+      user._id.toString() === currentAdminId ||
+      (user.email && user.email.toLowerCase().trim() === adminCheck.admin.email.toLowerCase().trim())
+    ) {
       return NextResponse.json(
-        { error: "لا يمكن حذف حساب الإدارة العامة للنظام" },
+        { error: "لا يمكن للمسؤول حذف حسابه الشخصي المسجل به حالياً منعاً للتعطيل الذاتي للنظام", code: "FORBIDDEN_SELF_DELETE" },
+        { status: 403 }
+      );
+    }
+
+    // Protect system master admin
+    const masterAdminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase().trim();
+    if (user.email && user.email.toLowerCase().trim() === masterAdminEmail) {
+      return NextResponse.json(
+        { error: "لا يمكن حذف حساب المسؤول العام الرئيسي للنظام", code: "FORBIDDEN_MASTER_ADMIN" },
         { status: 403 }
       );
     }
 
     const targetAcademyId = user._id.toString();
     const targetCaptainName = user.name || user.academyName || "الكابتن";
+    const targetEmail = user.email || "";
 
-    // Sequential cascading deletion
+    // 1. Cascading deletion: Players
     const playersDel = await db.collection("players").deleteMany({ ownerId: user._id });
-    const branchesDel = await db.collection("branches").deleteMany({ ownerId: user._id });
-    const eventsDel = await db.collection("events").deleteMany({ ownerId: user._id });
+    if (user._id.toString() !== user._id) {
+      await db.collection("players").deleteMany({ ownerId: user._id.toString() });
+    }
 
+    // 2. Cascading deletion: Branches / Halls
+    const branchesDel = await db.collection("branches").deleteMany({ ownerId: user._id });
+    if (user._id.toString() !== user._id) {
+      await db.collection("branches").deleteMany({ ownerId: user._id.toString() });
+    }
+
+    // 3. Cascading deletion: Events
+    const eventsDel = await db.collection("events").deleteMany({ ownerId: user._id });
+    if (user._id.toString() !== user._id) {
+      await db.collection("events").deleteMany({ ownerId: user._id.toString() });
+    }
+
+    // 4. Cascading deletion: Cloud snapshots
+    let snapshotsDel = { deletedCount: 0 };
     try {
-      await db.collection("cloud_snapshots").deleteMany({ ownerId: user._id });
+      snapshotsDel = await db.collection("cloud_snapshots").deleteMany({ ownerId: user._id });
+      if (targetEmail) {
+        await db.collection("cloud_snapshots").deleteMany({ userEmail: targetEmail });
+      }
     } catch {}
 
+    // 5. Delete User Authentication Account
     await db.collection("users").deleteOne({ _id: user._id });
+    if (targetEmail) {
+      await db.collection("users").deleteOne({ email: targetEmail });
+    }
 
-    // Record audit log
+    // 6. Record Audit Log
     await recordAuditLog({
-      action: "delete_academy_permanent",
+      action: "delete_captain_permanent",
       targetAcademyId,
       targetAcademyName: targetCaptainName,
       adminEmail: adminCheck.admin.email,
       adminId: adminCheck.admin.id,
       details: {
-        deletedEmail: user.email,
-        deletedName: user.name,
+        deletedEmail: targetEmail,
+        deletedName: targetCaptainName,
         deletedPlayersCount: playersDel.deletedCount || 0,
         deletedBranchesCount: branchesDel.deletedCount || 0,
         deletedEventsCount: eventsDel.deletedCount || 0,
+        deletedSnapshotsCount: snapshotsDel.deletedCount || 0,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: `تم حذف حساب الكابتن "${targetCaptainName}" وجميع لاعبيه (${playersDel.deletedCount || 0} لاعب) وصالاته (${branchesDel.deletedCount || 0} صالة) نهائياً من قاعدة البيانات بنجاح.`,
+      message: `تم حذف حساب الكابتن "${targetCaptainName}" (${targetEmail}) وجميع لاعبيه (${playersDel.deletedCount || 0} لاعب) وصالاته (${branchesDel.deletedCount || 0} صالة) وفعالياته (${eventsDel.deletedCount || 0}) نهائياً من قاعدة البيانات بنجاح.`,
       deletedCaptainId: targetAcademyId,
+      deletedSummary: {
+        players: playersDel.deletedCount || 0,
+        branches: branchesDel.deletedCount || 0,
+        events: eventsDel.deletedCount || 0,
+      },
     });
   } catch (error) {
     console.error("DELETE /api/admin/captains/[id] failed:", error);

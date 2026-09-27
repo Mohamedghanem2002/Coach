@@ -434,15 +434,40 @@ export default function AdminCaptainsTab({
                               <span>عرض</span>
                             </button>
 
-                            {/* Delete */}
-                            <button
-                              type="button"
-                              onClick={() => onOpenDelete && onOpenDelete(c)}
-                              className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
-                              title="حذف الحساب نهائياً"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            {/* Suspend or Reactivate (Only for non-admin) */}
+                            {!c.isAdmin && (
+                              isSuspended ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onOpenReactivate && onOpenReactivate(c)}
+                                  className="p-1.5 rounded-xl text-emerald-600 hover:bg-emerald-50 transition cursor-pointer"
+                                  title="إعادة تفعيل الحساب واستئناف الخدمة"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => onOpenSuspend && onOpenSuspend(c)}
+                                  className="p-1.5 rounded-xl text-amber-600 hover:bg-amber-50 transition cursor-pointer"
+                                  title="إيقاف وتعليق الحساب مؤقتاً"
+                                >
+                                  <ShieldAlert className="w-4 h-4" />
+                                </button>
+                              )
+                            )}
+
+                            {/* Delete (Only for non-admin) */}
+                            {!c.isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => onOpenDelete && onOpenDelete(c)}
+                                className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                                title="حذف الحساب بجميع بياناته نهائياً"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -567,15 +592,50 @@ export default function AdminCaptainsTab({
                     </div>
                   </div>
 
-                  {/* Mobile Actions Button */}
-                  <button
-                    type="button"
-                    onClick={() => onSelectCaptain(c.id || c._id)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span>عرض تفاصيل الكابتن واللاعبين</span>
-                  </button>
+                  {/* Mobile Actions Buttons */}
+                  <div className="flex flex-col gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => onSelectCaptain(c.id || c._id)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>عرض تفاصيل الكابتن واللاعبين</span>
+                    </button>
+
+                    {!c.isAdmin && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {isSuspended ? (
+                          <button
+                            type="button"
+                            onClick={() => onOpenReactivate && onOpenReactivate(c)}
+                            className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black transition cursor-pointer"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            <span>إعادة التفعيل</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onOpenSuspend && onOpenSuspend(c)}
+                            className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-black transition cursor-pointer"
+                          >
+                            <ShieldAlert className="w-3.5 h-3.5" />
+                            <span>إيقاف مؤقت</span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => onOpenDelete && onOpenDelete(c)}
+                          className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-red-50 text-red-700 border border-red-200 text-xs font-black transition cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>حذف نهائي</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

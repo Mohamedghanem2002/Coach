@@ -342,37 +342,74 @@ export async function DELETE(request, context) {
     const db = client.db(process.env.MONGODB_DB);
 
     const queryId = parseQueryId(id);
-    const user = await db.collection("users").findOne({ _id: queryId });
+    let user = await db.collection("users").findOne({ _id: queryId });
+    if (!user && typeof id === "string") {
+      user = await db.collection("users").findOne({ _id: id });
+    }
+    if (!user && typeof id === "string") {
+      user = await db.collection("users").findOne({ email: id.toLowerCase().trim() });
+    }
 
     if (!user) {
       return NextResponse.json(
-        { error: "الأكاديمية غير موجودة", code: "NOT_FOUND" },
+        { error: "الأكاديمية غير موجودة في قاعدة البيانات", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
-    // Protect system admin account from accidental deletion
-    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase().trim();
-    if (user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail)) {
+    // Protect currently logged-in administrator from self-destructive deletion
+    const currentAdminId = adminCheck.admin.id;
+    if (
+      user._id.toString() === currentAdminId ||
+      (user.email && user.email.toLowerCase().trim() === adminCheck.admin.email.toLowerCase().trim())
+    ) {
       return NextResponse.json(
-        { error: "لا يمكن حذف حساب الإدارة العامة للنظام" },
+        { error: "لا يمكن للمسؤول حذف حسابه الشخصي المسجل به حالياً منعاً للتعطيل الذاتي للنظام", code: "FORBIDDEN_SELF_DELETE" },
+        { status: 403 }
+      );
+    }
+
+    // Protect system master admin
+    const masterAdminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase().trim();
+    if (user.email && user.email.toLowerCase().trim() === masterAdminEmail) {
+      return NextResponse.json(
+        { error: "لا يمكن حذف حساب المسؤول العام الرئيسي للنظام", code: "FORBIDDEN_MASTER_ADMIN" },
         { status: 403 }
       );
     }
 
     const targetAcademyId = user._id.toString();
     const targetAcademyName = user.academyName || user.name || "الأكاديمية";
+    const targetEmail = user.email || "";
 
-    // Cascading deletion of all academy data (players, branches, events, user)
+    // Cascading deletion of all academy data (players, branches, events, snapshots, user)
     const playersDel = await db.collection("players").deleteMany({ ownerId: user._id });
-    const branchesDel = await db.collection("branches").deleteMany({ ownerId: user._id });
-    const eventsDel = await db.collection("events").deleteMany({ ownerId: user._id });
+    if (user._id.toString() !== user._id) {
+      await db.collection("players").deleteMany({ ownerId: user._id.toString() });
+    }
 
+    const branchesDel = await db.collection("branches").deleteMany({ ownerId: user._id });
+    if (user._id.toString() !== user._id) {
+      await db.collection("branches").deleteMany({ ownerId: user._id.toString() });
+    }
+
+    const eventsDel = await db.collection("events").deleteMany({ ownerId: user._id });
+    if (user._id.toString() !== user._id) {
+      await db.collection("events").deleteMany({ ownerId: user._id.toString() });
+    }
+
+    let snapshotsDel = { deletedCount: 0 };
     try {
-      await db.collection("cloud_snapshots").deleteMany({ ownerId: user._id });
+      snapshotsDel = await db.collection("cloud_snapshots").deleteMany({ ownerId: user._id });
+      if (targetEmail) {
+        await db.collection("cloud_snapshots").deleteMany({ userEmail: targetEmail });
+      }
     } catch {}
 
     await db.collection("users").deleteOne({ _id: user._id });
+    if (targetEmail) {
+      await db.collection("users").deleteOne({ email: targetEmail });
+    }
 
     // Record audit log
     await recordAuditLog({
@@ -382,18 +419,24 @@ export async function DELETE(request, context) {
       adminEmail: adminCheck.admin.email,
       adminId: adminCheck.admin.id,
       details: {
-        deletedEmail: user.email,
-        deletedName: user.name,
+        deletedEmail: targetEmail,
+        deletedName: targetAcademyName,
         deletedPlayersCount: playersDel.deletedCount || 0,
         deletedBranchesCount: branchesDel.deletedCount || 0,
         deletedEventsCount: eventsDel.deletedCount || 0,
+        deletedSnapshotsCount: snapshotsDel.deletedCount || 0,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: `تم حذف حساب أكاديمية "${targetAcademyName}" وجميع لاعبيها (${playersDel.deletedCount || 0} لاعب) وصالاتها (${branchesDel.deletedCount || 0} صالة) نهائياً من قاعدة البيانات بنجاح.`,
+      message: `تم حذف حساب أكاديمية "${targetAcademyName}" (${targetEmail}) وجميع لاعبيها (${playersDel.deletedCount || 0} لاعب) وصالاتها (${branchesDel.deletedCount || 0} صالة) وفعالياتها (${eventsDel.deletedCount || 0}) نهائياً من قاعدة البيانات بنجاح.`,
       deletedAcademyId: targetAcademyId,
+      deletedSummary: {
+        players: playersDel.deletedCount || 0,
+        branches: branchesDel.deletedCount || 0,
+        events: eventsDel.deletedCount || 0,
+      },
     });
   } catch (error) {
     console.error("DELETE /api/admin/academies/[id] failed:", error);

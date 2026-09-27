@@ -79,7 +79,26 @@ export default function SignInPage() {
         }
       }
 
-      // 2. Perform NextAuth Sign In
+      // 2. Check if account is suspended by admin
+      try {
+        const statusRes = await fetch("/api/auth/check-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: values.email }),
+        });
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          if (statusData?.suspended) {
+            setError(
+              `⛔ تم إيقاف هذا الحساب من قِبل إدارة المنصة.\nسبب الإيقاف: ${statusData.reason}\nيرجى التواصل مع إدارة النظام: ${statusData.adminEmail || "mg0447837@gmail.com"}`
+            );
+            setBusy(false);
+            return;
+          }
+        }
+      } catch {}
+
+      // 3. Perform NextAuth Sign In
       const result = await signIn("credentials", {
         email: values.email,
         password: values.password,
@@ -87,6 +106,25 @@ export default function SignInPage() {
       });
 
       if (result?.error) {
+        // Re-check if account was suspended
+        try {
+          const recheck = await fetch("/api/auth/check-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: values.email }),
+          });
+          if (recheck.ok) {
+            const recheckData = await recheck.json();
+            if (recheckData?.suspended) {
+              setError(
+                `⛔ تم إيقاف هذا الحساب من قِبل إدارة المنصة.\nسبب الإيقاف: ${recheckData.reason}\nيرجى التواصل مع الإدارة: ${recheckData.adminEmail || "mg0447837@gmail.com"}`
+              );
+              setBusy(false);
+              return;
+            }
+          }
+        } catch {}
+
         setError(
           mode === "admin"
             ? "البريد الإلكتروني أو كلمة المرور الإدارية غير صحيحة"

@@ -371,10 +371,19 @@ export function DeleteAcademyModal({ isOpen, onClose, onConfirm, academy, isBusy
 
   if (!isOpen || !academy) return null;
 
-  const targetName = academy.academyName || academy.name || "الأكاديمية";
+  const targetName = academy.academyName || academy.name || "الكابتن";
+  const normalized = confirmInput.trim().toUpperCase();
+  const isConfirmed = normalized === "DELETE" || normalized === "حذف";
+
+  const handleClose = () => {
+    setConfirmInput("");
+    onClose();
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isConfirmed) return;
+    setConfirmInput("");
     onConfirm();
   };
 
@@ -383,7 +392,7 @@ export function DeleteAcademyModal({ isOpen, onClose, onConfirm, academy, isBusy
       <div className="relative w-full max-w-lg rounded-3xl border border-rose-300 bg-white p-6 sm:p-8 shadow-2xl shadow-black/40 animate-scale-up text-right">
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           disabled={isBusy}
           className="absolute top-5 left-5 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
         >
@@ -397,7 +406,7 @@ export function DeleteAcademyModal({ isOpen, onClose, onConfirm, academy, isBusy
           </div>
           <div>
             <h3 className="text-xl font-black text-rose-700">
-              حذف الأكاديمية نهائياً ⚠️
+              حذف الحساب نهائياً ⚠️
             </h3>
             <p className="text-xs font-bold text-slate-500">
               {targetName} &bull; {academy.email}
@@ -409,34 +418,36 @@ export function DeleteAcademyModal({ isOpen, onClose, onConfirm, academy, isBusy
         <div className="p-4 mb-4 rounded-2xl border border-rose-200 bg-rose-50 text-rose-900 text-xs font-bold leading-relaxed space-y-2">
           <div className="flex items-center gap-1.5 font-black text-rose-700 text-sm">
             <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>تحذير شديد الأهمية (حذف نهائي لا يمكن الرجوع عنه):</span>
+            <span>تحذير شديد الأهمية (حذف كلي لا يمكن التراجع عنه):</span>
           </div>
           <p>
-            هذا الإجراء سيقوم بحذف حساب الأكاديمية بالكامل من قاعدة البيانات، ويتضمن ذلك:
+            سيتم مسح حساب الكابتن بالكامل من قاعدة البيانات وكافة البيانات التابعة له فوراً:
           </p>
           <ul className="list-disc list-inside space-y-1 text-slate-700 pr-1 font-semibold">
             <li>حساب الكابتن وبيانات الدخول كاملة.</li>
             <li>
-              جميع اللاعبين المسجلين ({academy.playersCount ?? 0} لاعب) وسجلات حضورهم وغيابهم.
+              جميع اللاعبين المسجلين ({academy.playersCount ?? 0} لاعب) وسجلاتهم.
             </li>
             <li>
-              جميع الصالات وفروع التدريب ({academy.branchesCount ?? 0} صالة).
+              جميع الصالات وفروع التدريب ({academy.branchesCount ?? academy.hallsCount ?? 0} صالة).
             </li>
-            <li>جميع الفعاليات وحساباتها المالية وسجلات الاشتراكات.</li>
+            <li>جميع الفعاليات وحساباتها المالية ({academy.eventsCount ?? 0} فعالية).</li>
+            <li>النسخ السحابية وسجلات التدقيق المرتبطة.</li>
           </ul>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-black text-slate-700 mb-1.5">
-              للتأكيد، اكتب كلمة <strong className="text-rose-600">&ldquo;حذف&rdquo;</strong> في المربع أدناه:
+              للتأكيد، اكتب كلمة <strong className="text-rose-600 font-mono">DELETE</strong> أو <strong className="text-rose-600">&ldquo;حذف&rdquo;</strong> في المربع أدناه:
             </label>
             <input
               type="text"
               value={confirmInput}
-              onChange={(e) => setConfirmInput(e.target.value.trim())}
-              placeholder='اكتب: حذف'
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder="اكتب DELETE أو حذف للتأكيد"
               className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-center text-sm font-black text-slate-900 outline-none focus:border-rose-500 focus:bg-white focus:ring-2 focus:ring-rose-100 transition"
+              autoFocus
               required
             />
           </div>
@@ -444,7 +455,7 @@ export function DeleteAcademyModal({ isOpen, onClose, onConfirm, academy, isBusy
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isBusy}
               className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-black transition cursor-pointer"
             >
@@ -452,18 +463,18 @@ export function DeleteAcademyModal({ isOpen, onClose, onConfirm, academy, isBusy
             </button>
             <button
               type="submit"
-              disabled={isBusy || confirmInput !== "حذف"}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 disabled:opacity-50 text-white text-xs font-black shadow-md shadow-rose-600/30 transition cursor-pointer"
+              disabled={isBusy || !isConfirmed}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-black shadow-md shadow-rose-600/30 transition cursor-pointer"
             >
               {isBusy ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>جارٍ الحذف الشامل...</span>
+                  <span>جارٍ الحذف الشامل من قاعدة البيانات...</span>
                 </>
               ) : (
                 <>
                   <Trash2 className="w-4 h-4" />
-                  <span>حذف الأكاديمية نهائياً من الداتا بيز</span>
+                  <span>حذف الحساب بجميع بياناته نهائياً</span>
                 </>
               )}
             </button>

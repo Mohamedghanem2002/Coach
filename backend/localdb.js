@@ -665,17 +665,14 @@ export function getLocalDbClient() {
             },
 
             async deleteOne(filter = {}) {
-              let list = [];
-              if (collectionName === "branches") list = currentData.branches;
-              if (collectionName === "players") list = currentData.players;
-              if (collectionName === "events") list = currentData.events || [];
-              if (collectionName === "cloud_snapshots") list = currentData.cloud_snapshots || [];
-              if (collectionName === "users") list = currentData.users;
+              const list = currentData[collectionName] || [];
 
               const idx = list.findIndex((item) => {
-                if (filter.ownerId && item.ownerId !== filter.ownerId) return false;
+                if (filter.ownerId && !matchId(item.ownerId, filter.ownerId)) return false;
+                if (filter.userEmail && (item.userEmail || "").toLowerCase().trim() !== (filter.userEmail || "").toLowerCase().trim()) return false;
                 if (filter.name && item.name !== filter.name) return false;
                 if (filter._id && !matchId(item._id, filter._id)) return false;
+                if (filter.email && (item.email || "").toLowerCase().trim() !== (filter.email || "").toLowerCase().trim()) return false;
                 return true;
               });
 
@@ -688,26 +685,22 @@ export function getLocalDbClient() {
             },
 
             async deleteMany(filter = {}) {
-              let list = [];
-              if (collectionName === "branches") list = currentData.branches;
-              else if (collectionName === "players") list = currentData.players;
-              else if (collectionName === "events") list = currentData.events || [];
-              else if (collectionName === "users") list = currentData.users;
-              else if (collectionName === "cloud_snapshots") list = currentData.cloud_snapshots || [];
-
+              const list = currentData[collectionName] || [];
               const initialCount = list.length;
               const remaining = list.filter((item) => {
+                // If filter is empty, delete all items
+                if (Object.keys(filter).length === 0) return false;
+
+                // Match against provided filters
                 if (filter.ownerId && !matchId(item.ownerId, filter.ownerId)) return true;
+                if (filter.userEmail && (item.userEmail || "").toLowerCase().trim() !== (filter.userEmail || "").toLowerCase().trim()) return true;
                 if (filter._id && !matchId(item._id, filter._id)) return true;
-                return false; // delete item
+                if (filter.email && (item.email || "").toLowerCase().trim() !== (filter.email || "").toLowerCase().trim()) return true;
+                return false; // all filter conditions met -> delete item
               });
 
               const deletedCount = initialCount - remaining.length;
-              if (collectionName === "branches") currentData.branches = remaining;
-              else if (collectionName === "players") currentData.players = remaining;
-              else if (collectionName === "events") currentData.events = remaining;
-              else if (collectionName === "users") currentData.users = remaining;
-              else if (collectionName === "cloud_snapshots") currentData.cloud_snapshots = remaining;
+              currentData[collectionName] = remaining;
 
               if (deletedCount > 0) {
                 saveData(currentData);

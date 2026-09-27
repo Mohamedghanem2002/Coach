@@ -147,13 +147,18 @@ export default function Home() {
           router.push("/auth/signin");
           return;
         }
-        if (playersResponse.status === 403 || branchesResponse.status === 403) {
+        if (playersResponse.status === 403 || branchesResponse.status === 403 || eventsResponse.status === 403) {
           const pErr = await playersResponse.json().catch(() => ({}));
           const bErr = await branchesResponse.json().catch(() => ({}));
+          const eErr = await eventsResponse.json().catch(() => ({}));
           const inactive =
-            pErr.code === "SUBSCRIPTION_INACTIVE" || pErr.error === "SUBSCRIPTION_INACTIVE"
+            (pErr.code === "SUBSCRIPTION_INACTIVE" || pErr.code === "ACCOUNT_SUSPENDED" || pErr.error === "SUBSCRIPTION_INACTIVE" || pErr.error === "ACCOUNT_SUSPENDED")
               ? pErr
-              : (bErr.code === "SUBSCRIPTION_INACTIVE" || bErr.error === "SUBSCRIPTION_INACTIVE" ? bErr : null);
+              : (bErr.code === "SUBSCRIPTION_INACTIVE" || bErr.code === "ACCOUNT_SUSPENDED" || bErr.error === "SUBSCRIPTION_INACTIVE" || bErr.error === "ACCOUNT_SUSPENDED")
+              ? bErr
+              : (eErr.code === "SUBSCRIPTION_INACTIVE" || eErr.code === "ACCOUNT_SUSPENDED" || eErr.error === "SUBSCRIPTION_INACTIVE" || eErr.error === "ACCOUNT_SUSPENDED")
+              ? eErr
+              : null;
           if (inactive && !cancelled) {
             setSubscriptionInactive(inactive);
             setLoading(false);

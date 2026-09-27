@@ -86,10 +86,12 @@ export async function requireActiveTenant() {
     };
   }
 
-  // 1. Check if academy is suspended by administrator
+  // 1. Check if captain account is suspended or disabled by administrator
   const isSuspended =
     user.status === "suspended" ||
-    user.subscriptionStatus === "suspended";
+    user.status === "disabled" ||
+    user.subscriptionStatus === "suspended" ||
+    user.subscriptionStatus === "disabled";
 
   if (isSuspended) {
     return {
