@@ -24,16 +24,16 @@
       "phone": "01011223344",
       "passwordHash": "$2b$12$k4vtdRsaJhGrR8zkAUdNv.uPUtB1YR5QVf9MdfyYLQsFg1A9Dy.RW",
       "role": "user",
-      "status": "suspended",
-      "subscriptionStatus": "suspended",
+      "status": "active",
+      "subscriptionStatus": "active",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T17:53:02.026Z",
       "subscriptionExpiresAt": "2026-10-27T17:53:02.026Z",
       "subscriptionPaid": true,
       "createdAt": "2026-09-27T17:53:02.026Z",
       "_id": "6ab957fe2dda5fd1a73929ca",
-      "updatedAt": "2026-09-27T20:10:32.926Z",
-      "suspensionReason": "مخالفة شروط وسياسة المنصة التجريبية"
+      "updatedAt": "2026-09-27T20:10:33.132Z",
+      "suspensionReason": null
     },
     {
       "name": "كابتن أحمد سامي",
@@ -68,6 +68,22 @@
       "_id": "6ab959f9a0992fdb8db3cc42",
       "updatedAt": "2026-09-27T18:01:29.830Z",
       "suspensionReason": null
+    },
+    {
+      "name": "كابتن اختبار المنظومة",
+      "academyName": "أكاديمية النخبة للكاراتيه",
+      "email": "coach_auth_test@example.com",
+      "phone": "",
+      "passwordHash": "$2b$12$e.RBcZA8pdXielefkEGTFuYy5QUaDYqoRTxkdHmB19Zkx4568efoi",
+      "role": "user",
+      "status": "active",
+      "subscriptionStatus": "active",
+      "subscriptionPlan": "trial",
+      "subscriptionStartedAt": "2026-09-27T20:58:41.795Z",
+      "subscriptionExpiresAt": "2026-10-27T20:58:41.795Z",
+      "subscriptionPaid": true,
+      "createdAt": "2026-09-27T20:58:41.795Z",
+      "_id": "6ab98382a8a4820d9e786c84"
     }
   ],
   "branches": [
@@ -945,6 +961,47 @@
       },
       "createdAt": "2026-09-27T19:56:29.813Z",
       "_id": "6ab974eda8a4820d9e786c80"
+    },
+    {
+      "action": "suspend_academy",
+      "targetAcademyId": "6ab957fe2dda5fd1a73929ca",
+      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "reason": "مخالفة شروط وسياسة المنصة التجريبية"
+      },
+      "createdAt": "2026-09-27T20:10:32.931Z",
+      "_id": "6ab97838a8a4820d9e786c81"
+    },
+    {
+      "action": "reactivate_academy",
+      "targetAcademyId": "6ab957fe2dda5fd1a73929ca",
+      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "restoredExpiresAt": "2026-10-27T17:53:02.026Z"
+      },
+      "createdAt": "2026-09-27T20:10:33.133Z",
+      "_id": "6ab97839a8a4820d9e786c82"
+    },
+    {
+      "action": "delete_captain_permanent",
+      "targetAcademyId": "6ab999999999999999999999",
+      "targetAcademyName": "كابتن حذف تجريبي",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "deletedEmail": "dummy_delete_test@example.com",
+        "deletedName": "كابتن حذف تجريبي",
+        "deletedPlayersCount": 1,
+        "deletedBranchesCount": 1,
+        "deletedEventsCount": 0,
+        "deletedSnapshotsCount": 0
+      },
+      "createdAt": "2026-09-27T20:10:33.771Z",
+      "_id": "6ab97839a8a4820d9e786c83"
     }
   ]
 }

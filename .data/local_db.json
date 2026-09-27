@@ -68,6 +68,72 @@
       "_id": "6ab959f9a0992fdb8db3cc42",
       "updatedAt": "2026-09-27T18:01:29.830Z",
       "suspensionReason": null
+    },
+    {
+      "name": "كابتن اختبار المنظومة",
+      "academyName": "أكاديمية النخبة للكاراتيه",
+      "email": "coach_auth_test@example.com",
+      "phone": "",
+      "passwordHash": "$2b$12$e.RBcZA8pdXielefkEGTFuYy5QUaDYqoRTxkdHmB19Zkx4568efoi",
+      "role": "user",
+      "status": "active",
+      "subscriptionStatus": "active",
+      "subscriptionPlan": "trial",
+      "subscriptionStartedAt": "2026-09-27T20:58:41.795Z",
+      "subscriptionExpiresAt": "2026-10-27T20:58:41.795Z",
+      "subscriptionPaid": true,
+      "createdAt": "2026-09-27T20:58:41.795Z",
+      "_id": "6ab98382a8a4820d9e786c84"
+    },
+    {
+      "name": "كابتن اختبار المنظومة",
+      "academyName": "أكاديمية النخبة للكاراتيه",
+      "email": "coach_auth_1790542807241@example.com",
+      "phone": "",
+      "passwordHash": "$2b$12$ru.BiuU8TMvNbUcTDyFLZOW7b8gKsDq7rIoOXDEyFLCDHvSULSo62",
+      "role": "user",
+      "status": "active",
+      "subscriptionStatus": "active",
+      "subscriptionPlan": "trial",
+      "subscriptionStartedAt": "2026-09-27T21:00:07.324Z",
+      "subscriptionExpiresAt": "2026-10-27T21:00:07.324Z",
+      "subscriptionPaid": true,
+      "createdAt": "2026-09-27T21:00:07.324Z",
+      "_id": "6ab983d7a8a4820d9e786c86"
+    },
+    {
+      "name": "كابتن اختبار المنظومة",
+      "academyName": "أكاديمية النخبة للكاراتيه",
+      "email": "coach_auth_1790542900742@example.com",
+      "phone": "",
+      "passwordHash": "$2b$12$vFr8Dnc6PDiqy9N1S5Jn8.G3516A32.YPKHH8kZPhv25Bm3ORXPzO",
+      "role": "user",
+      "status": "active",
+      "subscriptionStatus": "active",
+      "subscriptionPlan": "trial",
+      "subscriptionStartedAt": "2026-09-27T21:01:40.813Z",
+      "subscriptionExpiresAt": "2026-10-27T21:01:40.813Z",
+      "subscriptionPaid": true,
+      "createdAt": "2026-09-27T21:01:40.813Z",
+      "_id": "6ab98435a8a4820d9e786c88"
+    },
+    {
+      "name": "كابتن اختبار المنظومة",
+      "academyName": "أكاديمية النخبة للكاراتيه",
+      "email": "coach_auth_1790542971733@example.com",
+      "phone": "",
+      "passwordHash": "$2b$12$gjjZGkVO0E9ZBIshwbI25e5OoGcBGslLIf9bC9S6cBb592e.tLPQy",
+      "role": "user",
+      "status": "suspended",
+      "subscriptionStatus": "suspended",
+      "subscriptionPlan": "trial",
+      "subscriptionStartedAt": "2026-09-27T21:02:51.807Z",
+      "subscriptionExpiresAt": "2026-10-27T21:02:51.807Z",
+      "subscriptionPaid": true,
+      "createdAt": "2026-09-27T21:02:51.807Z",
+      "_id": "6ab9847ca8a4820d9e786c8a",
+      "updatedAt": "2026-09-27T21:02:53.751Z",
+      "suspensionReason": "إيقاف أمني تجريبي لاختبار منظومة الحظر"
     }
   ],
   "branches": [
@@ -986,6 +1052,139 @@
       },
       "createdAt": "2026-09-27T20:10:33.771Z",
       "_id": "6ab97839a8a4820d9e786c83"
+    },
+    {
+      "action": "register_academy",
+      "targetAcademyId": "6ab98382a8a4820d9e786c84",
+      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
+      "adminEmail": "نظام التسجيل التلقائي",
+      "adminId": null,
+      "details": {
+        "ownerName": "كابتن اختبار المنظومة",
+        "email": "coach_auth_test@example.com",
+        "phone": "",
+        "plan": "trial",
+        "expiresAt": "2026-10-27T20:58:41.795Z"
+      },
+      "createdAt": "2026-09-27T20:58:42.254Z",
+      "_id": "6ab98382a8a4820d9e786c85"
+    },
+    {
+      "action": "register_academy",
+      "targetAcademyId": "6ab983d7a8a4820d9e786c86",
+      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
+      "adminEmail": "نظام التسجيل التلقائي",
+      "adminId": null,
+      "details": {
+        "ownerName": "كابتن اختبار المنظومة",
+        "email": "coach_auth_1790542807241@example.com",
+        "phone": "",
+        "plan": "trial",
+        "expiresAt": "2026-10-27T21:00:07.324Z"
+      },
+      "createdAt": "2026-09-27T21:00:07.754Z",
+      "_id": "6ab983d7a8a4820d9e786c87"
+    },
+    {
+      "action": "register_academy",
+      "targetAcademyId": "6ab98435a8a4820d9e786c88",
+      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
+      "adminEmail": "نظام التسجيل التلقائي",
+      "adminId": null,
+      "details": {
+        "ownerName": "كابتن اختبار المنظومة",
+        "email": "coach_auth_1790542900742@example.com",
+        "phone": "",
+        "plan": "trial",
+        "expiresAt": "2026-10-27T21:01:40.813Z"
+      },
+      "createdAt": "2026-09-27T21:01:41.194Z",
+      "_id": "6ab98435a8a4820d9e786c89"
+    },
+    {
+      "action": "register_academy",
+      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
+      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
+      "adminEmail": "نظام التسجيل التلقائي",
+      "adminId": null,
+      "details": {
+        "ownerName": "كابتن اختبار المنظومة",
+        "email": "coach_auth_1790542971733@example.com",
+        "phone": "",
+        "plan": "trial",
+        "expiresAt": "2026-10-27T21:02:51.807Z"
+      },
+      "createdAt": "2026-09-27T21:02:52.194Z",
+      "_id": "6ab9847ca8a4820d9e786c8b"
+    },
+    {
+      "action": "suspend_academy",
+      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
+      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "reason": "إيقاف أمني تجريبي لاختبار منظومة الحظر"
+      },
+      "createdAt": "2026-09-27T21:02:53.752Z",
+      "_id": "6ab9847da8a4820d9e786c8c"
+    },
+    {
+      "action": "register_academy",
+      "targetAcademyId": "6ab9856ea8a4820d9e786c8d",
+      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
+      "adminEmail": "نظام التسجيل التلقائي",
+      "adminId": null,
+      "details": {
+        "ownerName": "كابتن اختبار المنظومة",
+        "email": "coach_auth_1790543214041@example.com",
+        "phone": "",
+        "plan": "trial",
+        "expiresAt": "2026-10-27T21:06:54.114Z"
+      },
+      "createdAt": "2026-09-27T21:06:54.591Z",
+      "_id": "6ab9856ea8a4820d9e786c8e"
+    },
+    {
+      "action": "suspend_academy",
+      "targetAcademyId": "6ab9856ea8a4820d9e786c8d",
+      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "reason": "إيقاف أمني تجريبي لاختبار منظومة الحظر"
+      },
+      "createdAt": "2026-09-27T21:06:56.091Z",
+      "_id": "6ab98570a8a4820d9e786c8f"
+    },
+    {
+      "action": "reactivate_academy",
+      "targetAcademyId": "6ab9856ea8a4820d9e786c8d",
+      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "restoredExpiresAt": "2026-10-27T21:06:54.114Z"
+      },
+      "createdAt": "2026-09-27T21:06:56.181Z",
+      "_id": "6ab98570a8a4820d9e786c90"
+    },
+    {
+      "action": "delete_captain_permanent",
+      "targetAcademyId": "6ab9856ea8a4820d9e786c8d",
+      "targetAcademyName": "كابتن اختبار المنظومة",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "deletedEmail": "coach_auth_1790543214041@example.com",
+        "deletedName": "كابتن اختبار المنظومة",
+        "deletedPlayersCount": 0,
+        "deletedBranchesCount": 0,
+        "deletedEventsCount": 0,
+        "deletedSnapshotsCount": 0
+      },
+      "createdAt": "2026-09-27T21:06:58.878Z",
+      "_id": "6ab98572a8a4820d9e786c91"
     }
   ]
 }
