@@ -17,6 +17,7 @@ import {
   MoreVertical,
   Plus,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 
 export default function AdminAcademiesTab({
@@ -31,6 +32,7 @@ export default function AdminAcademiesTab({
   onOpenSuspend,
   onOpenExtend,
   onOpenReactivate,
+  onOpenDelete,
   onTogglePayment,
   loading = false,
   onRefresh,
@@ -146,8 +148,8 @@ export default function AdminAcademiesTab({
               <table className="w-full text-right text-xs">
                 <thead className="bg-slate-50/80 text-slate-500 font-black border-b border-slate-200/80">
                   <tr>
-                    <th className="p-4">الأكاديمية والمالك</th>
-                    <th className="p-4">عدد اللاعبين</th>
+                    <th className="p-4">الأكاديمية والكابتن</th>
+                    <th className="p-4">اللاعبين والصالات وتفاصيلها</th>
                     <th className="p-4">حالة الاشتراك</th>
                     <th className="p-4">انتهاء الصلاحية</th>
                     <th className="p-4">حالة السداد</th>
@@ -190,11 +192,35 @@ export default function AdminAcademiesTab({
                           </div>
                         </td>
 
-                        {/* Player Count (RULE 5) */}
+                        {/* Player & Branch Breakdown */}
                         <td className="p-4">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-violet-50 text-violet-800 border border-violet-100">
-                            <Users className="w-3.5 h-3.5 text-violet-600" />
-                            <strong className="text-xs font-black">{ac.playersCount} لاعب</strong>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-violet-50 text-violet-800 border border-violet-100 text-xs font-black">
+                                <Users className="w-3.5 h-3.5 text-violet-600" />
+                                <span>{ac.playersCount ?? 0} لاعب</span>
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-800 border border-blue-100 text-xs font-black">
+                                <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                                <span>{ac.branchesCount ?? 0} صالة</span>
+                              </span>
+                            </div>
+
+                            {/* Details of each branch and its player count */}
+                            {Array.isArray(ac.branchesDetails) && ac.branchesDetails.length > 0 && (
+                              <div className="flex flex-wrap gap-1 max-w-[280px]">
+                                {ac.branchesDetails.map((b) => (
+                                  <span
+                                    key={b.id || b.name}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200/80"
+                                    title={`صالة: ${b.name} (${b.playersCount} لاعب)`}
+                                  >
+                                    <span className="truncate max-w-[120px]">{b.name}:</span>
+                                    <strong className="text-red-600 font-black">{b.playersCount} لاعب</strong>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </td>
 
@@ -293,10 +319,22 @@ export default function AdminAcademiesTab({
                               <button
                                 type="button"
                                 onClick={() => onOpenSuspend(ac)}
-                                className="px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-[11px] font-black transition cursor-pointer"
-                                title="تعليق الأكاديمية"
+                                className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-black transition cursor-pointer"
+                                title="إيقاف الأكاديمية مؤقتاً مع إرسال رسالة سبب التوقف"
                               >
-                                تعليق
+                                إيقاف
+                              </button>
+                            )}
+
+                            {/* Delete Permanently Button */}
+                            {onOpenDelete && (
+                              <button
+                                type="button"
+                                onClick={() => onOpenDelete(ac)}
+                                className="p-2 rounded-xl text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 transition cursor-pointer"
+                                title="حذف الأكاديمية وجميع بياناتها نهائياً من قاعدة البيانات"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
@@ -351,10 +389,14 @@ export default function AdminAcademiesTab({
                   </div>
 
                   {/* Mobile Quick Stats Row */}
-                  <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-100 text-center text-xs">
+                  <div className="grid grid-cols-4 gap-1.5 py-2 border-y border-slate-100 text-center text-xs">
                     <div>
                       <span className="block text-[10px] font-bold text-slate-400">اللاعبين</span>
-                      <strong className="font-black text-violet-700">{ac.playersCount}</strong>
+                      <strong className="font-black text-violet-700">{ac.playersCount ?? 0}</strong>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-bold text-slate-400">الصالات</span>
+                      <strong className="font-black text-blue-700">{ac.branchesCount ?? 0}</strong>
                     </div>
                     <div>
                       <span className="block text-[10px] font-bold text-slate-400">المتبقي</span>
@@ -376,8 +418,22 @@ export default function AdminAcademiesTab({
                     </div>
                   </div>
 
+                  {/* Mobile Branches Breakdown */}
+                  {Array.isArray(ac.branchesDetails) && ac.branchesDetails.length > 0 && (
+                    <div className="flex flex-wrap gap-1 py-1">
+                      {ac.branchesDetails.map((b) => (
+                        <span
+                          key={b.id || b.name}
+                          className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200"
+                        >
+                          {b.name}: <strong className="text-red-600 font-black">{b.playersCount} لاعب</strong>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Mobile Action Buttons */}
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 pt-1">
                     <button
                       type="button"
                       onClick={() => onSelectAcademy(ac.id)}
@@ -404,9 +460,19 @@ export default function AdminAcademiesTab({
                       <button
                         type="button"
                         onClick={() => onOpenSuspend(ac)}
-                        className="flex-1 py-2 rounded-xl bg-red-50 text-red-700 border border-red-200 text-xs font-black transition cursor-pointer"
+                        className="flex-1 py-2 rounded-xl bg-amber-50 text-amber-800 text-xs font-black transition cursor-pointer"
                       >
-                        تعليق
+                        إيقاف
+                      </button>
+                    )}
+                    {onOpenDelete && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenDelete(ac)}
+                        className="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
+                        title="حذف نهائي"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>

@@ -11,6 +11,7 @@ import {
   Lock,
   Calendar,
   CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function SubscriptionSuspended({
@@ -92,16 +93,30 @@ export default function SubscriptionSuspended({
           {/* Title */}
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-3">
             {isSuspendedByAdmin
-              ? "الخدمة غير متاحة مؤقتاً"
+              ? "تم إيقاف حساب الأكاديمية مؤقتاً"
               : "انتهت فترة اشتراك الأكاديمية"}
           </h2>
 
-          <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed max-w-md mx-auto mb-6">
-            {message ||
-              (isSuspendedByAdmin
-                ? "تم تعليق خدمة الأكاديمية مؤقتاً من قبل إدارة المنصة. يرجى التواصل مع الإدارة لاستئناف التفعيل."
-                : "انتهت فترة صلاحية الاشتراك في النظام. يرجى سداد الاشتراك لتجديد الصلاحية ومواصلة الاستخدام.")}
-          </p>
+          {/* Prominent Admin Suspension Reason Box */}
+          {isSuspendedByAdmin ? (
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl border-2 border-red-500/40 bg-red-950/40 text-right shadow-lg">
+              <div className="flex items-center gap-2 text-red-400 font-black text-xs sm:text-sm mb-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
+                <span>سبب الإيقاف من إدارة المنصة:</span>
+              </div>
+              <p className="text-sm sm:text-base text-red-100 font-bold leading-relaxed whitespace-pre-wrap bg-red-900/30 p-3 rounded-xl border border-red-800/50">
+                {message || "تم تعليق خدمة الأكاديمية مؤقتاً من قبل إدارة المنصة."}
+              </p>
+              <p className="text-xs text-slate-400 mt-2 font-medium">
+                يرجى مراجعة سبب الإيقاف أعلاه والتواصل مع إدارة المنصة لاستئناف فتح وتفعيل الحساب.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed max-w-md mx-auto mb-6">
+              {message ||
+                "انتهت فترة صلاحية الاشتراك في النظام. يرجى سداد الاشتراك لتجديد الصلاحية ومواصلة الاستخدام."}
+            </p>
+          )}
 
           {/* Details / Safe Data Assurance Card */}
           <div className="space-y-3 mb-8 text-right">

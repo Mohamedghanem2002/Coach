@@ -11,6 +11,7 @@ import {
   SuspendModal,
   ExtendSubscriptionModal,
   ReactivateModal,
+  DeleteAcademyModal,
 } from "../components/admin/AcademyActionModals";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
 
@@ -34,6 +35,7 @@ export default function AdminDashboard() {
   const [suspendTargetAcademy, setSuspendTargetAcademy] = useState(null);
   const [extendTargetAcademy, setExtendTargetAcademy] = useState(null);
   const [reactivateTargetAcademy, setReactivateTargetAcademy] = useState(null);
+  const [deleteTargetAcademy, setDeleteTargetAcademy] = useState(null);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -272,6 +274,31 @@ export default function AdminDashboard() {
     }
   };
 
+  // 7. Admin Action: Permanently Delete Academy (Cascade Delete)
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetAcademy) return;
+    setActionBusy(true);
+    try {
+      const res = await fetch(`/api/admin/academies/${deleteTargetAcademy.id || deleteTargetAcademy._id}`, {
+        method: "DELETE",
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "فشل حذف الأكاديمية");
+
+      showToast(result.message || "تم حذف الأكاديمية وجميع بياناتها نهائياً");
+      setDeleteTargetAcademy(null);
+      if (inspectAcademyId === (deleteTargetAcademy.id || deleteTargetAcademy._id)) {
+        setInspectAcademyId(null);
+      }
+      loadOverview();
+      refreshAcademies();
+    } catch (err) {
+      showToast(err.message || "تعذر حذف الأكاديمية", "error");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   if (sessionStatus === "loading" || loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-500" dir="rtl">
@@ -317,6 +344,7 @@ export default function AdminDashboard() {
               onOpenSuspend={(ac) => setSuspendTargetAcademy(ac)}
               onOpenExtend={(ac) => setExtendTargetAcademy(ac)}
               onOpenReactivate={(ac) => setReactivateTargetAcademy(ac)}
+              onOpenDelete={(ac) => setDeleteTargetAcademy(ac)}
               onTogglePayment={handleTogglePayment}
               loading={academiesLoading}
               onRefresh={() => {
@@ -338,6 +366,7 @@ export default function AdminDashboard() {
         onOpenSuspend={(ac) => setSuspendTargetAcademy(ac)}
         onOpenExtend={(ac) => setExtendTargetAcademy(ac)}
         onOpenReactivate={(ac) => setReactivateTargetAcademy(ac)}
+        onOpenDelete={(ac) => setDeleteTargetAcademy(ac)}
         onTogglePayment={handleTogglePayment}
       />
 
@@ -363,6 +392,14 @@ export default function AdminDashboard() {
         onClose={() => setReactivateTargetAcademy(null)}
         onConfirm={handleReactivateConfirm}
         academy={reactivateTargetAcademy}
+        isBusy={actionBusy}
+      />
+
+      <DeleteAcademyModal
+        isOpen={Boolean(deleteTargetAcademy)}
+        onClose={() => setDeleteTargetAcademy(null)}
+        onConfirm={handleDeleteConfirm}
+        academy={deleteTargetAcademy}
         isBusy={actionBusy}
       />
 

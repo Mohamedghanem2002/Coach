@@ -9,6 +9,9 @@ import {
   Clock,
   Sparkles,
   RotateCcw,
+  Trash2,
+  Users,
+  Building2,
 } from "lucide-react";
 
 /**
@@ -63,15 +66,35 @@ export function SuspendModal({ isOpen, onClose, onConfirm, academy, isBusy }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-black text-slate-700 mb-1.5">
-              سبب التعليق (سيظهر لمالك الأكاديمية عند محاولة الدخول):
+              سبب التعليق (سيظهر لمالك الأكاديمية على شاشته فوراً عند محاولة الدخول):
             </label>
             <textarea
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="مثال: انتهاء صلاحية الاشتراك ولم يتم التجديد / يرجى التواصل مع الإدارة..."
+              placeholder="اكتب هنا سبب إيقاف الحساب الذي سيظهر للكابتن..."
               className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 p-3 text-sm font-bold text-slate-900 outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100 transition"
+              required
             />
+            {/* Quick Suggestions */}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <span className="text-[10px] font-bold text-slate-400 self-center">عبارات سريعة:</span>
+              {[
+                "يرجى سداد الاشتراك الشهري لتفعيل الحساب",
+                "تم إيقاف الحساب مؤقتاً لمراجعة الإدارة",
+                "انتهت فترة الصلاحية المحددة للاشتراك",
+                "يرجى التواصل مع الإدارة لاستكمال البيانات",
+              ].map((msg) => (
+                <button
+                  key={msg}
+                  type="button"
+                  onClick={() => setReason(msg)}
+                  className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                >
+                  {msg}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
@@ -335,6 +358,117 @@ export function ReactivateModal({ isOpen, onClose, onConfirm, academy, isBusy })
             )}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Permanent Academy Deletion Modal (Cascade Delete)
+ */
+export function DeleteAcademyModal({ isOpen, onClose, onConfirm, academy, isBusy }) {
+  const [confirmInput, setConfirmInput] = useState("");
+
+  if (!isOpen || !academy) return null;
+
+  const targetName = academy.academyName || academy.name || "الأكاديمية";
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onConfirm();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-backdrop" dir="rtl">
+      <div className="relative w-full max-w-lg rounded-3xl border border-rose-300 bg-white p-6 sm:p-8 shadow-2xl shadow-black/40 animate-scale-up text-right">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          disabled={isBusy}
+          className="absolute top-5 left-5 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Warning Badge */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
+            <Trash2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-rose-700">
+              حذف الأكاديمية نهائياً ⚠️
+            </h3>
+            <p className="text-xs font-bold text-slate-500">
+              {targetName} &bull; {academy.email}
+            </p>
+          </div>
+        </div>
+
+        {/* Danger Warning Callout */}
+        <div className="p-4 mb-4 rounded-2xl border border-rose-200 bg-rose-50 text-rose-900 text-xs font-bold leading-relaxed space-y-2">
+          <div className="flex items-center gap-1.5 font-black text-rose-700 text-sm">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>تحذير شديد الأهمية (حذف نهائي لا يمكن الرجوع عنه):</span>
+          </div>
+          <p>
+            هذا الإجراء سيقوم بحذف حساب الأكاديمية بالكامل من قاعدة البيانات، ويتضمن ذلك:
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-slate-700 pr-1 font-semibold">
+            <li>حساب الكابتن وبيانات الدخول كاملة.</li>
+            <li>
+              جميع اللاعبين المسجلين ({academy.playersCount ?? 0} لاعب) وسجلات حضورهم وغيابهم.
+            </li>
+            <li>
+              جميع الصالات وفروع التدريب ({academy.branchesCount ?? 0} صالة).
+            </li>
+            <li>جميع الفعاليات وحساباتها المالية وسجلات الاشتراكات.</li>
+          </ul>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-black text-slate-700 mb-1.5">
+              للتأكيد، اكتب كلمة <strong className="text-rose-600">&ldquo;حذف&rdquo;</strong> في المربع أدناه:
+            </label>
+            <input
+              type="text"
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value.trim())}
+              placeholder='اكتب: حذف'
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-center text-sm font-black text-slate-900 outline-none focus:border-rose-500 focus:bg-white focus:ring-2 focus:ring-rose-100 transition"
+              required
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isBusy}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-black transition cursor-pointer"
+            >
+              إلغاء التراجع
+            </button>
+            <button
+              type="submit"
+              disabled={isBusy || confirmInput !== "حذف"}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 disabled:opacity-50 text-white text-xs font-black shadow-md shadow-rose-600/30 transition cursor-pointer"
+            >
+              {isBusy ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>جارٍ الحذف الشامل...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  <span>حذف الأكاديمية نهائياً من الداتا بيز</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -69,11 +69,23 @@ export async function GET(request) {
       pageUsers.map(async (u) => {
         const uId = u._id.toString();
 
-        const [playersCount, branchesCount, eventsCount] = await Promise.all([
-          db.collection("players").countDocuments({ ownerId: u._id }),
-          db.collection("branches").countDocuments({ ownerId: u._id }),
+        const [uPlayers, uBranches, eventsCount] = await Promise.all([
+          db.collection("players").find({ ownerId: u._id }).toArray(),
+          db.collection("branches").find({ ownerId: u._id }).toArray(),
           db.collection("events").countDocuments({ ownerId: u._id }),
         ]);
+
+        const branchesDetails = uBranches.map((b) => {
+          const bName = (b.name || "").trim().toLowerCase();
+          const pInBranch = uPlayers.filter(
+            (p) => (p.branch || "").trim().toLowerCase() === bName
+          ).length;
+          return {
+            id: b._id.toString(),
+            name: b.name,
+            playersCount: pInBranch,
+          };
+        });
 
         const isSuspended = u.status === "suspended" || u.subscriptionStatus === "suspended";
         const isExpired = u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt).getTime() < now.getTime();
@@ -104,8 +116,9 @@ export async function GET(request) {
           subscriptionPaid: u.subscriptionPaid !== false,
           suspensionReason: u.suspensionReason || null,
           daysRemaining,
-          playersCount,
-          branchesCount,
+          playersCount: uPlayers.length,
+          branchesCount: uBranches.length,
+          branchesDetails,
           eventsCount,
           createdAt: u.createdAt,
         };

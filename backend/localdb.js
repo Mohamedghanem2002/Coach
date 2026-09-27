@@ -129,6 +129,8 @@ function loadData() {
 }
 
 let lastBackupTimestamp = 0;
+let cachedStore = null;
+let lastMtime = 0;
 
 function saveData(data) {
   try {
@@ -137,6 +139,8 @@ function saveData(data) {
     // Guard: Do not wipe existing data with empty invalid state
     if (!data || typeof data !== "object") return;
     if (!Array.isArray(data.users) || !Array.isArray(data.players)) return;
+
+    cachedStore = data;
 
     const serialized = JSON.stringify(data, null, 2);
     const tmpFile = path.join(
@@ -154,6 +158,11 @@ function saveData(data) {
 
     // 3. Atomic rename to guarantee zero file corruption on crash/power cut
     fs.renameSync(tmpFile, DB_FILE);
+    try {
+      lastMtime = fs.statSync(DB_FILE).mtimeMs;
+    } catch {
+      lastMtime = Date.now();
+    }
 
     // 4. Create periodic timestamped backup snapshot (at most once every 30 minutes)
     const now = Date.now();
@@ -184,7 +193,17 @@ function saveData(data) {
 }
 
 function getStore() {
-  return loadData();
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const stats = fs.statSync(DB_FILE);
+      if (cachedStore && stats.mtimeMs <= lastMtime) {
+        return cachedStore;
+      }
+      lastMtime = stats.mtimeMs;
+    }
+  } catch {}
+  cachedStore = loadData();
+  return cachedStore;
 }
 
 function matchId(a, b) {
@@ -225,6 +244,12 @@ export function getLocalDbClient() {
                 return currentData.players.filter((p) => {
                   if (filter.ownerId && p.ownerId !== filter.ownerId && !matchId(p.ownerId, filter.ownerId)) return false;
                   if (filter.branch && p.branch !== filter.branch) return false;
+                  return true;
+                }).length;
+              }
+              if (collectionName === "branches") {
+                return currentData.branches.filter((b) => {
+                  if (filter.ownerId && b.ownerId !== filter.ownerId && !matchId(b.ownerId, filter.ownerId)) return false;
                   return true;
                 }).length;
               }
@@ -282,8 +307,9 @@ export function getLocalDbClient() {
                   return true;
                 });
 
-                // Pre-seed default karate branches if coach has none
-                if (items.length === 0 && filter.ownerId) {
+                // Pre-seed default karate branches only if coach has none AND user exists in system
+                const userExists = currentData.users.some((u) => matchId(u._id, filter.ownerId));
+                if (items.length === 0 && filter.ownerId && userExists) {
                   const defaultBranches = [
                     {
                       _id: new ObjectId(),
@@ -644,6 +670,7 @@ export function getLocalDbClient() {
               if (collectionName === "players") list = currentData.players;
               if (collectionName === "events") list = currentData.events || [];
               if (collectionName === "cloud_snapshots") list = currentData.cloud_snapshots || [];
+              if (collectionName === "users") list = currentData.users;
 
               const idx = list.findIndex((item) => {
                 if (filter.ownerId && item.ownerId !== filter.ownerId) return false;

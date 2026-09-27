@@ -121,11 +121,18 @@ export async function GET(request, context) {
         phone: p.phone || p.parentPhone || "",
         createdAt: p.createdAt,
       })),
-      branches: branches.map((b) => ({
-        id: b._id.toString(),
-        name: b.name,
-        createdAt: b.createdAt,
-      })),
+      branches: branches.map((b) => {
+        const bName = (b.name || "").trim().toLowerCase();
+        const pInBranch = players.filter(
+          (p) => (p.branch || "").trim().toLowerCase() === bName
+        ).length;
+        return {
+          id: b._id.toString(),
+          name: b.name,
+          playersCount: pInBranch,
+          createdAt: b.createdAt,
+        };
+      }),
       auditLogs: auditLogs.map((log) => ({
         ...log,
         _id: log._id?.toString(),
@@ -305,6 +312,85 @@ export async function PATCH(request, context) {
     console.error("PATCH /api/admin/academies/[id] failed:", error);
     return NextResponse.json(
       { error: "تعذر تطبيق الإجراء على الأكاديمية", details: error?.message || String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request, context) {
+  try {
+    const adminCheck = await requireAdmin();
+    if (!adminCheck.authorized) return adminCheck.response;
+
+    const id = await extractAcademyId(request, context);
+    if (!id) {
+      return NextResponse.json(
+        { error: "معرف الأكاديمية مطلوب في الطلب", code: "INVALID_ID" },
+        { status: 400 }
+      );
+    }
+
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+
+    const queryId = parseQueryId(id);
+    const user = await db.collection("users").findOne({ _id: queryId });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "الأكاديمية غير موجودة", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
+    // Protect system admin account from accidental deletion
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase().trim();
+    if (user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail)) {
+      return NextResponse.json(
+        { error: "لا يمكن حذف حساب الإدارة العامة للنظام" },
+        { status: 403 }
+      );
+    }
+
+    const targetAcademyId = user._id.toString();
+    const targetAcademyName = user.academyName || user.name || "الأكاديمية";
+
+    // Cascading deletion of all academy data (players, branches, events, user)
+    const playersDel = await db.collection("players").deleteMany({ ownerId: user._id });
+    const branchesDel = await db.collection("branches").deleteMany({ ownerId: user._id });
+    const eventsDel = await db.collection("events").deleteMany({ ownerId: user._id });
+
+    try {
+      await db.collection("cloud_snapshots").deleteMany({ ownerId: user._id });
+    } catch {}
+
+    await db.collection("users").deleteOne({ _id: user._id });
+
+    // Record audit log
+    await recordAuditLog({
+      action: "delete_academy_permanent",
+      targetAcademyId,
+      targetAcademyName,
+      adminEmail: adminCheck.admin.email,
+      adminId: adminCheck.admin.id,
+      details: {
+        deletedEmail: user.email,
+        deletedName: user.name,
+        deletedPlayersCount: playersDel.deletedCount || 0,
+        deletedBranchesCount: branchesDel.deletedCount || 0,
+        deletedEventsCount: eventsDel.deletedCount || 0,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `تم حذف حساب أكاديمية "${targetAcademyName}" وجميع لاعبيها (${playersDel.deletedCount || 0} لاعب) وصالاتها (${branchesDel.deletedCount || 0} صالة) نهائياً من قاعدة البيانات بنجاح.`,
+      deletedAcademyId: targetAcademyId,
+    });
+  } catch (error) {
+    console.error("DELETE /api/admin/academies/[id] failed:", error);
+    return NextResponse.json(
+      { error: "تعذر حذف الأكاديمية وبياناتها", details: error?.message || String(error) },
       { status: 500 }
     );
   }
