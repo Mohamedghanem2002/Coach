@@ -67,12 +67,25 @@ export async function GET(request) {
       };
     });
 
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isSystemAdmin = (u) => {
+      if (!u) return false;
+      if (u.role === "admin") return true;
+      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
+      return false;
+    };
+
     const uniqueCoaches = Array.from(
       new Map(
-        processedHalls.map((h) => [
-          h.ownerId,
-          { id: h.ownerId, name: h.coachName, academyName: h.academyName },
-        ])
+        processedHalls
+          .filter((h) => {
+            const coach = userMap.get(h.ownerId);
+            return coach && !isSystemAdmin(coach);
+          })
+          .map((h) => [
+            h.ownerId,
+            { id: h.ownerId, name: h.coachName, academyName: h.academyName },
+          ])
       ).values()
     );
 

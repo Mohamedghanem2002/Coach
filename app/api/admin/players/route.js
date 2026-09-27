@@ -59,15 +59,28 @@ export async function GET(request) {
       };
     });
 
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isSystemAdmin = (u) => {
+      if (!u) return false;
+      if (u.role === "admin") return true;
+      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
+      return false;
+    };
+
     // Extract unique belts and branches for filter dropdowns
     const uniqueBelts = Array.from(new Set(processedPlayers.map((p) => p.belt).filter(Boolean)));
     const uniqueBranches = Array.from(new Set(processedPlayers.map((p) => p.branch).filter(Boolean)));
     const uniqueCoaches = Array.from(
       new Map(
-        processedPlayers.map((p) => [
-          p.ownerId,
-          { id: p.ownerId, name: p.coachName, academyName: p.academyName },
-        ])
+        processedPlayers
+          .filter((p) => {
+            const coach = userMap.get(p.ownerId);
+            return coach && !isSystemAdmin(coach);
+          })
+          .map((p) => [
+            p.ownerId,
+            { id: p.ownerId, name: p.coachName, academyName: p.academyName },
+          ])
       ).values()
     );
 

@@ -18,8 +18,17 @@ export async function GET() {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-    // 1. Query ALL users from database (including admin and test accounts)
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isSystemAdmin = (u) => {
+      if (!u) return false;
+      if (u.role === "admin") return true;
+      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
+      return false;
+    };
+
+    // 1. Query users from database (strictly separating admins from registered captains)
     const allUsers = await db.collection("users").find({}).toArray();
+    const captainUsers = allUsers.filter((u) => !isSystemAdmin(u));
 
     // 2. Query all players, branches, events, and audit logs
     const [allPlayers, allBranches, allEvents, recentAuditLogs] = await Promise.all([
@@ -66,7 +75,7 @@ export async function GET() {
       else completedEvents++;
     }
 
-    // Account status & distribution calculations
+    // Captain Account status & distribution calculations (Strictly for real captains)
     let activeAccounts = 0;
     let suspendedAccounts = 0;
     let expiredAccounts = 0;
@@ -76,12 +85,19 @@ export async function GET() {
     let accountsWithPlayers = 0;
     let accountsWithHalls = 0;
     let accountsWithEvents = 0;
+    let totalCaptainsPlayers = 0;
+    let totalCaptainsHalls = 0;
+    let totalCaptainsEvents = 0;
 
-    for (const u of allUsers) {
+    for (const u of captainUsers) {
       const uId = u._id.toString();
       const pCount = (playersByOwner.get(uId) || []).length;
       const bCount = (branchesByOwner.get(uId) || []).length;
       const eCount = (eventsByOwner.get(uId) || []).length;
+
+      totalCaptainsPlayers += pCount;
+      totalCaptainsHalls += bCount;
+      totalCaptainsEvents += eCount;
 
       if (pCount > 0) accountsWithPlayers++;
       if (bCount > 0) accountsWithHalls++;
@@ -109,8 +125,8 @@ export async function GET() {
       }
     }
 
-    // Recent 5 accounts with exact counts
-    const sortedUsers = [...allUsers].sort(
+    // Recent captain accounts with exact counts (Strictly captains, no admins)
+    const sortedUsers = [...captainUsers].sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
 
@@ -129,12 +145,12 @@ export async function GET() {
       return {
         id: uId,
         _id: uId,
-        name: u.name || "مستخدم",
+        name: u.name || "كابتن",
         academyName: u.academyName || "أكاديمية جديدة",
         email: u.email,
         phone: u.phone || "",
         role: u.role || "user",
-        isAdmin: u.role === "admin",
+        isAdmin: false,
         status: u.status || "active",
         subscriptionStatus: computedStatus,
         subscriptionPlan: u.subscriptionPlan || "Standard",
@@ -152,14 +168,14 @@ export async function GET() {
     const usersGrowth = {
       last7Days: newAccounts7d,
       last30Days: newAccounts30d,
-      last90Days: allUsers.filter((u) => u.createdAt && new Date(u.createdAt) >= ninetyDaysAgo).length,
-      total: allUsers.length,
+      last90Days: captainUsers.filter((u) => u.createdAt && new Date(u.createdAt) >= ninetyDaysAgo).length,
+      total: captainUsers.length,
     };
 
     const playersGrowth = {
       last7Days: allPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= sevenDaysAgo).length,
       last30Days: allPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= thirtyDaysAgo).length,
-      total: allPlayers.length,
+      total: totalCaptainsPlayers,
     };
 
     const eventsGrowth = {
@@ -172,15 +188,15 @@ export async function GET() {
       accountsWithPlayers,
       accountsWithHalls,
       accountsWithEvents,
-      totalAccounts: allUsers.length,
+      totalAccounts: captainUsers.length,
     };
 
     return NextResponse.json({
       success: true,
       stats: {
-        totalAccounts: allUsers.length,
-        totalAcademies: allUsers.length, // backward-compatibility
-        totalCaptains: allUsers.length,
+        totalAccounts: captainUsers.length,
+        totalAcademies: captainUsers.length, // backward-compatibility
+        totalCaptains: captainUsers.length,
         activeAccounts,
         activeAcademies: activeAccounts,
         suspendedAccounts,
@@ -191,10 +207,10 @@ export async function GET() {
         pendingPaymentAcademies: pendingPaymentAccounts,
         newAccounts7d,
         newAccounts30d,
-        totalPlayers: allPlayers.length,
-        totalBranches: allBranches.length,
-        totalHalls: allBranches.length,
-        totalEvents: allEvents.length,
+        totalPlayers: totalCaptainsPlayers,
+        totalBranches: totalCaptainsHalls,
+        totalHalls: totalCaptainsHalls,
+        totalEvents: totalCaptainsEvents,
         upcomingEvents,
         completedEvents,
         accountsWithPlayers,

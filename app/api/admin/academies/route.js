@@ -19,6 +19,13 @@ export async function GET(request) {
     const db = client.db(process.env.MONGODB_DB);
 
     const now = new Date();
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isSystemAdmin = (u) => {
+      if (!u) return false;
+      if (u.role === "admin") return true;
+      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
+      return false;
+    };
 
     // Query non-admin academies
     const allUsers = await db
@@ -26,8 +33,9 @@ export async function GET(request) {
       .find({ role: { $ne: "admin" } })
       .toArray();
 
-    // Filter in-memory for rich text search and computed subscription status
+    // Filter in-memory for rich text search, computed subscription status, and strict admin exclusion
     const filtered = allUsers.filter((u) => {
+      if (isSystemAdmin(u)) return false;
       // 1. Search text filter
       if (search) {
         const matchesName = (u.name || "").toLowerCase().includes(search);

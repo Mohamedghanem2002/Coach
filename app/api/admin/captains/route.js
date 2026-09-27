@@ -21,9 +21,18 @@ export async function GET(request) {
     const db = client.db(process.env.MONGODB_DB);
 
     const now = new Date();
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
 
-    // 1. Query ALL accounts from actual database (including admin and test accounts)
+    const isSystemAdmin = (u) => {
+      if (!u) return false;
+      if (u.role === "admin") return true;
+      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
+      return false;
+    };
+
+    // 1. Query accounts from actual database (strictly excluding system admins)
     const allUsers = await db.collection("users").find({}).toArray();
+    const captainUsers = allUsers.filter((u) => !isSystemAdmin(u));
 
     // 2. Fetch all real data to calculate exact counts and platform totals
     const [allPlayers, allBranches, allEvents] = await Promise.all([
@@ -54,8 +63,8 @@ export async function GET(request) {
       eventsByOwner.get(oId).push(e);
     }
 
-    // 3. Process every account with actual database relationships
-    const processedCaptains = allUsers.map((u) => {
+    // 3. Process every captain account with actual database relationships (Admins are strictly excluded)
+    const processedCaptains = captainUsers.map((u) => {
       const uId = u._id.toString();
       const uPlayers = playersByOwner.get(uId) || [];
       const uBranches = branchesByOwner.get(uId) || [];
@@ -92,12 +101,12 @@ export async function GET(request) {
       return {
         id: uId,
         _id: uId,
-        name: u.name || "مستخدم غير محدد",
+        name: u.name || "كابتن",
         academyName: u.academyName || "أكاديمية جديدة",
         email: u.email,
         phone: u.phone || "",
         role: u.role || "user",
-        isAdmin: u.role === "admin",
+        isAdmin: false,
         status: u.status || "active",
         subscriptionStatus: computedStatus,
         subscriptionPlan: u.subscriptionPlan || "Standard",
@@ -121,13 +130,26 @@ export async function GET(request) {
       };
     });
 
-    // 4. Platform-wide summary statistics (Real database totals for all accounts)
+    // 4. Platform-wide summary statistics (Strictly matches the exact sum of all captains)
+    const totalCaptainsPlayers = processedCaptains.reduce(
+      (sum, c) => sum + (c.stats?.players || 0),
+      0
+    );
+    const totalCaptainsHalls = processedCaptains.reduce(
+      (sum, c) => sum + (c.stats?.halls || 0),
+      0
+    );
+    const totalCaptainsEvents = processedCaptains.reduce(
+      (sum, c) => sum + (c.stats?.events || 0),
+      0
+    );
+
     const summary = {
       totalCaptains: processedCaptains.length,
       totalAccounts: processedCaptains.length,
-      totalPlayers: allPlayers.length,
-      totalHalls: allBranches.length,
-      totalEvents: allEvents.length,
+      totalPlayers: totalCaptainsPlayers,
+      totalHalls: totalCaptainsHalls,
+      totalEvents: totalCaptainsEvents,
     };
 
     // 5. Apply Search & Filters
@@ -152,8 +174,6 @@ export async function GET(request) {
       if (statusFilter === "has_players" && c.stats.players === 0) return false;
       if (statusFilter === "has_halls" && c.stats.halls === 0) return false;
       if (statusFilter === "has_events" && c.stats.events === 0) return false;
-      if (statusFilter === "admin" && !c.isAdmin) return false;
-      if (statusFilter === "user" && c.isAdmin) return false;
 
       // 5.3 Registration Date Filter
       if (dateFilter && dateFilter !== "all" && c.createdAt) {

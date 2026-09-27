@@ -332,11 +332,6 @@ export default function AdminCaptainsTab({
                                 >
                                   {c.name}
                                 </button>
-                                {c.isAdmin && (
-                                  <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[9px] font-black text-amber-800 border border-amber-200 shrink-0">
-                                    ADMIN 👑
-                                  </span>
-                                )}
                               </div>
                               <span className="block text-[11px] text-red-600 font-bold truncate">
                                 🏟️ {c.academyName}
@@ -512,11 +507,6 @@ export default function AdminCaptainsTab({
                           <strong className="block text-sm font-black text-slate-900 truncate">
                             {c.name}
                           </strong>
-                          {c.isAdmin && (
-                            <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[9px] font-black text-amber-800 border border-amber-200 shrink-0">
-                              ADMIN 👑
-                            </span>
-                          )}
                         </div>
                         <span className="block text-[11px] text-red-600 font-bold truncate">
                           🏟️ {c.academyName}
