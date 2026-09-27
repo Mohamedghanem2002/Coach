@@ -70,7 +70,7 @@ export default function SignInPage() {
 
       {/* Main Container Card */}
       <section className="relative z-10 w-full max-w-4xl grid rounded-3xl border border-slate-800/80 bg-slate-900/60 shadow-2xl shadow-black/80 backdrop-blur-xl md:grid-cols-[1.1fr_1.2fr] overflow-hidden">
-        
+
         {/* Left/Hero Side: Athletic Brand Experience */}
         <div className="relative flex flex-col justify-between p-6 sm:p-10 bg-gradient-to-br from-slate-900 via-slate-950 to-red-950/40 text-white border-b md:border-b-0 md:border-l border-slate-800/80">
           <div>
@@ -142,11 +142,10 @@ export default function SignInPage() {
             <div className="mb-6 grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
               <button
                 type="button"
-                className={`py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation ${
-                  !isRegistering
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation ${!isRegistering
                     ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
                     : "text-slate-500 hover:text-slate-900"
-                }`}
+                  }`}
                 onClick={() => {
                   setError("");
                   setIsRegistering(false);
@@ -156,11 +155,10 @@ export default function SignInPage() {
               </button>
               <button
                 type="button"
-                className={`py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation ${
-                  isRegistering
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation ${isRegistering
                     ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
                     : "text-slate-500 hover:text-slate-900"
-                }`}
+                  }`}
                 onClick={() => {
                   setError("");
                   setIsRegistering(true);
