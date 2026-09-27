@@ -132,7 +132,7 @@ export default function AdminSidebar({
           </Link>
 
           <button
-            onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+            onClick={() => signOut({ callbackUrl: "/auth/signin?admin=true" })}
             className="w-full flex items-center gap-2.5 p-3 rounded-2xl border border-red-100 bg-red-50/50 hover:bg-red-100/80 text-red-600 text-xs font-black transition cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
@@ -167,7 +167,7 @@ export default function AdminSidebar({
             </Link>
 
             <button
-              onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+              onClick={() => signOut({ callbackUrl: "/auth/signin?admin=true" })}
               className="p-2 rounded-xl text-red-600 hover:bg-red-50"
               title="تسجيل الخروج"
             >

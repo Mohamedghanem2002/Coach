@@ -29,6 +29,10 @@ function getConnectedClient() {
           const db = connectedClient.db(process.env.MONGODB_DB);
 
           await Promise.allSettled([
+            db.collection("users").createIndex(
+              { email: 1 },
+              { unique: true }
+            ),
             db.collection("players").createIndex({
               ownerId: 1,
               createdAt: -1,

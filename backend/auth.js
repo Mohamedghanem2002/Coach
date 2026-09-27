@@ -127,8 +127,8 @@ export const { handlers, auth } = NextAuth({
         return true;
       }
       if (session) return true;
-      if (pathname.startsWith("/auth/signin")) return true;
-      if (pathname.startsWith("/api/auth/register")) return true;
+      if (pathname.startsWith("/auth")) return true;
+      if (pathname.startsWith("/api/auth")) return true;
       if (pathname.startsWith("/api/")) {
         return NextResponse.json(
           { error: "يجب تسجيل الدخول أولًا" },

@@ -3,7 +3,7 @@
     {
       "name": "Mohamed Ghanem",
       "email": "mg0447837@gmail.com",
-      "passwordHash": "$2b$12$iwmQ2oExs4Su93gdXjfo8OjribTpNbvPiA9ASx5VQMxWDkAJx3gXK",
+      "passwordHash": "$2b$12$mRkPdv5HCh8TaqNu2L3jC.rqIAWa6OGRwtls82fAHe/N7SkkgjPc2",
       "createdAt": "2026-09-09T21:42:04.392Z",
       "_id": "6aa1d2acc20ba8a6e482c3a3",
       "academyName": "Re_action DOJO",
@@ -13,9 +13,9 @@
       "subscriptionPlan": "standard",
       "subscriptionExpiresAt": "2026-11-08T21:42:04.392Z",
       "subscriptionPaid": true,
-      "updatedAt": "2026-09-27T17:16:28.470Z",
-      "resetCode": null,
-      "resetExpiresAt": null
+      "updatedAt": "2026-09-27T05:15:56.520Z",
+      "resetCode": "447239",
+      "resetExpiresAt": "2026-09-27T17:30:48.240Z"
     },
     {
       "name": "كابتن تجريبي",
@@ -554,22 +554,6 @@
       },
       "createdAt": "2026-09-27T05:30:08.964Z",
       "_id": "6ab8a9e03841784d52256f3f"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab94fa32dda5fd1a73929c8",
-      "targetAcademyName": "أكاديمية النسور",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن عمر",
-        "email": "new_coach_unique@test.com",
-        "phone": "",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T17:17:23.084Z"
-      },
-      "createdAt": "2026-09-27T17:17:23.491Z",
-      "_id": "6ab94fa32dda5fd1a73929c9"
     }
   ]
 }

@@ -38,9 +38,16 @@ export async function POST(request) {
 
     const client = await clientPromise;
     const users = client.db(process.env.MONGODB_DB).collection("users");
-    if (await users.findOne({ email })) {
+    const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const existingUser = await users.findOne({
+      $or: [
+        { email },
+        { email: { $regex: new RegExp(`^${escapedEmail}$`, "i") } }
+      ]
+    });
+    if (existingUser) {
       return NextResponse.json(
-        { error: "هذا الإيميل مسجل بالفعل" },
+        { error: "الايميل مسجل من قبل" },
         { status: 409 },
       );
     }
@@ -104,6 +111,9 @@ export async function POST(request) {
     return NextResponse.json({ created: true, id: userId.toString() }, { status: 201 });
   } catch (error) {
     console.error("POST /api/auth/register failed", error);
+    if (error?.code === 11000 || error?.message?.includes("duplicate key") || error?.message?.includes("E11000")) {
+      return NextResponse.json({ error: "الايميل مسجل من قبل" }, { status: 409 });
+    }
     if (error instanceof Error && error.name === "MongoServerSelectionError") {
       return NextResponse.json(
         {

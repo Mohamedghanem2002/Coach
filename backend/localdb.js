@@ -374,18 +374,31 @@ export function getLocalDbClient() {
               if (collectionName === "users") {
                 return (
                   currentData.users.find((u) => {
+                    const uEmail = (u.email || "").toLowerCase().trim();
                     if (Array.isArray(filter.$or)) {
                       return filter.$or.some((clause) => {
                         if ("_id" in clause && (!clause._id || !matchId(u._id, clause._id))) return false;
-                        if (clause.email && u.email?.toLowerCase() !== clause.email.toLowerCase()) return false;
+                        if (clause.email) {
+                          if (typeof clause.email === "string") {
+                            return uEmail === clause.email.toLowerCase().trim();
+                          }
+                          if (clause.email.$regex) {
+                            const reg = clause.email.$regex instanceof RegExp ? clause.email.$regex : new RegExp(clause.email.$regex, "i");
+                            return reg.test(uEmail);
+                          }
+                        }
                         return true;
                       });
                     }
-                    if (typeof filter.email === "string" && u.email?.toLowerCase() !== filter.email.toLowerCase()) {
+                    if (typeof filter.email === "string" && uEmail !== filter.email.toLowerCase().trim()) {
                       return false;
                     }
-                    if (filter.email && typeof filter.email === "object" && filter.email.$ne) {
-                      if (u.email?.toLowerCase() === filter.email.$ne.toLowerCase()) return false;
+                    if (filter.email && typeof filter.email === "object") {
+                      if (filter.email.$regex) {
+                        const reg = filter.email.$regex instanceof RegExp ? filter.email.$regex : new RegExp(filter.email.$regex, "i");
+                        if (!reg.test(uEmail)) return false;
+                      }
+                      if (filter.email.$ne && uEmail === filter.email.$ne.toLowerCase().trim()) return false;
                     }
                     if ("_id" in filter && (!filter._id || !matchId(u._id, filter._id))) return false;
                     if (filter.role && u.role !== filter.role) return false;
@@ -452,6 +465,17 @@ export function getLocalDbClient() {
               const newDoc = { ...doc, _id };
 
               if (collectionName === "users") {
+                if (doc.email) {
+                  const targetEmail = doc.email.toLowerCase().trim();
+                  const exists = currentData.users.some(
+                    (u) => (u.email || "").toLowerCase().trim() === targetEmail
+                  );
+                  if (exists) {
+                    const dupErr = new Error(`E11000 duplicate key error collection: users index: email dup key: { email: "${targetEmail}" }`);
+                    dupErr.code = 11000;
+                    throw dupErr;
+                  }
+                }
                 currentData.users.push(newDoc);
               } else if (collectionName === "branches") {
                 currentData.branches.push(newDoc);
@@ -550,13 +574,18 @@ export function getLocalDbClient() {
                     return Boolean(filter._id && matchId(u._id, filter._id));
                   }
                   if (filter.email) {
-                    return u.email?.toLowerCase() === filter.email?.toLowerCase();
+                    return (u.email || "").toLowerCase().trim() === filter.email.toLowerCase().trim();
                   }
                   return false;
                 });
                 if (user) {
                   if (update.$set) {
                     Object.assign(user, update.$set);
+                  }
+                  if (update.$unset) {
+                    for (const k of Object.keys(update.$unset)) {
+                      delete user[k];
+                    }
                   }
                   saveData(currentData);
                   return { modifiedCount: 1 };
