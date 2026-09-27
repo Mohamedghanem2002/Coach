@@ -18,6 +18,22 @@
       "resetExpiresAt": null
     },
     {
+      "name": "كابتن تجريبي",
+      "academyName": "أكاديمية النسور الذهبية",
+      "email": "test_saas_coach@example.com",
+      "passwordHash": "$2b$12$nf3cgqbMt.cDWmklKS.Jb.lFSu2R7Kn5/R6XiRFoSyQxGVHmbweZO",
+      "createdAt": "2026-09-27T02:01:55.343Z",
+      "_id": "6ab8791366844c55cf3c4bff",
+      "role": "user",
+      "status": "active",
+      "subscriptionStatus": "active",
+      "subscriptionPlan": "standard",
+      "subscriptionExpiresAt": "2026-10-27T05:30:08.962Z",
+      "subscriptionPaid": true,
+      "updatedAt": "2026-09-27T05:30:08.962Z",
+      "suspensionReason": null
+    },
+    {
       "name": "كابتن أحمد سامي",
       "academyName": "أكاديمية النجوم للألعاب القتالية",
       "email": "coach_test_1790531582012@example.com",
@@ -31,9 +47,7 @@
       "subscriptionExpiresAt": "2026-10-27T17:53:02.026Z",
       "subscriptionPaid": true,
       "createdAt": "2026-09-27T17:53:02.026Z",
-      "_id": "6ab957fe2dda5fd1a73929ca",
-      "updatedAt": "2026-09-27T20:10:33.132Z",
-      "suspensionReason": null
+      "_id": "6ab957fe2dda5fd1a73929ca"
     },
     {
       "name": "كابتن أحمد سامي",
@@ -929,63 +943,6 @@
       },
       "createdAt": "2026-09-27T18:01:29.831Z",
       "_id": "6ab959f9a0992fdb8db3cc49"
-    },
-    {
-      "action": "delete_academy_permanent",
-      "targetAcademyId": "6ab8791366844c55cf3c4bff",
-      "targetAcademyName": "كابتن تجريبي",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "deletedEmail": "test_saas_coach@example.com",
-        "deletedName": "كابتن تجريبي",
-        "deletedPlayersCount": 0,
-        "deletedBranchesCount": 2,
-        "deletedEventsCount": 0
-      },
-      "createdAt": "2026-09-27T19:56:29.813Z",
-      "_id": "6ab974eda8a4820d9e786c80"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6ab957fe2dda5fd1a73929ca",
-      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "مخالفة شروط وسياسة المنصة التجريبية"
-      },
-      "createdAt": "2026-09-27T20:10:32.931Z",
-      "_id": "6ab97838a8a4820d9e786c81"
-    },
-    {
-      "action": "reactivate_academy",
-      "targetAcademyId": "6ab957fe2dda5fd1a73929ca",
-      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "restoredExpiresAt": "2026-10-27T17:53:02.026Z"
-      },
-      "createdAt": "2026-09-27T20:10:33.133Z",
-      "_id": "6ab97839a8a4820d9e786c82"
-    },
-    {
-      "action": "delete_captain_permanent",
-      "targetAcademyId": "6ab999999999999999999999",
-      "targetAcademyName": "كابتن حذف تجريبي",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "deletedEmail": "dummy_delete_test@example.com",
-        "deletedName": "كابتن حذف تجريبي",
-        "deletedPlayersCount": 1,
-        "deletedBranchesCount": 1,
-        "deletedEventsCount": 0,
-        "deletedSnapshotsCount": 0
-      },
-      "createdAt": "2026-09-27T20:10:33.771Z",
-      "_id": "6ab97839a8a4820d9e786c83"
     }
   ]
 }
