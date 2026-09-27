@@ -224,7 +224,7 @@ export default function ProfileCardModal({
             <img
               src={dataUrl}
               alt={`بطاقة اللاعب ${player.name}`}
-              className="max-h-[52vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
+              className="max-h-[58vh] sm:max-h-[64vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
             />
           ) : (
             <span className="text-xs text-rose-400">تعذر إنشاء البطاقة</span>
