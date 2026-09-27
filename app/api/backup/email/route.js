@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { currentUserId } from "../../../../backend/tenant";
+import { requireActiveTenant } from "../../../../backend/tenant";
 import {
   getEmailBackupSettings,
   saveEmailBackupSettings,
@@ -12,10 +12,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId) {
-      return NextResponse.json({ error: "يجب تسجيل الدخول أولاً" }, { status: 401 });
-    }
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
 
     const settings = getEmailBackupSettings();
     const lastStatus = getLastEmailBackupStatus();
@@ -49,10 +48,9 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId) {
-      return NextResponse.json({ error: "يجب تسجيل الدخول أولاً" }, { status: 401 });
-    }
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
 
     const body = await request.json();
     const action = body?.action || "send_now";

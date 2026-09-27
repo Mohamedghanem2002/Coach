@@ -12,8 +12,7 @@
       "subscriptionStatus": "active",
       "subscriptionPlan": "standard",
       "subscriptionExpiresAt": "2026-11-08T21:42:04.392Z",
-      "subscriptionPaid": true,
-      "updatedAt": "2026-09-27T05:15:56.520Z"
+      "subscriptionPaid": true
     },
     {
       "name": "كابتن تجريبي",
@@ -26,7 +25,7 @@
       "status": "active",
       "subscriptionStatus": "active",
       "subscriptionPlan": "standard",
-      "subscriptionExpiresAt": "2026-09-25T05:13:26.947Z",
+      "subscriptionExpiresAt": "2026-11-26T02:01:55.343Z",
       "subscriptionPaid": true
     }
   ],
@@ -57,6 +56,13 @@
     }
   ],
   "players": [
+    {
+      "name": "Test Player",
+      "branch": "صالة 1",
+      "age": 10,
+      "_id": "6ab718f1378442cb19246d39",
+      "ownerId": "test_owner_restore"
+    },
     {
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",
       "name": "rrrrr",
@@ -437,312 +443,5 @@
       }
     }
   ],
-  "audit_logs": [
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a12e21d660dad530c174",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790484782063@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T04:53:02.128Z"
-      },
-      "createdAt": "2026-09-27T04:53:02.591Z",
-      "_id": "6ab8a12e21d660dad530c175"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a17921d660dad530c176",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790484856609@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T04:54:16.617Z"
-      },
-      "createdAt": "2026-09-27T04:54:17.039Z",
-      "_id": "6ab8a17921d660dad530c177"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a1c521d660dad530c178",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790484933014@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T04:55:33.024Z"
-      },
-      "createdAt": "2026-09-27T04:55:33.448Z",
-      "_id": "6ab8a1c521d660dad530c179"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6aa1d2acc20ba8a6e482c3a3",
-      "targetAcademyName": "Re_action DOJO",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "تأخر سداد الاشتراك السنوي للأكاديمية"
-      },
-      "createdAt": "2026-09-27T04:55:35.163Z",
-      "_id": "6ab8a1c721d660dad530c17b"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a2d521d660dad530c17c",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790485205038@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T05:00:05.046Z"
-      },
-      "createdAt": "2026-09-27T05:00:05.472Z",
-      "_id": "6ab8a2d521d660dad530c17d"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6ab8a2d521d660dad530c17c",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "تأخر سداد الاشتراك السنوي للأكاديمية"
-      },
-      "createdAt": "2026-09-27T05:00:06.157Z",
-      "_id": "6ab8a2d621d660dad530c17f"
-    },
-    {
-      "action": "reactivate_academy",
-      "targetAcademyId": "6ab8a2d521d660dad530c17c",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "restoredExpiresAt": "2026-10-27T05:00:05.046Z"
-      },
-      "createdAt": "2026-09-27T05:00:06.300Z",
-      "_id": "6ab8a2d621d660dad530c180"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab8a2d521d660dad530c17c",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "daysAdded": 90,
-        "newExpiresAt": "2027-01-25T05:00:05.046Z",
-        "previousExpiresAt": "2026-10-27T05:00:05.046Z"
-      },
-      "createdAt": "2026-09-27T05:00:06.413Z",
-      "_id": "6ab8a2d621d660dad530c181"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a3bc21d660dad530c182",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790485436145@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T05:03:56.154Z"
-      },
-      "createdAt": "2026-09-27T05:03:56.708Z",
-      "_id": "6ab8a3bc21d660dad530c183"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6aa1d2acc20ba8a6e482c3a3",
-      "targetAcademyName": "Re_action DOJO",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "تأخر سداد الاشتراك السنوي للأكاديمية"
-      },
-      "createdAt": "2026-09-27T05:03:57.458Z",
-      "_id": "6ab8a3bd21d660dad530c185"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a4dc21d660dad530c186",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790485724322@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T05:08:44.331Z"
-      },
-      "createdAt": "2026-09-27T05:08:44.767Z",
-      "_id": "6ab8a4dc21d660dad530c187"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6aa1d2acc20ba8a6e482c3a3",
-      "targetAcademyName": "Re_action DOJO",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "تأخر سداد الاشتراك السنوي للأكاديمية"
-      },
-      "createdAt": "2026-09-27T05:08:45.404Z",
-      "_id": "6ab8a4dd21d660dad530c189"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a5b221d660dad530c18a",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790485938361@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T05:12:18.376Z"
-      },
-      "createdAt": "2026-09-27T05:12:18.808Z",
-      "_id": "6ab8a5b221d660dad530c18b"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6ab8a5b221d660dad530c18a",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "تأخر سداد الاشتراك السنوي للأكاديمية"
-      },
-      "createdAt": "2026-09-27T05:12:19.513Z",
-      "_id": "6ab8a5b321d660dad530c18d"
-    },
-    {
-      "action": "reactivate_academy",
-      "targetAcademyId": "6ab8a5b221d660dad530c18a",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "restoredExpiresAt": "2026-10-27T05:12:18.376Z"
-      },
-      "createdAt": "2026-09-27T05:12:19.656Z",
-      "_id": "6ab8a5b321d660dad530c18e"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab8a5b221d660dad530c18a",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "daysAdded": 90,
-        "newExpiresAt": "2027-01-25T05:12:18.376Z",
-        "previousExpiresAt": "2026-10-27T05:12:18.376Z"
-      },
-      "createdAt": "2026-09-27T05:12:19.763Z",
-      "_id": "6ab8a5b321d660dad530c18f"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a68b21d660dad530c190",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790486155344@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T05:15:55.355Z"
-      },
-      "createdAt": "2026-09-27T05:15:55.793Z",
-      "_id": "6ab8a68b21d660dad530c191"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6aa1d2acc20ba8a6e482c3a3",
-      "targetAcademyName": "Re_action DOJO",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "تأخر سداد الاشتراك السنوي للأكاديمية"
-      },
-      "createdAt": "2026-09-27T05:15:56.521Z",
-      "_id": "6ab8a68c21d660dad530c193"
-    },
-    {
-      "action": "register_academy",
-      "targetAcademyId": "6ab8a6c33841784d52256f36",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "نظام التسجيل التلقائي",
-      "adminId": null,
-      "details": {
-        "ownerName": "كابتن سيف الدين",
-        "email": "academy_test_1790486211209@example.com",
-        "phone": "01012345678",
-        "plan": "trial",
-        "expiresAt": "2026-10-27T05:16:51.257Z"
-      },
-      "createdAt": "2026-09-27T05:16:51.705Z",
-      "_id": "6ab8a6c33841784d52256f37"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6ab8a6c33841784d52256f36",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "تأخر سداد الاشتراك السنوي للأكاديمية"
-      },
-      "createdAt": "2026-09-27T05:16:53.326Z",
-      "_id": "6ab8a6c53841784d52256f39"
-    },
-    {
-      "action": "reactivate_academy",
-      "targetAcademyId": "6ab8a6c33841784d52256f36",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "restoredExpiresAt": "2026-10-27T05:16:51.257Z"
-      },
-      "createdAt": "2026-09-27T05:16:53.460Z",
-      "_id": "6ab8a6c53841784d52256f3a"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab8a6c33841784d52256f36",
-      "targetAcademyName": "أكاديمية الفرسان الدولية",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "daysAdded": 90,
-        "newExpiresAt": "2027-01-25T05:16:51.257Z",
-        "previousExpiresAt": "2026-10-27T05:16:51.257Z"
-      },
-      "createdAt": "2026-09-27T05:16:53.541Z",
-      "_id": "6ab8a6c53841784d52256f3b"
-    }
-  ]
+  "audit_logs": []
 }

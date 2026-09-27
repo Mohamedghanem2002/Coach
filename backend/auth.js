@@ -29,18 +29,58 @@ export const { handlers, auth } = NextAuth({
             : "";
         if (!email || !password) return null;
         const client = await clientPromise;
-        const user = await client
+        const users = client
           .db(process.env.MONGODB_DB)
-          .collection("users")
-          .findOne({ email });
-        if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+          .collection("users");
+        let user = await users.findOne({ email });
+
+        const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase().trim();
+
+        // Seed initial admin if it doesn't exist and ADMIN_PASSWORD is set
+        if (!user && email === adminEmail && process.env.ADMIN_PASSWORD) {
+          const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
+          const initialAdmin = {
+            name: "المدير العام",
+            email: adminEmail,
+            passwordHash,
+            role: "admin",
+            academyName: "لوحة التحكم الرئيسية",
+            status: "active",
+            subscriptionStatus: "active",
+            subscriptionPlan: "system_admin",
+            subscriptionPaid: true,
+            createdAt: new Date(),
+          };
+          const res = await users.insertOne(initialAdmin);
+          user = { ...initialAdmin, _id: res.insertedId };
+        }
+
+        if (!user) return null;
+
+        let passwordMatches = false;
+        if (user.passwordHash) {
+          passwordMatches = await bcrypt.compare(password, user.passwordHash);
+        }
+
+        // Allow administrator to login via ADMIN_PASSWORD environment variable and sync hash
+        if (!passwordMatches && email === adminEmail && process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
+          passwordMatches = true;
+          const newHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
+          await users.updateOne({ _id: user._id }, { $set: { passwordHash: newHash, role: "admin" } });
+        }
+
+        if (!passwordMatches) {
           return null;
         }
+
+        const role = user.role || (user.email.toLowerCase() === adminEmail ? "admin" : "user");
+
         return {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
           academyName: user.academyName || "Re_action DOJO",
+          role,
         };
       },
     }),
@@ -55,6 +95,7 @@ export const { handlers, auth } = NextAuth({
         token.name = user.name;
         token.email = user.email;
         token.academyName = user.academyName || "Re_action DOJO";
+        token.role = user.role || "user";
       }
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
@@ -63,6 +104,8 @@ export const { handlers, auth } = NextAuth({
         if (session.user?.academyName) token.academyName = session.user.academyName;
         if (session.email) token.email = session.email;
         if (session.user?.email) token.email = session.user.email;
+        if (session.role) token.role = session.role;
+        if (session.user?.role) token.role = session.user.role;
       }
       return token;
     },
@@ -72,13 +115,21 @@ export const { handlers, auth } = NextAuth({
         if (token.name) session.user.name = token.name;
         if (token.email) session.user.email = token.email;
         session.user.academyName = token.academyName || "Re_action DOJO";
+        session.user.role = token.role || "user";
       }
       return session;
     },
     authorized({ auth: session, request }) {
+      const pathname = request.nextUrl.pathname;
+      if (pathname.startsWith("/admin")) {
+        if (!session?.user) return false;
+        if (session.user.role !== "admin") return false;
+        return true;
+      }
       if (session) return true;
-      if (request.nextUrl.pathname.startsWith("/auth/signin")) return true;
-      if (request.nextUrl.pathname.startsWith("/api/")) {
+      if (pathname.startsWith("/auth/signin")) return true;
+      if (pathname.startsWith("/api/auth/register")) return true;
+      if (pathname.startsWith("/api/")) {
         return NextResponse.json(
           { error: "يجب تسجيل الدخول أولًا" },
           { status: 401 },

@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Cake,
   CalendarDays,
@@ -370,6 +371,17 @@ export default function Header({
               </>
             )}
           </div>
+
+          {/* Admin Control Panel Link (Visible only to administrators) */}
+          {session?.user?.role === "admin" && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-1.5 rounded-xl border border-amber-300/80 bg-linear-to-r from-amber-500 to-red-600 text-white px-2.5 sm:px-3 py-1.5 text-xs font-black shadow-sm shadow-amber-500/20 hover:brightness-110 active:scale-95 transition cursor-pointer"
+              title="الانتقال إلى لوحة تحكم الإدارة الشاملة والاشتراكات"
+            >
+              <span>👑 لوحة الإدارة</span>
+            </Link>
+          )}
 
           {/* User avatar & settings button (Desktop) */}
           <button

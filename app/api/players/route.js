@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import clientPromise from "../../../backend/mongodb";
-import { currentUserId } from "../../../backend/tenant";
+import { requireActiveTenant } from "../../../backend/tenant";
 export const dynamic = "force-dynamic";
 function appDate() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -132,12 +132,9 @@ function serializePlayer(player) {
 }
 export async function GET() {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId)
-      return NextResponse.json(
-        { error: "يجب تسجيل الدخول أولًا" },
-        { status: 401 },
-      );
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
     const client = await clientPromise;
     const dbName = process.env.MONGODB_DB;
     if (!dbName) {
@@ -172,12 +169,9 @@ export async function GET() {
 }
 export async function POST(request) {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId)
-      return NextResponse.json(
-        { error: "يجب تسجيل الدخول أولًا" },
-        { status: 401 },
-      );
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
     const body = await request.json();
     if (body?.action === "restore_backup") {
       const backupData = body?.data || body;
@@ -338,12 +332,9 @@ export async function POST(request) {
 export async function PATCH(request) {
   var _a, _b, _c;
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId)
-      return NextResponse.json(
-        { error: "يجب تسجيل الدخول أولًا" },
-        { status: 401 },
-      );
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
     const body = await request.json();
     if (typeof body.id !== "string" || !ObjectId.isValid(body.id)) {
       return NextResponse.json(
@@ -775,12 +766,9 @@ export async function PATCH(request) {
 }
 export async function DELETE(request) {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId)
-      return NextResponse.json(
-        { error: "يجب تسجيل الدخول أولًا" },
-        { status: 401 },
-      );
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
     const body = await request.json();
     const client = await clientPromise;
     const collection = client.db(process.env.MONGODB_DB).collection("players");

@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import clientPromise from "../../../backend/mongodb";
-import { currentUserId } from "../../../backend/tenant";
+import { requireActiveTenant } from "../../../backend/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -57,10 +57,9 @@ function serializeEvent(event) {
 
 export async function GET(request) {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId) {
-      return NextResponse.json({ error: "يجب تسجيل الدخول أولًا" }, { status: 401 });
-    }
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
 
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("id");
@@ -121,10 +120,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId) {
-      return NextResponse.json({ error: "يجب تسجيل الدخول أولًا" }, { status: 401 });
-    }
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
 
     const body = await request.json();
     const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -197,10 +195,9 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId) {
-      return NextResponse.json({ error: "يجب تسجيل الدخول أولًا" }, { status: 401 });
-    }
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
 
     const body = await request.json();
     const eventId = body.id || body.eventId;
@@ -458,10 +455,9 @@ export async function PATCH(request) {
 
 export async function DELETE(request) {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId) {
-      return NextResponse.json({ error: "يجب تسجيل الدخول أولًا" }, { status: 401 });
-    }
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
 
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("id");

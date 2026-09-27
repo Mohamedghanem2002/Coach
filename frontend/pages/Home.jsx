@@ -64,6 +64,7 @@ import RestoreModal from "../components/dashboard/RestoreModal";
 import WelcomeCardModal from "../components/dashboard/WelcomeCardModal";
 import BranchAttendanceModal from "../components/dashboard/BranchAttendanceModal";
 import AccountSettingsModal from "../components/dashboard/AccountSettingsModal";
+import SubscriptionSuspended from "../components/SubscriptionSuspended";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 
@@ -101,6 +102,7 @@ export default function Home() {
   const [welcomePlayer, setWelcomePlayer] = useState(null);
   const [branchAttendanceReport, setBranchAttendanceReport] = useState(null);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [subscriptionInactive, setSubscriptionInactive] = useState(null);
 
   // Events management state
   const [events, setEvents] = useState([]);
@@ -144,6 +146,19 @@ export default function Home() {
         if (playersResponse.status === 401 || branchesResponse.status === 401) {
           router.push("/auth/signin");
           return;
+        }
+        if (playersResponse.status === 403 || branchesResponse.status === 403) {
+          const pErr = await playersResponse.json().catch(() => ({}));
+          const bErr = await branchesResponse.json().catch(() => ({}));
+          const inactive =
+            pErr.code === "SUBSCRIPTION_INACTIVE" || pErr.error === "SUBSCRIPTION_INACTIVE"
+              ? pErr
+              : (bErr.code === "SUBSCRIPTION_INACTIVE" || bErr.error === "SUBSCRIPTION_INACTIVE" ? bErr : null);
+          if (inactive && !cancelled) {
+            setSubscriptionInactive(inactive);
+            setLoading(false);
+            return;
+          }
         }
         if (!playersResponse.ok || !branchesResponse.ok) {
           console.error("Initial fetch failed:", {
@@ -951,6 +966,23 @@ export default function Home() {
     } catch {
       showToast("تعذر تحديث السداد الجماعي", "error");
     }
+  }
+
+  if (subscriptionInactive) {
+    return (
+      <SubscriptionSuspended
+        reason={subscriptionInactive.reason}
+        message={subscriptionInactive.message}
+        academyName={subscriptionInactive.academyName || academyName}
+        subscriptionExpiresAt={subscriptionInactive.subscriptionExpiresAt}
+        adminEmail={subscriptionInactive.adminEmail}
+        onRefresh={() => {
+          setSubscriptionInactive(null);
+          setLoading(true);
+          window.location.reload();
+        }}
+      />
+    );
   }
 
   return (

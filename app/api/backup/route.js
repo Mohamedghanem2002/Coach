@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { currentUserId } from "../../../backend/tenant";
+import { requireActiveTenant } from "../../../backend/tenant";
 import clientPromise from "../../../backend/mongodb";
 import { ObjectId } from "mongodb";
 import fs from "fs";
@@ -9,10 +9,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId) {
-      return NextResponse.json({ error: "يجب تسجيل الدخول أولاً" }, { status: 401 });
-    }
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
@@ -115,10 +114,9 @@ function sanitizeDoc(doc, ownerId) {
 
 export async function POST(request) {
   try {
-    const ownerId = await currentUserId();
-    if (!ownerId) {
-      return NextResponse.json({ error: "يجب تسجيل الدخول أولاً" }, { status: 401 });
-    }
+    const tenant = await requireActiveTenant();
+    if (!tenant.allowed) return tenant.response;
+    const ownerId = tenant.ownerId;
 
     const body = await request.json();
     const backupData = body?.data || body;

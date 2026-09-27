@@ -26,11 +26,27 @@ function parseAndNormalizeData(raw) {
   if (!Array.isArray(data.players)) data.players = [];
   if (!Array.isArray(data.events)) data.events = [];
   if (!Array.isArray(data.cloud_snapshots)) data.cloud_snapshots = [];
+  if (!Array.isArray(data.audit_logs)) data.audit_logs = [];
+
+  const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase();
 
   // Ensure _id are ObjectId instances
   data.users.forEach((u) => {
     if (u._id && typeof u._id === "string") u._id = new ObjectId(u._id);
     if (!u.academyName) u.academyName = "Re_action DOJO";
+    if (u.email && u.email.toLowerCase() === adminEmail) {
+      u.role = "admin";
+    } else if (!u.role) {
+      u.role = "user";
+    }
+    if (!u.status) u.status = "active";
+    if (!u.subscriptionStatus) u.subscriptionStatus = "active";
+    if (!u.subscriptionPlan) u.subscriptionPlan = "standard";
+    if (!u.subscriptionExpiresAt) {
+      const base = u.createdAt ? new Date(u.createdAt) : new Date();
+      u.subscriptionExpiresAt = new Date(base.getTime() + 60 * 24 * 60 * 60 * 1000);
+    }
+    if (u.subscriptionPaid === undefined) u.subscriptionPaid = true;
   });
   data.branches.forEach((b) => {
     if (b._id && typeof b._id === "string") b._id = new ObjectId(b._id);
@@ -43,6 +59,9 @@ function parseAndNormalizeData(raw) {
   });
   data.cloud_snapshots.forEach((s) => {
     if (s._id && typeof s._id === "string") s._id = new ObjectId(s._id);
+  });
+  data.audit_logs.forEach((a) => {
+    if (a._id && typeof a._id === "string") a._id = new ObjectId(a._id);
   });
 
   return data;
@@ -102,7 +121,7 @@ function loadData() {
   }
 
   // 4. Clean initial state if fresh install
-  const initialData = { users: [], branches: [], players: [], events: [], cloud_snapshots: [] };
+  const initialData = { users: [], branches: [], players: [], events: [], cloud_snapshots: [], audit_logs: [] };
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), "utf-8");
   } catch {}
@@ -164,12 +183,8 @@ function saveData(data) {
   }
 }
 
-let store = null;
 function getStore() {
-  if (!store) {
-    store = loadData();
-  }
-  return store;
+  return loadData();
 }
 
 function matchId(a, b) {
@@ -194,16 +209,35 @@ export function getLocalDbClient() {
             },
 
             async countDocuments(filter = {}) {
+              if (collectionName === "users") {
+                return currentData.users.filter((u) => {
+                  if (filter.role) {
+                    if (typeof filter.role === "object" && filter.role.$ne) {
+                      if (u.role === filter.role.$ne) return false;
+                    } else if (u.role !== filter.role) return false;
+                  }
+                  if (filter.status && u.status !== filter.status) return false;
+                  if (filter.subscriptionStatus && u.subscriptionStatus !== filter.subscriptionStatus) return false;
+                  return true;
+                }).length;
+              }
               if (collectionName === "players") {
                 return currentData.players.filter((p) => {
-                  if (filter.ownerId && p.ownerId !== filter.ownerId) return false;
+                  if (filter.ownerId && p.ownerId !== filter.ownerId && !matchId(p.ownerId, filter.ownerId)) return false;
                   if (filter.branch && p.branch !== filter.branch) return false;
                   return true;
                 }).length;
               }
               if (collectionName === "events") {
                 return (currentData.events || []).filter((e) => {
-                  if (filter.ownerId && e.ownerId !== filter.ownerId) return false;
+                  if (filter.ownerId && e.ownerId !== filter.ownerId && !matchId(e.ownerId, filter.ownerId)) return false;
+                  return true;
+                }).length;
+              }
+              if (collectionName === "audit_logs") {
+                return (currentData.audit_logs || []).filter((a) => {
+                  if (filter.targetAcademyId && a.targetAcademyId !== filter.targetAcademyId && !matchId(a.targetAcademyId, filter.targetAcademyId)) return false;
+                  if (filter.action && a.action !== filter.action) return false;
                   return true;
                 }).length;
               }
@@ -214,7 +248,7 @@ export function getLocalDbClient() {
               if (collectionName === "players") {
                 const values = currentData.players
                   .filter((p) => {
-                    if (filter.ownerId && p.ownerId !== filter.ownerId) return false;
+                    if (filter.ownerId && p.ownerId !== filter.ownerId && !matchId(p.ownerId, filter.ownerId)) return false;
                     return true;
                   })
                   .map((p) => p[field])
@@ -227,10 +261,24 @@ export function getLocalDbClient() {
             find(filter = {}) {
               let items = [];
               if (collectionName === "users") {
-                items = currentData.users;
+                items = currentData.users.filter((u) => {
+                  if (filter._id && !matchId(u._id, filter._id)) return false;
+                  if (typeof filter.email === "string" && u.email?.toLowerCase() !== filter.email.toLowerCase()) return false;
+                  if (filter.email && typeof filter.email === "object" && filter.email.$ne) {
+                    if (u.email?.toLowerCase() === filter.email.$ne.toLowerCase()) return false;
+                  }
+                  if (filter.role) {
+                    if (typeof filter.role === "object" && filter.role.$ne) {
+                      if (u.role === filter.role.$ne) return false;
+                    } else if (u.role !== filter.role) return false;
+                  }
+                  if (filter.status && u.status !== filter.status) return false;
+                  if (filter.subscriptionStatus && u.subscriptionStatus !== filter.subscriptionStatus) return false;
+                  return true;
+                });
               } else if (collectionName === "branches") {
                 items = currentData.branches.filter((b) => {
-                  if (filter.ownerId && b.ownerId !== filter.ownerId) return false;
+                  if (filter.ownerId && b.ownerId !== filter.ownerId && !matchId(b.ownerId, filter.ownerId)) return false;
                   return true;
                 });
 
@@ -256,54 +304,91 @@ export function getLocalDbClient() {
                 }
               } else if (collectionName === "players") {
                 items = currentData.players.filter((p) => {
-                  if (filter.ownerId && p.ownerId !== filter.ownerId) return false;
+                  if (filter.ownerId && p.ownerId !== filter.ownerId && !matchId(p.ownerId, filter.ownerId)) return false;
                   if (filter._id && !matchId(p._id, filter._id)) return false;
                   return true;
                 });
               } else if (collectionName === "events") {
                 items = (currentData.events || []).filter((e) => {
-                  if (filter.ownerId && e.ownerId !== filter.ownerId) return false;
+                  if (filter.ownerId && e.ownerId !== filter.ownerId && !matchId(e.ownerId, filter.ownerId)) return false;
                   if (filter._id && !matchId(e._id, filter._id)) return false;
                   return true;
                 });
               } else if (collectionName === "cloud_snapshots") {
                 items = (currentData.cloud_snapshots || []).filter((s) => {
-                  if (filter.ownerId && s.ownerId !== filter.ownerId) return false;
+                  if (filter.ownerId && s.ownerId !== filter.ownerId && !matchId(s.ownerId, filter.ownerId)) return false;
                   if (filter._id && !matchId(s._id, filter._id)) return false;
+                  return true;
+                });
+              } else if (collectionName === "audit_logs") {
+                items = (currentData.audit_logs || []).filter((a) => {
+                  if (filter.targetAcademyId && a.targetAcademyId !== filter.targetAcademyId && !matchId(a.targetAcademyId, filter.targetAcademyId)) return false;
+                  if (filter.action && a.action !== filter.action) return false;
                   return true;
                 });
               }
 
-              return {
+              // Create chainable cursor with sort, skip, limit, project, toArray
+              const cursor = {
+                _items: [...items],
                 sort(sortCriteria) {
-                  return {
-                    async toArray() {
-                      const copy = [...items];
-                      if (sortCriteria?.date === -1) {
-                        copy.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
-                      } else if (sortCriteria?.createdAt === -1) {
-                        copy.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                      } else if (sortCriteria?.createdAt === 1) {
-                        copy.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-                      }
-                      return copy;
-                    },
-                  };
+                  if (sortCriteria) {
+                    if (sortCriteria.createdAt === -1) {
+                      this._items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                    } else if (sortCriteria.createdAt === 1) {
+                      this._items.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+                    } else if (sortCriteria.timestamp === -1) {
+                      this._items.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                    } else if (sortCriteria.timestamp === 1) {
+                      this._items.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+                    } else if (sortCriteria.date === -1) {
+                      this._items.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
+                    }
+                  }
+                  return this;
+                },
+                skip(n) {
+                  if (typeof n === "number" && n > 0) {
+                    this._items = this._items.slice(n);
+                  }
+                  return this;
+                },
+                limit(n) {
+                  if (typeof n === "number" && n >= 0) {
+                    this._items = this._items.slice(0, n);
+                  }
+                  return this;
+                },
+                project() {
+                  return this;
                 },
                 async toArray() {
-                  return [...items];
+                  return [...this._items];
                 },
               };
+
+              return cursor;
             },
 
             async findOne(filter = {}) {
               if (collectionName === "users") {
                 return (
                   currentData.users.find((u) => {
-                    if (filter.email && u.email?.toLowerCase() !== filter.email.toLowerCase()) {
+                    if (Array.isArray(filter.$or)) {
+                      return filter.$or.some((clause) => {
+                        if ("_id" in clause && (!clause._id || !matchId(u._id, clause._id))) return false;
+                        if (clause.email && u.email?.toLowerCase() !== clause.email.toLowerCase()) return false;
+                        return true;
+                      });
+                    }
+                    if (typeof filter.email === "string" && u.email?.toLowerCase() !== filter.email.toLowerCase()) {
                       return false;
                     }
-                    if (filter._id && !matchId(u._id, filter._id)) return false;
+                    if (filter.email && typeof filter.email === "object" && filter.email.$ne) {
+                      if (u.email?.toLowerCase() === filter.email.$ne.toLowerCase()) return false;
+                    }
+                    if ("_id" in filter && (!filter._id || !matchId(u._id, filter._id))) return false;
+                    if (filter.role && u.role !== filter.role) return false;
                     return true;
                   }) || null
                 );
@@ -313,8 +398,8 @@ export function getLocalDbClient() {
                 return (
                   currentData.branches.find((b) => {
                     if (filter.name && b.name !== filter.name) return false;
-                    if (filter.ownerId && b.ownerId !== filter.ownerId) return false;
-                    if (filter._id && !matchId(b._id, filter._id)) return false;
+                    if (filter.ownerId && b.ownerId !== filter.ownerId && !matchId(b.ownerId, filter.ownerId)) return false;
+                    if ("_id" in filter && (!filter._id || !matchId(b._id, filter._id))) return false;
                     return true;
                   }) || null
                 );
@@ -323,8 +408,8 @@ export function getLocalDbClient() {
               if (collectionName === "players") {
                 return (
                   currentData.players.find((p) => {
-                    if (filter.ownerId && p.ownerId !== filter.ownerId) return false;
-                    if (filter._id && !matchId(p._id, filter._id)) return false;
+                    if (filter.ownerId && p.ownerId !== filter.ownerId && !matchId(p.ownerId, filter.ownerId)) return false;
+                    if ("_id" in filter && (!filter._id || !matchId(p._id, filter._id))) return false;
                     return true;
                   }) || null
                 );
@@ -333,8 +418,8 @@ export function getLocalDbClient() {
               if (collectionName === "events") {
                 return (
                   (currentData.events || []).find((e) => {
-                    if (filter.ownerId && e.ownerId !== filter.ownerId) return false;
-                    if (filter._id && !matchId(e._id, filter._id)) return false;
+                    if (filter.ownerId && e.ownerId !== filter.ownerId && !matchId(e.ownerId, filter.ownerId)) return false;
+                    if ("_id" in filter && (!filter._id || !matchId(e._id, filter._id))) return false;
                     return true;
                   }) || null
                 );
@@ -343,8 +428,17 @@ export function getLocalDbClient() {
               if (collectionName === "cloud_snapshots") {
                 return (
                   (currentData.cloud_snapshots || []).find((s) => {
-                    if (filter.ownerId && s.ownerId !== filter.ownerId) return false;
-                    if (filter._id && !matchId(s._id, filter._id)) return false;
+                    if (filter.ownerId && s.ownerId !== filter.ownerId && !matchId(s.ownerId, filter.ownerId)) return false;
+                    if ("_id" in filter && (!filter._id || !matchId(s._id, filter._id))) return false;
+                    return true;
+                  }) || null
+                );
+              }
+
+              if (collectionName === "audit_logs") {
+                return (
+                  (currentData.audit_logs || []).find((a) => {
+                    if ("_id" in filter && (!filter._id || !matchId(a._id, filter._id))) return false;
                     return true;
                   }) || null
                 );
@@ -369,6 +463,9 @@ export function getLocalDbClient() {
               } else if (collectionName === "cloud_snapshots") {
                 if (!Array.isArray(currentData.cloud_snapshots)) currentData.cloud_snapshots = [];
                 currentData.cloud_snapshots.push(newDoc);
+              } else if (collectionName === "audit_logs") {
+                if (!Array.isArray(currentData.audit_logs)) currentData.audit_logs = [];
+                currentData.audit_logs.push(newDoc);
               }
 
               saveData(currentData);
@@ -448,11 +545,15 @@ export function getLocalDbClient() {
                 }
               }
               if (collectionName === "users") {
-                const user = (currentData.users || []).find(
-                  (u) =>
-                    (filter._id && matchId(u._id, filter._id)) ||
-                    (filter.email && u.email?.toLowerCase() === filter.email?.toLowerCase())
-                );
+                const user = (currentData.users || []).find((u) => {
+                  if ("_id" in filter) {
+                    return Boolean(filter._id && matchId(u._id, filter._id));
+                  }
+                  if (filter.email) {
+                    return u.email?.toLowerCase() === filter.email?.toLowerCase();
+                  }
+                  return false;
+                });
                 if (user) {
                   if (update.$set) {
                     Object.assign(user, update.$set);
@@ -466,11 +567,15 @@ export function getLocalDbClient() {
 
             async findOneAndUpdate(filter = {}, update = {}, _options = {}) {
               if (collectionName === "users") {
-                const user = (currentData.users || []).find(
-                  (u) =>
-                    (filter._id && matchId(u._id, filter._id)) ||
-                    (filter.email && u.email?.toLowerCase() === filter.email?.toLowerCase())
-                );
+                const user = (currentData.users || []).find((u) => {
+                  if ("_id" in filter) {
+                    return Boolean(filter._id && matchId(u._id, filter._id));
+                  }
+                  if (filter.email) {
+                    return u.email?.toLowerCase() === filter.email?.toLowerCase();
+                  }
+                  return false;
+                });
                 if (user) {
                   if (update.$set) {
                     Object.assign(user, update.$set);
