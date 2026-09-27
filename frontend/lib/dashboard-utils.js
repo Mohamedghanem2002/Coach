@@ -16,70 +16,92 @@ export function getPaymentDetailsFor(player, month) {
       (b.month || "").localeCompare(a.month || ""),
     );
     const latestWithAmount = sorted.find(
-      (p) => p.totalAmount !== undefined && p.totalAmount !== null,
+      (p) => p.totalAmount !== undefined && p.totalAmount !== null && Number(p.totalAmount) > 0,
     );
     if (latestWithAmount) latestHistoryAmount = Number(latestWithAmount.totalAmount);
   }
 
-  const defaultTotal = Number(
-    player?.defaultTotalAmount ?? player?.totalAmount ?? latestHistoryAmount ?? 100,
-  );
+  const configuredDefault =
+    player?.defaultTotalAmount !== undefined && player?.defaultTotalAmount !== null && player?.defaultTotalAmount !== ""
+      ? Number(player.defaultTotalAmount)
+      : (player?.totalAmount !== undefined && player?.totalAmount !== null && player?.totalAmount !== "" && Number(player?.totalAmount) > 0
+          ? Number(player.totalAmount)
+          : latestHistoryAmount);
+
+  const defaultTotal =
+    configuredDefault !== undefined && !isNaN(configuredDefault) && configuredDefault > 0
+      ? configuredDefault
+      : null;
 
   if (record) {
-    const totalAmount = Number(
-      record.totalAmount ?? record.amount ?? defaultTotal,
-    );
+    const hasRecordAmount =
+      record.totalAmount !== undefined && record.totalAmount !== null && record.totalAmount !== "";
+    const totalAmount = hasRecordAmount
+      ? Number(record.totalAmount)
+      : (record.amount !== undefined && record.amount !== null && record.amount !== ""
+          ? Number(record.amount)
+          : defaultTotal);
+
+    const hasConfiguredAmount = totalAmount !== null && totalAmount > 0;
     const paidAmount = Number(
-      record.paidAmount ?? (record.status === "paid" ? totalAmount : 0),
+      record.paidAmount ?? (record.status === "paid" && hasConfiguredAmount ? totalAmount : 0),
     );
-    const remainingAmount = Math.max(0, totalAmount - paidAmount);
+    const remainingAmount = hasConfiguredAmount ? Math.max(0, totalAmount - paidAmount) : 0;
 
     let status = record.status;
-    if (paidAmount >= totalAmount && totalAmount > 0) {
+    if (paidAmount >= totalAmount && hasConfiguredAmount) {
       status = "paid";
-    } else if (paidAmount > 0 && paidAmount < totalAmount) {
+    } else if (paidAmount > 0) {
       status = "partially_paid";
-    } else if (paidAmount === 0) {
+    } else if (paidAmount === 0 && hasConfiguredAmount) {
       status = "unpaid";
     }
 
     return {
-      status,
-      totalAmount,
+      status: status || "unpaid",
+      totalAmount: totalAmount ?? 0,
       paidAmount,
       remainingAmount,
+      hasConfiguredAmount,
     };
   }
 
   if (month === currentMonth) {
-    const totalAmount = Number(player?.totalAmount ?? defaultTotal);
+    const hasPlayerTotal =
+      player?.totalAmount !== undefined && player?.totalAmount !== null && player?.totalAmount !== "" && Number(player?.totalAmount) > 0;
+    const totalAmount = hasPlayerTotal ? Number(player.totalAmount) : defaultTotal;
+    const hasConfiguredAmount = totalAmount !== null && totalAmount > 0;
+
     const paidAmount = Number(
       player?.paidAmount ??
-        (player?.paymentStatus === "paid" ? totalAmount : 0),
+        (player?.paymentStatus === "paid" && hasConfiguredAmount ? totalAmount : 0),
     );
-    const remainingAmount = Math.max(0, totalAmount - paidAmount);
+    const remainingAmount = hasConfiguredAmount ? Math.max(0, totalAmount - paidAmount) : 0;
     let status = player?.paymentStatus || "unpaid";
-    if (paidAmount >= totalAmount && totalAmount > 0) {
+    if (paidAmount >= totalAmount && hasConfiguredAmount) {
       status = "paid";
-    } else if (paidAmount > 0 && paidAmount < totalAmount) {
+    } else if (paidAmount > 0) {
       status = "partially_paid";
-    } else if (paidAmount === 0) {
+    } else if (paidAmount === 0 && hasConfiguredAmount) {
       status = "unpaid";
     }
 
     return {
       status,
-      totalAmount,
+      totalAmount: totalAmount ?? 0,
       paidAmount,
       remainingAmount,
+      hasConfiguredAmount,
     };
   }
 
+  const hasConfiguredAmount = defaultTotal !== null && defaultTotal > 0;
   return {
     status: "unpaid",
-    totalAmount: defaultTotal,
+    totalAmount: defaultTotal ?? 0,
     paidAmount: 0,
-    remainingAmount: defaultTotal,
+    remainingAmount: defaultTotal ?? 0,
+    hasConfiguredAmount,
   };
 }
 

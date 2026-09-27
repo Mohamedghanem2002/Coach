@@ -364,11 +364,13 @@ function PlayerRow({
                 </div>
                 <div className="font-black text-[11px] truncate">
                   {paymentStatus === "paid" ? (
-                    <span className="text-emerald-700">{paidAmount} ج.م ✓</span>
+                    <span className="text-emerald-700">{paidAmount > 0 ? `${paidAmount} ج.م ✓` : "مسدد ✓"}</span>
                   ) : paymentStatus === "partially_paid" ? (
                     <span className="text-amber-800">باقي {remainingAmount} ج.م</span>
-                  ) : (
+                  ) : totalAmount > 0 ? (
                     <span className="text-rose-700">مطلوب {totalAmount || remainingAmount}</span>
+                  ) : (
+                    <span className="text-rose-700">غير مسدد</span>
                   )}
                 </div>
               </div>
@@ -661,7 +663,11 @@ function PlayerRow({
               ) : (
                 <>
                   <Clock className="h-3.5 w-3.5 shrink-0 text-rose-600" />
-                  <span className="truncate font-black text-xs">غير مسدد ({totalAmount || remainingAmount} ج.م)</span>
+                  <span className="truncate font-black text-xs">
+                    {totalAmount > 0
+                      ? `غير مسدد (${totalAmount || remainingAmount} ج.م)`
+                      : "غير مسدد"}
+                  </span>
                 </>
               )}
             </div>

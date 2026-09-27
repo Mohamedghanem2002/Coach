@@ -67,31 +67,44 @@ function serializePlayer(player) {
       (b.month || "").localeCompare(a.month || ""),
     );
     const latestWithAmount = sorted.find(
-      (p) => p.totalAmount !== undefined && p.totalAmount !== null,
+      (p) => p.totalAmount !== undefined && p.totalAmount !== null && Number(p.totalAmount) > 0,
     );
     if (latestWithAmount) latestHistoryAmount = Number(latestWithAmount.totalAmount);
   }
 
-  const defaultTotalAmount = Number(
-    player.defaultTotalAmount ?? player.totalAmount ?? latestHistoryAmount ?? 100,
-  );
+  const configuredDefault =
+    player.defaultTotalAmount !== undefined && player.defaultTotalAmount !== null && player.defaultTotalAmount !== ""
+      ? Number(player.defaultTotalAmount)
+      : (player.totalAmount !== undefined && player.totalAmount !== null && player.totalAmount !== "" && Number(player.totalAmount) > 0
+          ? Number(player.totalAmount)
+          : latestHistoryAmount);
 
-  const totalAmount = Number(
-    monthlyPayment?.totalAmount ?? defaultTotalAmount,
-  );
+  const defaultTotalAmount =
+    configuredDefault !== undefined && !isNaN(configuredDefault) && configuredDefault > 0
+      ? configuredDefault
+      : null;
+
+  const totalAmount =
+    monthlyPayment?.totalAmount !== undefined && monthlyPayment?.totalAmount !== null && monthlyPayment?.totalAmount !== ""
+      ? Number(monthlyPayment.totalAmount)
+      : (defaultTotalAmount ?? 0);
+
+  const hasConfiguredAmount = totalAmount > 0;
   const paidAmount = Number(
     monthlyPayment?.paidAmount ?? (
-      monthlyPayment?.status === "paid"
+      monthlyPayment?.status === "paid" && hasConfiguredAmount
         ? totalAmount
         : (player.paidAmount ?? 0)
     ),
   );
-  const remainingAmount = Math.max(0, totalAmount - paidAmount);
+  const remainingAmount = hasConfiguredAmount ? Math.max(0, totalAmount - paidAmount) : 0;
   let status = monthlyPayment?.status || player.paymentStatus || "unpaid";
-  if (paidAmount >= totalAmount && totalAmount > 0) {
+  if (paidAmount >= totalAmount && hasConfiguredAmount) {
     status = "paid";
-  } else if (paidAmount > 0 && paidAmount < totalAmount) {
+  } else if (paidAmount > 0) {
     status = "partially_paid";
+  } else if (paidAmount === 0 && hasConfiguredAmount) {
+    status = "unpaid";
   }
 
   const dynamicAge = player.dateOfBirth
@@ -106,7 +119,7 @@ function serializePlayer(player) {
       : [],
     purchases: Array.isArray(player.purchases) ? player.purchases : [],
     paymentStatus: status,
-    defaultTotalAmount,
+    defaultTotalAmount: defaultTotalAmount ?? 0,
     totalAmount,
     paidAmount,
     remainingAmount,
@@ -292,6 +305,14 @@ export async function POST(request) {
       attendance: [],
       createdAt: new Date(),
     };
+    const initDefaultTotal =
+      body.defaultTotalAmount !== undefined && body.defaultTotalAmount !== null && body.defaultTotalAmount !== ""
+        ? Number(body.defaultTotalAmount)
+        : null;
+    if (initDefaultTotal && initDefaultTotal > 0) {
+      player.defaultTotalAmount = initDefaultTotal;
+      player.totalAmount = initDefaultTotal;
+    }
     const client = await clientPromise;
     const result = await client
       .db(process.env.MONGODB_DB)
@@ -372,6 +393,11 @@ export async function PATCH(request) {
       }
       if (typeof body.level === "string" && body.level.trim()) {
         updateData.level = body.level.trim().toUpperCase();
+      }
+      if (body.defaultTotalAmount !== undefined) {
+        const val = Number(body.defaultTotalAmount);
+        updateData.defaultTotalAmount = !isNaN(val) && val > 0 ? val : null;
+        updateData.totalAmount = updateData.defaultTotalAmount;
       }
       const player = await collection.findOneAndUpdate(
         { _id: new ObjectId(body.id), ownerId },
@@ -645,41 +671,53 @@ export async function PATCH(request) {
           (b.month || "").localeCompare(a.month || ""),
         );
         const latestWithAmount = sorted.find(
-          (p) => p.totalAmount !== undefined && p.totalAmount !== null,
+          (p) => p.totalAmount !== undefined && p.totalAmount !== null && Number(p.totalAmount) > 0,
         );
         if (latestWithAmount) latestHistoryAmount = Number(latestWithAmount.totalAmount);
       }
 
-      const defaultAmount = Number(
-        existing.defaultTotalAmount ?? existing.totalAmount ?? latestHistoryAmount ?? 100,
-      );
+      const configuredDefault =
+        existing.defaultTotalAmount !== undefined && existing.defaultTotalAmount !== null && existing.defaultTotalAmount !== ""
+          ? Number(existing.defaultTotalAmount)
+          : (existing.totalAmount !== undefined && existing.totalAmount !== null && existing.totalAmount !== "" && Number(existing.totalAmount) > 0
+              ? Number(existing.totalAmount)
+              : latestHistoryAmount);
 
+      const defaultAmount =
+        configuredDefault !== undefined && !isNaN(configuredDefault) && configuredDefault > 0
+          ? configuredDefault
+          : null;
+
+      const hasCustomBodyTotal = body.totalAmount !== undefined && body.totalAmount !== null && body.totalAmount !== "";
       const totalAmount =
-        body.totalAmount !== undefined
+        hasCustomBodyTotal
           ? Math.max(0, Number(body.totalAmount) || 0)
-          : (existingMonthPayment?.totalAmount ?? defaultAmount);
+          : (existingMonthPayment?.totalAmount !== undefined && existingMonthPayment?.totalAmount !== null
+              ? Number(existingMonthPayment.totalAmount)
+              : (defaultAmount ?? 0));
 
+      const hasConfiguredAmount = totalAmount > 0;
       let paidAmount;
       if (body.paidAmount !== undefined) {
         paidAmount = Math.max(0, Number(body.paidAmount) || 0);
       } else if (body.paymentStatus === "paid") {
-        paidAmount = totalAmount;
+        paidAmount = hasConfiguredAmount ? totalAmount : 0;
       } else if (body.paymentStatus === "unpaid") {
         paidAmount = 0;
       } else {
         paidAmount =
           existingMonthPayment?.paidAmount ??
-          (existingMonthPayment?.status === "paid" ? totalAmount : 0);
+          (existingMonthPayment?.status === "paid" && hasConfiguredAmount ? totalAmount : 0);
       }
 
-      const remainingAmount = Math.max(0, totalAmount - paidAmount);
+      const remainingAmount = hasConfiguredAmount ? Math.max(0, totalAmount - paidAmount) : 0;
 
       let status = body.paymentStatus;
-      if (paidAmount >= totalAmount && totalAmount > 0) {
+      if (paidAmount >= totalAmount && hasConfiguredAmount) {
         status = "paid";
-      } else if (paidAmount > 0 && paidAmount < totalAmount) {
+      } else if (paidAmount > 0) {
         status = "partially_paid";
-      } else if (paidAmount === 0) {
+      } else if (paidAmount === 0 && hasConfiguredAmount) {
         status = "unpaid";
       }
 
@@ -700,7 +738,7 @@ export async function PATCH(request) {
       const updateSet = {
         paymentHistory: history,
       };
-      if (body.totalAmount !== undefined) {
+      if (hasCustomBodyTotal && totalAmount > 0) {
         updateSet.totalAmount = totalAmount;
         updateSet.defaultTotalAmount = totalAmount;
       }

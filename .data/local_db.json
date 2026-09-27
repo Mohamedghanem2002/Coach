@@ -7,6 +7,14 @@
       "createdAt": "2026-09-09T21:42:04.392Z",
       "_id": "6aa1d2acc20ba8a6e482c3a3",
       "academyName": "Re_action DOJO"
+    },
+    {
+      "name": "كابتن تجريبي",
+      "academyName": "أكاديمية النسور الذهبية",
+      "email": "test_saas_coach@example.com",
+      "passwordHash": "$2b$12$nf3cgqbMt.cDWmklKS.Jb.lFSu2R7Kn5/R6XiRFoSyQxGVHmbweZO",
+      "createdAt": "2026-09-27T02:01:55.343Z",
+      "_id": "6ab8791366844c55cf3c4bff"
     }
   ],
   "branches": [
@@ -240,6 +248,36 @@
       "defaultTotalAmount": 300,
       "paidAmount": 150,
       "remainingAmount": 150
+    },
+    {
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "cccc",
+      "age": 6,
+      "dateOfBirth": "2020-05-05",
+      "guardianPhone": "",
+      "branch": "صالة الكاتا الرئيسية",
+      "belt": "أبيض",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "unpaid",
+      "paymentHistory": [
+        {
+          "month": "2026-09",
+          "status": "unpaid",
+          "totalAmount": 200,
+          "paidAmount": 0,
+          "remainingAmount": 200,
+          "updatedAt": "2026-09-27T03:58:52.630Z"
+        }
+      ],
+      "purchases": [],
+      "attendance": [],
+      "createdAt": "2026-09-27T03:55:19.688Z",
+      "_id": "6ab893a766844c55cf3c4c00",
+      "totalAmount": 200,
+      "defaultTotalAmount": 200,
+      "paidAmount": 0,
+      "remainingAmount": 200
     }
   ],
   "events": [

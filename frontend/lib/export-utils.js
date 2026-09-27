@@ -57,11 +57,15 @@ export function exportPlayersToCSV(
     const payDetails = getPaymentDetailsFor(player, paymentMonth);
     let paymentLabel = "لم يدفع";
     if (payDetails.status === "paid") {
-      paymentLabel = `مدفوع بالكامل (${payDetails.paidAmount} ج.م) ✓`;
+      paymentLabel = payDetails.hasConfiguredAmount || payDetails.paidAmount > 0
+        ? `مدفوع بالكامل (${payDetails.paidAmount} ج.م) ✓`
+        : "مدفوع بالكامل ✓";
     } else if (payDetails.status === "partially_paid") {
       paymentLabel = `دفع ${payDetails.paidAmount} • باقي ${payDetails.remainingAmount}`;
     } else {
-      paymentLabel = `لم يدفع (متبقي ${payDetails.remainingAmount})`;
+      paymentLabel = payDetails.hasConfiguredAmount && payDetails.remainingAmount > 0
+        ? `لم يدفع (متبقي ${payDetails.remainingAmount})`
+        : "لم يدفع";
     }
 
     const purchases = Array.isArray(player.purchases) ? player.purchases : [];

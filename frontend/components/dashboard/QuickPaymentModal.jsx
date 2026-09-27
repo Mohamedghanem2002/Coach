@@ -37,18 +37,27 @@ export default function QuickPaymentModal({
 }) {
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // ─── اشتراك الشهر State ───────────────────────────────────────────────────
-  const fallbackDefaultTotal = player?.defaultTotalAmount ?? player?.totalAmount ?? (
-    Array.isArray(player?.paymentHistory) && player.paymentHistory.length > 0
-      ? [...player.paymentHistory].sort((a, b) => (b.month || "").localeCompare(a.month || ""))[0]?.totalAmount
-      : 100
-  ) ?? 100;
+  const fallbackDefaultTotal =
+    player?.defaultTotalAmount !== undefined && player?.defaultTotalAmount !== null && player?.defaultTotalAmount !== ""
+      ? Number(player.defaultTotalAmount)
+      : (player?.totalAmount !== undefined && player?.totalAmount !== null && player?.totalAmount !== "" && Number(player.totalAmount) > 0
+          ? Number(player.totalAmount)
+          : (Array.isArray(player?.paymentHistory) && player.paymentHistory.length > 0
+              ? [...player.paymentHistory]
+                  .sort((a, b) => (b.month || "").localeCompare(a.month || ""))
+                  .find((p) => p.totalAmount !== undefined && p.totalAmount !== null && Number(p.totalAmount) > 0)?.totalAmount
+              : undefined));
 
-  const [totalAmount, setTotalAmount] = useState(
-    initialDetails?.totalAmount !== undefined
+  const resolvedInitialTotal =
+    initialDetails?.hasConfiguredAmount && initialDetails?.totalAmount > 0
       ? String(initialDetails.totalAmount)
-      : String(fallbackDefaultTotal)
-  );
+      : (initialDetails?.totalAmount && Number(initialDetails.totalAmount) > 0
+          ? String(initialDetails.totalAmount)
+          : (fallbackDefaultTotal !== undefined && Number(fallbackDefaultTotal) > 0
+              ? String(fallbackDefaultTotal)
+              : ""));
+
+  const [totalAmount, setTotalAmount] = useState(resolvedInitialTotal);
   const [paidAmount, setPaidAmount] = useState(
     initialDetails?.paidAmount !== undefined ? String(initialDetails.paidAmount) : "0"
   );
@@ -308,7 +317,7 @@ export default function QuickPaymentModal({
                 onChange={(e) =>
                   setTotalAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))
                 }
-                placeholder="100"
+                placeholder="حدد قيمة اشتراك الشهر (مثال: 150)"
                 className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 text-base sm:text-sm font-bold text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-3 focus:ring-emerald-100"
                 required
               />

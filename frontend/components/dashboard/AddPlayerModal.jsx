@@ -28,6 +28,7 @@ export default function AddPlayerModal({
   const [level, setLevel] = useState("A");
   const [contactNotice, setContactNotice] = useState("");
   const [photo, setPhoto] = useState("");
+  const [defaultTotalAmount, setDefaultTotalAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -216,6 +217,7 @@ export default function AddPlayerModal({
         belt,
         level,
         photo,
+        defaultTotalAmount: defaultTotalAmount ? Number(defaultTotalAmount) : null,
       });
     } finally {
       setSubmitting(false);
@@ -470,6 +472,26 @@ export default function AddPlayerModal({
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* قيمة الاشتراك الشهري الثابت - اختياري */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                  قيمة الاشتراك الشهري الثابت (ج.م) - اختياري
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                  type="text"
+                  inputMode="numeric"
+                  value={defaultTotalAmount}
+                  onChange={(e) =>
+                    setDefaultTotalAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))
+                  }
+                  placeholder="اتركه فارغاً إذا لم تحدد اشتراكاً ثابتاً لهذا اللاعب"
+                />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  إذا تم تحديد قيمة هنا، سيتم اعتمادها تلقائياً لكل الشهور القادمة ويمكنك تعديلها في أي وقت.
+                </p>
               </div>
 
               {error && (

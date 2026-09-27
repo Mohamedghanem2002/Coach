@@ -109,6 +109,34 @@ export default function Profile({
   const [editLevel, setEditLevel] = useState(player.level || "A");
   const [editContactNotice, setEditContactNotice] = useState("");
   const [editPhoto, setEditPhoto] = useState(player.photo || "");
+  const [editDefaultTotalAmount, setEditDefaultTotalAmount] = useState(
+    player.defaultTotalAmount !== undefined && player.defaultTotalAmount !== null && player.defaultTotalAmount !== ""
+      ? String(player.defaultTotalAmount)
+      : (player.totalAmount !== undefined && player.totalAmount !== null && player.totalAmount !== "" && Number(player.totalAmount) > 0
+          ? String(player.totalAmount)
+          : "")
+  );
+
+  function startEditing(phoneOverride = null) {
+    setEditName(player.name || "");
+    const _d = (player.dateOfBirth || "").split("-");
+    setEditDobYear(_d[0] || "");
+    setEditDobMonth(_d[1] || "");
+    setEditDobDay(_d[2] || "");
+    setEditGuardianPhone(phoneOverride !== null ? phoneOverride : (player.guardianPhone || ""));
+    setEditBranch(player.branch || "");
+    setEditBelt(player.belt || "أبيض");
+    setEditLevel(player.level || "A");
+    setEditPhoto(player.photo || "");
+    setEditDefaultTotalAmount(
+      player.defaultTotalAmount !== undefined && player.defaultTotalAmount !== null && player.defaultTotalAmount !== ""
+        ? String(player.defaultTotalAmount)
+        : (player.totalAmount !== undefined && player.totalAmount !== null && player.totalAmount !== "" && Number(player.totalAmount) > 0
+            ? String(player.totalAmount)
+            : "")
+    );
+    setIsEditing(true);
+  }
 
   async function handleEditPickContact() {
     if (typeof window !== "undefined" && "contacts" in navigator && "ContactsManager" in window) {
@@ -219,8 +247,14 @@ export default function Profile({
   const [customAttendanceDate, setCustomAttendanceDate] = useState(today);
   const [customAttendanceStatus, setCustomAttendanceStatus] = useState("present");
   const [customPaymentMonth, setCustomPaymentMonth] = useState(today.slice(0, 7));
-  const [customTotalAmount, setCustomTotalAmount] = useState("100");
-  const [customPaidAmount, setCustomPaidAmount] = useState("100");
+  const playerInitialFee =
+    player?.defaultTotalAmount !== undefined && player?.defaultTotalAmount !== null && player?.defaultTotalAmount !== ""
+      ? String(player.defaultTotalAmount)
+      : (player?.totalAmount !== undefined && player?.totalAmount !== null && player?.totalAmount !== "" && Number(player.totalAmount) > 0
+          ? String(player.totalAmount)
+          : "");
+  const [customTotalAmount, setCustomTotalAmount] = useState(playerInitialFee);
+  const [customPaidAmount, setCustomPaidAmount] = useState(playerInitialFee);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [targetPaymentMonth, setTargetPaymentMonth] = useState(paymentMonth);
   const [targetPaymentDetails, setTargetPaymentDetails] = useState(null);
@@ -405,12 +439,22 @@ export default function Profile({
     const paymentText = paymentHistory.length
       ? paymentHistory
         .map((item) => {
-          const total = item.totalAmount ?? player?.defaultTotalAmount ?? player?.totalAmount ?? 100;
-          const paid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? total : 0);
-          const rem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, total - paid);
-          if (paid >= total && total > 0) return `• ${item.month}: مدفوع بالكامل (${paid} ج.م) ✓`;
-          if (paid > 0) return `• ${item.month}: تم دفع ${paid} ج.م (المتبقي ${rem} ج.م) ⚠️`;
-          return `• ${item.month}: لم يدفع (المتبقي ${rem} ج.م) ⚠️`;
+          const itemHasFee =
+            item.totalAmount !== undefined && item.totalAmount !== null && Number(item.totalAmount) > 0;
+          const total = itemHasFee
+            ? Number(item.totalAmount)
+            : (player?.defaultTotalAmount
+                ? Number(player.defaultTotalAmount)
+                : (player?.totalAmount && Number(player.totalAmount) > 0 ? Number(player.totalAmount) : null));
+          const hasFee = total !== null && total > 0;
+          const paid = item.paidAmount !== undefined ? Number(item.paidAmount) : (item.status === "paid" && hasFee ? total : 0);
+          const rem = hasFee ? Math.max(0, total - paid) : 0;
+          if (hasFee && paid >= total && total > 0) return `• ${item.month}: مدفوع بالكامل (${paid} ج.م) ✓`;
+          if (paid > 0 && hasFee) return `• ${item.month}: تم دفع ${paid} ج.م (المتبقي ${rem} ج.م) ⚠️`;
+          if (paid > 0 && !hasFee) return `• ${item.month}: تم دفع ${paid} ج.م ⚠️`;
+          return hasFee && rem > 0
+            ? `• ${item.month}: لم يدفع (المتبقي ${rem} ج.م) ⚠️`
+            : `• ${item.month}: لم يدفع ⚠️`;
         })
         .join("\n")
       : "لا توجد مدفوعات مسجلة بعد";
@@ -446,10 +490,16 @@ export default function Profile({
       `✅ مرات الحضور: ${attended} حصة`,
       `📝 إجمالي الحصص المسجلة: ${(player.attendance || []).length}`,
       `💳 اشتراك شهر ${paymentMonth}: ${monthlyStatus === "paid"
-        ? `مدفوع بالكامل (${paidAmount} ج.م) ✓`
+        ? (paymentDetails.hasConfiguredAmount || paidAmount > 0
+            ? `مدفوع بالكامل (${paidAmount} ج.م) ✓`
+            : "مدفوع بالكامل ✓")
         : monthlyStatus === "partially_paid"
-          ? `سدد ${paidAmount} من أصل ${totalAmount} ج.م (فاضل عليه ${remainingAmount} ج.م) ⚠️`
-          : `غير مدفوع (المطلوب ${totalAmount || remainingAmount} ج.م) ⚠️`
+          ? (paymentDetails.hasConfiguredAmount || totalAmount > 0
+              ? `سدد ${paidAmount} من أصل ${totalAmount} ج.م (فاضل عليه ${remainingAmount} ج.م) ⚠️`
+              : `سدد ${paidAmount} ج.م ⚠️`)
+          : (paymentDetails.hasConfiguredAmount && (totalAmount > 0 || remainingAmount > 0)
+              ? `غير مدفوع (المطلوب ${totalAmount || remainingAmount} ج.م) ⚠️`
+              : "لم يدفع ⚠️")
       }`,
       ...(purchasesText ? ["", "🥋 المشتريات والمستلزمات (البدل والأدوات):", purchasesText] : []),
       "",
@@ -550,9 +600,13 @@ export default function Profile({
 
     const targetPayment = getPaymentDetailsFor(player, paymentMonth);
     const mStatus = targetPayment.status;
-    const mTotal = targetPayment.totalAmount ?? player?.defaultTotalAmount ?? player?.totalAmount ?? 100;
+    const mHasConfigured = Boolean(
+      targetPayment.hasConfiguredAmount ||
+      (targetPayment.totalAmount !== undefined && targetPayment.totalAmount !== null && Number(targetPayment.totalAmount) > 0)
+    );
+    const mTotal = mHasConfigured ? Number(targetPayment.totalAmount) : 0;
     const mPaid = targetPayment.paidAmount ?? 0;
-    const mRemaining = targetPayment.remainingAmount ?? 0;
+    const mRemaining = mHasConfigured ? (targetPayment.remainingAmount ?? 0) : 0;
 
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
@@ -766,13 +820,17 @@ export default function Profile({
     context.stroke();
 
     drawRight(`💳 اشتراك شهر ${paymentMonth}`, 552 + 456 - 22, 676, "800 23px Cairo, sans-serif", mIsPaid ? "#065f46" : mIsPartial ? "#92400e" : "#991b1b");
-    const mStatusText = mIsPaid ? "مدفوع بالكامل ✓" : mIsPartial ? `سداد جزئي (${mPaid} ج.م)` : "غير مسدد ⚠️";
+    const mStatusText = mIsPaid
+      ? "مدفوع بالكامل ✓"
+      : mIsPartial
+      ? `سداد جزئي (${mPaid} ج.م)`
+      : (mHasConfigured ? "غير مسدد ⚠️" : "لم يدفع ⚠️");
     drawCenter(mStatusText, 552 + 228, 725, "900 34px Cairo, sans-serif", mIsPaid ? "#047857" : mIsPartial ? "#b45309" : "#b91c1c");
     const mSubText = mIsPaid
-      ? `سدد ${mPaid} ج.م من أصل ${mTotal} ج.م`
+      ? (mHasConfigured ? `سدد ${mPaid} ج.م من أصل ${mTotal} ج.م` : "تم سداد الاشتراك بالكامل ✓")
       : mIsPartial
-      ? `فاضل عليه: ${mRemaining} ج.م (من ${mTotal})`
-      : `المبلغ المطلوب: ${mTotal || mRemaining} ج.م`;
+      ? (mHasConfigured ? `فاضل عليه: ${mRemaining} ج.م (من ${mTotal})` : `سدد ${mPaid} ج.م`)
+      : (mHasConfigured ? `المبلغ المطلوب: ${mTotal || mRemaining} ج.م` : "لم يدفع");
     drawCenter(mSubText, 552 + 228, 766, "700 21px Cairo, sans-serif", mIsPaid ? "#065f46" : mIsPartial ? "#b45309" : "#9f1239");
 
     // Card 2 (Left): المشتريات والبدل والأدوات
@@ -872,10 +930,17 @@ export default function Profile({
       y += 54;
     } else {
       for (const item of pHistoryList) {
-        const total = item.totalAmount ?? player?.defaultTotalAmount ?? player?.totalAmount ?? 100;
-        const paid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? total : 0);
-        const rem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, total - paid);
-        const isP = paid >= total && total > 0;
+        const itemHasFee =
+          item.totalAmount !== undefined && item.totalAmount !== null && Number(item.totalAmount) > 0;
+        const total = itemHasFee
+          ? Number(item.totalAmount)
+          : (player?.defaultTotalAmount
+              ? Number(player.defaultTotalAmount)
+              : (player?.totalAmount && Number(player.totalAmount) > 0 ? Number(player.totalAmount) : 0));
+        const hasFee = total > 0;
+        const paid = item.paidAmount !== undefined ? Number(item.paidAmount) : (item.status === "paid" && hasFee ? total : 0);
+        const rem = hasFee ? Math.max(0, total - paid) : 0;
+        const isP = hasFee ? (paid >= total && total > 0) : item.status === "paid";
         const isPartial = paid > 0 && !isP;
 
         context.fillStyle = isP ? "#f0fdf4" : isPartial ? "#fffbeb" : "#fef2f2";
@@ -888,10 +953,10 @@ export default function Profile({
 
         drawRight(`اشتراك شهر: ${item.month}`, 1008 - 20, y + 29, "700 22px Cairo, sans-serif", isP ? "#166534" : isPartial ? "#92400e" : "#991b1b");
         const pStatusStr = isP
-          ? `مدفوع بالكامل (${paid} ج.م) ✓`
+          ? (hasFee ? `مدفوع بالكامل (${paid} ج.م) ✓` : "مدفوع بالكامل ✓")
           : isPartial
-          ? `سدد ${paid} ج.م  •  فاضل عليه: ${rem} ج.م ⚠️`
-          : `لم يدفع (مطلوب ${rem || total} ج.م) ⚠️`;
+          ? (hasFee ? `سدد ${paid} ج.م  •  فاضل عليه: ${rem} ج.م ⚠️` : `سدد ${paid} ج.م ⚠️`)
+          : (hasFee ? `لم يدفع (مطلوب ${rem || total} ج.م) ⚠️` : "لم يدفع ⚠️");
         drawLeft(pStatusStr, 72 + 20, y + 29, "800 22px Cairo, sans-serif", isP ? "#15803d" : isPartial ? "#b45309" : "#b91c1c");
         y += 50;
       }
@@ -1098,6 +1163,7 @@ export default function Profile({
       belt: editBelt,
       level: editLevel,
       photo: editPhoto,
+      defaultTotalAmount: editDefaultTotalAmount ? Number(editDefaultTotalAmount) : null,
     });
     setProfileNotice(
       updatedPlayer
@@ -1227,19 +1293,7 @@ export default function Profile({
               <>
                 <button
                   type="button"
-                  onClick={() => {
-                    setEditName(player.name);
-                    const _d = (player.dateOfBirth || "").split("-");
-                    setEditDobYear(_d[0] || "");
-                    setEditDobMonth(_d[1] || "");
-                    setEditDobDay(_d[2] || "");
-                    setEditGuardianPhone(guardianPhone);
-                    setEditBranch(player.branch);
-                    setEditBelt(player.belt || "أبيض");
-                    setEditLevel(player.level || "A");
-                    setEditPhoto(player.photo || "");
-                    setIsEditing(true);
-                  }}
+                  onClick={() => startEditing()}
                   className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3 text-xs font-black text-slate-700 transition active-press cursor-pointer touch-manipulation shadow-2xs"
                   title="تعديل بيانات اللاعب"
                 >
@@ -1482,6 +1536,25 @@ export default function Profile({
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                  قيمة اشتراك الشهر الثابت للاعب (ج.م) - اختياري
+                </label>
+                <input
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                  type="text"
+                  inputMode="numeric"
+                  value={editDefaultTotalAmount}
+                  onChange={(e) =>
+                    setEditDefaultTotalAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))
+                  }
+                  placeholder="اتركه فارغاً إذا لم تحدد اشتراكاً ثابتاً لهذا اللاعب"
+                />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  إذا تم تحديد قيمة هنا، سيتم اعتمادها تلقائياً لكل الشهور القادمة ويمكنك تعديلها في أي وقت.
+                </p>
+              </div>
+
               <div className="pt-2 grid gap-2 sm:grid-cols-2">
                 <button
                   className="rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-3 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 disabled:opacity-60 cursor-pointer transition touch-manipulation"
@@ -1662,19 +1735,7 @@ export default function Profile({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        setEditName(player.name);
-                        const _d = (player.dateOfBirth || "").split("-");
-                        setEditDobYear(_d[0] || "");
-                        setEditDobMonth(_d[1] || "");
-                        setEditDobDay(_d[2] || "");
-                        setEditGuardianPhone("");
-                        setEditBranch(player.branch);
-                        setEditBelt(player.belt || "أبيض");
-                        setEditLevel(player.level || "A");
-                        setEditPhoto(player.photo || "");
-                        setIsEditing(true);
-                      }}
+                      onClick={() => startEditing("")}
                       className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 p-2.5 text-xs font-bold text-slate-600 transition active-press cursor-pointer touch-manipulation"
                       title="إضافة رقم ولي الأمر"
                     >
@@ -1697,19 +1758,7 @@ export default function Profile({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        setEditName(player.name);
-                        const _d = (player.dateOfBirth || "").split("-");
-                        setEditDobYear(_d[0] || "");
-                        setEditDobMonth(_d[1] || "");
-                        setEditDobDay(_d[2] || "");
-                        setEditGuardianPhone(guardianPhone);
-                        setEditBranch(player.branch);
-                        setEditBelt(player.belt || "أبيض");
-                        setEditLevel(player.level || "A");
-                        setEditPhoto(player.photo || "");
-                        setIsEditing(true);
-                      }}
+                      onClick={() => startEditing()}
                       className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 p-2.5 text-xs font-bold text-slate-700 transition active-press cursor-pointer touch-manipulation"
                       title="تعديل بيانات اللاعب"
                     >
@@ -1853,9 +1902,15 @@ export default function Profile({
                       <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
                         <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-2.5 text-center shadow-2xs">
                           <span className="block text-[10px] font-bold text-slate-500">المطلوب</span>
-                          <strong className="font-cairo text-sm sm:text-base font-black text-slate-800">
-                            {totalAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
-                          </strong>
+                          {totalAmount > 0 ? (
+                            <strong className="font-cairo text-sm sm:text-base font-black text-slate-800">
+                              {totalAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
+                            </strong>
+                          ) : (
+                            <strong className="font-cairo text-xs font-bold text-slate-500">
+                              غير محدد
+                            </strong>
+                          )}
                         </div>
                         <div className="rounded-xl bg-slate-50 border border-emerald-200/80 p-2.5 text-center shadow-2xs">
                           <span className="block text-[10px] font-bold text-emerald-700">المدفوع</span>
@@ -2044,17 +2099,7 @@ export default function Profile({
                       ) : (
                         <button
                           type="button"
-                          onClick={() => {
-                            setEditName(player.name);
-                            const _d = (player.dateOfBirth || "").split("-");
-                            setEditDobYear(_d[0] || "");
-                            setEditDobMonth(_d[1] || "");
-                            setEditDobDay(_d[2] || "");
-                            setEditGuardianPhone("");
-                            setEditBranch(player.branch);
-                            setEditPhoto(player.photo || "");
-                            setIsEditing(true);
-                          }}
+                          onClick={() => startEditing("")}
                           className="w-full text-center text-xs font-bold text-red-600 hover:underline py-1.5 cursor-pointer"
                         >
                           + اضغط هنا لإضافة رقم هاتف ولي الأمر
@@ -2329,10 +2374,17 @@ export default function Profile({
                       ) : (
                         <div className="space-y-2 max-h-60 sm:max-h-80 lg:max-h-[380px] overflow-y-auto pr-1">
                           {[...player.paymentHistory].reverse().map((item) => {
-                            const itemTotal = item.totalAmount ?? player?.defaultTotalAmount ?? player?.totalAmount ?? 100;
-                            const itemPaid = item.paidAmount !== undefined ? item.paidAmount : (item.status === "paid" ? itemTotal : 0);
-                            const itemRem = item.remainingAmount !== undefined ? item.remainingAmount : Math.max(0, itemTotal - itemPaid);
-                            const isItemPaid = itemPaid >= itemTotal && itemTotal > 0;
+                            const itemHasFee =
+                              item.totalAmount !== undefined && item.totalAmount !== null && Number(item.totalAmount) > 0;
+                            const itemTotal = itemHasFee
+                              ? Number(item.totalAmount)
+                              : (player?.defaultTotalAmount
+                                  ? Number(player.defaultTotalAmount)
+                                  : (player?.totalAmount && Number(player.totalAmount) > 0 ? Number(player.totalAmount) : 0));
+                            const hasFee = itemTotal > 0;
+                            const itemPaid = item.paidAmount !== undefined ? Number(item.paidAmount) : (item.status === "paid" && hasFee ? itemTotal : 0);
+                            const itemRem = hasFee ? Math.max(0, itemTotal - itemPaid) : 0;
+                            const isItemPaid = hasFee ? (itemPaid >= itemTotal && itemTotal > 0) : item.status === "paid";
                             const isItemPartial = itemPaid > 0 && !isItemPaid;
 
                             return (
@@ -2343,7 +2395,9 @@ export default function Profile({
                                 <div>
                                   <span className="font-bold text-slate-800 block sm:inline">{item.month}</span>
                                   <span className="text-[11px] font-semibold text-slate-500 sm:mr-2">
-                                    (دفع: {itemPaid} ج.م • متبقي: {itemRem} ج.م)
+                                    {hasFee
+                                      ? `(دفع: ${itemPaid} ج.م • متبقي: ${itemRem} ج.م)`
+                                      : (itemPaid > 0 ? `(دفع: ${itemPaid} ج.م)` : "(غير مسدد)")}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1.5 self-end sm:self-auto">
@@ -2355,6 +2409,7 @@ export default function Profile({
                                         totalAmount: itemTotal,
                                         paidAmount: itemPaid,
                                         remainingAmount: itemRem,
+                                        hasConfiguredAmount: hasFee,
                                         status: isItemPaid ? "paid" : isItemPartial ? "partially_paid" : "unpaid",
                                       });
                                       setShowPaymentModal(true);
@@ -2427,7 +2482,7 @@ export default function Profile({
                               inputMode="numeric"
                               value={customTotalAmount}
                               onChange={(e) => setCustomTotalAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))}
-                              placeholder="100"
+                              placeholder="حدد المطلوب (مثال: 150)"
                               className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 text-xs font-bold outline-none focus:border-red-500 focus:bg-white text-center"
                               required
                             />
@@ -2440,7 +2495,7 @@ export default function Profile({
                               inputMode="numeric"
                               value={customPaidAmount}
                               onChange={(e) => setCustomPaidAmount(toEnglishDigits(e.target.value).replace(/[^0-9]/g, ""))}
-                              placeholder="100"
+                              placeholder="0"
                               className="min-h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 text-xs font-bold outline-none focus:border-red-500 focus:bg-white text-center"
                               required
                             />
