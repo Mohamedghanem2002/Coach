@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminOverviewTab from "../components/admin/AdminOverviewTab";
 import AdminAcademiesTab from "../components/admin/AdminAcademiesTab";
+import AdminCaptainsTab from "../components/admin/AdminCaptainsTab";
 import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
 import AcademyDetailsModal from "../components/admin/AcademyDetailsModal";
+import CaptainDetailsModal from "../components/admin/CaptainDetailsModal";
 import {
   SuspendModal,
   ExtendSubscriptionModal,
@@ -19,19 +21,25 @@ export default function AdminDashboard() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "academies" | "audit"
+  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "captains" | "academies" | "audit"
   const [overviewData, setOverviewData] = useState(null);
-  const [academiesData, setAcademiesData] = useState({ academies: [], pagination: {} });
+  const [captainsData, setCaptainsData] = useState({
+    captains: [],
+    summary: { totalCaptains: 0, totalPlayers: 0, totalHalls: 0, totalEvents: 0 },
+    pagination: {},
+  });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [academiesLoading, setAcademiesLoading] = useState(false);
+  const [captainsLoading, setCaptainsLoading] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Modals state
-  const [inspectAcademyId, setInspectAcademyId] = useState(null);
+  const [inspectCaptainId, setInspectCaptainId] = useState(null);
   const [suspendTargetAcademy, setSuspendTargetAcademy] = useState(null);
   const [extendTargetAcademy, setExtendTargetAcademy] = useState(null);
   const [reactivateTargetAcademy, setReactivateTargetAcademy] = useState(null);
@@ -88,7 +96,7 @@ export default function AdminDashboard() {
     loadOverview();
   }, [loadOverview]);
 
-  // 2. Fetch Academies Data (with Search, Status Filter & Pagination)
+  // 2. Fetch Captains Data (with Search, Status Filter, Date Filter, Sorting & Pagination)
   useEffect(() => {
     let ignore = false;
     const params = new URLSearchParams({
@@ -96,58 +104,64 @@ export default function AdminDashboard() {
       limit: "15",
       search,
       status: statusFilter,
+      dateFilter,
+      sortBy,
     });
 
-    fetch(`/api/admin/academies?${params.toString()}`)
+    fetch(`/api/admin/captains?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
         if (!ignore && data?.success) {
-          setAcademiesData({
-            academies: data.academies || [],
+          setCaptainsData({
+            captains: data.captains || [],
+            summary: data.summary || { totalCaptains: 0, totalPlayers: 0, totalHalls: 0, totalEvents: 0 },
             pagination: data.pagination || {},
           });
         }
       })
       .catch((err) => {
-        console.error("Academies fetch error:", err);
+        console.error("Captains fetch error:", err);
       })
       .finally(() => {
-        if (!ignore) setAcademiesLoading(false);
+        if (!ignore) setCaptainsLoading(false);
       });
 
     return () => {
       ignore = true;
     };
-  }, [currentPage, search, statusFilter]);
+  }, [currentPage, search, statusFilter, dateFilter, sortBy]);
 
-  const refreshAcademies = useCallback(() => {
-    setAcademiesLoading(true);
+  const refreshCaptains = useCallback(() => {
+    setCaptainsLoading(true);
     const params = new URLSearchParams({
       page: String(currentPage),
       limit: "15",
       search,
       status: statusFilter,
+      dateFilter,
+      sortBy,
     });
 
-    fetch(`/api/admin/academies?${params.toString()}`)
+    fetch(`/api/admin/captains?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
         if (data?.success) {
-          setAcademiesData({
-            academies: data.academies || [],
+          setCaptainsData({
+            captains: data.captains || [],
+            summary: data.summary || { totalCaptains: 0, totalPlayers: 0, totalHalls: 0, totalEvents: 0 },
             pagination: data.pagination || {},
           });
         }
       })
       .catch((err) => {
-        console.error("Academies refresh error:", err);
+        console.error("Captains refresh error:", err);
       })
       .finally(() => {
-        setAcademiesLoading(false);
+        setCaptainsLoading(false);
       });
-  }, [currentPage, search, statusFilter]);
+  }, [currentPage, search, statusFilter, dateFilter, sortBy]);
 
-  // Reset page when search or status changes
+  // Reset page when search or filters change
   const handleSearchChange = (val) => {
     setSearch(val);
     setCurrentPage(1);
@@ -158,12 +172,12 @@ export default function AdminDashboard() {
     setCurrentPage(1);
   };
 
-  // 3. Admin Action: Suspend Academy
+  // 3. Admin Action: Suspend Academy / Captain
   const handleSuspendConfirm = async (reason) => {
     if (!suspendTargetAcademy) return;
     setActionBusy(true);
     try {
-      const res = await fetch(`/api/admin/academies/${suspendTargetAcademy.id || suspendTargetAcademy._id}`, {
+      const res = await fetch(`/api/admin/captains/${suspendTargetAcademy.id || suspendTargetAcademy._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "suspend", reason }),
@@ -171,28 +185,27 @@ export default function AdminDashboard() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "فشل التعليق");
 
-      showToast(result.message || "تم تعليق خدمة الأكاديمية بنجاح");
+      showToast(result.message || "تم تعليق حساب الكابتن بنجاح");
       setSuspendTargetAcademy(null);
       loadOverview();
-      refreshAcademies();
-      // If details modal was open for this academy, reload it
-      if (inspectAcademyId === suspendTargetAcademy.id) {
-        setInspectAcademyId(null);
-        setTimeout(() => setInspectAcademyId(suspendTargetAcademy.id), 50);
+      refreshCaptains();
+      if (inspectCaptainId === (suspendTargetAcademy.id || suspendTargetAcademy._id)) {
+        setInspectCaptainId(null);
+        setTimeout(() => setInspectCaptainId(suspendTargetAcademy.id || suspendTargetAcademy._id), 50);
       }
     } catch (err) {
-      showToast(err.message || "تعذر تعليق الأكاديمية", "error");
+      showToast(err.message || "تعذر تعليق حساب الكابتن", "error");
     } finally {
       setActionBusy(false);
     }
   };
 
-  // 4. Admin Action: Reactivate Academy
+  // 4. Admin Action: Reactivate Academy / Captain
   const handleReactivateConfirm = async () => {
     if (!reactivateTargetAcademy) return;
     setActionBusy(true);
     try {
-      const res = await fetch(`/api/admin/academies/${reactivateTargetAcademy.id || reactivateTargetAcademy._id}`, {
+      const res = await fetch(`/api/admin/captains/${reactivateTargetAcademy.id || reactivateTargetAcademy._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "activate" }),
@@ -200,16 +213,16 @@ export default function AdminDashboard() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "فشل التفعيل");
 
-      showToast(result.message || "تمت إعادة تفعيل الأكاديمية بنجاح");
+      showToast(result.message || "تمت إعادة تفعيل حساب الكابتن بنجاح");
       setReactivateTargetAcademy(null);
       loadOverview();
-      refreshAcademies();
-      if (inspectAcademyId === reactivateTargetAcademy.id) {
-        setInspectAcademyId(null);
-        setTimeout(() => setInspectAcademyId(reactivateTargetAcademy.id), 50);
+      refreshCaptains();
+      if (inspectCaptainId === (reactivateTargetAcademy.id || reactivateTargetAcademy._id)) {
+        setInspectCaptainId(null);
+        setTimeout(() => setInspectCaptainId(reactivateTargetAcademy.id || reactivateTargetAcademy._id), 50);
       }
     } catch (err) {
-      showToast(err.message || "تعذر إعادة تفعيل الأكاديمية", "error");
+      showToast(err.message || "تعذر إعادة تفعيل الحساب", "error");
     } finally {
       setActionBusy(false);
     }
@@ -220,7 +233,7 @@ export default function AdminDashboard() {
     if (!extendTargetAcademy) return;
     setActionBusy(true);
     try {
-      const res = await fetch(`/api/admin/academies/${extendTargetAcademy.id || extendTargetAcademy._id}`, {
+      const res = await fetch(`/api/admin/captains/${extendTargetAcademy.id || extendTargetAcademy._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -232,13 +245,13 @@ export default function AdminDashboard() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "فشل التمديد");
 
-      showToast(result.message || "تم تمديد اشتراك الأكاديمية بنجاح");
+      showToast(result.message || "تم تمديد اشتراك الكابتن بنجاح");
       setExtendTargetAcademy(null);
       loadOverview();
-      refreshAcademies();
-      if (inspectAcademyId === extendTargetAcademy.id) {
-        setInspectAcademyId(null);
-        setTimeout(() => setInspectAcademyId(extendTargetAcademy.id), 50);
+      refreshCaptains();
+      if (inspectCaptainId === (extendTargetAcademy.id || extendTargetAcademy._id)) {
+        setInspectCaptainId(null);
+        setTimeout(() => setInspectCaptainId(extendTargetAcademy.id || extendTargetAcademy._id), 50);
       }
     } catch (err) {
       showToast(err.message || "تعذر تمديد الاشتراك", "error");
@@ -251,7 +264,7 @@ export default function AdminDashboard() {
   const handleTogglePayment = async (academy) => {
     const nextPaid = !academy.subscriptionPaid;
     try {
-      const res = await fetch(`/api/admin/academies/${academy.id || academy._id}`, {
+      const res = await fetch(`/api/admin/captains/${academy.id || academy._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -264,36 +277,36 @@ export default function AdminDashboard() {
 
       showToast(result.message || "تم تحديث حالة السداد بنجاح");
       loadOverview();
-      refreshAcademies();
-      if (inspectAcademyId === (academy.id || academy._id)) {
-        setInspectAcademyId(null);
-        setTimeout(() => setInspectAcademyId(academy.id || academy._id), 50);
+      refreshCaptains();
+      if (inspectCaptainId === (academy.id || academy._id)) {
+        setInspectCaptainId(null);
+        setTimeout(() => setInspectCaptainId(academy.id || academy._id), 50);
       }
     } catch (err) {
       showToast(err.message || "تعذر تحديث السداد", "error");
     }
   };
 
-  // 7. Admin Action: Permanently Delete Academy (Cascade Delete)
+  // 7. Admin Action: Permanently Delete Captain / Academy (Cascade Delete)
   const handleDeleteConfirm = async () => {
     if (!deleteTargetAcademy) return;
     setActionBusy(true);
     try {
-      const res = await fetch(`/api/admin/academies/${deleteTargetAcademy.id || deleteTargetAcademy._id}`, {
+      const res = await fetch(`/api/admin/captains/${deleteTargetAcademy.id || deleteTargetAcademy._id}`, {
         method: "DELETE",
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "فشل حذف الأكاديمية");
+      if (!res.ok) throw new Error(result.error || "فشل حذف الحساب");
 
-      showToast(result.message || "تم حذف الأكاديمية وجميع بياناتها نهائياً");
+      showToast(result.message || "تم حذف الحساب وجميع بياناته نهائياً");
       setDeleteTargetAcademy(null);
-      if (inspectAcademyId === (deleteTargetAcademy.id || deleteTargetAcademy._id)) {
-        setInspectAcademyId(null);
+      if (inspectCaptainId === (deleteTargetAcademy.id || deleteTargetAcademy._id)) {
+        setInspectCaptainId(null);
       }
       loadOverview();
-      refreshAcademies();
+      refreshCaptains();
     } catch (err) {
-      showToast(err.message || "تعذر حذف الأكاديمية", "error");
+      showToast(err.message || "تعذر حذف الحساب", "error");
     } finally {
       setActionBusy(false);
     }
@@ -315,7 +328,7 @@ export default function AdminDashboard() {
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         adminUser={session?.user}
-        academiesCount={overviewData?.stats?.totalAcademies || 0}
+        captainsCount={overviewData?.stats?.totalCaptains || overviewData?.stats?.totalAcademies || captainsData?.summary?.totalCaptains || 0}
       />
 
       {/* Main Content Area */}
@@ -326,30 +339,41 @@ export default function AdminDashboard() {
               stats={overviewData?.stats}
               recentAcademies={overviewData?.recentAcademies || []}
               recentAuditLogs={overviewData?.recentAuditLogs || []}
-              onSelectAcademy={(id) => setInspectAcademyId(id)}
-              onNavigateToAcademies={() => setActiveTab("academies")}
+              onSelectAcademy={(id) => setInspectCaptainId(id)}
+              onNavigateToAcademies={() => setActiveTab("captains")}
             />
           )}
 
-          {activeTab === "academies" && (
-            <AdminAcademiesTab
-              academies={academiesData.academies}
-              pagination={academiesData.pagination}
+          {(activeTab === "captains" || activeTab === "academies") && (
+            <AdminCaptainsTab
+              captains={captainsData.captains}
+              summary={captainsData.summary}
+              pagination={captainsData.pagination}
               search={search}
               onSearchChange={handleSearchChange}
               statusFilter={statusFilter}
               onStatusFilterChange={handleStatusFilterChange}
+              dateFilter={dateFilter}
+              onDateFilterChange={(df) => {
+                setDateFilter(df);
+                setCurrentPage(1);
+              }}
+              sortBy={sortBy}
+              onSortByChange={(sb) => {
+                setSortBy(sb);
+                setCurrentPage(1);
+              }}
               onPageChange={(p) => setCurrentPage(p)}
-              onSelectAcademy={(id) => setInspectAcademyId(id)}
+              onSelectCaptain={(id) => setInspectCaptainId(id)}
               onOpenSuspend={(ac) => setSuspendTargetAcademy(ac)}
               onOpenExtend={(ac) => setExtendTargetAcademy(ac)}
               onOpenReactivate={(ac) => setReactivateTargetAcademy(ac)}
               onOpenDelete={(ac) => setDeleteTargetAcademy(ac)}
               onTogglePayment={handleTogglePayment}
-              loading={academiesLoading}
+              loading={captainsLoading}
               onRefresh={() => {
                 loadOverview();
-                refreshAcademies();
+                refreshCaptains();
               }}
             />
           )}
@@ -358,11 +382,11 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* Academy Full Details Modal */}
-      <AcademyDetailsModal
-        academyId={inspectAcademyId}
-        isOpen={Boolean(inspectAcademyId)}
-        onClose={() => setInspectAcademyId(null)}
+      {/* Captain Full Details Modal */}
+      <CaptainDetailsModal
+        captainId={inspectCaptainId}
+        isOpen={Boolean(inspectCaptainId)}
+        onClose={() => setInspectCaptainId(null)}
         onOpenSuspend={(ac) => setSuspendTargetAcademy(ac)}
         onOpenExtend={(ac) => setExtendTargetAcademy(ac)}
         onOpenReactivate={(ac) => setReactivateTargetAcademy(ac)}

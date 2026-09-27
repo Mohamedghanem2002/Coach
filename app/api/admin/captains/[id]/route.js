@@ -15,7 +15,7 @@ function parseQueryId(id) {
   return id;
 }
 
-async function extractAcademyId(request, context) {
+async function extractCaptainId(request, context) {
   let id = null;
   try {
     const rawParams = context?.params;
@@ -28,7 +28,7 @@ async function extractAcademyId(request, context) {
       const url = new URL(request.url);
       const parts = url.pathname.split("/").filter(Boolean);
       const lastPart = parts[parts.length - 1];
-      if (lastPart && lastPart !== "academies") {
+      if (lastPart && lastPart !== "captains" && lastPart !== "academies") {
         id = lastPart;
       }
     } catch {}
@@ -36,15 +36,16 @@ async function extractAcademyId(request, context) {
   return id;
 }
 
+// GET: Full Captain profile, statistics, players list, halls list, events list, and audit logs
 export async function GET(request, context) {
   try {
     const adminCheck = await requireAdmin();
     if (!adminCheck.authorized) return adminCheck.response;
 
-    const id = await extractAcademyId(request, context);
+    const id = await extractCaptainId(request, context);
     if (!id) {
       return NextResponse.json(
-        { error: "معرف الأكاديمية مطلوب في الطلب", code: "INVALID_ID" },
+        { error: "معرف الكابتن مطلوب في الطلب", code: "INVALID_ID" },
         { status: 400 }
       );
     }
@@ -57,7 +58,7 @@ export async function GET(request, context) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "الأكاديمية غير موجودة في النظام", code: "NOT_FOUND" },
+        { error: "حساب الكابتن غير موجود في النظام", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
@@ -76,7 +77,7 @@ export async function GET(request, context) {
       daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     }
 
-    // Real DB relationships
+    // Query real DB records belonging to this captain
     const [players, branches, events, auditLogs] = await Promise.all([
       db.collection("players").find({ ownerId: user._id }).toArray(),
       db.collection("branches").find({ ownerId: user._id }).toArray(),
@@ -88,10 +89,50 @@ export async function GET(request, context) {
         .toArray(),
     ]);
 
+    // Build halls with player breakdowns
+    const hallsWithDetails = branches.map((b) => {
+      const bName = (b.name || "").trim().toLowerCase();
+      const hallPlayers = players.filter(
+        (p) => (p.branch || "").trim().toLowerCase() === bName
+      );
+      return {
+        id: b._id.toString(),
+        _id: b._id.toString(),
+        name: b.name,
+        days: b.days || [],
+        playersCount: hallPlayers.length,
+        players: hallPlayers.map((hp) => ({
+          id: hp._id.toString(),
+          name: hp.name,
+          belt: hp.belt || "",
+        })),
+        createdAt: b.createdAt,
+      };
+    });
+
     return NextResponse.json({
       success: true,
+      captain: {
+        id: user._id.toString(),
+        _id: user._id.toString(),
+        name: user.name,
+        academyName: user.academyName || "Re_action DOJO",
+        email: user.email,
+        phone: user.phone || "",
+        role: user.role || "user",
+        status: user.status || "active",
+        subscriptionStatus: computedStatus,
+        subscriptionPlan: user.subscriptionPlan || "trial",
+        subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
+        subscriptionExpiresAt: user.subscriptionExpiresAt || null,
+        subscriptionPaid: user.subscriptionPaid !== false,
+        suspensionReason: user.suspensionReason || null,
+        daysRemaining,
+        createdAt: user.createdAt,
+      },
       academy: {
         id: user._id.toString(),
+        _id: user._id.toString(),
         name: user.name,
         academyName: user.academyName || "Re_action DOJO",
         email: user.email,
@@ -110,31 +151,26 @@ export async function GET(request, context) {
       stats: {
         playersCount: players.length,
         branchesCount: branches.length,
+        hallsCount: branches.length,
         eventsCount: events.length,
       },
       players: players.map((p) => ({
         id: p._id.toString(),
+        _id: p._id.toString(),
         name: p.name,
         branch: p.branch || "",
         belt: p.belt || "",
         age: p.age || null,
-        phone: p.phone || p.parentPhone || "",
+        dateOfBirth: p.dateOfBirth || null,
+        phone: p.guardianPhone || p.phone || "",
+        paymentStatus: p.paymentStatus || "unpaid",
         createdAt: p.createdAt,
       })),
-      branches: branches.map((b) => {
-        const bName = (b.name || "").trim().toLowerCase();
-        const pInBranch = players.filter(
-          (p) => (p.branch || "").trim().toLowerCase() === bName
-        ).length;
-        return {
-          id: b._id.toString(),
-          name: b.name,
-          playersCount: pInBranch,
-          createdAt: b.createdAt,
-        };
-      }),
+      branches: hallsWithDetails,
+      halls: hallsWithDetails,
       events: events.map((e) => ({
         id: e._id.toString(),
+        _id: e._id.toString(),
         title: e.title || e.name || "فعالية تدريبية",
         date: e.date || null,
         fee: Number(e.fee ?? 100),
@@ -147,23 +183,24 @@ export async function GET(request, context) {
       })),
     });
   } catch (error) {
-    console.error("GET /api/admin/academies/[id] failed:", error);
+    console.error("GET /api/admin/captains/[id] error:", error);
     return NextResponse.json(
-      { error: "تعذر تحميل تفاصيل الأكاديمية", details: error?.message || String(error) },
+      { error: "تعذر تحميل تفاصيل الكابتن", details: error?.message || String(error) },
       { status: 500 }
     );
   }
 }
 
+// PATCH: Suspend, reactivate, extend subscription, toggle payment
 export async function PATCH(request, context) {
   try {
     const adminCheck = await requireAdmin();
     if (!adminCheck.authorized) return adminCheck.response;
 
-    const id = await extractAcademyId(request, context);
+    const id = await extractCaptainId(request, context);
     if (!id) {
       return NextResponse.json(
-        { error: "معرف الأكاديمية مطلوب في الطلب", code: "INVALID_ID" },
+        { error: "معرف الكابتن مطلوب في الطلب", code: "INVALID_ID" },
         { status: 400 }
       );
     }
@@ -179,15 +216,13 @@ export async function PATCH(request, context) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "الأكاديمية غير موجودة", code: "NOT_FOUND" },
+        { error: "حساب الكابتن غير موجود", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
     const targetAcademyId = user._id.toString();
     const targetAcademyName = user.academyName || user.name || "الأكاديمية";
-    const adminEmail = adminCheck.admin.email;
-    const adminId = adminCheck.admin.id;
 
     const updateFields = {
       updatedAt: new Date(),
@@ -199,7 +234,7 @@ export async function PATCH(request, context) {
 
     const now = new Date();
 
-    // 1. Suspend Academy
+    // 1. Suspend Captain
     if (action === "suspend") {
       const reason = (body.reason || "تم تعليق الحساب بقرار من إدارة المنصة").trim();
       updateFields.status = "suspended";
@@ -208,16 +243,15 @@ export async function PATCH(request, context) {
 
       auditAction = "suspend_academy";
       auditDetails = { reason };
-      successMessage = `تم تعليق خدمة أكاديمية "${targetAcademyName}" بنجاح.`;
+      successMessage = `تم تعليق حساب الكابتن "${user.name}" بنجاح.`;
     }
 
-    // 2. Reactivate / Activate Academy
+    // 2. Reactivate / Activate Captain
     else if (action === "activate" || action === "reactivate") {
       updateFields.status = "active";
       updateFields.subscriptionStatus = "active";
       updateFields.suspensionReason = null;
 
-      // If already expired, extend by at least 30 days from now
       const isPast = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() < now.getTime();
       if (isPast || !user.subscriptionExpiresAt) {
         updateFields.subscriptionExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -227,7 +261,7 @@ export async function PATCH(request, context) {
       auditDetails = {
         restoredExpiresAt: updateFields.subscriptionExpiresAt || user.subscriptionExpiresAt,
       };
-      successMessage = `تمت إعادة تفعيل أكاديمية "${targetAcademyName}" واستئناف الخدمة.`;
+      successMessage = `تمت إعادة تفعيل حساب الكابتن "${user.name}" واستئناف الخدمة.`;
     }
 
     // 3. Extend Subscription
@@ -245,7 +279,6 @@ export async function PATCH(request, context) {
           return NextResponse.json({ error: "عدد الأيام غير صالح (يجب أن يكون رقماً أكبر من صفر)" }, { status: 400 });
         }
 
-        // If current expiration is in the future, extend from that date; otherwise from now
         const baseDate = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() > now.getTime()
           ? new Date(user.subscriptionExpiresAt)
           : now;
@@ -256,84 +289,72 @@ export async function PATCH(request, context) {
       updateFields.subscriptionExpiresAt = newExpiresAt;
       updateFields.status = "active";
       updateFields.subscriptionStatus = "active";
-      updateFields.suspensionReason = null;
 
       auditAction = "extend_subscription";
       auditDetails = {
-        daysAdded: body.days || "custom",
+        daysAdded: body.days || null,
         newExpiresAt,
-        previousExpiresAt: user.subscriptionExpiresAt,
       };
-      successMessage = `تم تمديد اشتراك أكاديمية "${targetAcademyName}" بنجاح حتى ${newExpiresAt.toISOString().slice(0, 10)}.`;
+      successMessage = `تم تمديد اشتراك الكابتن "${user.name}" بنجاح حتى ${newExpiresAt.toISOString().slice(0, 10)}.`;
     }
 
-    // 4. Set Payment Status
-    else if (action === "set_payment_status") {
-      const isPaid = Boolean(body.paid);
-      updateFields.subscriptionPaid = isPaid;
+    // 4. Toggle Payment Status
+    else if (action === "toggle_payment") {
+      const currentPaid = user.subscriptionPaid !== false;
+      const newPaid = !currentPaid;
+      updateFields.subscriptionPaid = newPaid;
 
-      auditAction = isPaid ? "mark_subscription_paid" : "mark_subscription_unpaid";
-      auditDetails = { paid: isPaid };
-      successMessage = `تم تحديث حالة السداد إلى: ${isPaid ? "تم الدفع ✓" : "غير مدفوع ✗"}.`;
-    }
-
-    // 5. Update Plan
-    else if (action === "update_plan") {
-      const plan = (body.plan || "standard").trim();
-      updateFields.subscriptionPlan = plan;
-
-      auditAction = "update_subscription_plan";
-      auditDetails = { newPlan: plan, oldPlan: user.subscriptionPlan };
-      successMessage = `تم ترقية وتحديث خطة الاشتراك إلى: ${plan}.`;
+      auditAction = newPaid ? "mark_subscription_paid" : "mark_subscription_unpaid";
+      auditDetails = { paid: newPaid };
+      successMessage = `تم تحديث حالة السداد إلى: ${newPaid ? "مدفوع ✓" : "غير مدفوع ✗"}.`;
     }
 
     else {
       return NextResponse.json(
-        { error: "إجراء غير مدعوم" },
+        { error: `الإجراء المطلوب (${action}) غير معروف` },
         { status: 400 }
       );
     }
 
-    // Save to database
-    await db.collection("users").updateOne(
-      { _id: user._id },
-      { $set: updateFields }
-    );
+    // Apply update
+    await db.collection("users").updateOne({ _id: user._id }, { $set: updateFields });
 
     // Record audit log
-    await recordAuditLog({
-      action: auditAction,
-      targetAcademyId,
-      targetAcademyName,
-      adminEmail,
-      adminId,
-      details: auditDetails,
-    });
+    if (auditAction) {
+      await recordAuditLog({
+        action: auditAction,
+        targetAcademyId,
+        targetAcademyName,
+        adminEmail: adminCheck.admin.email,
+        adminId: adminCheck.admin.id,
+        details: auditDetails,
+      });
+    }
 
     return NextResponse.json({
       success: true,
       message: successMessage,
-      action,
-      updatedFields: updateFields,
+      updated: updateFields,
     });
   } catch (error) {
-    console.error("PATCH /api/admin/academies/[id] failed:", error);
+    console.error("PATCH /api/admin/captains/[id] failed:", error);
     return NextResponse.json(
-      { error: "تعذر تطبيق الإجراء على الأكاديمية", details: error?.message || String(error) },
+      { error: "تعذر تحديث بيانات الكابتن", details: error?.message || String(error) },
       { status: 500 }
     );
   }
 }
 
+// DELETE: Cascading permanent deletion of captain account, players, halls, and events
 export async function DELETE(request, context) {
   try {
     const adminCheck = await requireAdmin();
     if (!adminCheck.authorized) return adminCheck.response;
 
-    const id = await extractAcademyId(request, context);
+    const id = await extractCaptainId(request, context);
     if (!id) {
       return NextResponse.json(
-        { error: "معرف الأكاديمية مطلوب في الطلب", code: "INVALID_ID" },
+        { error: "معرف الكابتن مطلوب في الطلب", code: "INVALID_ID" },
         { status: 400 }
       );
     }
@@ -346,12 +367,12 @@ export async function DELETE(request, context) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "الأكاديمية غير موجودة", code: "NOT_FOUND" },
+        { error: "حساب الكابتن غير موجود", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
-    // Protect system admin account from accidental deletion
+    // Protect system admin account
     const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase().trim();
     if (user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail)) {
       return NextResponse.json(
@@ -361,9 +382,9 @@ export async function DELETE(request, context) {
     }
 
     const targetAcademyId = user._id.toString();
-    const targetAcademyName = user.academyName || user.name || "الأكاديمية";
+    const targetCaptainName = user.name || user.academyName || "الكابتن";
 
-    // Cascading deletion of all academy data (players, branches, events, user)
+    // Sequential cascading deletion
     const playersDel = await db.collection("players").deleteMany({ ownerId: user._id });
     const branchesDel = await db.collection("branches").deleteMany({ ownerId: user._id });
     const eventsDel = await db.collection("events").deleteMany({ ownerId: user._id });
@@ -378,7 +399,7 @@ export async function DELETE(request, context) {
     await recordAuditLog({
       action: "delete_academy_permanent",
       targetAcademyId,
-      targetAcademyName,
+      targetAcademyName: targetCaptainName,
       adminEmail: adminCheck.admin.email,
       adminId: adminCheck.admin.id,
       details: {
@@ -392,13 +413,13 @@ export async function DELETE(request, context) {
 
     return NextResponse.json({
       success: true,
-      message: `تم حذف حساب أكاديمية "${targetAcademyName}" وجميع لاعبيها (${playersDel.deletedCount || 0} لاعب) وصالاتها (${branchesDel.deletedCount || 0} صالة) نهائياً من قاعدة البيانات بنجاح.`,
-      deletedAcademyId: targetAcademyId,
+      message: `تم حذف حساب الكابتن "${targetCaptainName}" وجميع لاعبيه (${playersDel.deletedCount || 0} لاعب) وصالاته (${branchesDel.deletedCount || 0} صالة) نهائياً من قاعدة البيانات بنجاح.`,
+      deletedCaptainId: targetAcademyId,
     });
   } catch (error) {
-    console.error("DELETE /api/admin/academies/[id] failed:", error);
+    console.error("DELETE /api/admin/captains/[id] failed:", error);
     return NextResponse.json(
-      { error: "تعذر حذف الأكاديمية وبياناتها", details: error?.message || String(error) },
+      { error: "تعذر حذف الكابتن وبياناته", details: error?.message || String(error) },
       { status: 500 }
     );
   }

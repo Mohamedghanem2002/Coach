@@ -2,7 +2,7 @@
 import React from "react";
 import {
   LayoutDashboard,
-  Building2,
+  Users,
   History,
   ShieldCheck,
   LogOut,
@@ -17,8 +17,11 @@ export default function AdminSidebar({
   activeTab,
   onSelectTab,
   adminUser,
+  captainsCount = 0,
   academiesCount = 0,
 }) {
+  const displayCount = captainsCount || academiesCount || 0;
+
   const navItems = [
     {
       id: "overview",
@@ -27,10 +30,10 @@ export default function AdminSidebar({
       badge: null,
     },
     {
-      id: "academies",
-      label: "إدارة الأكاديميات",
-      icon: Building2,
-      badge: academiesCount ? String(academiesCount) : null,
+      id: "captains",
+      label: "إدارة الكباتن",
+      icon: Users,
+      badge: displayCount ? String(displayCount) : null,
     },
     {
       id: "audit",
@@ -87,7 +90,7 @@ export default function AdminSidebar({
           <nav className="space-y-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const active = activeTab === item.id;
+              const active = activeTab === item.id || (item.id === "captains" && activeTab === "academies");
               return (
                 <button
                   key={item.id}
@@ -183,7 +186,7 @@ export default function AdminSidebar({
         >
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = activeTab === item.id;
+            const active = activeTab === item.id || (item.id === "captains" && activeTab === "academies");
             return (
               <button
                 key={item.id}

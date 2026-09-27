@@ -109,10 +109,10 @@ export default function AdminOverviewTab({
               <span>لوحة التحكم الرئيسية للمنصة</span>
             </div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white">
-              مرحباً بك في مركز إدارة أكاديميات المنصة 👑
+              مرحباً بك في مركز إدارة الكباتن والأكاديميات بالمنصة 👑
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 font-bold mt-1 max-w-xl">
-              إحصائيات فورية حية من قاعدة البيانات، مراقبة جميع الأكاديميات، حساب أعداد اللاعبين بدقة، وإدارة الاشتراكات والتعليق الفوري.
+              إحصائيات فورية حية من قاعدة البيانات، مراقبة جميع حسابات الكباتن، حساب أعداد اللاعبين والصالات والفعاليات بدقة، وإدارة الاشتراكات والتعليق الفوري.
             </p>
           </div>
 
@@ -120,7 +120,7 @@ export default function AdminOverviewTab({
             onClick={onNavigateToAcademies}
             className="self-start sm:self-auto flex items-center gap-2 px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-red-600/30 transition cursor-pointer active:scale-95"
           >
-            <span>إدارة جميع الأكاديميات</span>
+            <span>إدارة جميع الكباتن</span>
             <ChevronLeft className="w-4 h-4" />
           </button>
         </div>
@@ -214,10 +214,10 @@ export default function AdminOverviewTab({
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-left hidden sm:block">
                         <span className="block text-xs font-black text-slate-800">
-                          {ac.playersCount} لاعب
+                          {ac.playersCount ?? 0} لاعب
                         </span>
                         <span className="block text-[10px] font-bold text-slate-400">
-                          {ac.branchesCount} صالات
+                          {ac.branchesCount ?? ac.hallsCount ?? 0} صالات &bull; {ac.eventsCount ?? 0} فعاليات
                         </span>
                       </div>
 
