@@ -1,4 +1,4 @@
-import { getEmailBackupSettings } from "./emailBackup";
+import { getEmailBackupSettings } from "./emailBackup.js";
 
 let _cachedNodemailer = null;
 async function getNodemailer() {
@@ -256,6 +256,10 @@ export async function sendPasswordResetCode({ email, code, userName = "" }) {
     return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error("[Password Reset] Failed to send email:", err?.message || err);
-    return { success: false, error: err?.message || String(err) };
+    return {
+      success: false,
+      error: err?.message || String(err),
+      isAuthError: err?.code === "EAUTH" || err?.message?.includes("535"),
+    };
   }
 }

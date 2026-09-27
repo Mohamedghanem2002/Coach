@@ -55,11 +55,24 @@ export async function POST(request) {
       userName: user.name || "",
     });
 
+    if (!mailRes.success) {
+      console.warn("[Password Reset] Email delivery failed:", mailRes.error);
+      return NextResponse.json({
+        success: true,
+        emailSent: false,
+        code,
+        isAuthError: mailRes.isAuthError,
+        message: mailRes.isAuthError
+          ? "تعذر إرسال الإيميل لأن حساب Google يتطلب (كلمة مرور تطبيقات App Password) مكونة من 16 حرفاً لحساب Gmail بدلاً من كلمة السر العادية. يمكنك استخدام رمز التحقق المعروض أدناه لإتمام العملية فوراً."
+          : "تعذر إرسال الإيميل إلى بريدك حالياً. يمكنك استخدام رمز التحقق المعروض أدناه لإتمام العملية.",
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      message: "تم إرسال رمز التحقق إلى بريدك الإلكتروني بنجاح",
-      simulated: Boolean(mailRes?.simulated),
-      simulatedCode: mailRes?.simulated ? code : undefined,
+      emailSent: true,
+      message: "تم إرسال رمز التحقق إلى بريدك الإلكتروني بنجاح (تفقد صندوق الوارد أو Spam)",
+      code: mailRes?.simulated ? code : undefined,
     });
   } catch (error) {
     console.error("POST /api/auth/forgot-password error:", error);

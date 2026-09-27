@@ -148,9 +148,9 @@ export default function SignInPage() {
       }
 
       setForgotStep(2);
-      setSuccess("تم إرسال رمز التحقق بنجاح! تفقد بريدك الإلكتروني (بما في ذلك مجلد Spam).");
-      if (data.simulated && data.simulatedCode) {
-        setSimulatedOtpNotice(data.simulatedCode);
+      setSuccess(data.message || "تم إرسال رمز التحقق بنجاح! تفقد بريدك الإلكتروني (بما في ذلك مجلد Spam).");
+      if (data.code) {
+        setSimulatedOtpNotice(data.code);
       }
     } catch (_err) {
       setError("حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.");
@@ -557,14 +557,26 @@ export default function SignInPage() {
                   </div>
 
                   {simulatedOtpNotice && (
-                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-                      <div className="flex items-center gap-1.5 font-bold mb-1">
-                        <span>💡</span>
-                        <span>وضع التطوير المحلي:</span>
+                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2 animate-slide-up">
+                      <div className="flex items-center gap-1.5 font-black text-amber-900">
+                        <span>🔐</span>
+                        <span>رمز التحقق الخاص بك (أدخل هذا الرمز أدناه):</span>
                       </div>
-                      <div className="font-mono text-sm font-black tracking-widest text-amber-700 bg-white px-2 py-1 rounded-lg border border-amber-200 text-center select-all">
-                        {simulatedOtpNotice}
+                      <div className="flex items-center justify-between gap-2 bg-white px-3 py-2 rounded-xl border border-amber-200">
+                        <span className="font-mono text-xl font-black tracking-widest text-red-600 select-all">
+                          {simulatedOtpNotice}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setForgotOtp(simulatedOtpNotice)}
+                          className="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] transition cursor-pointer"
+                        >
+                          تعبئة الرمز تلقائياً ✍️
+                        </button>
                       </div>
+                      <p className="text-[10px] text-amber-700 font-semibold leading-relaxed">
+                        💡 يمكنك إدخال الرمز مباشرة لإتمام تعيين كلمة المرور الجديدة دون أي انتظار.
+                      </p>
                     </div>
                   )}
 
