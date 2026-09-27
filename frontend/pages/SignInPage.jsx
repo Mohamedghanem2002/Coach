@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, User, CheckCircle2, ShieldCheck, Zap, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, CheckCircle2, ShieldCheck, Zap, Sparkles, Building2 } from "lucide-react";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -18,13 +18,10 @@ export default function SignInPage() {
     setBusy(true);
     const form = new FormData(event.currentTarget);
     const values = {
-      name: String((_a = form.get("name")) !== null && _a !== void 0 ? _a : ""),
-      email: String(
-        (_b = form.get("email")) !== null && _b !== void 0 ? _b : "",
-      ),
-      password: String(
-        (_c = form.get("password")) !== null && _c !== void 0 ? _c : "",
-      ),
+      name: String(form.get("name") ?? "").trim(),
+      academyName: String(form.get("academyName") ?? "").trim(),
+      email: String(form.get("email") ?? "").trim().toLowerCase(),
+      password: String(form.get("password") ?? ""),
     };
     try {
       if (isRegistering) {
@@ -188,21 +185,42 @@ export default function SignInPage() {
             {/* Authentication Form */}
             <form className="space-y-3.5 text-right" onSubmit={submit}>
               {isRegistering && (
-                <div>
-                  <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                    اسم الكابتن / المدرب
-                  </label>
-                  <div className="relative flex items-center">
-                    <input
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                      name="name"
-                      required
-                      placeholder="مثال: كابتن أحمد محمود"
-                      autoComplete="name"
-                    />
-                    <User className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                <>
+                  <div>
+                    <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                      اسم الكابتن / المدرب
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                        name="name"
+                        required
+                        placeholder="مثال: كابتن أحمد محمود"
+                        autoComplete="name"
+                      />
+                      <User className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                    </div>
                   </div>
-                </div>
+
+                  <div>
+                    <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                      اسم الأكاديمية / النادي
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                        name="academyName"
+                        required
+                        placeholder="مثال: أكاديمية أبطال المستقبل للكاراتيه"
+                        autoComplete="organization"
+                      />
+                      <Building2 className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                    </div>
+                    <span className="mt-1 block text-[10px] text-slate-400 font-medium">
+                      💡 سيظهر هذا الاسم على الكروت والشهادات وتقارير الواتساب (يمكن تعديله في أي وقت)
+                    </span>
+                  </div>
+                </>
               )}
 
               <div>

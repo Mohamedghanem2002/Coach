@@ -8,12 +8,20 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const name = typeof body.name === "string" ? body.name.trim() : "";
+    const academyName =
+      typeof body.academyName === "string" ? body.academyName.trim() : "";
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body.password === "string" ? body.password : "";
     if (!name || name.length > 80 || !/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json(
         { error: "اكتب الاسم والإيميل بشكل صحيح" },
+        { status: 400 },
+      );
+    }
+    if (!academyName || academyName.length > 100) {
+      return NextResponse.json(
+        { error: "اكتب اسم الأكاديمية أو النادي بشكل صحيح (مثال: أكاديمية النجوم)" },
         { status: 400 },
       );
     }
@@ -33,6 +41,7 @@ export async function POST(request) {
     }
     await users.insertOne({
       name,
+      academyName,
       email,
       passwordHash: await bcrypt.hash(password, 12),
       createdAt: new Date(),

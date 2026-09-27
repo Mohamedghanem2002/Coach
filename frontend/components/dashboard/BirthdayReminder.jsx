@@ -35,6 +35,7 @@ export default function BirthdayReminder({
   players = [],
   branches = [],
   captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه",
   onOpenPlayer,
   onBack,
   allowDismiss = true,
@@ -620,7 +621,7 @@ export default function BirthdayReminder({
                       type="button"
                       onClick={() => {
                         const cleanPhone = formatWhatsAppPhone(phone);
-                        const wishText = generateBirthdayWishText(player, captainName);
+                        const wishText = generateBirthdayWishText(player, captainName, academyName);
                         markBirthdayCongratulated(player._id, now);
                         openWhatsAppDirect(cleanPhone, wishText);
                         setReminderNotice(
@@ -735,6 +736,7 @@ export default function BirthdayReminder({
         <BirthdayCardModal
           player={previewPlayer}
           captainName={captainName}
+          academyName={academyName}
           isOpen={Boolean(previewPlayer)}
           onClose={() => setPreviewPlayer(null)}
         />

@@ -61,6 +61,7 @@ export default function Profile({
 }) {
   const { data: session } = useSession();
   const captainName = session?.user?.name || "كابتن الأكاديمية";
+  const academyName = session?.user?.academyName || "أكاديمية الكاراتيه";
   const guardianPhone =
     player.guardianPhone ||
     player.parentPhone ||
@@ -603,12 +604,16 @@ export default function Profile({
     context.roundRect(36, 36, canvas.width - 72, 184, [40, 40, 0, 0]);
     context.fill();
 
-    // Embellishment badge
-    context.fillStyle = "rgba(255, 255, 255, 0.15)";
+    // Embellishment badge (Dynamic Academy Brand)
+    const badgeText = academyName || "Re_action DOJO";
+    context.font = "900 20px Cairo, sans-serif";
+    const badgeTextWidth = context.measureText(badgeText).width;
+    const badgeWidth = Math.max(160, Math.min(320, badgeTextWidth + 36));
+    context.fillStyle = "rgba(255, 255, 255, 0.18)";
     context.beginPath();
-    context.roundRect(72, 65, 160, 52, 16);
+    context.roundRect(72, 65, badgeWidth, 52, 16);
     context.fill();
-    drawCenter("Re_action PRO", 152, 100, "900 22px Cairo, sans-serif", "#ffffff");
+    drawCenter(badgeText, 72 + badgeWidth / 2, 99, "900 20px Cairo, sans-serif", "#ffffff");
 
     drawRight(
       "بطاقة لاعب الكاراتيه الرسمية 🥋",
@@ -954,7 +959,7 @@ export default function Profile({
     context.fillRect(72, canvas.height - 100, canvas.width - 144, 2);
 
     drawRight(
-      `تم استخراج البطاقة رسميًا من نظام Re_action PRO  •  ${new Date().toLocaleDateString("ar-EG")}`,
+      `تم استخراج البطاقة رسميًا من ${academyName || "الأكاديمية"}  •  ${new Date().toLocaleDateString("ar-EG")}`,
       canvas.width - 80,
       canvas.height - 58,
       "600 22px Cairo, sans-serif",

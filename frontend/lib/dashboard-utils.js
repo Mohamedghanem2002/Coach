@@ -440,7 +440,8 @@ export function formatWhatsAppPhone(phone) {
 
 export function generateBirthdayWishText(
   player,
-  captainName = "كابتن الأكاديمية"
+  captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه"
 ) {
   const bday = getBirthdayInfo(player);
   const currentAge = calculateAge(player?.dateOfBirth) ?? player?.age ?? 0;
@@ -453,7 +454,7 @@ export function generateBirthdayWishText(
 
 فخورين بيك وبأدائك في الأكاديمية ونتمنالك سنة جديدة مليانة نجاح، ميداليات دهب، وأهداف كتير! 🏆🥇🔥
 
-مع تحيات أسرة أكاديمية Re_action والكابتن *${captainName}* ❤️`;
+مع تحيات أسرة ${academyName || "الأكاديمية"} والكابتن *${captainName}* ❤️`;
 }
 
 

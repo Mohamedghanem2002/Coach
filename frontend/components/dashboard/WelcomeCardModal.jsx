@@ -12,6 +12,7 @@ import {
 export default function WelcomeCardModal({
   player,
   captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه",
   isOpen,
   onClose,
 }) {
@@ -40,7 +41,7 @@ export default function WelcomeCardModal({
 
     let isMounted = true;
 
-    generateWelcomeCardCanvas(player, captainName)
+    generateWelcomeCardCanvas(player, captainName, academyName)
       .then((canvas) => {
         if (!isMounted) return;
         if (!canvas) {
@@ -70,7 +71,7 @@ export default function WelcomeCardModal({
       setNotice("");
       setWhatsAppUrl("");
     };
-  }, [isOpen, player, captainName]);
+  }, [isOpen, player, captainName, academyName]);
 
   if (!isOpen || !player) return null;
 

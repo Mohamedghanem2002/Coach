@@ -112,7 +112,8 @@ export function openWhatsAppDirect(cleanPhone, text = "", preOpenedWindow = null
  */
 export async function generateBirthdayCardCanvas(
   player,
-  captainName = "كابتن الأكاديمية"
+  captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه"
 ) {
   if (typeof document === "undefined") return null;
 
@@ -316,11 +317,14 @@ export async function generateBirthdayCardCanvas(
   });
 
   // 5. Header: Academy Name & Badge (Bright & Prestigious)
+  const academyBadge = `🥋 ${academyName || "أكاديمية الكاراتيه"} 🥋`;
+  ctx.font = "800 20px Cairo, sans-serif";
+  const badgeWidth = Math.max(340, Math.min(520, ctx.measureText(academyBadge).width + 48));
   drawBadge(
-    "🥋 أكاديمية RE_ACTION للكاراتيه 🥋",
+    academyBadge,
     540,
     90,
-    390,
+    badgeWidth,
     44,
     "#ffffff",
     "#991b1b",
@@ -655,7 +659,7 @@ export async function generateBirthdayCardCanvas(
     `كبرت سنة وبقيت ${turningAge} سنين كلها شجاعة وطاقة وبطولة! 🎂🥋`,
     "فخورين بيك وبكل خطوة وتمرين وتطور كبير بتعمله في الكاراتيه 🥊✨",
     "نتمنالك سنة جديدة مليانة نجاح، فرحة، ميداليات دهب وأهداف كتير! 🏆🥇🔥",
-    `من أسرة أكاديمية Re_action والكابتن / ${captainName} ❤️`,
+    `من أسرة ${academyName || "الأكاديمية"} والكابتن / ${captainName} ❤️`,
   ];
 
   let textY = boxY + 95;
@@ -702,7 +706,7 @@ export async function generateBirthdayCardCanvas(
   ctx.stroke();
 
   drawCenter(
-    `كارت تهنئة رسمي من نظام Re_action PRO  •  ${new Date().getFullYear()}`,
+    `كارت تهنئة رسمي من ${academyName || "الأكاديمية"}  •  ${new Date().getFullYear()}`,
     540,
     1305,
     "700 18px Cairo, sans-serif",

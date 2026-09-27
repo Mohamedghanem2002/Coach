@@ -33,10 +33,11 @@ export function generateAttendanceWhatsAppText({
   totalCount,
   attendanceRate,
   captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه",
 }) {
   const formattedDate = formatArabicSessionDate(sessionDate);
   return (
-    `📋 *كشف الحضور والغياب الرسمي - أكاديمية الأبطال للكاراتيه* 🥋\n` +
+    `📋 *كشف الحضور والغياب الرسمي - ${academyName || "أكاديمية الكاراتيه"}* 🥋\n` +
     `━━━━━━━━━━━━━━━━━━━━━━\n` +
     `📍 *صالة التدريب:* ${branchName}\n` +
     `📅 *تاريخ الحصة:* ${formattedDate}\n` +
@@ -63,6 +64,7 @@ export async function generateBranchAttendanceCardCanvas({
   sessionDate,
   players = [],
   captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه",
 }) {
   if (typeof document === "undefined") return null;
 
@@ -209,12 +211,16 @@ export async function generateBranchAttendanceCardCanvas({
   context.fillStyle = "#f59e0b";
   context.fillRect(cardX, cardY + headerH, cardW, 4);
 
-  // Brand Badge (Left top)
+  // Brand Badge (Dynamic Academy Brand)
+  const badgeText = `${academyName || "Re_action DOJO"} 🥋`;
+  context.font = "800 20px Cairo, sans-serif";
+  const badgeTextWidth = context.measureText(badgeText).width;
+  const badgeWidth = Math.max(180, Math.min(320, badgeTextWidth + 36));
   context.fillStyle = "rgba(255, 255, 255, 0.16)";
   context.beginPath();
-  context.roundRect(cardX + 28, cardY + 24, 180, 48, 14);
+  context.roundRect(cardX + 28, cardY + 24, badgeWidth, 48, 14);
   context.fill();
-  drawCenter("Re_action PRO 🥋", cardX + 118, cardY + 56, "800 20px Cairo, sans-serif", "#ffffff");
+  drawCenter(badgeText, cardX + 28 + badgeWidth / 2, cardY + 56, "800 20px Cairo, sans-serif", "#ffffff");
 
   // Header Title & Subtitle
   drawRight(
@@ -589,7 +595,7 @@ export async function generateBranchAttendanceCardCanvas({
   );
 
   drawCenter(
-    "معتمد من إدارة أكاديمية Re_action PRO للفنون القتالية 🏆",
+    `معتمد من إدارة ${academyName || "أكاديمية الكاراتيه"} للفنون القتالية 🏆`,
     cardX + cardW / 2,
     footerY + 68,
     "700 16px Cairo, sans-serif",

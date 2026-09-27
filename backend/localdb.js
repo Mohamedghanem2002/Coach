@@ -30,6 +30,7 @@ function parseAndNormalizeData(raw) {
   // Ensure _id are ObjectId instances
   data.users.forEach((u) => {
     if (u._id && typeof u._id === "string") u._id = new ObjectId(u._id);
+    if (!u.academyName) u.academyName = "Re_action DOJO";
   });
   data.branches.forEach((b) => {
     if (b._id && typeof b._id === "string") b._id = new ObjectId(b._id);
@@ -446,10 +447,38 @@ export function getLocalDbClient() {
                   return { modifiedCount: 1 };
                 }
               }
+              if (collectionName === "users") {
+                const user = (currentData.users || []).find(
+                  (u) =>
+                    (filter._id && matchId(u._id, filter._id)) ||
+                    (filter.email && u.email?.toLowerCase() === filter.email?.toLowerCase())
+                );
+                if (user) {
+                  if (update.$set) {
+                    Object.assign(user, update.$set);
+                  }
+                  saveData(currentData);
+                  return { modifiedCount: 1 };
+                }
+              }
               return { modifiedCount: 0 };
             },
 
             async findOneAndUpdate(filter = {}, update = {}, _options = {}) {
+              if (collectionName === "users") {
+                const user = (currentData.users || []).find(
+                  (u) =>
+                    (filter._id && matchId(u._id, filter._id)) ||
+                    (filter.email && u.email?.toLowerCase() === filter.email?.toLowerCase())
+                );
+                if (user) {
+                  if (update.$set) {
+                    Object.assign(user, update.$set);
+                  }
+                  saveData(currentData);
+                  return { ...user };
+                }
+              }
               if (collectionName === "players") {
                 const player = currentData.players.find(
                   (p) => filter.ownerId === p.ownerId && matchId(p._id, filter._id)

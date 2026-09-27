@@ -13,6 +13,7 @@ export default function BranchAttendanceModal({
   sessionDate,
   players = [],
   captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه",
   isOpen,
   onClose,
 }) {
@@ -49,6 +50,7 @@ export default function BranchAttendanceModal({
       sessionDate,
       players,
       captainName,
+      academyName,
     })
       .then((canvas) => {
         if (!isMounted) return;
@@ -79,7 +81,7 @@ export default function BranchAttendanceModal({
       setNotice("");
       setWhatsAppUrl("");
     };
-  }, [isOpen, branchName, sessionDate, players, captainName]);
+  }, [isOpen, branchName, sessionDate, players, captainName, academyName]);
 
   if (!isOpen) return null;
 

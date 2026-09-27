@@ -25,7 +25,8 @@ export {
  */
 export async function generateWelcomeCardCanvas(
   player,
-  captainName = "كابتن الأكاديمية"
+  captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه"
 ) {
   if (typeof document === "undefined") return null;
 
@@ -108,12 +109,16 @@ export async function generateWelcomeCardCanvas(
   context.fillStyle = "#f59e0b";
   context.fillRect(36, 230, canvas.width - 72, 4);
 
-  // Embellishment badge on the left (Re_action PRO)
+  // Embellishment badge on the left (Dynamic Academy Brand)
+  const badgeText = academyName || "Re_action DOJO";
+  context.font = "900 20px Cairo, sans-serif";
+  const badgeTextWidth = context.measureText(badgeText).width;
+  const badgeWidth = Math.max(160, Math.min(320, badgeTextWidth + 36));
   context.fillStyle = "rgba(255, 255, 255, 0.18)";
   context.beginPath();
-  context.roundRect(72, 68, 164, 52, 16);
+  context.roundRect(72, 68, badgeWidth, 52, 16);
   context.fill();
-  drawCenter("Re_action PRO", 154, 102, "900 22px Cairo, sans-serif", "#ffffff");
+  drawCenter(badgeText, 72 + badgeWidth / 2, 101, "900 20px Cairo, sans-serif", "#ffffff");
 
   // Header Title & Captain subtitle
   drawRight(
@@ -421,7 +426,7 @@ export async function generateWelcomeCardCanvas(
     "#0f172a"
   );
   drawCenter(
-    `الكابتن / ${captainName}  •  أكاديمية الكاراتيه والرياضات القتالية ❤️`,
+    `الكابتن / ${captainName}  •  ${academyName || "أكاديمية الكاراتيه"} ❤️`,
     photoCenterX,
     capBoxY + 98,
     "900 24px Cairo, sans-serif",
@@ -433,7 +438,7 @@ export async function generateWelcomeCardCanvas(
   context.fillRect(72, 1715, canvas.width - 144, 2);
 
   drawRight(
-    `تم استخراج بطاقة الترحيب رسميًا من نظام Re_action PRO  •  ${new Date().toLocaleDateString("ar-EG")}`,
+    `تم استخراج بطاقة الترحيب رسميًا من ${academyName || "الأكاديمية"}  •  ${new Date().toLocaleDateString("ar-EG")}`,
     canvas.width - 80,
     1770,
     "600 22px Cairo, sans-serif",
@@ -441,7 +446,7 @@ export async function generateWelcomeCardCanvas(
   );
 
   drawLeft(
-    "أكاديمية الكاراتيه والرياضات القتالية 🥋",
+    `${academyName || "أكاديمية الكاراتيه والرياضات القتالية"} 🥋`,
     80,
     1770,
     "800 22px Cairo, sans-serif",

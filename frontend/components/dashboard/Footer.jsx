@@ -33,7 +33,7 @@ function WhatsAppIcon({ className = "w-4 h-4" }) {
   );
 }
 
-export default function Footer() {
+export default function Footer({ academyName = "Re_action DOJO" } = {}) {
   const [copiedNumber, setCopiedNumber] = useState(null);
 
   const phoneContacts = [
@@ -177,7 +177,7 @@ export default function Footer() {
           </div>
           <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
             <span>نظام أكاديمية</span>
-            <span className="font-extrabold text-red-600">Re_action DOJO</span>
+            <span className="font-extrabold text-red-600">{academyName || "Re_action DOJO"}</span>
             <span className="text-slate-300">•</span>
             <span>إدارة تدريب وبطولات الكاراتيه</span>
           </div>

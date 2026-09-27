@@ -63,6 +63,7 @@ import EmailBackupModal from "../components/dashboard/EmailBackupModal";
 import RestoreModal from "../components/dashboard/RestoreModal";
 import WelcomeCardModal from "../components/dashboard/WelcomeCardModal";
 import BranchAttendanceModal from "../components/dashboard/BranchAttendanceModal";
+import AccountSettingsModal from "../components/dashboard/AccountSettingsModal";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 
@@ -70,6 +71,7 @@ export default function Home() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const captainName = session?.user?.name || "كابتن";
+  const academyName = session?.user?.academyName || "Re_action DOJO";
   const [players, setPlayers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [branch, setBranch] = useState("كل الصالات");
@@ -98,6 +100,7 @@ export default function Home() {
   const [isCloudBackingUp, setIsCloudBackingUp] = useState(false);
   const [welcomePlayer, setWelcomePlayer] = useState(null);
   const [branchAttendanceReport, setBranchAttendanceReport] = useState(null);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   // Events management state
   const [events, setEvents] = useState([]);
@@ -967,6 +970,7 @@ export default function Home() {
           setMobileTab("birthdays");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
+        onOpenAccountSettings={() => setShowAccountSettings(true)}
       />
 
       <section className="mx-auto w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
@@ -1502,6 +1506,7 @@ export default function Home() {
                 players={players}
                 branches={branches}
                 captainName={captainName}
+                academyName={academyName}
                 onOpenPlayer={(player) => setSelected(player)}
                 onBack={() => {
                   setMobileTab("players");
@@ -1732,6 +1737,7 @@ export default function Home() {
               players={players}
               branches={branches}
               captainName={captainName}
+              academyName={academyName}
               onOpenPlayer={(player) => setSelected(player)}
               onBack={() => setActiveView("players")}
             />
@@ -2269,7 +2275,7 @@ export default function Home() {
       </section>
 
       {/* تذييل الصفحة / Footer */}
-      <Footer />
+      <Footer academyName={academyName} />
 
       {/* شريط الملاحة السفلي الثابت على الموبايل */}
       <MobileBottomNav
@@ -2392,6 +2398,7 @@ export default function Home() {
         <WelcomeCardModal
           player={welcomePlayer}
           captainName={captainName}
+          academyName={academyName}
           isOpen={Boolean(welcomePlayer)}
           onClose={() => setWelcomePlayer(null)}
         />
@@ -2403,8 +2410,20 @@ export default function Home() {
           sessionDate={branchAttendanceReport.date || sessionDate}
           players={players}
           captainName={captainName}
+          academyName={academyName}
           isOpen={Boolean(branchAttendanceReport)}
           onClose={() => setBranchAttendanceReport(null)}
+        />
+      )}
+
+      {showAccountSettings && (
+        <AccountSettingsModal
+          isOpen={showAccountSettings}
+          onClose={() => setShowAccountSettings(false)}
+          showToast={showToast}
+          onUserUpdated={() => {
+            // Re-render or trigger updates
+          }}
         />
       )}
       {/* ━━━ Global Fixed Toast Notification Overlay ━━━

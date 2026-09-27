@@ -9,6 +9,7 @@ import {
   Compass,
   LogOut,
   MessageCircle,
+  Settings,
   User,
   Zap,
 } from "lucide-react";
@@ -25,6 +26,7 @@ export default function Header({
   onToggleEventsView,
   eventsCount = 0,
   onNavigateToBirthdays,
+  onOpenAccountSettings,
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -39,6 +41,7 @@ export default function Header({
   }).format(new Date());
 
   const fullName = session?.user?.name || "حساب الأكاديمية";
+  const academyName = session?.user?.academyName || "Re_action DOJO";
   const firstName = fullName.split(" ")[0] || "كابتن";
   const email = session?.user?.email || "";
   const initials = firstName.charAt(0);
@@ -90,8 +93,8 @@ export default function Header({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <strong className="font-cairo text-base sm:text-lg font-black tracking-tight text-slate-900 truncate">
-                Re_action
+              <strong className="font-cairo text-base sm:text-lg font-black tracking-tight text-slate-900 truncate max-w-[150px] sm:max-w-[240px]">
+                {academyName}
               </strong>
               <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 text-[9px] font-black text-red-600 shrink-0">
                 DOJO
@@ -368,25 +371,37 @@ export default function Header({
             )}
           </div>
 
-          {/* User avatar pill */}
-          <div
-            className="hidden items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white px-2 py-1.5 shadow-xs md:flex"
+          {/* User avatar & settings button (Desktop) */}
+          <button
+            type="button"
+            onClick={onOpenAccountSettings}
+            className="group hidden items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 hover:border-slate-300 px-2.5 py-1.5 shadow-xs md:flex transition-all cursor-pointer"
             dir="ltr"
+            title="إعدادات الحساب وتعديل اسم الأكاديمية والكابتن"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-xs font-black text-white shadow-xs ring-2 ring-slate-100">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-xs font-black text-white shadow-xs ring-2 ring-slate-100 group-hover:scale-105 transition-transform">
               {initials}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 text-left">
               <span className="block truncate text-xs font-bold text-slate-800 max-w-[120px]">
                 {fullName}
               </span>
-              {email && (
-                <span className="block truncate text-[10px] text-slate-400 max-w-[120px]">
-                  {email}
-                </span>
-              )}
+              <span className="block truncate text-[10px] text-slate-400 max-w-[120px]">
+                {academyName}
+              </span>
             </div>
-          </div>
+            <Settings className="h-3.5 w-3.5 text-slate-400 group-hover:text-red-600 transition-colors ml-0.5" />
+          </button>
+
+          {/* User settings icon button (Mobile) */}
+          <button
+            type="button"
+            onClick={onOpenAccountSettings}
+            className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 hover:text-red-600 hover:bg-slate-50 shadow-xs transition cursor-pointer"
+            title="إعدادات الحساب وتعديل اسم الأكاديمية"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
 
           {/* Sign out */}
           <button

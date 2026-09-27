@@ -12,6 +12,7 @@ import { formatWhatsAppPhone, openWhatsAppDirect } from "../../lib/dashboard-uti
 export default function BirthdayCardModal({
   player,
   captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه",
   cachedBlob,
   isOpen,
   onClose,
@@ -55,7 +56,7 @@ export default function BirthdayCardModal({
       };
     }
 
-    generateBirthdayCardCanvas(player, captainName)
+    generateBirthdayCardCanvas(player, captainName, academyName)
       .then((canvas) => {
         if (!isMounted) return;
         if (!canvas) {
@@ -83,7 +84,7 @@ export default function BirthdayCardModal({
       setLoadError(false);
       setNotice("");
     };
-  }, [isOpen, player, captainName, cachedBlob]);
+  }, [isOpen, player, captainName, academyName, cachedBlob]);
 
   if (!isOpen || !player) return null;
 
@@ -91,6 +92,7 @@ export default function BirthdayCardModal({
     if (!blob) return;
     await downloadBirthdayCard(player, captainName, {
       existingBlob: blob,
+      academyName,
       onProgress: setIsDownloading,
       onNotice: setNotice,
     });
@@ -100,6 +102,7 @@ export default function BirthdayCardModal({
     if (!blob) return;
     await sendBirthdayCardViaWhatsApp(player, captainName, {
       existingBlob: blob,
+      academyName,
       onProgress: setIsSending,
       onNotice: setNotice,
     });
