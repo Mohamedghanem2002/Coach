@@ -318,10 +318,14 @@ export default function AdminDashboard() {
   if (sessionStatus === "loading" || loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-500" dir="rtl">
-        <div className="w-10 h-10 border-3 border-red-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <div className="w-10 h-10 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
         <h2 className="text-sm font-black text-slate-800">جارٍ التحقق وفتح لوحة الإدارة...</h2>
       </div>
     );
+  }
+
+  if (sessionStatus === "unauthenticated" || (session?.user && session.user.role !== "admin")) {
+    return null;
   }
 
   return (

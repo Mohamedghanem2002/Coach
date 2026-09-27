@@ -163,22 +163,98 @@ export const { handlers, auth } = NextAuth({
       return session;
     },
     authorized({ auth: session, request }) {
-      const pathname = request.nextUrl.pathname;
-      if (pathname.startsWith("/admin")) {
-        if (!session?.user) return false;
-        if (session.user.role !== "admin") return false;
+      const { pathname } = request.nextUrl;
+
+      // 1. Static assets and public endpoints
+      if (
+        pathname.startsWith("/_next") ||
+        pathname.startsWith("/favicon.ico") ||
+        pathname.startsWith("/api/auth") ||
+        pathname.startsWith("/api/health")
+      ) {
         return true;
       }
-      if (session) return true;
-      if (pathname.startsWith("/auth")) return true;
-      if (pathname.startsWith("/api/auth")) return true;
-      if (pathname.startsWith("/api/")) {
-        return NextResponse.json(
-          { error: "يجب تسجيل الدخول أولًا" },
-          { status: 401 },
-        );
+
+      // 2. Auth pages (/auth/signin, /auth/reset-password)
+      if (pathname.startsWith("/auth")) {
+        if (session?.user) {
+          // Already authenticated! Redirect to appropriate dashboard
+          if (session.user.role === "admin") {
+            return NextResponse.redirect(new URL("/admin", request.url));
+          }
+          return NextResponse.redirect(new URL("/", request.url));
+        }
+        return true;
       }
-      return false;
+
+      // 3. Admin routes
+      if (pathname.startsWith("/admin")) {
+        if (!session?.user) {
+          return false; // Redirects to /auth/signin?callbackUrl=%2Fadmin
+        }
+        if (session.user.role !== "admin") {
+          return NextResponse.redirect(new URL("/", request.url));
+        }
+        return true;
+      }
+
+      // 4. Admin API endpoints
+      if (pathname.startsWith("/api/admin")) {
+        if (!session?.user) {
+          return NextResponse.json(
+            { error: "يجب تسجيل الدخول أولاً كمسؤول", code: "UNAUTHORIZED" },
+            { status: 401 }
+          );
+        }
+        if (session.user.role !== "admin") {
+          return NextResponse.json(
+            { error: "غير مصرح لك بالوصول إلى لوحة الإدارة", code: "FORBIDDEN" },
+            { status: 403 }
+          );
+        }
+        return true;
+      }
+
+      // 5. Protected Coach API endpoints
+      if (pathname.startsWith("/api/")) {
+        if (!session?.user) {
+          return NextResponse.json(
+            { error: "يجب تسجيل الدخول أولًا", code: "UNAUTHORIZED" },
+            { status: 401 }
+          );
+        }
+        if (session.user.role !== "admin") {
+          const isSuspended =
+            session.user.status === "suspended" ||
+            session.user.status === "disabled";
+          if (isSuspended) {
+            return NextResponse.json(
+              {
+                error: "ACCOUNT_SUSPENDED",
+                reason:
+                  session.user.suspensionReason ||
+                  "تم إيقاف هذا الحساب من قِبل إدارة المنصة",
+                code: "ACCOUNT_SUSPENDED",
+              },
+              { status: 403 }
+            );
+          }
+        }
+        return true;
+      }
+
+      // 6. Root Coach Dashboard (/)
+      if (pathname === "/") {
+        if (!session?.user) {
+          return false; // NextAuth redirects to /auth/signin
+        }
+        return true;
+      }
+
+      return true;
     },
   },
 });
+
+export const { signIn, signOut } = NextAuth;
+

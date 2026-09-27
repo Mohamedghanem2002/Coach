@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
-import { getSession, signIn, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useMemo } from "react";
+import { useSession, getSession, signIn, signOut } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -19,105 +19,206 @@ import {
   RefreshCw,
   AlertCircle,
   ShieldAlert,
+  Info,
 } from "lucide-react";
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: currentSession, status: sessionStatus } = useSession();
 
   // Mode: "login" | "register" | "admin" | "forgot"
   const [mode, setMode] = useState(() => {
     if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("admin") === "true") {
-        return "admin";
-      }
+      const adminParam = searchParams.get("admin");
+      const modeParam = searchParams.get("mode");
+      if (adminParam === "true") return "admin";
+      if (modeParam === "register") return "register";
+      if (modeParam === "forgot") return "forgot";
     }
     return "login";
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [busy, setBusy] = useState(false);
+
+  // Redirect already authenticated users
+  useEffect(() => {
+    if (sessionStatus === "authenticated" && currentSession?.user) {
+      if (currentSession.user.role === "admin") {
+        router.replace("/admin");
+      } else {
+        router.replace("/");
+      }
+    }
+  }, [sessionStatus, currentSession, router]);
+
+  // Form Fields
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [academyName, setAcademyName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+
+  // Visibility Toggles
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Forgot password states
-  const [forgotStep, setForgotStep] = useState(1); // 1: send OTP, 2: verify & change password
+  // Status & Feedback
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [suspendedDetails, setSuspendedDetails] = useState(null);
+
+  // Forgot password flow states
+  const [forgotStep, setForgotStep] = useState(1); // 1: send email, 2: verify & change password
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotOtp, setForgotOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmNewPass, setConfirmNewPass] = useState("");
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmNewPass, setShowConfirmNewPass] = useState(false);
   const [simulatedOtpNotice, setSimulatedOtpNotice] = useState("");
 
-  // Normal login, registration, or admin sign-in submission
-  async function submitAuth(event) {
-    event.preventDefault();
+  // Calculate password strength (0 to 4)
+  const passwordStrength = useMemo(() => {
+    const target = mode === "forgot" ? newPassword : password;
+    if (!target) return 0;
+    let score = 0;
+    if (target.length >= 8) score += 1;
+    if (target.length >= 10) score += 1;
+    if (/[A-Z]/.test(target) || /[0-9]/.test(target)) score += 1;
+    if (/[^A-Za-z0-9]/.test(target)) score += 1;
+    return score;
+  }, [mode, password, newPassword]);
+
+  const strengthLabels = ["ضعيفة جداً", "مقبولة", "جيدة", "قوية ومثالية"];
+  const strengthColors = [
+    "bg-rose-500",
+    "bg-amber-500",
+    "bg-blue-500",
+    "bg-emerald-500",
+  ];
+
+  // 1. Submit Authentication (Login, Register, or Admin)
+  async function submitAuth(e) {
+    e.preventDefault();
+    if (busy) return; // Prevent double submit
+
     setError("");
     setSuccess("");
+    setSuspendedDetails(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    // Frontend Validations
+    if (!cleanEmail || !/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      setError("يرجى إدخال بريد إلكتروني صحيح");
+      return;
+    }
+
+    if (!cleanPassword || cleanPassword.length < 8) {
+      setError("كلمة المرور يجب ألا تقل عن 8 أحرف");
+      return;
+    }
+
+    if (mode === "register") {
+      const cleanName = name.trim();
+      const cleanAcademy = academyName.trim();
+
+      if (!cleanName || cleanName.length < 2) {
+        setError("يرجى إدخال اسم الكابتن بشكل صحيح (حرفين على الأقل)");
+        return;
+      }
+
+      if (!cleanAcademy || cleanAcademy.length < 2) {
+        setError("يرجى إدخال اسم الأكاديمية أو النادي");
+        return;
+      }
+
+      if (cleanPassword !== confirmPassword.trim()) {
+        setError("كلمتا المرور غير متطابقتين");
+        return;
+      }
+
+      if (cleanPassword.toLowerCase() === cleanEmail.toLowerCase()) {
+        setError("لا يمكن أن تكون كلمة المرور مطابقة للبريد الإلكتروني");
+        return;
+      }
+    }
+
     setBusy(true);
 
-    const form = new FormData(event.currentTarget);
-    const values = {
-      name: String(form.get("name") ?? "").trim(),
-      academyName: String(form.get("academyName") ?? "").trim(),
-      email: String(form.get("email") ?? "").trim().toLowerCase(),
-      password: String(form.get("password") ?? "").trim(),
-    };
-
     try {
-      // 1. New Coach Registration
+      // Step A: If Registering, create user first
       if (mode === "register") {
-        const response = await fetch("/api/auth/register", {
+        const regRes = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
+          body: JSON.stringify({
+            name: name.trim(),
+            academyName: academyName.trim(),
+            email: cleanEmail,
+            password: cleanPassword,
+            confirmPassword: confirmPassword.trim(),
+          }),
         });
-        const result = await response.json();
-        if (!response.ok) {
-          setError(result.error || "تعذر إنشاء الحساب");
+
+        const regData = await regRes.json();
+
+        if (!regRes.ok) {
+          setError(regData.error || "تعذر إنشاء الحساب");
           setBusy(false);
           return;
         }
+
+        // Registration succeeded: Auto-login
+        setSuccess("تم إنشاء حسابك بنجاح! جاري تسجيل الدخول...");
       }
 
-      // 2. Check if account is suspended by admin
+      // Step B: Check if account is suspended / disabled
       try {
         const statusRes = await fetch("/api/auth/check-status", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: values.email }),
+          body: JSON.stringify({ email: cleanEmail }),
         });
+
         if (statusRes.ok) {
           const statusData = await statusRes.json();
           if (statusData?.suspended) {
+            setSuspendedDetails(statusData);
             setError(
-              `⛔ تم إيقاف هذا الحساب من قِبل إدارة المنصة.\nسبب الإيقاف: ${statusData.reason}\nيرجى التواصل مع إدارة النظام: ${statusData.adminEmail || "mg0447837@gmail.com"}`
+              `⛔ تم إيقاف هذا الحساب من قِبل إدارة المنصة. سبب الإيقاف: ${statusData.reason || "غير محدد"}`
             );
             setBusy(false);
             return;
           }
         }
-      } catch {}
+      } catch {
+        // Non-blocking status pre-check; backend auth enforces it
+      }
 
-      // 3. Perform NextAuth Sign In
+      // Step C: Perform NextAuth Sign In
       const result = await signIn("credentials", {
-        email: values.email,
-        password: values.password,
+        email: cleanEmail,
+        password: cleanPassword,
         redirect: false,
       });
 
       if (result?.error) {
-        // Re-check if account was suspended
+        // Re-check for suspension in case credentials error was thrown due to suspension
         try {
           const recheck = await fetch("/api/auth/check-status", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: values.email }),
+            body: JSON.stringify({ email: cleanEmail }),
           });
           if (recheck.ok) {
             const recheckData = await recheck.json();
             if (recheckData?.suspended) {
+              setSuspendedDetails(recheckData);
               setError(
-                `⛔ تم إيقاف هذا الحساب من قِبل إدارة المنصة.\nسبب الإيقاف: ${recheckData.reason}\nيرجى التواصل مع الإدارة: ${recheckData.adminEmail || "mg0447837@gmail.com"}`
+                `⛔ تم إيقاف هذا الحساب من قِبل إدارة المنصة. سبب الإيقاف: ${recheckData.reason || "غير محدد"}`
               );
               setBusy(false);
               return;
@@ -134,45 +235,54 @@ export default function SignInPage() {
         return;
       }
 
-      // 3. Admin Portal Role Enforcement
+      // Step D: Verify role and navigate
+      const session = await getSession();
+
       if (mode === "admin") {
-        const session = await getSession();
-        if (session && session.user?.role && session.user.role !== "admin") {
+        if (session?.user?.role !== "admin") {
           await signOut({ redirect: false });
           setError("عذراً، هذا الحساب ليس لديه صلاحيات الوصول إلى لوحة تحكم المنصة الإدارية.");
           setBusy(false);
           return;
         }
-        // Redirect directly to admin panel
         router.push("/admin");
         router.refresh();
         return;
       }
 
-      // 4. Standard Coach Portal
+      // Standard Coach Portal
       router.push("/");
       router.refresh();
-      return;
-    } catch (_err) {
+    } catch {
       setError("تعذر الاتصال بالخادم. يرجى التأكد من اتصال الإنترنت والمحاولة مجدداً.");
-    } finally {
       setBusy(false);
     }
   }
 
-  // Request Password Reset OTP (Step 1)
-  async function submitForgotStep1(event) {
-    event.preventDefault();
+  // 2. Forgot Password - Step 1: Send Code / Link
+  async function submitForgotStep1(e) {
+    e.preventDefault();
+    if (busy) return;
+
     setError("");
     setSuccess("");
+    setSimulatedOtpNotice("");
+
+    const cleanEmail = forgotEmail.trim().toLowerCase();
+    if (!cleanEmail || !/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      setError("يرجى كتابة البريد الإلكتروني بشكل صحيح");
+      return;
+    }
+
     setBusy(true);
 
     try {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail }),
+        body: JSON.stringify({ email: cleanEmail }),
       });
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -181,44 +291,63 @@ export default function SignInPage() {
       }
 
       setForgotStep(2);
-      setSuccess(data.message || "تم إرسال رمز التحقق بنجاح! تفقد بريدك الإلكتروني (بما في ذلك مجلد Spam).");
+      setSuccess(
+        data.message ||
+          "إذا كان هذا البريد مسجلاً لدينا، فستصلك تعليمات استعادة كلمة المرور ورمز التحقق (تفقد صندوق الوارد أو Spam)."
+      );
+
       if (data.code) {
         setSimulatedOtpNotice(data.code);
       }
-    } catch (_err) {
+    } catch {
       setError("حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.");
     } finally {
       setBusy(false);
     }
   }
 
-  // Verify OTP and Reset Password (Step 2)
-  async function submitForgotStep2(event) {
-    event.preventDefault();
+  // 3. Forgot Password - Step 2: Confirm OTP & Set New Password
+  async function submitForgotStep2(e) {
+    e.preventDefault();
+    if (busy) return;
+
     setError("");
     setSuccess("");
+
+    if (!forgotOtp || forgotOtp.trim().length !== 6) {
+      setError("يرجى إدخال رمز التحقق المكون من 6 أرقام");
+      return;
+    }
 
     if (newPassword.length < 8) {
       setError("كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف");
       return;
     }
 
-    if (newPassword !== confirmPassword) {
+    if (newPassword !== confirmNewPass) {
       setError("كلمتا المرور غير متطابقتين");
       return;
     }
 
+    if (newPassword.toLowerCase() === forgotEmail.trim().toLowerCase()) {
+      setError("لا يمكن أن تكون كلمة المرور مطابقة للبريد الإلكتروني");
+      return;
+    }
+
     setBusy(true);
+
     try {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: forgotEmail,
-          code: forgotOtp,
+          email: forgotEmail.trim().toLowerCase(),
+          code: forgotOtp.trim(),
           newPassword,
+          confirmPassword: confirmNewPass,
         }),
       });
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -226,15 +355,19 @@ export default function SignInPage() {
         return;
       }
 
-      // Successful reset: return to login with notification
-      setSuccess("تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.");
+      // Success: Reset flow and return to login
+      setSuccess(
+        "تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة."
+      );
+      setEmail(forgotEmail.trim().toLowerCase());
+      setPassword("");
       setMode("login");
       setForgotStep(1);
       setForgotOtp("");
       setNewPassword("");
-      setConfirmPassword("");
+      setConfirmNewPass("");
       setSimulatedOtpNotice("");
-    } catch (_err) {
+    } catch {
       setError("حدث خطأ أثناء حفظ كلمة المرور الجديدة.");
     } finally {
       setBusy(false);
@@ -246,18 +379,17 @@ export default function SignInPage() {
       className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-3 sm:p-6 selection:bg-red-600 selection:text-white relative overflow-hidden"
       dir="rtl"
     >
-      {/* Dynamic Ambient Background Glows */}
+      {/* Background ambient lighting */}
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-radial from-red-600/15 via-slate-950/0 to-transparent blur-3xl" />
       <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-red-900/10 blur-3xl" />
       <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-rose-950/15 blur-3xl" />
 
       {/* Main Container Card */}
-      <section className="relative z-10 w-full max-w-4xl grid rounded-3xl border border-slate-800/80 bg-slate-900/60 shadow-2xl shadow-black/80 backdrop-blur-xl md:grid-cols-[1.1fr_1.2fr] overflow-hidden">
-
-        {/* Left/Hero Side: Dynamic Brand Experience */}
+      <section className="relative z-10 w-full max-w-4xl grid rounded-3xl border border-slate-800/80 bg-slate-900/70 shadow-2xl shadow-black/80 backdrop-blur-xl md:grid-cols-[1.05fr_1.2fr] overflow-hidden">
+        {/* Left Side: Brand Banner */}
         <div className="relative flex flex-col justify-between p-6 sm:p-10 bg-gradient-to-br from-slate-900 via-slate-950 to-red-950/40 text-white border-b md:border-b-0 md:border-l border-slate-800/80">
           <div>
-            {/* Emblem */}
+            {/* Logo Emblem */}
             <div className="flex items-center gap-3 mb-6 sm:mb-8">
               <div
                 className={`relative flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg shrink-0 transition-all ${
@@ -305,7 +437,7 @@ export default function SignInPage() {
               </div>
             </div>
 
-            {/* Dynamic Copy depending on mode */}
+            {/* Dynamic Headlines based on mode */}
             {mode === "admin" ? (
               <div className="space-y-2.5">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-700/50 text-[11px] font-extrabold text-amber-300 shadow-xs">
@@ -337,14 +469,31 @@ export default function SignInPage() {
                   </span>
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm pt-1">
-                  سوف نرسل لك رمز تحقق سريع على بريدك الإلكتروني المعتمد لتعيين كلمة مرور جديدة ومتابعة تدريبات أكاديميتك فوراً.
+                  سوف نرسل لك رمز تحقق من 6 أرقام ورابطاً آمناً لتعيين كلمة مرور جديدة والعودة لإدارة تدريبات أكاديميتك فوراً.
+                </p>
+              </div>
+            ) : mode === "register" ? (
+              <div className="space-y-2.5">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/60 border border-red-800/40 text-[11px] font-extrabold text-red-400 shadow-xs">
+                  <Sparkles className="h-3 w-3" />
+                  <span>ابدأ تجربتك المجانية 30 يوماً</span>
+                </div>
+                <h2 className="font-cairo text-2xl sm:text-3xl font-black text-white leading-tight">
+                  انضم لأبطال الكاراتيه.
+                  <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-300 to-amber-200">
+                    إدارة متطورة بلمسة واحدة.
+                  </span>
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm pt-1">
+                  سجل حضور اللاعبين، تابع سداد الاشتراكات الشهرية، نظم بطولات الأكاديمية وصالات التدريب، وتواصل مع أولياء الأمور بسهولة.
                 </p>
               </div>
             ) : (
               <div className="space-y-2.5">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/60 border border-red-800/40 text-[11px] font-extrabold text-red-400 shadow-xs">
                   <Sparkles className="h-3 w-3" />
-                  <span>إدارة متكاملة من الدرجة الأولى</span>
+                  <span>إدارة تدريبية ذكية</span>
                 </div>
                 <h2 className="font-cairo text-2xl sm:text-3xl font-black text-white leading-tight">
                   قيادة تدريبية ذكية.
@@ -366,11 +515,11 @@ export default function SignInPage() {
               <>
                 <div className="flex items-center gap-2.5 text-slate-300">
                   <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
-                  <span className="font-semibold">إدارة مركزية للأكاديميات المشتركة وفترات الصلاحية</span>
+                  <span className="font-semibold">إدارة مركزية للكباتن والأكاديميات وفترات الصلاحية</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-slate-300">
                   <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
-                  <span className="font-semibold">تمديد أو إيقاف مؤقت للاشتراكات بنقرة زر واحدة</span>
+                  <span className="font-semibold">تمديد أو إيقاف أو حذف الحسابات بنقرة زر واحدة</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-slate-300">
                   <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
@@ -381,7 +530,7 @@ export default function SignInPage() {
               <>
                 <div className="flex items-center gap-2.5 text-slate-300">
                   <CheckCircle2 className="h-4 w-4 text-blue-400 shrink-0" />
-                  <span className="font-semibold">رمز تحقق مشفر بصلاحية 15 دقيقة لحماية الحساب</span>
+                  <span className="font-semibold">رمز تحقق مشفر ورابط آمن بصلاحية 15 دقيقة</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-slate-300">
                   <CheckCircle2 className="h-4 w-4 text-blue-400 shrink-0" />
@@ -396,25 +545,28 @@ export default function SignInPage() {
                 </div>
                 <div className="flex items-center gap-2.5 text-slate-300">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span className="font-semibold">فصل مالي تام بين الاشتراكات الشهرية والأدوات</span>
+                  <span className="font-semibold">فصل مالي تام بين الاشتراكات الشهرية والبطولات والأدوات</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-slate-300">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span className="font-semibold">إرسال تقارير وتهاني واتساب المباشرة لولي الأمر</span>
+                  <span className="font-semibold">نسخ احتياطي واستعادة سحابية مشفرة لبياناتك</span>
                 </div>
               </>
             )}
           </div>
         </div>
 
-        {/* Right/Form Side: Interactive Entry */}
+        {/* Right Side: Interactive Forms */}
         <div className="flex items-center justify-center p-6 sm:p-10 bg-white">
           <div className="w-full max-w-md">
-
-            {/* 3-Way Segmented Switcher (Login | Register | Admin Control Panel) */}
-            <div className="mb-6 grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+            {/* 3-Way Segmented Switcher (Login | Register | Admin) */}
+            <nav
+              aria-label="نوع تسجيل الدخول"
+              className="mb-6 grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/80"
+            >
               <button
                 type="button"
+                id="tab-login"
                 className={`py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation ${
                   mode === "login"
                     ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
@@ -423,6 +575,7 @@ export default function SignInPage() {
                 onClick={() => {
                   setError("");
                   setSuccess("");
+                  setSuspendedDetails(null);
                   setMode("login");
                 }}
               >
@@ -431,6 +584,7 @@ export default function SignInPage() {
 
               <button
                 type="button"
+                id="tab-register"
                 className={`py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation ${
                   mode === "register"
                     ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
@@ -439,6 +593,7 @@ export default function SignInPage() {
                 onClick={() => {
                   setError("");
                   setSuccess("");
+                  setSuspendedDetails(null);
                   setMode("register");
                 }}
               >
@@ -447,6 +602,7 @@ export default function SignInPage() {
 
               <button
                 type="button"
+                id="tab-admin"
                 className={`py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation flex items-center justify-center gap-1 ${
                   mode === "admin"
                     ? "bg-gradient-to-r from-amber-500 to-red-600 text-white shadow-sm shadow-amber-500/20"
@@ -455,16 +611,17 @@ export default function SignInPage() {
                 onClick={() => {
                   setError("");
                   setSuccess("");
+                  setSuspendedDetails(null);
                   setMode("admin");
                 }}
               >
                 <Crown className="w-3.5 h-3.5" />
                 <span>لوحة التحكم</span>
               </button>
-            </div>
+            </nav>
 
-            {/* Form Titles based on Mode */}
-            <div className="mb-5 text-right">
+            {/* Form Titles */}
+            <header className="mb-5 text-right">
               {mode === "admin" ? (
                 <>
                   <h1 className="font-cairo text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
@@ -483,17 +640,17 @@ export default function SignInPage() {
                   </h1>
                   <p className="mt-1 text-xs text-slate-500 font-medium">
                     {forgotStep === 1
-                      ? "أدخل بريدك الإلكتروني المسجل وسنرسل لك رمز تحقق من 6 أرقام."
+                      ? "أدخل بريدك الإلكتروني وسنرسل لك رمز تحقق ورابطاً لتعيين كلمة مرور جديدة."
                       : "أدخل رمز التحقق المكون من 6 أرقام وكلمة المرور الجديدة."}
                   </p>
                 </>
               ) : mode === "register" ? (
                 <>
                   <h1 className="font-cairo text-xl sm:text-2xl font-black text-slate-900">
-                    إنشاء حساب مدرب جديد
+                    إنشاء حساب كابتن جديد
                   </h1>
                   <p className="mt-1 text-xs text-slate-500 font-medium">
-                    سجّل بياناتك للبدء في إدارة لاعبين الأكاديمية وصالات التدريب.
+                    سجّل بياناتك للبدء في إدارة لاعبي الأكاديمية وصالات التدريب.
                   </p>
                 </>
               ) : (
@@ -506,25 +663,30 @@ export default function SignInPage() {
                   </p>
                 </>
               )}
-            </div>
+            </header>
 
-            {/* ━━━ FORGOT PASSWORD MODE ━━━ */}
+            {/* ━━━ FORGOT PASSWORD SUB-FLOW ━━━ */}
             {mode === "forgot" ? (
               forgotStep === 1 ? (
-                /* Step 1: Enter Email to Receive OTP */
+                /* Step 1: Request Code / Link */
                 <form className="space-y-4 text-right" onSubmit={submitForgotStep1}>
                   <div>
-                    <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                    <label
+                      htmlFor="forgot-email"
+                      className="block text-xs font-extrabold text-slate-700 mb-1"
+                    >
                       البريد الإلكتروني المسجل
                     </label>
                     <div className="relative flex items-center">
                       <input
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                        id="forgot-email"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                         type="email"
                         required
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         placeholder="coach@example.com"
+                        autoComplete="email"
                         dir="ltr"
                       />
                       <Mail className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -532,7 +694,10 @@ export default function SignInPage() {
                   </div>
 
                   {error && (
-                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-xs font-bold text-rose-700 animate-slide-up flex items-center justify-center gap-2">
+                    <div
+                      role="alert"
+                      className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-xs font-bold text-rose-700 flex items-center justify-center gap-2"
+                    >
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{error}</span>
                     </div>
@@ -546,12 +711,12 @@ export default function SignInPage() {
                     {busy ? (
                       <span className="flex items-center gap-2">
                         <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                        <span>جاري إرسال الرمز...</span>
+                        <span>جاري إرسال التعليمات...</span>
                       </span>
                     ) : (
                       <>
                         <Mail className="h-4 w-4" />
-                        <span>إرسال رمز التحقق</span>
+                        <span>إرسال رمز ورابط الاستعادة</span>
                       </>
                     )}
                   </button>
@@ -571,7 +736,7 @@ export default function SignInPage() {
                   </div>
                 </form>
               ) : (
-                /* Step 2: Enter OTP + New Password */
+                /* Step 2: Enter Code + New Password */
                 <form className="space-y-3.5 text-right" onSubmit={submitForgotStep2}>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                     <div className="truncate">
@@ -590,10 +755,10 @@ export default function SignInPage() {
                   </div>
 
                   {simulatedOtpNotice && (
-                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2 animate-slide-up">
+                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2">
                       <div className="flex items-center gap-1.5 font-black text-amber-900">
                         <span>🔐</span>
-                        <span>رمز التحقق الخاص بك (أدخل هذا الرمز أدناه):</span>
+                        <span>رمز التحقق التجريبي (للاختبار الفوري):</span>
                       </div>
                       <div className="flex items-center justify-between gap-2 bg-white px-3 py-2 rounded-xl border border-amber-200">
                         <span className="font-mono text-xl font-black tracking-widest text-red-600 select-all">
@@ -607,24 +772,27 @@ export default function SignInPage() {
                           تعبئة الرمز تلقائياً ✍️
                         </button>
                       </div>
-                      <p className="text-[10px] text-amber-700 font-semibold leading-relaxed">
-                        💡 يمكنك إدخال الرمز مباشرة لإتمام تعيين كلمة المرور الجديدة دون أي انتظار.
-                      </p>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                    <label
+                      htmlFor="forgot-otp"
+                      className="block text-xs font-extrabold text-slate-700 mb-1"
+                    >
                       رمز التحقق (6 أرقام)
                     </label>
                     <div className="relative flex items-center">
                       <input
+                        id="forgot-otp"
                         className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-3 pl-3 py-2.5 text-center text-lg font-black tracking-widest text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100 font-mono"
                         type="text"
                         maxLength={6}
                         required
                         value={forgotOtp}
-                        onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ""))}
+                        onChange={(e) =>
+                          setForgotOtp(e.target.value.replace(/\D/g, ""))
+                        }
                         placeholder="••••••"
                         dir="ltr"
                       />
@@ -632,59 +800,106 @@ export default function SignInPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                    <label
+                      htmlFor="forgot-new-password"
+                      className="block text-xs font-extrabold text-slate-700 mb-1"
+                    >
                       كلمة المرور الجديدة (8 أحرف على الأقل)
                     </label>
                     <div className="relative flex items-center">
                       <input
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-10 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                        type={showPassword ? "text" : "password"}
+                        id="forgot-new-password"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-10 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                        type={showNewPass ? "text" : "password"}
                         minLength={8}
                         required
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="••••••••"
+                        autoComplete="new-password"
                         dir="ltr"
                       />
                       <Lock className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
                       <button
                         type="button"
-                        onClick={() => setShowPassword((prev) => !prev)}
+                        onClick={() => setShowNewPass(!showNewPass)}
                         className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                        title={showNewPass ? "إخفاء" : "إظهار"}
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showNewPass ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
+
+                    {/* Strength Bar */}
+                    {newPassword && (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between text-[11px] font-bold">
+                          <span className="text-slate-400">قوة كلمة المرور:</span>
+                          <span className="text-slate-700">
+                            {strengthLabels[passwordStrength - 1] || "ضعيفة"}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex gap-1">
+                          {[1, 2, 3, 4].map((step) => (
+                            <div
+                              key={step}
+                              className={`h-full flex-1 rounded-full transition-all duration-300 ${
+                                passwordStrength >= step
+                                  ? strengthColors[passwordStrength - 1]
+                                  : "bg-slate-200"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                    <label
+                      htmlFor="forgot-confirm-password"
+                      className="block text-xs font-extrabold text-slate-700 mb-1"
+                    >
                       تأكيد كلمة المرور الجديدة
                     </label>
                     <div className="relative flex items-center">
                       <input
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-10 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                        type={showConfirmPassword ? "text" : "password"}
+                        id="forgot-confirm-password"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-10 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                        type={showConfirmNewPass ? "text" : "password"}
                         minLength={8}
                         required
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={confirmNewPass}
+                        onChange={(e) => setConfirmNewPass(e.target.value)}
                         placeholder="••••••••"
+                        autoComplete="new-password"
                         dir="ltr"
                       />
                       <Lock className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        onClick={() => setShowConfirmNewPass(!showConfirmNewPass)}
                         className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                        title={showConfirmNewPass ? "إخفاء" : "إظهار"}
                       >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showConfirmNewPass ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
                   </div>
 
                   {error && (
-                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-xs font-bold text-rose-700 animate-slide-up flex items-center justify-center gap-2">
+                    <div
+                      role="alert"
+                      className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-xs font-bold text-rose-700 flex items-center justify-center gap-2"
+                    >
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{error}</span>
                     </div>
@@ -737,14 +952,19 @@ export default function SignInPage() {
                 {mode === "register" && (
                   <>
                     <div>
-                      <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                      <label
+                        htmlFor="reg-name"
+                        className="block text-xs font-extrabold text-slate-700 mb-1"
+                      >
                         اسم الكابتن / المدرب
                       </label>
                       <div className="relative flex items-center">
                         <input
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                          name="name"
+                          id="reg-name"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                           required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
                           placeholder="مثال: كابتن أحمد محمود"
                           autoComplete="name"
                         />
@@ -753,14 +973,19 @@ export default function SignInPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                      <label
+                        htmlFor="reg-academy"
+                        className="block text-xs font-extrabold text-slate-700 mb-1"
+                      >
                         اسم الأكاديمية / النادي
                       </label>
                       <div className="relative flex items-center">
                         <input
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                          name="academyName"
+                          id="reg-academy"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                           required
+                          value={academyName}
+                          onChange={(e) => setAcademyName(e.target.value)}
                           placeholder="مثال: أكاديمية أبطال المستقبل للكاراتيه"
                           autoComplete="organization"
                         />
@@ -774,21 +999,26 @@ export default function SignInPage() {
                 )}
 
                 <div>
-                  <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                  <label
+                    htmlFor="auth-email"
+                    className="block text-xs font-extrabold text-slate-700 mb-1"
+                  >
                     {mode === "admin"
                       ? "البريد الإلكتروني للوحة التحكم (Gmail)"
                       : "البريد الإلكتروني"}
                   </label>
                   <div className="relative flex items-center">
                     <input
-                      className={`w-full rounded-xl border bg-slate-50/70 pr-10 pl-3 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition ${
+                      id="auth-email"
+                      className={`w-full rounded-xl border bg-slate-50/70 pr-10 pl-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition ${
                         mode === "admin"
-                          ? "border-amber-200 focus:border-amber-500 focus:ring-3 focus:ring-amber-100"
-                          : "border-slate-200 focus:border-red-500 focus:ring-3 focus:ring-red-100"
+                          ? "border-amber-200 focus:border-amber-500 focus:bg-white focus:ring-3 focus:ring-amber-100"
+                          : "border-slate-200 focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                       }`}
-                      name="email"
                       type="email"
                       required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder={
                         mode === "admin" ? "mg0447837@gmail.com" : "coach@example.com"
                       }
@@ -804,22 +1034,29 @@ export default function SignInPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                  <label
+                    htmlFor="auth-password"
+                    className="block text-xs font-extrabold text-slate-700 mb-1"
+                  >
                     {mode === "admin" ? "كلمة المرور الإدارية" : "كلمة المرور"}
                   </label>
                   <div className="relative flex items-center">
                     <input
-                      className={`w-full rounded-xl border bg-slate-50/70 pr-10 pl-10 py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition ${
+                      id="auth-password"
+                      className={`w-full rounded-xl border bg-slate-50/70 pr-10 pl-10 py-2.5 text-sm font-semibold text-slate-900 outline-none transition ${
                         mode === "admin"
-                          ? "border-amber-200 focus:border-amber-500 focus:ring-3 focus:ring-amber-100"
-                          : "border-slate-200 focus:border-red-500 focus:ring-3 focus:ring-red-100"
+                          ? "border-amber-200 focus:border-amber-500 focus:bg-white focus:ring-3 focus:ring-amber-100"
+                          : "border-slate-200 focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
                       }`}
-                      name="password"
                       type={showPassword ? "text" : "password"}
                       minLength={8}
                       required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      autoComplete={mode === "register" ? "new-password" : "current-password"}
+                      autoComplete={
+                        mode === "register" ? "new-password" : "current-password"
+                      }
                       dir="ltr"
                     />
                     <Lock
@@ -833,18 +1070,57 @@ export default function SignInPage() {
                       className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                       title={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
 
-                  {/* Forgot Password Link in Login Mode */}
+                  {/* Password Strength Meter in Register Mode */}
+                  {mode === "register" && password && (
+                    <div className="mt-2 space-y-1">
+                      <div className="flex items-center justify-between text-[11px] font-bold">
+                        <span className="text-slate-400">قوة كلمة المرور:</span>
+                        <span className="text-slate-700">
+                          {strengthLabels[passwordStrength - 1] || "ضعيفة"}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex gap-1">
+                        {[1, 2, 3, 4].map((step) => (
+                          <div
+                            key={step}
+                            className={`h-full flex-1 rounded-full transition-all duration-300 ${
+                              passwordStrength >= step
+                                ? strengthColors[passwordStrength - 1]
+                                : "bg-slate-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Forgot Password link in Login Mode */}
                   {mode === "login" && (
-                    <div className="mt-2 flex justify-end">
+                    <div className="mt-2 flex items-center justify-between">
+                      <label className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="rounded border-slate-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5"
+                        />
+                        <span>تذكرني على هذا الجهاز</span>
+                      </label>
                       <button
                         type="button"
                         onClick={() => {
                           setError("");
                           setSuccess("");
+                          setSuspendedDetails(null);
+                          setForgotEmail(email);
                           setMode("forgot");
                           setForgotStep(1);
                         }}
@@ -856,9 +1132,74 @@ export default function SignInPage() {
                   )}
                 </div>
 
-                {/* Error Banner */}
-                {error && (
-                  <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-xs font-bold text-rose-700 animate-slide-up flex items-center justify-center gap-2">
+                {/* Confirm Password in Register Mode */}
+                {mode === "register" && (
+                  <div>
+                    <label
+                      htmlFor="reg-confirm-password"
+                      className="block text-xs font-extrabold text-slate-700 mb-1"
+                    >
+                      تأكيد كلمة المرور
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        id="reg-confirm-password"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-10 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                        type={showConfirmPassword ? "text" : "password"}
+                        minLength={8}
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        autoComplete="new-password"
+                        dir="ltr"
+                      />
+                      <Lock className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                        title={showConfirmPassword ? "إخفاء" : "إظهار"}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Suspended Account Alert Banner */}
+                {suspendedDetails && (
+                  <div
+                    role="alert"
+                    className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-rose-950 space-y-2 animate-slide-up"
+                  >
+                    <div className="flex items-center gap-2 font-black text-rose-900 text-sm">
+                      <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+                      <span>الحساب موقوف من قِبل إدارة المنصة</span>
+                    </div>
+                    <p className="text-xs leading-relaxed text-rose-800">
+                      <strong>سبب الإيقاف:</strong>{" "}
+                      {suspendedDetails.reason || "مخالفة الشروط أو انتهاء فترة الصلاحية"}
+                    </p>
+                    <div className="text-[11px] text-rose-700 pt-1 border-t border-rose-200 flex items-center justify-between">
+                      <span>لإعادة التفعيل، يرجى مراسلة الإدارة:</span>
+                      <strong dir="ltr" className="select-all font-mono">
+                        {suspendedDetails.adminEmail || "mg0447837@gmail.com"}
+                      </strong>
+                    </div>
+                  </div>
+                )}
+
+                {/* Generic Error Banner */}
+                {!suspendedDetails && error && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-xs font-bold text-rose-700 animate-slide-up flex items-center justify-center gap-2"
+                  >
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{error}</span>
                   </div>
@@ -866,14 +1207,18 @@ export default function SignInPage() {
 
                 {/* Success Banner */}
                 {success && (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center text-xs font-bold text-emerald-700 animate-slide-up flex items-center justify-center gap-2">
+                  <div
+                    role="status"
+                    className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center text-xs font-bold text-emerald-700 animate-slide-up flex items-center justify-center gap-2"
+                  >
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
                     <span>{success}</span>
                   </div>
                 )}
 
-                {/* Submit Button */}
+                {/* Submit Action Button */}
                 <button
+                  id="submit-auth-btn"
                   className={`mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl font-cairo text-sm font-black text-white shadow-sm transition-all active:scale-98 disabled:opacity-60 cursor-pointer ${
                     mode === "admin"
                       ? "bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 hover:brightness-110 shadow-amber-500/25"
@@ -907,9 +1252,9 @@ export default function SignInPage() {
               </form>
             )}
 
-            <p className="mt-6 text-center text-[11px] font-medium text-slate-400">
-              أكاديمية Re_action للكاراتيه • جميع الحقوق محفوظة {new Date().getFullYear()}
-            </p>
+            <footer className="mt-6 text-center text-[11px] font-medium text-slate-400">
+              أكاديمية Re_action للكاراتيه • منظومة الأبطال {new Date().getFullYear()}
+            </footer>
           </div>
         </div>
       </section>

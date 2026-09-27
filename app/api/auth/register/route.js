@@ -15,23 +15,43 @@ export async function POST(request) {
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body.password === "string" ? body.password : "";
+    const confirmPassword =
+      typeof body.confirmPassword === "string" ? body.confirmPassword : "";
     const phone = typeof body.phone === "string" ? body.phone.trim() : "";
 
-    if (!name || name.length > 80 || !/^\S+@\S+\.\S+$/.test(email)) {
+    if (!name || name.length < 2 || name.length > 80) {
       return NextResponse.json(
-        { error: "اكتب الاسم والإيميل بشكل صحيح" },
+        { error: "يرجى كتابة اسم الكابتن بشكل صحيح (حرفين على الأقل)" },
         { status: 400 },
       );
     }
-    if (!academyName || academyName.length > 100) {
+    if (!academyName || academyName.length < 2 || academyName.length > 100) {
       return NextResponse.json(
-        { error: "اكتب اسم الأكاديمية أو النادي بشكل صحيح (مثال: أكاديمية النجوم)" },
+        { error: "يرجى كتابة اسم الأكاديمية أو النادي بشكل صحيح (مثال: أكاديمية النجوم)" },
+        { status: 400 },
+      );
+    }
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return NextResponse.json(
+        { error: "يرجى إدخال بريد إلكتروني صحيح" },
         { status: 400 },
       );
     }
     if (password.length < 8) {
       return NextResponse.json(
         { error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" },
+        { status: 400 },
+      );
+    }
+    if (password.toLowerCase() === email) {
+      return NextResponse.json(
+        { error: "لا يمكن أن تكون كلمة المرور مطابقة للبريد الإلكتروني" },
+        { status: 400 },
+      );
+    }
+    if (confirmPassword && password !== confirmPassword) {
+      return NextResponse.json(
+        { error: "كلمتا المرور غير متطابقتين" },
         { status: 400 },
       );
     }
@@ -47,7 +67,10 @@ export async function POST(request) {
     });
     if (existingUser) {
       return NextResponse.json(
-        { error: "الايميل مسجل من قبل" },
+        {
+          error: "هذا البريد الإلكتروني مسجل بالفعل. يمكنك تسجيل الدخول مباشرة أو استعادة كلمة المرور.",
+          code: "DUPLICATE_EMAIL",
+        },
         { status: 409 },
       );
     }

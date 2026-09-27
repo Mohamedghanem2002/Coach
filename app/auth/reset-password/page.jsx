@@ -1,9 +1,9 @@
 import { Suspense } from "react";
-import SignInPage from "../../../frontend/pages/SignInPage";
+import ResetPasswordPage from "../../../frontend/pages/ResetPasswordPage";
 
 export const metadata = {
-  title: "تسجيل الدخول وإدارة الأكاديميات | Re_action DOJO",
-  description: "تسجيل الدخول والوصول إلى منظومة إدارة أكاديمية الكاراتيه أو لوحة التحكم المركزية",
+  title: "استعادة كلمة المرور | أكاديمية Re_action",
+  description: "إعادة تعيين كلمة المرور الخاصة بحساب كابتن الأكاديمية",
 };
 
 export default function Page() {
@@ -15,7 +15,7 @@ export default function Page() {
         </div>
       }
     >
-      <SignInPage />
+      <ResetPasswordPage />
     </Suspense>
   );
 }

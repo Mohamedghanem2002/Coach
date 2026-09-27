@@ -248,7 +248,7 @@ export async function PATCH(request, context) {
     const now = new Date();
 
     // 1. Suspend / Disable Captain
-    if (action === "suspend" || action === "disable") {
+    if (action === "suspend" || action === "disable" || action === "suspend_academy") {
       const reason = (body.reason || "تم تعليق الحساب بقرار من إدارة المنصة").trim();
       updateFields.status = "suspended";
       updateFields.subscriptionStatus = "suspended";
@@ -260,7 +260,12 @@ export async function PATCH(request, context) {
     }
 
     // 2. Reactivate / Activate / Enable Captain
-    else if (action === "activate" || action === "reactivate" || action === "enable") {
+    else if (
+      action === "activate" ||
+      action === "reactivate" ||
+      action === "enable" ||
+      action === "reactivate_academy"
+    ) {
       updateFields.status = "active";
       updateFields.subscriptionStatus = "active";
       updateFields.suspensionReason = null;

@@ -42,6 +42,7 @@ import {
   Mail,
   Sparkles,
   FileText,
+  Zap,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -988,6 +989,37 @@ export default function Home() {
         }}
       />
     );
+  }
+
+  // Zero-flicker server auth protection
+  if (sessionStatus === "loading") {
+    return (
+      <div
+        className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-white"
+        dir="rtl"
+      >
+        <div className="flex flex-col items-center gap-4 text-center max-w-sm">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 shadow-xl shadow-red-600/30 ring-2 ring-red-400/30 animate-pulse">
+            <Zap className="h-7 w-7 fill-white stroke-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-white">
+              أكاديمية Re_action
+            </h2>
+            <div className="flex items-center justify-center gap-2 mt-2.5">
+              <span className="h-4 w-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
+              <p className="text-xs font-semibold text-slate-400">
+                جاري التحقق من الحساب والاتصال بالمنظومة...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionStatus === "unauthenticated") {
+    return null;
   }
 
   return (

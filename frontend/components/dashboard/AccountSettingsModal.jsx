@@ -34,8 +34,10 @@ export default function AccountSettingsModal({
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showCurrentPass, setShowCurrentPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
@@ -46,6 +48,7 @@ export default function AccountSettingsModal({
     setShowPasswordSection(false);
     setCurrentPassword("");
     setNewPassword("");
+    setConfirmNewPassword("");
     onClose();
   };
 
@@ -106,7 +109,7 @@ export default function AccountSettingsModal({
       return;
     }
 
-    if (showPasswordSection && newPassword) {
+    if (showPasswordSection && (newPassword || currentPassword)) {
       if (!currentPassword) {
         setNotice({
           type: "error",
@@ -118,6 +121,20 @@ export default function AccountSettingsModal({
         setNotice({
           type: "error",
           message: "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل",
+        });
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        setNotice({
+          type: "error",
+          message: "كلمتا المرور الجديدتان غير متطابقتين",
+        });
+        return;
+      }
+      if (newPassword.toLowerCase() === trimmedEmail.toLowerCase()) {
+        setNotice({
+          type: "error",
+          message: "لا يمكن أن تكون كلمة المرور مطابقة للبريد الإلكتروني",
         });
         return;
       }
@@ -135,6 +152,7 @@ export default function AccountSettingsModal({
       if (showPasswordSection && newPassword) {
         payload.currentPassword = currentPassword;
         payload.newPassword = newPassword;
+        payload.confirmNewPassword = confirmNewPassword;
       }
 
       const res = await fetch("/api/account", {
@@ -389,6 +407,46 @@ export default function AccountSettingsModal({
                     </button>
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-700 mb-1">
+                    تأكيد كلمة المرور الجديدة
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type={showConfirmPass ? "text" : "password"}
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      minLength={8}
+                      placeholder="••••••••"
+                      dir="ltr"
+                      className="w-full rounded-xl border border-slate-200 bg-white pr-9 pl-9 py-2 text-xs font-medium text-slate-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                    />
+                    <Lock className="absolute right-3 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPass(!showConfirmPass)}
+                      className="absolute left-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showConfirmPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {newPassword && (
+                  <div className="pt-1">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1">
+                      <span>قوة كلمة المرور:</span>
+                      <span className={newPassword.length >= 10 ? "text-emerald-600" : newPassword.length >= 8 ? "text-amber-600" : "text-rose-600"}>
+                        {newPassword.length >= 10 ? "قوية" : newPassword.length >= 8 ? "متوسطة" : "قصيرة"}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden flex gap-1">
+                      <div className={`h-full flex-1 rounded-full ${newPassword.length >= 8 ? "bg-amber-500" : "bg-rose-500"}`} />
+                      <div className={`h-full flex-1 rounded-full ${newPassword.length >= 10 ? "bg-emerald-500" : "bg-slate-200"}`} />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -173,11 +173,26 @@ export async function PUT(request) {
       updatedAt: new Date(),
     };
 
+    const confirmNewPassword =
+      typeof body.confirmNewPassword === "string" ? body.confirmNewPassword : "";
+
     // If new password requested
     if (newPassword) {
       if (newPassword.length < 8) {
         return NextResponse.json(
           { error: "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل" },
+          { status: 400 }
+        );
+      }
+      if (newPassword.toLowerCase() === email) {
+        return NextResponse.json(
+          { error: "لا يمكن أن تكون كلمة المرور مطابقة للبريد الإلكتروني" },
+          { status: 400 }
+        );
+      }
+      if (confirmNewPassword && newPassword !== confirmNewPassword) {
+        return NextResponse.json(
+          { error: "كلمتا المرور الجديدتان غير متطابقتين" },
           { status: 400 }
         );
       }

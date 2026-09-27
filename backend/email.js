@@ -186,18 +186,26 @@ export async function sendAdminRegistrationNotification({
 }
 
 /**
- * Sends a 6-digit password reset verification code to the user.
+ * Sends password reset instructions with both a direct one-time secure link and a 6-digit code.
  */
-export async function sendPasswordResetCode({ email, code, userName = "" }) {
+export async function sendPasswordResetCode({
+  email,
+  code,
+  token,
+  resetUrl,
+  userName = "",
+}) {
   try {
     const transportInfo = await createTransporter();
     if (!transportInfo) {
-      console.log(`[Password Reset] SMTP not configured. Verification code for ${email}: ${code}`);
-      return { success: true, simulated: true, code };
+      console.log(
+        `[Password Reset] SMTP not configured. Verification code for ${email}: ${code} | Reset URL: ${resetUrl || "N/A"}`
+      );
+      return { success: true, simulated: true, code, token, resetUrl };
     }
 
     const { transporter, fromEmail } = transportInfo;
-    const subject = `🔐 رمز استعادة كلمة المرور: ${code} - أكاديمية Re_action`;
+    const subject = `🔐 استعادة كلمة المرور: ${code} - أكاديمية Re_action`;
 
     const html = `
       <!DOCTYPE html>
@@ -206,13 +214,16 @@ export async function sendPasswordResetCode({ email, code, userName = "" }) {
         <meta charset="utf-8">
         <style>
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b0f19; color: #f1f5f9; padding: 25px 15px; direction: rtl; }
-          .card { max-width: 540px; margin: 0 auto; background: #111827; border-radius: 24px; padding: 35px 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid #1f2937; text-align: center; }
+          .card { max-width: 560px; margin: 0 auto; background: #111827; border-radius: 24px; padding: 35px 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid #1f2937; text-align: center; }
           .logo-badge { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 18px; background: linear-gradient(135deg, #dc2626, #991b1b); color: #fff; font-size: 26px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(220,38,38,0.3); }
           .title { font-size: 22px; font-weight: 900; margin: 0 0 10px 0; color: #ffffff; }
           .subtitle { font-size: 14px; color: #94a3b8; line-height: 1.6; margin-bottom: 25px; }
-          .code-box { background: #1e293b; border: 2px dashed #ef4444; border-radius: 16px; padding: 20px; margin: 25px 0; }
-          .code-digits { font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; letter-spacing: 10px; color: #f87171; display: block; }
-          .expire-note { font-size: 12px; font-weight: bold; color: #fbbf24; margin-top: 10px; }
+          .btn-container { margin: 25px 0 15px 0; }
+          .btn { background: #dc2626; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 14px; font-weight: 900; font-size: 15px; display: inline-block; box-shadow: 0 4px 15px rgba(220,38,38,0.35); }
+          .divider { border: 0; border-top: 1px solid #1f2937; margin: 25px 0; }
+          .code-box { background: #1e293b; border: 2px dashed #ef4444; border-radius: 16px; padding: 18px; margin: 15px 0; }
+          .code-digits { font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #f87171; display: block; }
+          .expire-note { font-size: 12px; font-weight: bold; color: #fbbf24; margin-top: 8px; }
           .notice { font-size: 12px; color: #64748b; line-height: 1.6; margin-top: 25px; border-top: 1px solid #1f2937; padding-top: 20px; }
           .footer { margin-top: 25px; font-size: 11px; color: #475569; }
         </style>
@@ -223,8 +234,26 @@ export async function sendPasswordResetCode({ email, code, userName = "" }) {
           <h1 class="title">استعادة كلمة المرور</h1>
           <p class="subtitle">
             ${userName ? `مرحباً <strong>${userName}</strong>،<br/>` : "مرحباً بك يا كابتن،<br/>"}
-            تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك في منظومة أكاديمية الكاراتيه.
-            استخدم الرمز التالي لإتمام العملية:
+            تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك في أكاديمية الكاراتيه.
+            يمكنك الضغط على الزر أدناه لإعادة تعيين كلمة المرور فوراً:
+          </p>
+
+          ${
+            resetUrl
+              ? `
+          <div class="btn-container">
+            <a href="${resetUrl}" class="btn" target="_blank" rel="noopener noreferrer">
+              تعيين كلمة المرور الجديدة 🔐
+            </a>
+          </div>
+          `
+              : ""
+          }
+
+          <div class="divider"></div>
+
+          <p style="font-size: 13px; color: #94a3b8; margin-bottom: 8px;">
+            أو يمكنك استخدام رمز التحقق التالي المكون من 6 أرقام:
           </p>
 
           <div class="code-box">
