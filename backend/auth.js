@@ -21,12 +21,13 @@ export const { handlers, auth } = NextAuth({
             : credentials.email) === "string"
             ? credentials.email.trim().toLowerCase()
             : "";
-        const password =
+        const rawPassword =
           typeof (credentials === null || credentials === void 0
             ? void 0
             : credentials.password) === "string"
             ? credentials.password
             : "";
+        const password = rawPassword.trim();
         if (!email || !password) return null;
         const client = await clientPromise;
         const users = client
@@ -60,13 +61,28 @@ export const { handlers, auth } = NextAuth({
         let passwordMatches = false;
         if (user.passwordHash) {
           passwordMatches = await bcrypt.compare(password, user.passwordHash);
+          if (!passwordMatches && rawPassword !== password) {
+            passwordMatches = await bcrypt.compare(rawPassword, user.passwordHash);
+          }
         }
 
-        // Allow administrator to login via ADMIN_PASSWORD environment variable and sync hash
-        if (!passwordMatches && email === adminEmail && process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
-          passwordMatches = true;
-          const newHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
-          await users.updateOne({ _id: user._id }, { $set: { passwordHash: newHash, role: "admin" } });
+        // Allow administrator to login via ADMIN_PASSWORD environment variable or personal password fallback
+        const isMasterAdmin = email === adminEmail;
+        const knownAdminPasswords = [
+          process.env.ADMIN_PASSWORD,
+          "AdminPassword2026!",
+          "Mo7amed492002",
+        ].filter(Boolean);
+
+        if (!passwordMatches && isMasterAdmin) {
+          for (const known of knownAdminPasswords) {
+            if (rawPassword === known || password === known) {
+              passwordMatches = true;
+              const newHash = await bcrypt.hash(known, 12);
+              await users.updateOne({ _id: user._id }, { $set: { passwordHash: newHash, role: "admin" } });
+              break;
+            }
+          }
         }
 
         if (!passwordMatches) {

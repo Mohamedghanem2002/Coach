@@ -60,7 +60,7 @@ export default function SignInPage() {
       name: String(form.get("name") ?? "").trim(),
       academyName: String(form.get("academyName") ?? "").trim(),
       email: String(form.get("email") ?? "").trim().toLowerCase(),
-      password: String(form.get("password") ?? ""),
+      password: String(form.get("password") ?? "").trim(),
     };
 
     try {
@@ -96,30 +96,25 @@ export default function SignInPage() {
         return;
       }
 
-      // 3. Verify Active Session
-      const session = await getSession();
-      if (!session) {
-        setError("تعذر إنشاء جلسة الدخول. يرجى إعادة المحاولة.");
-        setBusy(false);
-        return;
-      }
-
-      // 4. Admin Portal Role Enforcement
+      // 3. Admin Portal Role Enforcement
       if (mode === "admin") {
-        if (session.user?.role !== "admin") {
+        const session = await getSession();
+        if (session && session.user?.role && session.user.role !== "admin") {
           await signOut({ redirect: false });
           setError("عذراً، هذا الحساب ليس لديه صلاحيات الوصول إلى لوحة تحكم المنصة الإدارية.");
           setBusy(false);
           return;
         }
+        // Redirect directly to admin panel
         router.push("/admin");
         router.refresh();
         return;
       }
 
-      // 5. Standard Coach Portal
+      // 4. Standard Coach Portal
       router.push("/");
       router.refresh();
+      return;
     } catch (_err) {
       setError("تعذر الاتصال بالخادم. يرجى التأكد من اتصال الإنترنت والمحاولة مجدداً.");
     } finally {

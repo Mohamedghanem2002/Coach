@@ -3,7 +3,7 @@
     {
       "name": "Mohamed Ghanem",
       "email": "mg0447837@gmail.com",
-      "passwordHash": "$2b$12$E0h0nIpMPIu49NRwb0ppiOdZQIcKcGn/t2iTdwHXRzCpdvmtzVy0u",
+      "passwordHash": "$2b$12$ldC9eyyLNYjAiWCESgYr9uvDXksQl.e23yTkRFftRUt/QU05ipB.a",
       "createdAt": "2026-09-09T21:42:04.392Z",
       "_id": "6aa1d2acc20ba8a6e482c3a3",
       "academyName": "Re_action DOJO",
@@ -76,7 +76,7 @@
       "subscriptionStatus": "active",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T18:01:28.626Z",
-      "subscriptionExpiresAt": "2026-09-25T18:01:29.836Z",
+      "subscriptionExpiresAt": "2026-10-27T18:01:29.883Z",
       "subscriptionPaid": true,
       "createdAt": "2026-09-27T18:01:28.626Z",
       "_id": "6ab959f9a0992fdb8db3cc42",
