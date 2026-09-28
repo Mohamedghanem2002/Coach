@@ -147,21 +147,34 @@ export default function DashboardHero({
               type="button"
               onClick={onInstantCloudBackup}
               disabled={isCloudBackingUp || isBackingUp || isRestoring}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-800 text-xs font-black shadow-2xs active-press transition cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-800 text-xs font-black shadow-2xs active-press transition cursor-pointer disabled:opacity-50"
               title="حفظ نسخة سحابية فورية بضغطة واحدة"
             >
               <Sparkles className="h-4 w-4 text-emerald-600" />
               <span>{isCloudBackingUp ? "جارٍ النسخ..." : "نسخ سحابي"}</span>
             </button>
+
+            {onRestore && (
+              <button
+                type="button"
+                onClick={onRestore}
+                disabled={isRestoring || isBackingUp || isCloudBackingUp}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/80 hover:bg-amber-100 text-amber-900 text-xs font-black shadow-2xs active-press transition cursor-pointer disabled:opacity-50"
+                title="استعادة نسخة احتياطية سحابية أو من ملف"
+              >
+                <RotateCcw className="h-4 w-4 text-amber-600" />
+                <span>{isRestoring ? "جارٍ الاستعادة..." : "استعادة نسخة"}</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* ━━━ Mobile Quick Action Bar (Grid for Phone) ━━━ */}
-        <div className="grid grid-cols-4 gap-2 pt-3 sm:hidden border-t border-slate-100 mt-3">
+        <div className="grid grid-cols-5 gap-1.5 pt-3 sm:hidden border-t border-slate-100 mt-3">
           <button
             type="button"
             onClick={onAddPlayer}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white text-[11px] font-black shadow-xs active-press cursor-pointer"
+            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white text-[10px] font-black shadow-xs active-press cursor-pointer"
           >
             <Plus className="h-4 w-4 stroke-[3]" />
             <span className="truncate">لاعب جديد</span>
@@ -170,7 +183,7 @@ export default function DashboardHero({
           <button
             type="button"
             onClick={() => onOpenAttendanceReport?.(branch === "كل الصالات" ? branches[0]?.name || "كل الصالات" : branch)}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-red-200 bg-red-50/80 text-red-700 text-[11px] font-black active-press cursor-pointer"
+            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-red-200 bg-red-50/80 text-red-700 text-[10px] font-black active-press cursor-pointer"
           >
             <FileText className="h-4 w-4 text-red-600" />
             <span className="truncate">تقرير الحضور</span>
@@ -185,7 +198,7 @@ export default function DashboardHero({
                 onMarkBranchPresent(branches[0].name);
               }
             }}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-emerald-200 bg-emerald-50/80 text-emerald-800 text-[11px] font-black active-press cursor-pointer"
+            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-emerald-200 bg-emerald-50/80 text-emerald-800 text-[10px] font-black active-press cursor-pointer"
             title="تحضير جميع أبطال الصالة بضغطة واحدة"
           >
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -196,11 +209,25 @@ export default function DashboardHero({
             type="button"
             onClick={onInstantCloudBackup}
             disabled={isCloudBackingUp || isBackingUp || isRestoring}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-emerald-200 bg-emerald-50/80 text-emerald-800 text-[11px] font-black active-press cursor-pointer"
+            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-emerald-300 bg-emerald-50/80 text-emerald-800 text-[10px] font-black active-press cursor-pointer disabled:opacity-50"
+            title="نسخ احتياطي سحابي فوري"
           >
             <Sparkles className="h-4 w-4 text-emerald-600" />
             <span className="truncate">{isCloudBackingUp ? "جارٍ..." : "نسخ سحابي"}</span>
           </button>
+
+          {onRestore && (
+            <button
+              type="button"
+              onClick={onRestore}
+              disabled={isRestoring || isBackingUp || isCloudBackingUp}
+              className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-amber-300 bg-amber-50/80 text-amber-900 text-[10px] font-black active-press cursor-pointer disabled:opacity-50"
+              title="استعادة نسخة احتياطية"
+            >
+              <RotateCcw className="h-4 w-4 text-amber-600" />
+              <span className="truncate">{isRestoring ? "جارٍ..." : "استعادة"}</span>
+            </button>
+          )}
         </div>
       </div>
 

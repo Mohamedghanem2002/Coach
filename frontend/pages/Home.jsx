@@ -1044,6 +1044,12 @@ export default function Home() {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         onOpenAccountSettings={() => setShowAccountSettings(true)}
+        onInstantCloudBackup={handleInstantCloudBackup}
+        onRestore={() => setShowRestoreModal(true)}
+        onDownloadBackup={handleDownloadBackup}
+        isCloudBackingUp={isCloudBackingUp}
+        isRestoring={isRestoring}
+        isBackingUp={isBackingUp}
       />
 
       <section className="mx-auto w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] px-3 sm:px-6 pt-3.5 pb-28 sm:py-7 lg:px-8 overflow-x-hidden">
@@ -1142,6 +1148,46 @@ export default function Home() {
                   <span>تقرير الحضور 📋</span>
                 </button>
               </div>
+
+              {/* شريط أدوات النسخ الاحتياطي السحابي والاستعادة للموبايل (Mobile Cloud Backup & Restore Toolbar) */}
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  id="mobile-cloud-backup-btn"
+                  onClick={handleInstantCloudBackup}
+                  disabled={isCloudBackingUp || isBackingUp || isRestoring}
+                  className="flex items-center justify-center gap-1.5 h-10 px-2 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-300 text-emerald-900 text-xs font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
+                  title="حفظ نسخة سحابية فورية بحسابك (Gmail)"
+                >
+                  <Sparkles className={`h-3.5 w-3.5 text-emerald-600 shrink-0 ${isCloudBackingUp ? "animate-spin" : ""}`} />
+                  <span className="truncate">{isCloudBackingUp ? "جارٍ..." : "نسخ سحابي ☁️"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="mobile-restore-btn"
+                  onClick={() => setShowRestoreModal(true)}
+                  disabled={isRestoring || isBackingUp || isCloudBackingUp}
+                  className="flex items-center justify-center gap-1.5 h-10 px-2 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border border-amber-300 text-amber-950 text-xs font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
+                  title="استعادة البيانات من نسخة سحابية أو ملف"
+                >
+                  <RotateCcw className={`h-3.5 w-3.5 text-amber-600 shrink-0 ${isRestoring ? "animate-spin" : ""}`} />
+                  <span className="truncate">{isRestoring ? "جارٍ..." : "استعادة نسخة 🔄"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="mobile-local-backup-btn"
+                  onClick={handleDownloadBackup}
+                  disabled={isBackingUp || isRestoring}
+                  className="flex items-center justify-center gap-1.5 h-10 px-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 text-xs font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
+                  title="تنزيل نسخة احتياطية محلية بصيغة JSON على جهازك"
+                >
+                  <ShieldCheck className={`h-3.5 w-3.5 text-blue-600 shrink-0 ${isBackingUp ? "animate-spin" : ""}`} />
+                  <span className="truncate">{isBackingUp ? "جارٍ..." : "نسخ محلي 💾"}</span>
+                </button>
+              </div>
+
               {/* Row 1: Search Bar + Integrated Branch Selector + Advanced Filters Button */}
               <div className="flex items-center gap-2">
                 <div className="relative flex-1 flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-3.5 shadow-2xs focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 transition-all">

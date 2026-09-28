@@ -13,6 +13,9 @@ import {
   Settings,
   User,
   Zap,
+  Sparkles,
+  RotateCcw,
+  ShieldCheck,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -28,6 +31,12 @@ export default function Header({
   eventsCount = 0,
   onNavigateToBirthdays,
   onOpenAccountSettings,
+  onInstantCloudBackup,
+  onRestore,
+  onDownloadBackup,
+  isCloudBackingUp = false,
+  isRestoring = false,
+  isBackingUp = false,
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -522,6 +531,61 @@ export default function Header({
                   <ChevronRight className="h-4 w-4 text-rose-400 rotate-180" />
                 </button>
               )}
+
+              {/* Data Backup & Protection Section in Mobile Coach Sheet */}
+              <div className="rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-slate-100/60 p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-800">
+                    أمان البيانات والنسخ الاحتياطي 🛡️
+                  </span>
+                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                    نسخ آمن
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMobileCoachSheet(false);
+                      onInstantCloudBackup?.();
+                    }}
+                    disabled={isCloudBackingUp || isBackingUp || isRestoring}
+                    className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 text-xs font-black shadow-2xs active-press transition cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className={`h-3.5 w-3.5 text-emerald-600 shrink-0 ${isCloudBackingUp ? "animate-spin" : ""}`} />
+                    <span className="truncate">{isCloudBackingUp ? "جارٍ الحفظ..." : "نسخ سحابي"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMobileCoachSheet(false);
+                      onRestore?.();
+                    }}
+                    disabled={isRestoring || isBackingUp || isCloudBackingUp}
+                    className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-amber-300 bg-white hover:bg-amber-50 text-amber-950 text-xs font-black shadow-2xs active-press transition cursor-pointer disabled:opacity-50"
+                  >
+                    <RotateCcw className={`h-3.5 w-3.5 text-amber-600 shrink-0 ${isRestoring ? "animate-spin" : ""}`} />
+                    <span className="truncate">{isRestoring ? "جارٍ الاستعادة..." : "استعادة نسخة"}</span>
+                  </button>
+                </div>
+
+                {onDownloadBackup && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMobileCoachSheet(false);
+                      onDownloadBackup();
+                    }}
+                    disabled={isBackingUp || isRestoring}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs active-press transition cursor-pointer disabled:opacity-50"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                    <span>تنزيل نسخة احتياطية محلية (JSON) 💾</span>
+                  </button>
+                )}
+              </div>
 
               {/* Sign out button */}
               <button
