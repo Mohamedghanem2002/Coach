@@ -346,6 +346,11 @@ export default function AdminCaptainsTab({
                           >
                             {c.name}
                           </button>
+                          {c.isAdmin && (
+                            <span className="rounded-md bg-purple-100 px-1 py-0.2 text-[9px] font-black text-purple-800 border border-purple-200">
+                              ADMIN
+                            </span>
+                          )}
                         </div>
                         <span className="block text-xs text-red-600 font-bold truncate">
                           🥋 {c.academyName || "أكاديمية تدريب"}
@@ -520,13 +525,20 @@ export default function AdminCaptainsTab({
                               {(c.name || "C").charAt(0)}
                             </div>
                             <div className="min-w-0">
-                              <button
-                                type="button"
-                                onClick={() => onSelectCaptain(c.id || c._id)}
-                                className="font-bold text-slate-900 hover:text-red-600 transition text-sm text-right truncate max-w-[200px] cursor-pointer block"
-                              >
-                                {c.name}
-                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => onSelectCaptain(c.id || c._id)}
+                                  className="font-bold text-slate-900 hover:text-red-600 transition text-sm text-right truncate max-w-[200px] cursor-pointer block"
+                                >
+                                  {c.name}
+                                </button>
+                                {c.isAdmin && (
+                                  <span className="rounded-md bg-purple-100 px-1 py-0.2 text-[9px] font-black text-purple-800 border border-purple-200">
+                                    ADMIN
+                                  </span>
+                                )}
+                              </div>
                               <span className="block text-xs text-red-600 font-bold truncate">
                                 🥋 {c.academyName || "أكاديمية تدريب"}
                               </span>
@@ -730,40 +742,44 @@ export default function AdminCaptainsTab({
               </button>
 
               {/* Extend Subscription */}
-              <button
-                type="button"
-                onClick={() => {
-                  const c = selectedActionCaptain;
-                  setSelectedActionCaptain(null);
-                  onOpenExtend && onOpenExtend(c);
-                }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition cursor-pointer text-slate-900"
-              >
-                <Clock className="w-4 h-4 text-amber-600" />
-                <span>تمديد فترة الاشتراك والصلاحية</span>
-              </button>
+              {!selectedActionCaptain.isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const c = selectedActionCaptain;
+                    setSelectedActionCaptain(null);
+                    onOpenExtend && onOpenExtend(c);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition cursor-pointer text-slate-900"
+                >
+                  <Clock className="w-4 h-4 text-amber-600" />
+                  <span>تمديد فترة الاشتراك والصلاحية</span>
+                </button>
+              )}
 
               {/* Toggle Payment */}
-              <button
-                type="button"
-                onClick={() => {
-                  const c = selectedActionCaptain;
-                  setSelectedActionCaptain(null);
-                  onTogglePayment && onTogglePayment(c);
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition cursor-pointer text-slate-900"
-              >
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-4 h-4 text-emerald-600" />
-                  <span>تعديل حالة السداد</span>
-                </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${selectedActionCaptain.subscriptionPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
-                  {selectedActionCaptain.subscriptionPaid ? "مسدد ✓" : "غير مسدد"}
-                </span>
-              </button>
+              {!selectedActionCaptain.isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const c = selectedActionCaptain;
+                    setSelectedActionCaptain(null);
+                    onTogglePayment && onTogglePayment(c);
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition cursor-pointer text-slate-900"
+                >
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="w-4 h-4 text-emerald-600" />
+                    <span>تعديل حالة السداد</span>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${selectedActionCaptain.subscriptionPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                    {selectedActionCaptain.subscriptionPaid ? "مسدد ✓" : "غير مسدد"}
+                  </span>
+                </button>
+              )}
 
               {/* Suspend or Reactivate */}
-              {!selectedActionCaptain.isAdmin && (
+              {!selectedActionCaptain.isAdmin ? (
                 selectedActionCaptain.subscriptionStatus === "suspended" || selectedActionCaptain.status === "suspended" ? (
                   <button
                     type="button"
@@ -791,6 +807,10 @@ export default function AdminCaptainsTab({
                     <span>إيقاف وتعليق الحساب مؤقتاً</span>
                   </button>
                 )
+              ) : (
+                <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-100 text-center text-xs font-black text-purple-700">
+                  🛡️ حساب مدير المنصة محمي من أي تعديلات أو تعليق
+                </div>
               )}
 
               {/* Direct Call / WhatsApp if phone available */}

@@ -36,41 +36,44 @@ export default function AdminEventsTab({ onSelectCaptain }) {
 
   useEffect(() => {
     let ignore = false;
-    const params = new URLSearchParams({
-      page: String(currentPage),
-      limit: "15",
-      search,
-      status: statusFilter,
-      ownerId: coachFilter,
-      sortBy,
-    });
-
-    fetch(`/api/admin/events?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!ignore && data?.success) {
-          setEvents(data.events || []);
-          setSummary(
-            data.summary || {
-              totalEvents: 0,
-              upcomingEvents: 0,
-              completedEvents: 0,
-              filteredCount: 0,
-            }
-          );
-          setFiltersData(data.filters || { coaches: [] });
-          setPagination(data.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
-        }
-      })
-      .catch((err) => {
-        if (!ignore) console.error("Events fetch error:", err);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: "15",
+        search,
+        status: statusFilter,
+        ownerId: coachFilter,
+        sortBy,
       });
+
+      fetch(`/api/admin/events?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!ignore && data?.success) {
+            setEvents(data.events || []);
+            setSummary(
+              data.summary || {
+                totalEvents: 0,
+                upcomingEvents: 0,
+                completedEvents: 0,
+                filteredCount: 0,
+              }
+            );
+            setFiltersData(data.filters || { coaches: [] });
+            setPagination(data.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
+          }
+        })
+        .catch((err) => {
+          if (!ignore) console.error("Events fetch error:", err);
+        })
+        .finally(() => {
+          if (!ignore) setLoading(false);
+        });
+    }, 250);
 
     return () => {
       ignore = true;
+      clearTimeout(timer);
     };
   }, [currentPage, search, statusFilter, coachFilter, sortBy, refreshTrigger]);
 

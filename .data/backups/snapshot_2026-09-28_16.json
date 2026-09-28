@@ -124,16 +124,16 @@
       "phone": "",
       "passwordHash": "$2b$12$gjjZGkVO0E9ZBIshwbI25e5OoGcBGslLIf9bC9S6cBb592e.tLPQy",
       "role": "user",
-      "status": "active",
-      "subscriptionStatus": "active",
+      "status": "suspended",
+      "subscriptionStatus": "suspended",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T21:02:51.807Z",
-      "subscriptionExpiresAt": "2026-12-26T21:02:51.807Z",
-      "subscriptionPaid": true,
+      "subscriptionExpiresAt": "2026-10-27T21:02:51.807Z",
+      "subscriptionPaid": false,
       "createdAt": "2026-09-27T21:02:51.807Z",
       "_id": "6ab9847ca8a4820d9e786c8a",
-      "updatedAt": "2026-09-28T17:15:24.016Z",
-      "suspensionReason": null
+      "updatedAt": "2026-09-28T16:54:26.407Z",
+      "suspensionReason": "إيقاف أمني تجريبي لاختبار منظومة الحظر"
     }
   ],
   "branches": [
@@ -1089,116 +1089,6 @@
       },
       "createdAt": "2026-09-27T21:06:58.878Z",
       "_id": "6ab98572a8a4820d9e786c91"
-    },
-    {
-      "action": "mark_subscription_unpaid",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "paid": false
-      },
-      "createdAt": "2026-09-28T16:54:26.408Z",
-      "_id": "6aba9bc27d6682b8e5323551"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "فحص أمني تجريبي"
-      },
-      "createdAt": "2026-09-28T16:54:26.436Z",
-      "_id": "6aba9bc27d6682b8e5323552"
-    },
-    {
-      "action": "reactivate_academy",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "restoredExpiresAt": "2026-10-27T21:02:51.807Z"
-      },
-      "createdAt": "2026-09-28T16:54:26.466Z",
-      "_id": "6aba9bc27d6682b8e5323553"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "daysAdded": 30,
-        "newExpiresAt": "2026-11-26T21:02:51.807Z"
-      },
-      "createdAt": "2026-09-28T16:54:26.497Z",
-      "_id": "6aba9bc27d6682b8e5323554"
-    },
-    {
-      "action": "mark_subscription_unpaid",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "paid": false
-      },
-      "createdAt": "2026-09-28T17:15:23.895Z",
-      "_id": "6abaa0ab7d6682b8e5323555"
-    },
-    {
-      "action": "mark_subscription_paid",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "paid": true
-      },
-      "createdAt": "2026-09-28T17:15:23.928Z",
-      "_id": "6abaa0ab7d6682b8e5323556"
-    },
-    {
-      "action": "suspend_academy",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "reason": "فحص أمني تجريبي"
-      },
-      "createdAt": "2026-09-28T17:15:23.954Z",
-      "_id": "6abaa0ab7d6682b8e5323557"
-    },
-    {
-      "action": "reactivate_academy",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "restoredExpiresAt": "2026-11-26T21:02:51.807Z"
-      },
-      "createdAt": "2026-09-28T17:15:23.991Z",
-      "_id": "6abaa0ab7d6682b8e5323558"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab9847ca8a4820d9e786c8a",
-      "targetAcademyName": "أكاديمية النخبة للكاراتيه",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "daysAdded": 30,
-        "newExpiresAt": "2026-12-26T21:02:51.807Z"
-      },
-      "createdAt": "2026-09-28T17:15:24.017Z",
-      "_id": "6abaa0ac7d6682b8e5323559"
     }
   ]
 }

@@ -34,8 +34,23 @@ export async function GET(request) {
       userMap.set(u._id.toString(), u);
     }
 
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isSystemAdmin = (u) => {
+      if (!u) return false;
+      if (u.role === "admin") return true;
+      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
+      return false;
+    };
+
+    // Filter to only events belonging to valid captains (excluding admins and orphaned records)
+    const validCaptainEvents = allEvents.filter((e) => {
+      const oId = e.ownerId ? e.ownerId.toString() : "";
+      const coach = userMap.get(oId);
+      return coach && !isSystemAdmin(coach);
+    });
+
     // Process events with status & organizer information
-    const processedEvents = allEvents.map((e) => {
+    const processedEvents = validCaptainEvents.map((e) => {
       const eId = e._id ? e._id.toString() : "";
       const oId = e.ownerId ? e.ownerId.toString() : "";
       const coach = userMap.get(oId);
@@ -71,21 +86,9 @@ export async function GET(request) {
       };
     });
 
-    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
-    const isSystemAdmin = (u) => {
-      if (!u) return false;
-      if (u.role === "admin") return true;
-      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
-      return false;
-    };
-
     const uniqueCoaches = Array.from(
       new Map(
         processedEvents
-          .filter((e) => {
-            const coach = userMap.get(e.ownerId);
-            return coach && !isSystemAdmin(coach);
-          })
           .map((e) => [
             e.ownerId,
             { id: e.ownerId, name: e.coachName, academyName: e.academyName },
@@ -143,7 +146,7 @@ export async function GET(request) {
     const offset = (page - 1) * limit;
     const pageEvents = filtered.slice(offset, offset + limit);
 
-    const upcomingCount = allEvents.filter((e) => {
+    const upcomingCount = validCaptainEvents.filter((e) => {
       if (!e.date) return false;
       const d = new Date(e.date);
       return !isNaN(d.getTime()) && d >= startOfToday;
@@ -152,9 +155,9 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       summary: {
-        totalEvents: allEvents.length,
+        totalEvents: validCaptainEvents.length,
         upcomingEvents: upcomingCount,
-        completedEvents: allEvents.length - upcomingCount,
+        completedEvents: validCaptainEvents.length - upcomingCount,
         filteredCount: total,
       },
       filters: {

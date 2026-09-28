@@ -33,8 +33,23 @@ export async function GET(request) {
       userMap.set(u._id.toString(), u);
     }
 
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isSystemAdmin = (u) => {
+      if (!u) return false;
+      if (u.role === "admin") return true;
+      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
+      return false;
+    };
+
+    // Filter to only players belonging to valid captains (strictly excluding admins and orphaned records)
+    const validCaptainPlayers = allPlayers.filter((p) => {
+      const oId = p.ownerId ? p.ownerId.toString() : "";
+      const coach = userMap.get(oId);
+      return coach && !isSystemAdmin(coach);
+    });
+
     // Process players with joined coach & branch information
-    const processedPlayers = allPlayers.map((p) => {
+    const processedPlayers = validCaptainPlayers.map((p) => {
       const pId = p._id ? p._id.toString() : "";
       const oId = p.ownerId ? p.ownerId.toString() : "";
       const coach = userMap.get(oId);
@@ -59,24 +74,12 @@ export async function GET(request) {
       };
     });
 
-    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
-    const isSystemAdmin = (u) => {
-      if (!u) return false;
-      if (u.role === "admin") return true;
-      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
-      return false;
-    };
-
     // Extract unique belts and branches for filter dropdowns
     const uniqueBelts = Array.from(new Set(processedPlayers.map((p) => p.belt).filter(Boolean)));
     const uniqueBranches = Array.from(new Set(processedPlayers.map((p) => p.branch).filter(Boolean)));
     const uniqueCoaches = Array.from(
       new Map(
         processedPlayers
-          .filter((p) => {
-            const coach = userMap.get(p.ownerId);
-            return coach && !isSystemAdmin(coach);
-          })
           .map((p) => [
             p.ownerId,
             { id: p.ownerId, name: p.coachName, academyName: p.academyName },
@@ -152,7 +155,7 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       summary: {
-        totalPlayers: allPlayers.length,
+        totalPlayers: validCaptainPlayers.length,
         filteredCount: total,
         uniqueBeltsCount: uniqueBelts.length,
         uniqueBranchesCount: uniqueBranches.length,

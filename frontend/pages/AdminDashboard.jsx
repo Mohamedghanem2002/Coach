@@ -4,13 +4,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminOverviewTab from "../components/admin/AdminOverviewTab";
-import AdminAcademiesTab from "../components/admin/AdminAcademiesTab";
 import AdminCaptainsTab from "../components/admin/AdminCaptainsTab";
 import AdminPlayersTab from "../components/admin/AdminPlayersTab";
 import AdminHallsTab from "../components/admin/AdminHallsTab";
 import AdminEventsTab from "../components/admin/AdminEventsTab";
 import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
-import AcademyDetailsModal from "../components/admin/AcademyDetailsModal";
 import CaptainDetailsModal from "../components/admin/CaptainDetailsModal";
 import {
   SuspendModal,
@@ -29,7 +27,7 @@ export default function AdminDashboard() {
       const urlTab = new URLSearchParams(window.location.search).get("tab");
       if (urlTab) return urlTab;
     }
-    return "accounts";
+    return "overview";
   });
   const [overviewData, setOverviewData] = useState(null);
   const [captainsData, setCaptainsData] = useState({
@@ -49,10 +47,20 @@ export default function AdminDashboard() {
 
   // Modals state
   const [inspectCaptainId, setInspectCaptainId] = useState(null);
+  const [modalRefreshTrigger, setModalRefreshTrigger] = useState(0);
   const [suspendTargetAcademy, setSuspendTargetAcademy] = useState(null);
   const [extendTargetAcademy, setExtendTargetAcademy] = useState(null);
   const [reactivateTargetAcademy, setReactivateTargetAcademy] = useState(null);
   const [deleteTargetAcademy, setDeleteTargetAcademy] = useState(null);
+
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -108,35 +116,39 @@ export default function AdminDashboard() {
   // 2. Fetch Captains Data (with Search, Status Filter, Date Filter, Sorting & Pagination)
   useEffect(() => {
     let ignore = false;
-    const params = new URLSearchParams({
-      page: String(currentPage),
-      limit: "15",
-      search,
-      status: statusFilter,
-      dateFilter,
-      sortBy,
-    });
-
-    fetch(`/api/admin/captains?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!ignore && data?.success) {
-          setCaptainsData({
-            captains: data.captains || [],
-            summary: data.summary || { totalCaptains: 0, totalPlayers: 0, totalHalls: 0, totalEvents: 0 },
-            pagination: data.pagination || {},
-          });
-        }
-      })
-      .catch((err) => {
-        console.error("Captains fetch error:", err);
-      })
-      .finally(() => {
-        if (!ignore) setCaptainsLoading(false);
+    const timer = setTimeout(() => {
+      setCaptainsLoading(true);
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: "15",
+        search,
+        status: statusFilter,
+        dateFilter,
+        sortBy,
       });
+
+      fetch(`/api/admin/captains?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!ignore && data?.success) {
+            setCaptainsData({
+              captains: data.captains || [],
+              summary: data.summary || { totalCaptains: 0, totalPlayers: 0, totalHalls: 0, totalEvents: 0 },
+              pagination: data.pagination || {},
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Captains fetch error:", err);
+        })
+        .finally(() => {
+          if (!ignore) setCaptainsLoading(false);
+        });
+    }, 250);
 
     return () => {
       ignore = true;
+      clearTimeout(timer);
     };
   }, [currentPage, search, statusFilter, dateFilter, sortBy]);
 
@@ -198,9 +210,8 @@ export default function AdminDashboard() {
       setSuspendTargetAcademy(null);
       loadOverview();
       refreshCaptains();
-      if (inspectCaptainId === (suspendTargetAcademy.id || suspendTargetAcademy._id)) {
-        setInspectCaptainId(null);
-        setTimeout(() => setInspectCaptainId(suspendTargetAcademy.id || suspendTargetAcademy._id), 50);
+      if (inspectCaptainId) {
+        setModalRefreshTrigger((k) => k + 1);
       }
     } catch (err) {
       showToast(err.message || "تعذر تعليق حساب الكابتن", "error");
@@ -226,9 +237,8 @@ export default function AdminDashboard() {
       setReactivateTargetAcademy(null);
       loadOverview();
       refreshCaptains();
-      if (inspectCaptainId === (reactivateTargetAcademy.id || reactivateTargetAcademy._id)) {
-        setInspectCaptainId(null);
-        setTimeout(() => setInspectCaptainId(reactivateTargetAcademy.id || reactivateTargetAcademy._id), 50);
+      if (inspectCaptainId) {
+        setModalRefreshTrigger((k) => k + 1);
       }
     } catch (err) {
       showToast(err.message || "تعذر إعادة تفعيل الحساب", "error");
@@ -258,9 +268,8 @@ export default function AdminDashboard() {
       setExtendTargetAcademy(null);
       loadOverview();
       refreshCaptains();
-      if (inspectCaptainId === (extendTargetAcademy.id || extendTargetAcademy._id)) {
-        setInspectCaptainId(null);
-        setTimeout(() => setInspectCaptainId(extendTargetAcademy.id || extendTargetAcademy._id), 50);
+      if (inspectCaptainId) {
+        setModalRefreshTrigger((k) => k + 1);
       }
     } catch (err) {
       showToast(err.message || "تعذر تمديد الاشتراك", "error");
@@ -287,9 +296,8 @@ export default function AdminDashboard() {
       showToast(result.message || "تم تحديث حالة السداد بنجاح");
       loadOverview();
       refreshCaptains();
-      if (inspectCaptainId === (academy.id || academy._id)) {
-        setInspectCaptainId(null);
-        setTimeout(() => setInspectCaptainId(academy.id || academy._id), 50);
+      if (inspectCaptainId) {
+        setModalRefreshTrigger((k) => k + 1);
       }
     } catch (err) {
       showToast(err.message || "تعذر تحديث السداد", "error");
@@ -339,7 +347,7 @@ export default function AdminDashboard() {
       {/* Sidebar Navigation */}
       <AdminSidebar
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleTabChange}
         adminUser={session?.user}
         accountsCount={overviewData?.stats?.totalAccounts ?? overviewData?.stats?.totalAcademies ?? captainsData?.summary?.totalAccounts ?? 0}
         playersCount={overviewData?.stats?.totalPlayers ?? 0}
@@ -357,7 +365,7 @@ export default function AdminDashboard() {
               recentAccounts={overviewData?.recentAccounts || overviewData?.recentAcademies || []}
               recentAuditLogs={overviewData?.recentAuditLogs || []}
               onSelectAccount={(id) => setInspectCaptainId(id)}
-              onNavigateToTab={(tab) => setActiveTab(tab)}
+              onNavigateToTab={handleTabChange}
             />
           )}
 
@@ -416,6 +424,7 @@ export default function AdminDashboard() {
         captainId={inspectCaptainId}
         isOpen={Boolean(inspectCaptainId)}
         onClose={() => setInspectCaptainId(null)}
+        refreshTrigger={modalRefreshTrigger}
         onOpenSuspend={(ac) => setSuspendTargetAcademy(ac)}
         onOpenExtend={(ac) => setExtendTargetAcademy(ac)}
         onOpenReactivate={(ac) => setReactivateTargetAcademy(ac)}

@@ -30,34 +30,37 @@ export default function AdminHallsTab({ onSelectCaptain }) {
 
   useEffect(() => {
     let ignore = false;
-    const params = new URLSearchParams({
-      page: String(currentPage),
-      limit: "15",
-      search,
-      ownerId: coachFilter,
-      hasPlayers: hasPlayersFilter,
-      sortBy,
-    });
-
-    fetch(`/api/admin/halls?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!ignore && data?.success) {
-          setHalls(data.halls || []);
-          setSummary(data.summary || { totalHalls: 0, totalHallsWithPlayers: 0, filteredCount: 0 });
-          setFiltersData(data.filters || { coaches: [] });
-          setPagination(data.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
-        }
-      })
-      .catch((err) => {
-        if (!ignore) console.error("Halls fetch error:", err);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: "15",
+        search,
+        ownerId: coachFilter,
+        hasPlayers: hasPlayersFilter,
+        sortBy,
       });
+
+      fetch(`/api/admin/halls?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!ignore && data?.success) {
+            setHalls(data.halls || []);
+            setSummary(data.summary || { totalHalls: 0, totalHallsWithPlayers: 0, filteredCount: 0 });
+            setFiltersData(data.filters || { coaches: [] });
+            setPagination(data.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
+          }
+        })
+        .catch((err) => {
+          if (!ignore) console.error("Halls fetch error:", err);
+        })
+        .finally(() => {
+          if (!ignore) setLoading(false);
+        });
+    }, 250);
 
     return () => {
       ignore = true;
+      clearTimeout(timer);
     };
   }, [currentPage, search, coachFilter, hasPlayersFilter, sortBy, refreshTrigger]);
 

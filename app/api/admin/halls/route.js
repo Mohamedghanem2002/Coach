@@ -32,8 +32,23 @@ export async function GET(request) {
       userMap.set(u._id.toString(), u);
     }
 
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isSystemAdmin = (u) => {
+      if (!u) return false;
+      if (u.role === "admin") return true;
+      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
+      return false;
+    };
+
+    // Filter to only halls/branches belonging to valid captains (excluding admins and orphaned records)
+    const validCaptainBranches = allBranches.filter((b) => {
+      const oId = b.ownerId ? b.ownerId.toString() : "";
+      const coach = userMap.get(oId);
+      return coach && !isSystemAdmin(coach);
+    });
+
     // Process each hall/branch
-    const processedHalls = allBranches.map((b) => {
+    const processedHalls = validCaptainBranches.map((b) => {
       const bId = b._id ? b._id.toString() : "";
       const oId = b.ownerId ? b.ownerId.toString() : "";
       const coach = userMap.get(oId);
@@ -67,21 +82,9 @@ export async function GET(request) {
       };
     });
 
-    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
-    const isSystemAdmin = (u) => {
-      if (!u) return false;
-      if (u.role === "admin") return true;
-      if (u.email && u.email.trim().toLowerCase() === adminEmail) return true;
-      return false;
-    };
-
     const uniqueCoaches = Array.from(
       new Map(
         processedHalls
-          .filter((h) => {
-            const coach = userMap.get(h.ownerId);
-            return coach && !isSystemAdmin(coach);
-          })
           .map((h) => [
             h.ownerId,
             { id: h.ownerId, name: h.coachName, academyName: h.academyName },
@@ -143,9 +146,9 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       summary: {
-        totalHalls: allBranches.length,
+        totalHalls: validCaptainBranches.length,
         filteredCount: total,
-        totalHallsWithPlayers: allBranches.filter((b) => {
+        totalHallsWithPlayers: validCaptainBranches.filter((b) => {
           const bName = (b.name || "").trim().toLowerCase();
           const oId = b.ownerId ? b.ownerId.toString() : "";
           return allPlayers.some(

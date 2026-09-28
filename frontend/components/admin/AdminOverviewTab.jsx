@@ -406,21 +406,30 @@ export default function AdminOverviewTab({
                 {recentAuditLogs.slice(0, 6).map((log) => {
                   let badgeColor = "bg-slate-100 text-slate-700";
                   let actionText = log.action;
-                  if (log.action === "suspend_academy") {
+                  if (log.action === "suspend_academy" || log.action === "suspend_captain") {
                     badgeColor = "bg-red-100 text-red-700 border border-red-200";
                     actionText = "تعليق حساب";
-                  } else if (log.action === "reactivate_academy") {
+                  } else if (log.action === "reactivate_academy" || log.action === "reactivate_captain") {
                     badgeColor = "bg-emerald-100 text-emerald-700 border border-emerald-200";
                     actionText = "إعادة تفعيل";
                   } else if (log.action === "extend_subscription") {
                     badgeColor = "bg-indigo-100 text-indigo-700 border border-indigo-200";
                     actionText = "تمديد اشتراك";
-                  } else if (log.action === "register_academy") {
+                  } else if (log.action === "register_academy" || log.action === "register_captain") {
                     badgeColor = "bg-blue-100 text-blue-700 border border-blue-200";
                     actionText = "تسجيل حساب";
                   } else if (log.action === "mark_subscription_paid") {
-                    badgeColor = "bg-emerald-100 text-emerald-800";
+                    badgeColor = "bg-emerald-100 text-emerald-800 border border-emerald-200";
                     actionText = "سداد اشتراك";
+                  } else if (log.action === "mark_subscription_unpaid") {
+                    badgeColor = "bg-amber-100 text-amber-800 border border-amber-200";
+                    actionText = "إلغاء سداد";
+                  } else if (log.action === "delete_captain_permanent" || log.action === "delete_academy_permanent") {
+                    badgeColor = "bg-rose-100 text-rose-800 border border-rose-200";
+                    actionText = "حذف نهائي 🗑️";
+                  } else if (log.action === "update_plan") {
+                    badgeColor = "bg-purple-100 text-purple-800 border border-purple-200";
+                    actionText = "تعديل خطة";
                   }
 
                   return (

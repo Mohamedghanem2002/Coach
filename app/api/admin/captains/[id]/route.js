@@ -123,6 +123,9 @@ export async function GET(request, context) {
       };
     });
 
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isUserAdmin = user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail);
+
     return NextResponse.json({
       success: true,
       captain: {
@@ -133,6 +136,7 @@ export async function GET(request, context) {
         email: user.email,
         phone: user.phone || "",
         role: user.role || "user",
+        isAdmin: isUserAdmin,
         status: user.status || "active",
         subscriptionStatus: computedStatus,
         subscriptionPlan: user.subscriptionPlan || "trial",
@@ -151,6 +155,7 @@ export async function GET(request, context) {
         email: user.email,
         phone: user.phone || "",
         role: user.role || "user",
+        isAdmin: isUserAdmin,
         status: user.status || "active",
         subscriptionStatus: computedStatus,
         subscriptionPlan: user.subscriptionPlan || "trial",
@@ -237,6 +242,20 @@ export async function PATCH(request, context) {
     const targetAcademyId = user._id.toString();
     const targetAcademyName = user.academyName || user.name || "الأكاديمية";
 
+    // Guard: Prevent modifying admin accounts via captain management actions
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").toLowerCase().trim();
+    const isTargetAdmin =
+      user.role === "admin" ||
+      (user.email && user.email.toLowerCase().trim() === adminEmail) ||
+      user._id.toString() === adminCheck.admin.id;
+
+    if (isTargetAdmin) {
+      return NextResponse.json(
+        { error: "لا يمكن تعديل حالة أو اشتراك حسابات مسؤولي المنصة", code: "FORBIDDEN_ADMIN_MODIFICATION" },
+        { status: 403 }
+      );
+    }
+
     const updateFields = {
       updatedAt: new Date(),
     };
@@ -307,6 +326,7 @@ export async function PATCH(request, context) {
       updateFields.subscriptionExpiresAt = newExpiresAt;
       updateFields.status = "active";
       updateFields.subscriptionStatus = "active";
+      updateFields.suspensionReason = null;
 
       auditAction = "extend_subscription";
       auditDetails = {
@@ -316,15 +336,30 @@ export async function PATCH(request, context) {
       successMessage = `تم تمديد اشتراك الكابتن "${user.name}" بنجاح حتى ${newExpiresAt.toISOString().slice(0, 10)}.`;
     }
 
-    // 4. Toggle Payment Status
-    else if (action === "toggle_payment") {
-      const currentPaid = user.subscriptionPaid !== false;
-      const newPaid = !currentPaid;
+    // 4. Toggle or Set Payment Status (supports both action names)
+    else if (action === "toggle_payment" || action === "set_payment_status") {
+      let newPaid;
+      if (action === "set_payment_status" && body.paid !== undefined) {
+        newPaid = Boolean(body.paid);
+      } else {
+        const currentPaid = user.subscriptionPaid !== false;
+        newPaid = !currentPaid;
+      }
       updateFields.subscriptionPaid = newPaid;
 
       auditAction = newPaid ? "mark_subscription_paid" : "mark_subscription_unpaid";
       auditDetails = { paid: newPaid };
       successMessage = `تم تحديث حالة السداد إلى: ${newPaid ? "مدفوع ✓" : "غير مدفوع ✗"}.`;
+    }
+
+    // 5. Update Subscription Plan
+    else if (action === "update_plan") {
+      const plan = (body.plan || "standard").trim();
+      updateFields.subscriptionPlan = plan;
+
+      auditAction = "update_subscription_plan";
+      auditDetails = { newPlan: plan, oldPlan: user.subscriptionPlan };
+      successMessage = `تم تحديث خطة الاشتراك إلى: ${plan}.`;
     }
 
     else {

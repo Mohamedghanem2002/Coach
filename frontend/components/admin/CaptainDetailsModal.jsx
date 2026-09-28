@@ -46,6 +46,7 @@ export default function CaptainDetailsModal({
   captainId,
   isOpen,
   onClose,
+  refreshTrigger,
   onOpenSuspend,
   onOpenExtend,
   onOpenReactivate,
@@ -87,7 +88,7 @@ export default function CaptainDetailsModal({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, captainId]);
+  }, [isOpen, captainId, refreshTrigger]);
 
   const loading = !data || loadedCaptainId !== captainId;
 
@@ -216,6 +217,12 @@ export default function CaptainDetailsModal({
                     <h2 className="text-base sm:text-lg font-black text-slate-900 truncate">
                       {captain ? captain.name : "ملف الكابتن"}
                     </h2>
+                    {captain?.isAdmin && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-800 text-[11px] font-black border border-purple-200 shrink-0">
+                        <Award className="w-3 h-3 text-purple-600" />
+                        <span>مدير المنصة 🛡️</span>
+                      </span>
+                    )}
                     {isSuspended ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[11px] font-black border border-rose-200 shrink-0">
                         <AlertTriangle className="w-3 h-3 text-rose-600" />
@@ -450,35 +457,42 @@ export default function CaptainDetailsModal({
                   </div>
 
                   {/* 1-Tap Payment Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => onTogglePayment && onTogglePayment(captain)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-black cursor-pointer transition flex items-center gap-1.5 shadow-2xs ${
-                      captain.subscriptionPaid
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
-                        : "bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100"
-                    }`}
-                    title="انقر لتعديل حالة السداد"
-                  >
-                    {captain.subscriptionPaid ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>الاشتراك: مسدد ✓</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                        <span>الاشتراك: غير مسدد ✗</span>
-                      </>
-                    )}
-                  </button>
+                  {captain.isAdmin ? (
+                    <span className="px-3 py-1.5 rounded-full text-xs font-black bg-purple-50 text-purple-800 border border-purple-200 flex items-center gap-1.5 shadow-2xs">
+                      <Award className="w-3.5 h-3.5 text-purple-600" />
+                      <span>حساب إداري دائم</span>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onTogglePayment && onTogglePayment(captain)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-black cursor-pointer transition flex items-center gap-1.5 shadow-2xs ${
+                        captain.subscriptionPaid
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
+                          : "bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100"
+                      }`}
+                      title="انقر لتعديل حالة السداد"
+                    >
+                      {captain.subscriptionPaid ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>الاشتراك: مسدد ✓</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                          <span>الاشتراك: غير مسدد ✗</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                   <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">
                     <span className="text-slate-500 font-bold">تاريخ الانتهاء:</span>
                     <strong className="text-slate-900 font-black">
-                      {formattedExpires}
+                      {captain.isAdmin ? "غير محدد (دائم)" : formattedExpires}
                     </strong>
                   </div>
 
@@ -486,14 +500,18 @@ export default function CaptainDetailsModal({
                     <span className="text-slate-500 font-bold">حالة الخدمة:</span>
                     <span
                       className={`font-black ${
-                        isSuspended
+                        captain.isAdmin
+                          ? "text-purple-600"
+                          : isSuspended
                           ? "text-rose-600"
                           : isExpired
                           ? "text-amber-600"
                           : "text-emerald-600"
                       }`}
                     >
-                      {isSuspended
+                      {captain.isAdmin
+                        ? "مدير المنصة"
+                        : isSuspended
                         ? "الخدمة معلقة مؤقتاً"
                         : isExpired
                         ? "منتهي الصلاحية"
@@ -504,35 +522,42 @@ export default function CaptainDetailsModal({
 
                 {/* Primary Action Buttons */}
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => onOpenExtend && onOpenExtend(captain)}
-                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-xs transition cursor-pointer"
-                  >
-                    <Clock className="w-3.5 h-3.5 text-amber-400" />
-                    <span>تمديد صلاحية الاشتراك</span>
-                  </button>
+                  {!captain.isAdmin ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onOpenExtend && onOpenExtend(captain)}
+                        className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-xs transition cursor-pointer"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>تمديد صلاحية الاشتراك</span>
+                      </button>
 
-                  {!captain.isAdmin &&
-                    (isSuspended ? (
-                      <button
-                        type="button"
-                        onClick={() => onOpenReactivate && onOpenReactivate(captain)}
-                        className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>إعادة تفعيل الحساب</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => onOpenSuspend && onOpenSuspend(captain)}
-                        className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-black transition cursor-pointer"
-                      >
-                        <ShieldAlert className="w-3.5 h-3.5" />
-                        <span>تعليق الحساب مؤقتاً</span>
-                      </button>
-                    ))}
+                      {isSuspended ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenReactivate && onOpenReactivate(captain)}
+                          className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>إعادة تفعيل الحساب</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onOpenSuspend && onOpenSuspend(captain)}
+                          className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-black transition cursor-pointer"
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          <span>تعليق الحساب مؤقتاً</span>
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-full p-2.5 rounded-xl bg-purple-50 border border-purple-100 text-center text-xs font-black text-purple-700">
+                      🛡️ حساب إداري مصرح ومحمي من تعديل حالة الاشتراك أو التعليق
+                    </div>
+                  )}
                 </div>
               </div>
 

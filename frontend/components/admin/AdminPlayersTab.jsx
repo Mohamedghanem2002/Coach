@@ -33,35 +33,38 @@ export default function AdminPlayersTab({ onSelectCaptain }) {
 
   useEffect(() => {
     let ignore = false;
-    const params = new URLSearchParams({
-      page: String(currentPage),
-      limit: "15",
-      search,
-      belt: beltFilter,
-      branch: branchFilter,
-      ownerId: coachFilter,
-      sortBy,
-    });
-
-    fetch(`/api/admin/players?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!ignore && data?.success) {
-          setPlayers(data.players || []);
-          setSummary(data.summary || { totalPlayers: 0, filteredCount: 0 });
-          setFiltersData(data.filters || { belts: [], branches: [], coaches: [] });
-          setPagination(data.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
-        }
-      })
-      .catch((err) => {
-        if (!ignore) console.error("Players fetch error:", err);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: "15",
+        search,
+        belt: beltFilter,
+        branch: branchFilter,
+        ownerId: coachFilter,
+        sortBy,
       });
+
+      fetch(`/api/admin/players?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!ignore && data?.success) {
+            setPlayers(data.players || []);
+            setSummary(data.summary || { totalPlayers: 0, filteredCount: 0 });
+            setFiltersData(data.filters || { belts: [], branches: [], coaches: [] });
+            setPagination(data.pagination || { page: 1, limit: 15, total: 0, totalPages: 1 });
+          }
+        })
+        .catch((err) => {
+          if (!ignore) console.error("Players fetch error:", err);
+        })
+        .finally(() => {
+          if (!ignore) setLoading(false);
+        });
+    }, 250);
 
     return () => {
       ignore = true;
+      clearTimeout(timer);
     };
   }, [currentPage, search, beltFilter, branchFilter, coachFilter, sortBy, refreshTrigger]);
 

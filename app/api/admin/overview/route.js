@@ -60,10 +60,16 @@ export async function GET() {
       eventsByOwner.get(oId).push(e);
     }
 
-    // Event calculations (Upcoming vs Completed)
+    // Events belonging to valid registered captains
+    const captainEvents = allEvents.filter((e) => {
+      const oId = e.ownerId ? e.ownerId.toString() : "";
+      return eventsByOwner.has(oId);
+    });
+
+    // Event calculations (Upcoming vs Completed) for valid captain events
     let upcomingEvents = 0;
     let completedEvents = 0;
-    for (const e of allEvents) {
+    for (const e of captainEvents) {
       let isUpcoming = false;
       if (e.date) {
         const eDate = new Date(e.date);
@@ -172,16 +178,21 @@ export async function GET() {
       total: captainUsers.length,
     };
 
+    const captainPlayers = allPlayers.filter((p) => {
+      const oId = p.ownerId ? p.ownerId.toString() : "";
+      return playersByOwner.has(oId);
+    });
+
     const playersGrowth = {
-      last7Days: allPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= sevenDaysAgo).length,
-      last30Days: allPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= thirtyDaysAgo).length,
+      last7Days: captainPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= sevenDaysAgo).length,
+      last30Days: captainPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= thirtyDaysAgo).length,
       total: totalCaptainsPlayers,
     };
 
     const eventsGrowth = {
       upcoming: upcomingEvents,
       completed: completedEvents,
-      total: allEvents.length,
+      total: captainEvents.length,
     };
 
     const distribution = {

@@ -48,30 +48,33 @@ export default function AdminAuditLogsTab() {
 
   useEffect(() => {
     let ignore = false;
-    const params = new URLSearchParams({
-      page: "1",
-      limit: "20",
-      search,
-      action: actionFilter,
-    });
-
-    fetch(`/api/admin/audit-logs?${params.toString()}`)
-      .then((res) => res.json())
-      .then((resData) => {
-        if (!ignore && resData.success) {
-          setLogs(resData.logs || []);
-          setPagination(resData.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 });
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch audit logs:", err);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        page: "1",
+        limit: "20",
+        search,
+        action: actionFilter,
       });
+
+      fetch(`/api/admin/audit-logs?${params.toString()}`)
+        .then((res) => res.json())
+        .then((resData) => {
+          if (!ignore && resData.success) {
+            setLogs(resData.logs || []);
+            setPagination(resData.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 });
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch audit logs:", err);
+        })
+        .finally(() => {
+          if (!ignore) setLoading(false);
+        });
+    }, 250);
 
     return () => {
       ignore = true;
+      clearTimeout(timer);
     };
   }, [actionFilter, search]);
 
@@ -83,12 +86,14 @@ export default function AdminAuditLogsTab() {
   const getActionBadge = (action) => {
     switch (action) {
       case "suspend_academy":
+      case "suspend_captain":
         return {
-          label: "تعليق أكاديمية",
+          label: "تعليق حساب",
           color: "bg-red-100 text-red-700 border-red-200",
           icon: ShieldAlert,
         };
       case "reactivate_academy":
+      case "reactivate_captain":
         return {
           label: "إعادة تفعيل",
           color: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -101,6 +106,7 @@ export default function AdminAuditLogsTab() {
           icon: Clock,
         };
       case "register_academy":
+      case "register_captain":
         return {
           label: "تسجيل جديد",
           color: "bg-blue-100 text-blue-700 border-blue-200",
@@ -117,6 +123,19 @@ export default function AdminAuditLogsTab() {
           label: "إلغاء سداد",
           color: "bg-amber-100 text-amber-800 border-amber-200",
           icon: CreditCard,
+        };
+      case "delete_captain_permanent":
+      case "delete_academy_permanent":
+        return {
+          label: "حذف نهائي 🗑️",
+          color: "bg-rose-100 text-rose-800 border-rose-200",
+          icon: ShieldAlert,
+        };
+      case "update_plan":
+        return {
+          label: "تعديل الخطة 📋",
+          color: "bg-purple-100 text-purple-800 border-purple-200",
+          icon: Clock,
         };
       default:
         return {
@@ -159,6 +178,7 @@ export default function AdminAuditLogsTab() {
             { id: "extend_subscription", label: "تمديد" },
             { id: "register_academy", label: "تسجيل" },
             { id: "mark_subscription_paid", label: "سداد" },
+            { id: "delete_captain_permanent", label: "حذف نهائي" },
           ].map((opt) => (
             <button
               key={opt.id}
