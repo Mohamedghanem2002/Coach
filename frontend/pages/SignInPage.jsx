@@ -6,19 +6,50 @@ import {
   Eye, EyeOff, Mail, Lock, User, CheckCircle2, ShieldCheck,
   Zap, Sparkles, Building2, Crown, KeyRound,
   RefreshCw, AlertCircle, ShieldAlert, Users, CalendarCheck,
-  CreditCard, Trophy, Cake, CloudUpload, ArrowRight, ChevronDown, ChevronUp,
+  CreditCard, Trophy, CloudUpload, Phone, Copy, Check,
+  ExternalLink, ChevronDown, ChevronUp,
 } from "lucide-react";
 
-const STRENGTH_LABELS = ["ضعيفة جداً", "مقبولة", "جيدة", "قوية ومثالية"];
+function WhatsAppIcon({ className = "w-3.5 h-3.5" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
+
+function FacebookIcon({ className = "w-3.5 h-3.5" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+const STRENGTH_LABELS = ["ضعيفة جداً", "مقبولة", "جيدة", "قوية وممتازة"];
 const STRENGTH_COLORS = ["bg-rose-500", "bg-amber-500", "bg-blue-500", "bg-emerald-500"];
 
 function StrengthBar({ pw, strength = 0 }) {
   if (!pw) return null;
   return (
-    <div className="mt-2 space-y-1">
+    <div className="mt-1.5 space-y-1">
       <div className="flex items-center justify-between text-[11px] font-bold">
         <span className="text-slate-400">قوة كلمة المرور:</span>
-        <span className="text-slate-700">{STRENGTH_LABELS[strength - 1] || "ضعيفة"}</span>
+        <span className="text-slate-600">{STRENGTH_LABELS[strength - 1] || "ضعيفة"}</span>
       </div>
       <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex gap-1">
         {[1, 2, 3, 4].map((step) => (
@@ -39,10 +70,36 @@ function ErrorBanner({ msg }) {
   return (
     <div
       role="alert"
-      className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 animate-slide-up flex items-start gap-2"
+      className="rounded-xl border border-rose-200 bg-rose-50/90 p-3 text-xs text-rose-800 animate-slide-up space-y-1.5"
     >
-      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
-      <span className="leading-relaxed">{msg}</span>
+      <div className="flex items-start gap-2 font-bold text-rose-700">
+        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+        <span className="leading-relaxed">{msg}</span>
+      </div>
+      <div className="pt-1.5 border-t border-rose-200/80 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+        <span className="text-rose-900 font-semibold">تحتاج مساعدة فورية؟</span>
+        <div className="flex items-center gap-2">
+          <a
+            href="tel:01552488179"
+            className="inline-flex items-center gap-1 font-mono font-bold text-rose-700 hover:text-rose-900 bg-white px-2 py-0.5 rounded-md border border-rose-200 shadow-2xs"
+            dir="ltr"
+            title="اتصال هاتفي مباشر"
+          >
+            <Phone className="w-3 h-3 text-red-600" />
+            <span>0155 248 8179</span>
+          </a>
+          <a
+            href="https://wa.me/201552488179"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 shadow-2xs"
+            title="مراسلة واتساب فورية"
+          >
+            <WhatsAppIcon className="w-3 h-3" />
+            <span>واتساب</span>
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
@@ -52,7 +109,7 @@ function SuccessBanner({ msg }) {
   return (
     <div
       role="status"
-      className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-700 animate-slide-up flex items-center gap-2"
+      className="rounded-xl border border-emerald-200 bg-emerald-50/90 p-3 text-xs font-bold text-emerald-700 animate-slide-up flex items-center gap-2"
     >
       <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
       <span className="leading-relaxed">{msg}</span>
@@ -60,48 +117,47 @@ function SuccessBanner({ msg }) {
   );
 }
 
-const ACADEMY_FEATURES = [
+// 5 Concise, High-Value Feature Points matching the site tone
+const CONCISE_FEATURES = [
   {
     icon: Users,
     title: "إدارة الأبطال والأحزمة",
-    desc: "ملف رياضي متكامل لكل لاعب، صورته الشخصية، تاريخ ميلاده، وتدرج الأحزمة من الأبيض إلى الأسود مع سجل الترقيات.",
-    badge: "ملفات الأبطال",
-    color: "text-red-600 bg-red-50 border-red-200",
+    desc: "ملف رياضي شامل لكل لاعب، صورته، وتوثيق دقيق لتدرج وترقيات الأحزمة.",
   },
   {
     icon: CalendarCheck,
     title: "تسجيل الحضور وكروت الواتساب",
-    desc: "تحضير الحصص بلمسة واحدة، واحتساب نسب الالتزام، وتوليد كروت تقرير حضور وغياب أنيقة لمشاركتها بضغطة زر مع أولياء الأمور.",
-    badge: "حضور ذكي",
-    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+    desc: "تحضير بلمسة واحدة، واحتساب نسب الالتزام، وإرسال كروت حضور ومتابعة لأولياء الأمور.",
   },
   {
     icon: CreditCard,
     title: "المحاسبة وفصل الاشتراكات",
-    desc: "فصل مالي ذكي تماماً بين اشتراك الشهر، ومتبقي الأدوات والمشتريات والبدل، ورسوم الفعاليات بدون أي اختلاط أو أخطاء حسابية.",
-    badge: "فصل مالي",
-    color: "text-sky-600 bg-sky-50 border-sky-200",
+    desc: "فصل مالي ذكي تماماً بين اشتراك الشهر ومتبقي المشتريات والبدل ورسوم الفعاليات.",
   },
   {
     icon: Trophy,
     title: "إدارة البطولات والمعسكرات",
-    desc: "تنظيم المسابقات والرحلات واختبارات الأحزمة، وتحديد المشتركين، ورسوم كل بطل، ومتابعة المتحصلات المالية بسهولة.",
-    badge: "بطولات وفعاليات",
-    color: "text-amber-600 bg-amber-50 border-amber-200",
-  },
-  {
-    icon: Cake,
-    title: "مركز احتفالات أعياد الميلاد",
-    desc: "تنبيه تلقائي بأعياد ميلاد الأبطال اليوم وغداً، وتوليد كروت تهنئة رسمية مصممة خصيصاً لمشاركتها عبر واتساب لإسعاد اللاعبين.",
-    badge: "تهنئة آلية",
-    color: "text-rose-600 bg-rose-50 border-rose-200",
+    desc: "تنظيم المسابقات والرحلات والاختبارات، ومتابعة المشتركين والرسوم بدون أخطاء.",
   },
   {
     icon: CloudUpload,
-    title: "النسخ الاحتياطي السحابي الفوري",
-    desc: "حفظ فوري ومشفر لكافة بيانات ناديك في حسابك السحابي بضغطة واحدة، مع استعادة سريعة لحماية سجلات الأكاديمية بنسبة 100%.",
-    badge: "أمان سحابي",
-    color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+    title: "النسخ السحابي المشفر",
+    desc: "حفظ فوري وآمن لكافة بيانات ناديك في السحابة مع استعادة سريعة بضغطة زر واحدة.",
+  },
+];
+
+const CONTACT_NUMBERS = [
+  {
+    number: "01552488179",
+    display: "0155 248 8179",
+    rawWhatsApp: "201552488179",
+    label: "م. محمد غانم (الدعم الفني)",
+  },
+  {
+    number: "01028138408",
+    display: "0102 813 8408",
+    rawWhatsApp: "201028138408",
+    label: "دعم الكباتن والأكاديميات",
   },
 ];
 
@@ -123,6 +179,15 @@ export default function SignInPage() {
   });
 
   const [showFeaturesMobile, setShowFeaturesMobile] = useState(false);
+  const [copiedNumber, setCopiedNumber] = useState(null);
+
+  const handleCopy = (num) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(num);
+      setCopiedNumber(num);
+      setTimeout(() => setCopiedNumber(null), 2000);
+    }
+  };
 
   // Redirect already authenticated users
   useEffect(() => {
@@ -140,6 +205,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [academyName, setAcademyName] = useState("");
+  const [phone, setPhone] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
 
@@ -198,7 +264,14 @@ export default function SignInPage() {
         const regRes = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: name.trim(), academyName: academyName.trim(), email: cleanEmail, password: cleanPassword, confirmPassword: confirmPassword.trim() }),
+          body: JSON.stringify({
+            name: name.trim(),
+            academyName: academyName.trim(),
+            email: cleanEmail,
+            password: cleanPassword,
+            confirmPassword: confirmPassword.trim(),
+            phone: phone.trim(),
+          }),
         });
         const regData = await regRes.json();
         if (!regRes.ok) { setError(regData.error || "تعذر إنشاء الحساب"); setBusy(false); return; }
@@ -245,7 +318,7 @@ export default function SignInPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "تعذر إرسال رمز التحقق"); return; }
       setForgotStep(2);
-      setSuccess(data.message || "إذا كان هذا البريد مسجلاً لدينا، فستصلك تعليمات استعادة كلمة المرور ورمز التحقق (تفقد صندوق الوارد أو Spam).");
+      setSuccess(data.message || "إذا كان هذا البريد مسجلاً لدينا، فستصلك تعليمات استعادة كلمة المرور ورمز التحقق.");
       if (data.code) setSimulatedOtpNotice(data.code);
     } catch { setError("حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً."); }
     finally { setBusy(false); }
@@ -280,140 +353,124 @@ export default function SignInPage() {
   const isAdmin = mode === "admin";
   const isForgot = mode === "forgot";
 
-  const accent = {
-    login:    { from: "from-red-600", to: "to-rose-700", ring: "focus:ring-red-100", border: "focus:border-red-500", btnBg: "bg-red-600 hover:bg-red-700 shadow-red-600/25" },
-    register: { from: "from-red-600", to: "to-rose-600", ring: "focus:ring-red-100", border: "focus:border-red-500", btnBg: "bg-red-600 hover:bg-red-700 shadow-red-600/25" },
-    admin:    { from: "from-amber-500", to: "to-red-600", ring: "focus:ring-amber-100", border: "focus:border-amber-500", btnBg: "bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 hover:brightness-110 shadow-amber-500/30" },
-    forgot:   { from: "from-blue-600", to: "to-indigo-600", ring: "focus:ring-blue-100", border: "focus:border-blue-500", btnBg: "bg-red-600 hover:bg-red-700 shadow-red-600/25" },
-  }[mode] || {};
-
-  const inputClass = `w-full rounded-2xl border border-slate-200 bg-slate-50/80 pr-10 pl-3.5 py-3 text-sm font-semibold text-slate-900 outline-none transition ${accent.border} ${accent.ring} focus:ring-3 focus:bg-white placeholder:text-slate-400 placeholder:font-normal`;
-  const inputWithToggleClass = `w-full rounded-2xl border border-slate-200 bg-slate-50/80 pr-10 pl-11 py-3 text-sm font-semibold text-slate-900 outline-none transition ${accent.border} ${accent.ring} focus:ring-3 focus:bg-white placeholder:text-slate-400 placeholder:font-normal`;
+  const inputClass = "w-full rounded-xl border border-slate-200 bg-slate-50/60 pr-10 pl-3.5 py-2.5 sm:py-3 text-sm font-semibold text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-3 focus:ring-red-50 placeholder:text-slate-400 placeholder:font-normal";
+  const inputWithToggleClass = "w-full rounded-xl border border-slate-200 bg-slate-50/60 pr-10 pl-11 py-2.5 sm:py-3 text-sm font-semibold text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-3 focus:ring-red-50 placeholder:text-slate-400 placeholder:font-normal";
 
   return (
     <main
-      className="min-h-screen flex flex-col justify-between selection:bg-red-600 selection:text-white relative overflow-x-hidden bg-slate-950 font-sans"
+      className="min-h-screen flex flex-col justify-between selection:bg-red-500 selection:text-white bg-slate-50 text-slate-900 font-sans"
       dir="rtl"
     >
-      {/* ── Ambient Background Accents ──────────────────────────────────── */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[450px] rounded-full bg-red-600/15 blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-rose-900/15 blur-[100px]" />
-        <div className="absolute top-1/2 left-0 w-[350px] h-[350px] rounded-full bg-indigo-900/15 blur-[100px]" />
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-      </div>
-
-      {/* ── Main Container ─────────────────────────────────────────────────── */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1 flex flex-col justify-center">
-
-        {/* ── Top Header Brand Strip (Ultra-crisp on Mobile & Desktop) ────── */}
-        <header className="flex items-center justify-between gap-3 mb-4 sm:mb-7">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-red-600 to-rose-700 text-white shadow-lg shadow-red-600/30 ring-2 ring-white/10 shrink-0">
-              <Zap className="h-5 w-5 sm:h-6 sm:w-6 fill-white stroke-white" />
-              <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
+      {/* ── Top Header: هادئ ومتناسق مع تصميم الموقع ── */}
+      <header className="w-full max-w-5xl mx-auto px-4 pt-5 sm:pt-7 pb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-red-600 text-white shadow-xs">
+            <Zap className="h-5 w-5 fill-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-cairo text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                CoachMaster
+              </span>
+              <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                كوتش ماستر 🥋
               </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-cairo text-lg sm:text-2xl font-black text-white tracking-tight">
-                  DOJO PRO
-                </span>
-                <span className="rounded-full bg-red-600/20 border border-red-500/40 text-red-400 px-2 py-0.5 text-[10px] font-black">
-                  دوجو برو 🥋
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-xs font-semibold text-slate-400">
-                المنظومة الاحترافية الشاملة لإدارة أكاديميات الكاراتيه والأبطال
-              </p>
-            </div>
+            <p className="text-[11px] sm:text-xs text-slate-500 font-medium">
+              المنظومة السحابية الذكية لإدارة أكاديميات الكاراتيه والأبطال
+            </p>
           </div>
+        </div>
 
-          {/* Quick Info Tag on Desktop */}
-          <div className="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-bold text-slate-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span>نظام إداري معتمد للأندية والأكاديميات</span>
-          </div>
-        </header>
+        {/* كبسولة الدعم الفني السريع في الهيدر */}
+        <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 bg-white border border-slate-200/90 px-3 py-1.5 rounded-full shadow-2xs">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="font-semibold text-slate-500">الدعم الفني:</span>
+          <a
+            href="tel:01552488179"
+            className="font-mono font-bold text-slate-800 hover:text-red-600 transition"
+            dir="ltr"
+          >
+            0155 248 8179
+          </a>
+          <span className="text-slate-300">|</span>
+          <a
+            href="https://wa.me/201552488179"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-bold"
+          >
+            <WhatsAppIcon className="h-3 w-3" />
+            <span>واتساب</span>
+          </a>
+        </div>
+      </header>
 
-        {/* ── Core Layout Grid (Desktop 2-Col / Mobile Streamlined Stack) ─── */}
-        <div className="grid lg:grid-cols-[1fr_1.05fr] rounded-3xl border border-white/10 overflow-hidden shadow-2xl bg-slate-900/80 backdrop-blur-xl">
+      {/* ── Main Container: بطاقة هادئة وبيضاء بنفس طراز لوحة التحكم ── */}
+      <div className="w-full max-w-5xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 flex-1 flex flex-col justify-center">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white shadow-sm overflow-hidden grid lg:grid-cols-[1.1fr_1.3fr]">
 
           {/* ═════════════════════════════════════════════════════════════════
-              PANEL 1: Interactive Features Showcase (شرح ما تقدمه المنظومة)
+              العمود 1: شرح مختصر وهادئ لما تقدمه المنظومة للأكاديمية
           ═════════════════════════════════════════════════════════════════ */}
-          <section className="relative flex flex-col justify-between p-5 sm:p-8 lg:p-10 border-b lg:border-b-0 lg:border-l border-white/10 bg-gradient-to-br from-slate-900/90 via-slate-950/95 to-slate-900/90 text-white order-2 lg:order-1">
+          <section className="bg-slate-50/70 border-b lg:border-b-0 lg:border-l border-slate-200/80 p-5 sm:p-7 flex flex-col justify-between space-y-5 order-2 lg:order-1">
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-red-950/70 border border-red-800/50 px-3 py-1 text-xs font-extrabold text-red-400">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>ماذا تقدم منظومة DOJO PRO للأكاديمية؟</span>
-                </div>
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">
+                  <Sparkles className="w-3.5 h-3.5 text-red-600" />
+                  <span>مميزات كوتش ماستر</span>
+                </span>
 
-                {/* Mobile accordion toggle button */}
+                {/* زر طي/عرض للهواتف */}
                 <button
                   type="button"
                   onClick={() => setShowFeaturesMobile(!showFeaturesMobile)}
-                  className="lg:hidden text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                  className="lg:hidden text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer"
                 >
-                  <span>{showFeaturesMobile ? "طي المميزات" : "عرض كل المميزات"}</span>
+                  <span>{showFeaturesMobile ? "طي المميزات" : "عرض المميزات"}</span>
                   {showFeaturesMobile ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                 </button>
               </div>
 
               <div>
-                <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
-                  منظومة سحابية متطورة مصممة خصيصاً{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-300 to-amber-200">
-                    لكباتن ومدربي الكاراتيه
-                  </span>
+                <h2 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                  ماذا تقدم المنظومة للأكاديمية والكابتن؟
                 </h2>
-                <p className="mt-1 text-xs text-slate-400 leading-relaxed max-w-lg">
-                  تحكم كامل في الحضور والغياب، الاشتراكات والمشتريات، البطولات والأحزمة، مع تواصل فوري مع أولياء الأمور عبر واتساب.
+                <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                  أدوات احترافية مبسطة تختصر وقتك وتوفر نظاماً دقيقاً لإدارة ناديك الرياضي:
                 </p>
               </div>
 
-              {/* Feature Cards Grid (Always visible on desktop, toggleable on mobile) */}
-              <div className={`${showFeaturesMobile ? "grid" : "hidden lg:grid"} grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2`}>
-                {ACADEMY_FEATURES.map((feat, idx) => {
+              {/* قائمة المميزات المختصرة (ظاهرة دائمًا على الكمبيوتر، قابلة للطي على الموبايل) */}
+              <div className={`${showFeaturesMobile ? "block" : "hidden lg:block"} space-y-2.5 pt-1`}>
+                {CONCISE_FEATURES.map((feat, idx) => {
                   const Icon = feat.icon;
                   return (
-                    <article
+                    <div
                       key={idx}
-                      className="rounded-2xl border border-white/5 bg-white/[0.03] p-3.5 transition-all hover:bg-white/[0.06] hover:border-white/10"
+                      className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs hover:border-slate-300 transition-colors"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-600/20 text-red-400 border border-red-500/30">
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <span className="text-[10px] font-black text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
-                          {feat.badge}
-                        </span>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 shrink-0 border border-red-100">
+                        <Icon className="h-4 w-4" />
                       </div>
-                      <h3 className="text-xs font-extrabold text-slate-200 font-cairo">
-                        {feat.title}
-                      </h3>
-                      <p className="mt-1 text-[11px] text-slate-400 leading-relaxed font-normal">
-                        {feat.desc}
-                      </p>
-                    </article>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-xs font-bold text-slate-800">
+                          {feat.title}
+                        </h3>
+                        <p className="mt-0.5 text-[11px] text-slate-500 leading-relaxed font-normal">
+                          {feat.desc}
+                        </p>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
 
-              {/* Quick Summary Pill for Mobile when collapsed */}
+              {/* شريط موجز للموبايل عند الطي */}
               {!showFeaturesMobile && (
                 <div className="lg:hidden flex flex-wrap gap-1.5 pt-1">
-                  {["حضور بلمسة", "فصل مالي تام", "كروت واتساب", "أعياد ميلاد", "نسخ سحابي", "بطولات وأحزمة"].map((tag, i) => (
-                    <span key={i} className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-slate-300">
+                  {["حضور بلمسة", "فصل مالي تام", "كروت واتساب", "أحزمة وبطولات", "نسخ سحابي"].map((tag, i) => (
+                    <span key={i} className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-600">
                       ✓ {tag}
                     </span>
                   ))}
@@ -421,28 +478,28 @@ export default function SignInPage() {
               )}
             </div>
 
-            {/* Bottom trust statement */}
-            <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
-              <span>تطوير وإشراف: <strong className="text-slate-200">محمد غانم</strong></span>
-              <span>نظام آمن ومشفر 100% 🛡️</span>
+            {/* سطر الثقة أسفل العمود */}
+            <div className="pt-3 border-t border-slate-200/70 flex items-center justify-between text-[11px] text-slate-500">
+              <span>تطوير وإشراف: <strong className="text-slate-700">محمد غانم</strong></span>
+              <span className="text-emerald-700 font-bold">بيانات مشفرة 100% 🛡️</span>
             </div>
           </section>
 
           {/* ═════════════════════════════════════════════════════════════════
-              PANEL 2: Auth Forms (Login / Register / Admin / Forgot)
+              العمود 2: نموذج تسجيل الدخول / حساب جديد / الإدارة (سهل ومريح)
           ═════════════════════════════════════════════════════════════════ */}
-          <section className="p-5 sm:p-8 lg:p-10 bg-white flex flex-col justify-center order-1 lg:order-2">
-            <div className="w-full max-w-md mx-auto space-y-4 sm:space-y-5">
+          <section className="p-5 sm:p-7 lg:p-8 bg-white flex flex-col justify-center order-1 lg:order-2">
+            <div className="w-full max-w-md mx-auto space-y-4">
 
-              {/* ── Segmented Mode Switcher (The 3 Main Tabs) ───────────── */}
+              {/* ── التبويبات الثلاثة الرئيسية ── */}
               <nav
                 aria-label="نوع تسجيل الدخول"
-                className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/90 shadow-2xs"
+                className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/80"
               >
                 {[
                   { id: "login", label: "تسجيل الدخول", icon: <Zap className="w-3.5 h-3.5" /> },
                   { id: "register", label: "حساب جديد", icon: <Sparkles className="w-3.5 h-3.5" /> },
-                  { id: "admin", label: "لوحة التحكم", icon: <Crown className="w-3.5 h-3.5 text-amber-500" /> },
+                  { id: "admin", label: "لوحة التحكم", icon: <Crown className="w-3.5 h-3.5" /> },
                 ].map((tab) => {
                   const isActive = (mode === tab.id || (tab.id === "login" && mode === "forgot"));
                   return (
@@ -452,15 +509,13 @@ export default function SignInPage() {
                       id={`tab-${tab.id}`}
                       onClick={() => clearAndSetMode(tab.id)}
                       className={`
-                        py-2.5 px-2 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation
+                        py-2 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer
                         flex items-center justify-center gap-1.5
                         ${isActive
                           ? tab.id === "admin"
-                            ? "bg-gradient-to-r from-amber-500 to-red-600 text-white shadow-sm shadow-amber-500/25"
-                            : "bg-white text-slate-900 shadow-sm border border-slate-200/80"
-                          : tab.id === "admin"
-                            ? "text-amber-800 hover:text-amber-950 hover:bg-amber-50/70"
-                            : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                            ? "bg-amber-500 text-white shadow-xs"
+                            : "bg-white text-slate-900 shadow-xs border border-slate-200/90"
+                          : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
                         }
                       `}
                     >
@@ -471,28 +526,28 @@ export default function SignInPage() {
                 })}
               </nav>
 
-              {/* ── Dynamic Form Header ─────────────────────────────────── */}
-              <header className="text-right space-y-1">
-                <h1 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+              {/* ── عنوان النموذج التفاعلي ── */}
+              <header className="text-right space-y-0.5">
+                <h1 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                   {isAdmin ? (
                     <>
                       <span>دخول لوحة التحكم المركزية</span>
-                      <Crown className="w-5 h-5 text-amber-500" />
+                      <Crown className="w-4 h-4 text-amber-500" />
                     </>
                   ) : isForgot ? (
                     <>
                       <span>استعادة كلمة المرور</span>
-                      <KeyRound className="w-5 h-5 text-red-600" />
+                      <KeyRound className="w-4 h-4 text-red-600" />
                     </>
                   ) : mode === "register" ? (
-                    "إنشاء حساب كابتن وأكاديمية جديدة ✨"
+                    "إنشاء حساب كابتن جديد ✨"
                   ) : (
                     "مرحباً بك يا كابتن 👋"
                   )}
                 </h1>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                <p className="text-xs text-slate-500 font-medium">
                   {isAdmin
-                    ? "أدخل البريد الإداري وكلمة المرور الخاصة بإدارة منصة الأكاديميات."
+                    ? "أدخل البريد الإداري وكلمة المرور لإدارة منصة الأكاديميات."
                     : isForgot
                     ? (forgotStep === 1
                         ? "أدخل بريدك الإلكتروني المسجل وسنرسل لك رمز تحقق سريعاً."
@@ -503,7 +558,7 @@ export default function SignInPage() {
                 </p>
               </header>
 
-              {/* ── Forgot Password Flow ────────────────────────────────── */}
+              {/* ── استعادة كلمة المرور ── */}
               {isForgot ? (
                 forgotStep === 1 ? (
                   <form className="space-y-3.5 text-right" onSubmit={submitForgotStep1}>
@@ -530,7 +585,7 @@ export default function SignInPage() {
                     <ErrorBanner msg={error} />
 
                     <button
-                      className="w-full h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-sm shadow-red-600/25 active-press transition cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full h-11 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs active-press transition cursor-pointer flex items-center justify-center gap-2"
                       type="submit"
                       disabled={busy}
                     >
@@ -559,7 +614,7 @@ export default function SignInPage() {
                   </form>
                 ) : (
                   <form className="space-y-3.5 text-right" onSubmit={submitForgotStep2}>
-                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                       <div className="truncate min-w-0">
                         <span className="text-slate-500 font-medium">البريد: </span>
                         <strong className="text-slate-800 font-bold" dir="ltr">{forgotEmail}</strong>
@@ -574,98 +629,97 @@ export default function SignInPage() {
                     </div>
 
                     {simulatedOtpNotice && (
-                      <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1.5">
-                        <div className="flex items-center gap-1.5 font-black text-amber-900">
+                      <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1.5">
+                        <div className="flex items-center gap-1.5 font-bold text-amber-900">
                           <span>🔐</span>
                           <span>رمز التحقق السريع للاختبار:</span>
                         </div>
-                        <div className="flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-xl border border-amber-200">
-                          <span className="font-mono text-lg font-black tracking-widest text-red-600 select-all">
+                        <div className="flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-lg border border-amber-200">
+                          <span className="font-mono text-base font-black tracking-widest text-red-600 select-all">
                             {simulatedOtpNotice}
                           </span>
                           <button
                             type="button"
                             onClick={() => setForgotOtp(simulatedOtpNotice)}
-                            className="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] transition cursor-pointer"
+                            className="text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 px-2 py-0.5 rounded cursor-pointer"
                           >
-                            تعبئة تلقائياً ✍️
+                            تعبئة تلقائية
                           </button>
                         </div>
                       </div>
                     )}
 
-                    <SuccessBanner msg={success} />
-
                     <div>
                       <label htmlFor="forgot-otp" className="block text-xs font-bold text-slate-700 mb-1.5">
                         رمز التحقق (6 أرقام) <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        id="forgot-otp"
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-50/80 py-3 px-3 text-center text-xl font-black tracking-widest text-slate-900 outline-none transition focus:border-red-500 focus:ring-3 focus:ring-red-100 focus:bg-white font-mono"
-                        type="text"
-                        maxLength={6}
-                        required
-                        value={forgotOtp}
-                        onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ""))}
-                        placeholder="••••••"
-                        dir="ltr"
-                      />
+                      <div className="relative">
+                        <input
+                          id="forgot-otp"
+                          className={`${inputClass} tracking-widest font-mono text-center text-base`}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          required
+                          value={forgotOtp}
+                          onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ""))}
+                          placeholder="------"
+                          dir="ltr"
+                        />
+                        <KeyRound className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      </div>
                     </div>
 
                     <div>
-                      <label htmlFor="forgot-new-password" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      <label htmlFor="forgot-new-pass" className="block text-xs font-bold text-slate-700 mb-1.5">
                         كلمة المرور الجديدة <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <input
-                          id="forgot-new-password"
+                          id="forgot-new-pass"
                           className={inputWithToggleClass}
                           type={showNewPass ? "text" : "password"}
                           minLength={8}
                           required
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="••••••••"
+                          placeholder="8 أحرف على الأقل"
                           autoComplete="new-password"
                           dir="ltr"
                         />
                         <Lock className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <button
                           type="button"
-                          onClick={() => setShowNewPass(!showNewPass)}
-                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
-                          title={showNewPass ? "إخفاء" : "إظهار"}
+                          onClick={() => setShowNewPass((p) => !p)}
+                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 transition cursor-pointer"
                         >
                           {showNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-                      <StrengthBar pw={newPassword} strength={passwordStrength} />
                     </div>
 
                     <div>
-                      <label htmlFor="forgot-confirm-password" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      <label htmlFor="forgot-confirm-pass" className="block text-xs font-bold text-slate-700 mb-1.5">
                         تأكيد كلمة المرور الجديدة <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <input
-                          id="forgot-confirm-password"
+                          id="forgot-confirm-pass"
                           className={inputWithToggleClass}
                           type={showConfirmNewPass ? "text" : "password"}
                           minLength={8}
                           required
                           value={confirmNewPass}
                           onChange={(e) => setConfirmNewPass(e.target.value)}
-                          placeholder="••••••••"
+                          placeholder="تأكيد كلمة المرور"
                           autoComplete="new-password"
                           dir="ltr"
                         />
                         <Lock className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <button
                           type="button"
-                          onClick={() => setShowConfirmNewPass(!showConfirmNewPass)}
-                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
-                          title={showConfirmNewPass ? "إخفاء" : "إظهار"}
+                          onClick={() => setShowConfirmNewPass((p) => !p)}
+                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 transition cursor-pointer"
                         >
                           {showConfirmNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
@@ -673,16 +727,17 @@ export default function SignInPage() {
                     </div>
 
                     <ErrorBanner msg={error} />
+                    <SuccessBanner msg={success} />
 
                     <button
-                      className="w-full h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-sm shadow-red-600/25 active-press transition cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active-press transition cursor-pointer flex items-center justify-center gap-2"
                       type="submit"
                       disabled={busy}
                     >
                       {busy ? (
                         <>
                           <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                          <span>جاري حفظ كلمة المرور...</span>
+                          <span>جاري الحفظ...</span>
                         </>
                       ) : (
                         <>
@@ -713,10 +768,10 @@ export default function SignInPage() {
                   </form>
                 )
               ) : (
-                /* ── Main Auth Form (Login / Register / Admin) ───────────── */
+                /* ── نموذج الدخول / التسجيل / الإدارة الأساسي ── */
                 <form className="space-y-3.5 text-right" onSubmit={submitAuth}>
 
-                  {/* Register-only: Name & Academy */}
+                  {/* في حالة حساب جديد: الاسم واسم الأكاديمية ورقم الهاتف */}
                   {mode === "register" && (
                     <>
                       <div>
@@ -753,14 +808,30 @@ export default function SignInPage() {
                           />
                           <Building2 className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         </div>
-                        <p className="mt-1 text-[11px] text-slate-400 font-medium">
-                          💡 يظهر الاسم تلقائياً على كروت الحضور والشهادات (قابل للتعديل).
-                        </p>
+                      </div>
+
+                      <div>
+                        <label htmlFor="reg-phone" className="block text-xs font-bold text-slate-700 mb-1.5">
+                          رقم الهاتف / واتساب <span className="text-slate-400 font-normal">(اختياري للدعم والتفعيل)</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="reg-phone"
+                            className={inputClass}
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="01xxxxxxxxx"
+                            autoComplete="tel"
+                            dir="ltr"
+                          />
+                          <Phone className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        </div>
                       </div>
                     </>
                   )}
 
-                  {/* Email */}
+                  {/* البريد الإلكتروني */}
                   <div>
                     <label htmlFor="auth-email" className="block text-xs font-bold text-slate-700 mb-1.5">
                       {isAdmin ? "البريد الإلكتروني للإدارة" : "البريد الإلكتروني"} <span className="text-red-500">*</span>
@@ -768,7 +839,7 @@ export default function SignInPage() {
                     <div className="relative">
                       <input
                         id="auth-email"
-                        className={`${inputClass} ${isAdmin ? "border-amber-200 focus:border-amber-500 focus:ring-amber-100" : ""}`}
+                        className={inputClass}
                         type="email"
                         required
                         value={email}
@@ -777,11 +848,11 @@ export default function SignInPage() {
                         autoComplete="email"
                         dir="ltr"
                       />
-                      <Mail className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${isAdmin ? "text-amber-500" : "text-slate-400"}`} />
+                      <Mail className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     </div>
                   </div>
 
-                  {/* Password */}
+                  {/* كلمة المرور */}
                   <div>
                     <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700 mb-1.5">
                       {isAdmin ? "كلمة المرور الإدارية" : "كلمة المرور"} <span className="text-red-500">*</span>
@@ -789,7 +860,7 @@ export default function SignInPage() {
                     <div className="relative">
                       <input
                         id="auth-password"
-                        className={`${inputWithToggleClass} ${isAdmin ? "border-amber-200 focus:border-amber-500 focus:ring-amber-100" : ""}`}
+                        className={inputWithToggleClass}
                         type={showPassword ? "text" : "password"}
                         minLength={8}
                         required
@@ -799,11 +870,11 @@ export default function SignInPage() {
                         autoComplete={mode === "register" ? "new-password" : "current-password"}
                         dir="ltr"
                       />
-                      <Lock className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${isAdmin ? "text-amber-500" : "text-slate-400"}`} />
+                      <Lock className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <button
                         type="button"
                         onClick={() => setShowPassword((p) => !p)}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 transition cursor-pointer"
                         title={showPassword ? "إخفاء" : "إظهار"}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -813,8 +884,8 @@ export default function SignInPage() {
                     {mode === "register" && <StrengthBar pw={password} strength={passwordStrength} />}
 
                     {mode === "login" && (
-                      <div className="mt-2.5 flex items-center justify-between">
-                        <label className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
+                      <div className="mt-2 flex items-center justify-between">
+                        <label className="flex items-center gap-1.5 text-xs text-slate-600 font-medium cursor-pointer">
                           <input
                             type="checkbox"
                             checked={rememberMe}
@@ -837,7 +908,7 @@ export default function SignInPage() {
                     )}
                   </div>
 
-                  {/* Register-only: Confirm password */}
+                  {/* في حالة حساب جديد: تأكيد كلمة المرور */}
                   {mode === "register" && (
                     <div>
                       <label htmlFor="reg-confirm-password" className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -860,7 +931,7 @@ export default function SignInPage() {
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword((p) => !p)}
-                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 transition cursor-pointer"
                           title={showConfirmPassword ? "إخفاء" : "إظهار"}
                         >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -869,17 +940,17 @@ export default function SignInPage() {
                     </div>
                   )}
 
-                  {/* Suspended account alert banner */}
+                  {/* تنبيه الحساب الموقوف إن وجد */}
                   {suspendedDetails && (
-                    <div role="alert" className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-rose-950 space-y-2 animate-slide-up">
-                      <div className="flex items-center gap-2 font-black text-rose-900 text-sm">
-                        <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+                    <div role="alert" className="rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-rose-950 space-y-1.5 animate-slide-up">
+                      <div className="flex items-center gap-2 font-black text-rose-900 text-xs">
+                        <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
                         <span>الحساب موقوف من قِبل إدارة المنصة</span>
                       </div>
                       <p className="text-xs leading-relaxed text-rose-800">
                         <strong>سبب الإيقاف:</strong> {suspendedDetails.reason || "مخالفة الشروط أو انتهاء فترة الصلاحية"}
                       </p>
-                      <div className="text-[11px] text-rose-700 pt-1.5 border-t border-rose-200 flex items-center justify-between flex-wrap gap-1">
+                      <div className="text-[11px] text-rose-700 pt-1 border-t border-rose-200 flex items-center justify-between flex-wrap gap-1">
                         <span>للتواصل مع الإدارة:</span>
                         <strong dir="ltr" className="select-all font-mono font-bold">{suspendedDetails.adminEmail || "mg0447837@gmail.com"}</strong>
                       </div>
@@ -889,10 +960,52 @@ export default function SignInPage() {
                   {!suspendedDetails && <ErrorBanner msg={error} />}
                   <SuccessBanner msg={success} />
 
-                  {/* Submit Button */}
+                  {/* ملاحظة مساعدة سريعة وهادئة خاصة بالتسجيل */}
+                  {mode === "register" && (
+                    <div className="rounded-xl border border-slate-200/90 bg-slate-50/80 p-3 text-right space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                          <Phone className="h-3.5 w-3.5 text-red-600" />
+                          <span>واجهتك أي صعوبة في التسجيل؟</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          مساعدة مباشرة 💬
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                        كلمني أو ابعتلي واتساب وهساعدك تسجل وتفعل حساب الأكاديمية فوراً:
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        <div className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs">
+                          <span className="font-mono font-bold text-slate-800" dir="ltr">0155 248 8179</span>
+                          <a href="tel:01552488179" className="text-slate-400 hover:text-red-600 p-0.5" title="اتصال">
+                            <Phone className="w-3 h-3" />
+                          </a>
+                          <a href="https://wa.me/201552488179" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-emerald-600 p-0.5" title="واتساب">
+                            <WhatsAppIcon className="w-3 h-3" />
+                          </a>
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs">
+                          <span className="font-mono font-bold text-slate-800" dir="ltr">0102 813 8408</span>
+                          <a href="tel:01028138408" className="text-slate-400 hover:text-red-600 p-0.5" title="اتصال">
+                            <Phone className="w-3 h-3" />
+                          </a>
+                          <a href="https://wa.me/201028138408" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-emerald-600 p-0.5" title="واتساب">
+                            <WhatsAppIcon className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* زر الإرسال الرئيسي */}
                   <button
                     id="submit-auth-btn"
-                    className={`w-full h-12 rounded-2xl font-black text-white text-xs sm:text-sm active-press transition cursor-pointer flex items-center justify-center gap-2 shadow-sm ${accent.btnBg}`}
+                    className={`w-full h-11 rounded-xl font-bold text-white text-xs sm:text-sm active-press transition cursor-pointer flex items-center justify-center gap-2 shadow-xs ${
+                      isAdmin
+                        ? "bg-amber-500 hover:bg-amber-600"
+                        : "bg-red-600 hover:bg-red-700"
+                    }`}
                     type="submit"
                     disabled={busy}
                   >
@@ -921,7 +1034,7 @@ export default function SignInPage() {
                 </form>
               )}
 
-              {/* Bottom Quick Switch Hint */}
+              {/* الرابط البديل أسفل النموذج */}
               <div className="text-center pt-2 border-t border-slate-100 text-xs text-slate-500">
                 {mode === "login" ? (
                   <span>
@@ -929,7 +1042,7 @@ export default function SignInPage() {
                     <button
                       type="button"
                       onClick={() => clearAndSetMode("register")}
-                      className="font-black text-red-600 hover:text-red-700 underline cursor-pointer"
+                      className="font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
                     >
                       أنشئ حسابك الآن مجاناً
                     </button>
@@ -940,7 +1053,7 @@ export default function SignInPage() {
                     <button
                       type="button"
                       onClick={() => clearAndSetMode("login")}
-                      className="font-black text-red-600 hover:text-red-700 underline cursor-pointer"
+                      className="font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
                     >
                       تسجيل الدخول
                     </button>
@@ -951,7 +1064,7 @@ export default function SignInPage() {
                     <button
                       type="button"
                       onClick={() => clearAndSetMode("login")}
-                      className="font-black text-red-600 hover:text-red-700 underline cursor-pointer"
+                      className="font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
                     >
                       دخول الكابتن
                     </button>
@@ -963,11 +1076,86 @@ export default function SignInPage() {
         </div>
       </div>
 
-      {/* ── Footer ────────────────────────────────────────────────────────── */}
-      <footer className="relative z-10 py-4 text-center text-xs text-slate-500 border-t border-white/5">
-        <span>منظومة </span>
-        <strong className="text-slate-300 font-bold">DOJO PRO (دوجو برو)</strong>
-        <span> • جميع الحقوق محفوظة © {new Date().getFullYear()}</span>
+      {/* ── Footer بسيط وهادئ بنفس ألوان وستايل الموقع وفيه أرقام الفون ── */}
+      <footer className="w-full border-t border-slate-200/80 bg-white py-4 px-4 sm:px-6 text-xs text-slate-500 mt-6">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          
+          {/* كبسولات أرقام التواصل وروابط الواتساب والفيسبوك */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {CONTACT_NUMBERS.map((contact) => {
+              const isCopied = copiedNumber === contact.number;
+              return (
+                <div
+                  key={contact.number}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50/80 px-3 py-1 shadow-2xs hover:border-slate-300 transition-colors"
+                >
+                  <span
+                    className="font-mono text-xs font-black text-slate-800 tracking-wider pl-1"
+                    dir="ltr"
+                  >
+                    {contact.display}
+                  </span>
+
+                  <span className="h-3 w-px bg-slate-200 shrink-0" />
+
+                  {/* اتصال هاتف */}
+                  <a
+                    href={`tel:${contact.number}`}
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    title={`اتصال (${contact.number})`}
+                  >
+                    <Phone className="h-3 w-3" />
+                  </a>
+
+                  {/* مراسلة واتساب */}
+                  <a
+                    href={`https://wa.me/${contact.rawWhatsApp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    title={`مراسلة واتساب (${contact.number})`}
+                  >
+                    <WhatsAppIcon className="h-3 w-3" />
+                  </a>
+
+                  {/* نسخ الرقم */}
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(contact.number)}
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-200/60 transition-colors cursor-pointer"
+                    title={isCopied ? "تم النسخ" : "نسخ الرقم"}
+                  >
+                    {isCopied ? (
+                      <Check className="h-3 w-3 text-emerald-600 stroke-[3]" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* كبسولة رابط فيسبوك */}
+            <a
+              href="https://www.facebook.com/share/189fmyCdsT/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50/80 px-3 py-1 text-slate-700 hover:text-[#1877F2] hover:bg-blue-50/50 shadow-2xs transition-colors"
+              title="صفحة فيسبوك الرسمية"
+            >
+              <FacebookIcon className="h-3.5 w-3.5 text-[#1877F2]" />
+              <span className="font-bold">فيسبوك</span>
+              <ExternalLink className="h-2.5 w-2.5 text-slate-400" />
+            </a>
+          </div>
+
+          {/* حقوق المنظومة والمطور */}
+          <div className="text-[11px] text-slate-400 text-center sm:text-left font-medium">
+            <span>منظومة </span>
+            <strong className="text-slate-700 font-bold">CoachMaster (كوتش ماستر)</strong>
+            <span> • تطوير محمد غانم • جميع الحقوق محفوظة © {new Date().getFullYear()}</span>
+          </div>
+        </div>
       </footer>
     </main>
   );
