@@ -940,19 +940,61 @@ export default function SignInPage() {
                     </div>
                   )}
 
-                  {/* تنبيه الحساب الموقوف إن وجد */}
+                  {/* تنبيه الحساب الموقوف / منتهي الصلاحية مع أرقام التواصل المباشرة */}
                   {suspendedDetails && (
-                    <div role="alert" className="rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-rose-950 space-y-1.5 animate-slide-up">
-                      <div className="flex items-center gap-2 font-black text-rose-900 text-xs">
-                        <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
-                        <span>الحساب موقوف من قِبل إدارة المنصة</span>
+                    <div role="alert" className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-rose-950 space-y-3 animate-slide-up shadow-sm text-right">
+                      <div className="flex items-center gap-2 font-black text-rose-900 text-xs sm:text-sm">
+                        <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+                        <span>
+                          {suspendedDetails.isExpired
+                            ? "انتهت فترة اشتراك الأكاديمية في النظام"
+                            : "تم تعليق الحساب مؤقتاً من قِبل إدارة المنصة"}
+                        </span>
                       </div>
-                      <p className="text-xs leading-relaxed text-rose-800">
-                        <strong>سبب الإيقاف:</strong> {suspendedDetails.reason || "مخالفة الشروط أو انتهاء فترة الصلاحية"}
-                      </p>
-                      <div className="text-[11px] text-rose-700 pt-1 border-t border-rose-200 flex items-center justify-between flex-wrap gap-1">
-                        <span>للتواصل مع الإدارة:</span>
-                        <strong dir="ltr" className="select-all font-mono font-bold">{suspendedDetails.adminEmail || "mg0447837@gmail.com"}</strong>
+
+                      <div className="bg-white/80 p-3 rounded-xl border border-rose-200/80 text-xs text-rose-900 leading-relaxed font-bold">
+                        <strong className="block text-rose-700 text-[11px] mb-1">سبب الإيقاف:</strong>
+                        {suspendedDetails.reason || "انتهت فترة صلاحية الاشتراك في النظام. يرجى سداد أو تجديد الاشتراك لاستئناف الخدمة ومواصلة الاستخدام."}
+                      </div>
+
+                      {/* Direct phone contacts to renew */}
+                      <div className="pt-2 border-t border-rose-200/80">
+                        <p className="text-[11px] font-bold text-rose-900 mb-2">
+                          أرقام وقنوات التواصل المباشرة مع الإدارة للتجديد الفوري:
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {[
+                            { number: "01552488179", display: "0155 248 8179", rawWhatsApp: "201552488179", label: "الخط 1" },
+                            { number: "01028138408", display: "0102 813 8408", rawWhatsApp: "201028138408", label: "الخط 2" },
+                          ].map((c) => (
+                            <div key={c.number} className="flex items-center justify-between p-2 rounded-xl bg-white border border-rose-200 text-xs">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono font-black text-slate-800" dir="ltr">{c.display}</span>
+                                <span className="text-[10px] text-rose-600 font-bold">({c.label})</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <a
+                                  href={`tel:${c.number}`}
+                                  className="p-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 transition"
+                                  title="اتصال مباشر"
+                                >
+                                  <Phone className="w-3.5 h-3.5" />
+                                </a>
+                                <a
+                                  href={`https://wa.me/${c.rawWhatsApp}?text=${encodeURIComponent(
+                                    "مرحباً إدارة المنصة، أود تجديد اشتراك الأكاديمية لاستئناف الخدمة."
+                                  )}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 transition"
+                                  title="محادثة واتساب"
+                                >
+                                  <WhatsAppIcon className="w-3.5 h-3.5" />
+                                </a>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}

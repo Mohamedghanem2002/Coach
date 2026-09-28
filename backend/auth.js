@@ -92,19 +92,45 @@ export const { handlers, auth } = NextAuth({
         const role = user.role || (user.email.toLowerCase() === adminEmail ? "admin" : "user");
 
         // CRITICAL SECURITY ENFORCEMENT:
-        // Prevent suspended / disabled accounts from logging in
+        // Prevent suspended / disabled / expired accounts from logging in
         if (role !== "admin") {
+          const now = new Date();
+          const isExpired =
+            user.subscriptionExpiresAt &&
+            new Date(user.subscriptionExpiresAt).getTime() < now.getTime();
+
           const isSuspended =
             user.status === "suspended" ||
             user.status === "disabled" ||
             user.subscriptionStatus === "suspended" ||
-            user.subscriptionStatus === "disabled";
+            user.subscriptionStatus === "disabled" ||
+            isExpired;
 
           if (isSuspended) {
-            console.warn(`[AUTH] Blocked sign-in attempt for suspended account: ${user.email}`);
-            throw new Error(
-              `ACCOUNT_SUSPENDED: ${user.suspensionReason || "تم إيقاف هذا الحساب من قِبل إدارة المنصة. يرجى التواصل مع إدارة النظام."}`
-            );
+            console.warn(`[AUTH] Blocked sign-in attempt for suspended/expired account: ${user.email}`);
+
+            if (isExpired && user.status !== "suspended") {
+              users
+                .updateOne(
+                  { _id: user._id },
+                  {
+                    $set: {
+                      status: "suspended",
+                      subscriptionStatus: "expired",
+                      suspensionReason:
+                        "انتهت فترة صلاحية الاشتراك في النظام. يرجى سداد أو تجديد الاشتراك لاستئناف الخدمة ومواصلة الاستخدام.",
+                      updatedAt: now,
+                    },
+                  }
+                )
+                .catch(() => {});
+            }
+
+            const suspensionMsg = isExpired
+              ? "انتهت فترة صلاحية الاشتراك في النظام. يرجى سداد أو تجديد الاشتراك لاستئناف الخدمة ومواصلة الاستخدام."
+              : (user.suspensionReason || "تم إيقاف هذا الحساب من قِبل إدارة المنصة. يرجى التواصل مع إدارة النظام.");
+
+            throw new Error(`ACCOUNT_SUSPENDED: ${suspensionMsg}`);
           }
         }
 

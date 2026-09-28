@@ -107,6 +107,10 @@ export async function requireActiveTenant() {
           academyName: user.academyName || "الأكاديمية",
           subscriptionExpiresAt: user.subscriptionExpiresAt,
           adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL || "mg0447837@gmail.com",
+          contactPhones: [
+            { number: "01552488179", display: "0155 248 8179", rawWhatsApp: "201552488179" },
+            { number: "01028138408", display: "0102 813 8408", rawWhatsApp: "201028138408" },
+          ],
         },
         { status: 403 }
       ),
@@ -127,7 +131,7 @@ export async function requireActiveTenant() {
                 status: "suspended",
                 subscriptionStatus: "expired",
                 suspensionReason:
-                  "انتهت فترة اشتراك الأكاديمية في النظام تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة.",
+                  "انتهت فترة صلاحية الاشتراك في النظام. يرجى سداد أو تجديد الاشتراك مع إدارة المنصة لاستئناف الخدمة ومواصلة الاستخدام.",
                 updatedAt: new Date(),
               },
             }
@@ -143,10 +147,14 @@ export async function requireActiveTenant() {
             code: "SUBSCRIPTION_INACTIVE",
             reason: "expired",
             message:
-              "انتهت فترة اشتراك الأكاديمية في النظام. يرجى تجديد الاشتراك لاستئناف الخدمة.",
+              "انتهت فترة صلاحية الاشتراك في النظام. يرجى سداد أو تجديد الاشتراك مع إدارة المنصة لاستئناف الخدمة ومواصلة الاستخدام.",
             academyName: user.academyName || "الأكاديمية",
             subscriptionExpiresAt: user.subscriptionExpiresAt,
             adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL || "mg0447837@gmail.com",
+            contactPhones: [
+              { number: "01552488179", display: "0155 248 8179", rawWhatsApp: "201552488179" },
+              { number: "01028138408", display: "0102 813 8408", rawWhatsApp: "201028138408" },
+            ],
           },
           { status: 403 }
         ),
