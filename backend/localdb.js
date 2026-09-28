@@ -299,6 +299,17 @@ export function getLocalDbClient() {
                   }
                   if (filter.status && u.status !== filter.status) return false;
                   if (filter.subscriptionStatus && u.subscriptionStatus !== filter.subscriptionStatus) return false;
+                  if (filter.subscriptionExpiresAt && typeof filter.subscriptionExpiresAt === "object") {
+                    const expTime = u.subscriptionExpiresAt ? new Date(u.subscriptionExpiresAt).getTime() : 0;
+                    if (filter.subscriptionExpiresAt.$lt) {
+                      const ltTime = new Date(filter.subscriptionExpiresAt.$lt).getTime();
+                      if (!expTime || expTime >= ltTime) return false;
+                    }
+                    if (filter.subscriptionExpiresAt.$gt) {
+                      const gtTime = new Date(filter.subscriptionExpiresAt.$gt).getTime();
+                      if (!expTime || expTime <= gtTime) return false;
+                    }
+                  }
                   return true;
                 });
               } else if (collectionName === "branches") {

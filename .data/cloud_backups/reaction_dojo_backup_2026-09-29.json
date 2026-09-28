@@ -1,0 +1,48 @@
+{
+  "system": "Re_action DOJO",
+  "version": "1.0",
+  "type": "full_database_backup",
+  "exportedAt": "2026-09-28T22:06:47.854Z",
+  "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+  "stats": {
+    "playersCount": 1,
+    "branchesCount": 2,
+    "eventsCount": 0
+  },
+  "data": {
+    "branches": [
+      {
+        "_id": "6ab9dc48c95fee0cff035b62",
+        "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+        "name": "صالة الكاتا الرئيسية",
+        "createdAt": "2026-09-28T03:17:28.118Z"
+      },
+      {
+        "_id": "6ab9dc48c95fee0cff035b63",
+        "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+        "name": "دوجو الكوميتيه للأبطال",
+        "createdAt": "2026-09-28T03:17:28.118Z"
+      }
+    ],
+    "players": [
+      {
+        "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+        "name": "ؤؤؤؤؤ",
+        "age": 6,
+        "dateOfBirth": "2020-05-05",
+        "guardianPhone": "",
+        "branch": "صالة الكاتا الرئيسية",
+        "belt": "أبيض",
+        "level": "A",
+        "photo": "",
+        "paymentStatus": "unpaid",
+        "paymentHistory": [],
+        "purchases": [],
+        "attendance": [],
+        "createdAt": "2026-09-28T03:29:54.665Z",
+        "_id": "6ab9df32c95fee0cff035b64"
+      }
+    ],
+    "events": []
+  }
+}

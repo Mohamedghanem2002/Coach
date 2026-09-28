@@ -7,6 +7,7 @@ import {
   addCalendarPeriod,
   calculateDaysRemaining,
   isSubscriptionExpired,
+  computeSubscriptionExpiry,
 } from "../../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
@@ -321,49 +322,70 @@ export async function PATCH(request, context) {
       successMessage = `تمت إعادة تفعيل وتشغيل حساب الكابتن "${user.name}" واستئناف الخدمة بنجاح.`;
     }
 
-    // 3. Extend Subscription (Calendar-aware month/year math)
+    // 3. Extend / Set Subscription Validity (Counts from Entry Date or Additive)
     else if (action === "extend_subscription") {
+      const mode = body.calculationBase || body.mode || (body.customDate ? "custom_date" : "from_entry");
+      const entryDate = user.subscriptionStartedAt || user.createdAt || now;
+
       let newExpiresAt = null;
 
-      if (body.customDate) {
+      if (mode === "custom_date" || body.customDate) {
         newExpiresAt = new Date(body.customDate);
         if (isNaN(newExpiresAt.getTime())) {
           return NextResponse.json({ error: "تاريخ الانتهاء المخصص غير صالح" }, { status: 400 });
         }
       } else {
-        const days = parseInt(body.days, 10);
-        if (isNaN(days) || days <= 0) {
-          return NextResponse.json({ error: "عدد الأيام غير صالح (يجب أن يكون رقماً أكبر من صفر)" }, { status: 400 });
+        const months = body.months ? parseInt(body.months, 10) : null;
+        const days = body.days ? parseInt(body.days, 10) : null;
+
+        if ((!months || months <= 0) && (!days || days <= 0)) {
+          return NextResponse.json({ error: "مدة الاشتراك المحددة غير صالحة" }, { status: 400 });
         }
 
-        const baseDate = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() > now.getTime()
-          ? new Date(user.subscriptionExpiresAt)
-          : now;
+        newExpiresAt = computeSubscriptionExpiry({
+          entryDate,
+          currentExpiry: user.subscriptionExpiresAt,
+          mode,
+          months,
+          days,
+          now,
+        });
+      }
 
-        if (days === 30) {
-          newExpiresAt = addCalendarPeriod(baseDate, 1, "months");
-        } else if (days === 90) {
-          newExpiresAt = addCalendarPeriod(baseDate, 3, "months");
-        } else if (days === 180) {
-          newExpiresAt = addCalendarPeriod(baseDate, 6, "months");
-        } else if (days === 365) {
-          newExpiresAt = addCalendarPeriod(baseDate, 1, "years");
-        } else {
-          newExpiresAt = addCalendarPeriod(baseDate, days, "days");
-        }
+      if (!user.subscriptionStartedAt) {
+        updateFields.subscriptionStartedAt = entryDate;
       }
 
       updateFields.subscriptionExpiresAt = newExpiresAt;
-      updateFields.status = "active";
-      updateFields.subscriptionStatus = "active";
-      updateFields.suspensionReason = null;
+
+      // Auto-update account status based on new expiration
+      const isPast = newExpiresAt.getTime() < now.getTime();
+      if (isPast) {
+        updateFields.status = "suspended";
+        updateFields.subscriptionStatus = "expired";
+        updateFields.suspensionReason = "انتهت فترة الصلاحية المحددة للاشتراك تلقائياً.";
+      } else {
+        updateFields.status = "active";
+        updateFields.subscriptionStatus = "active";
+        updateFields.suspensionReason = null;
+      }
+
+      const daysRemaining = calculateDaysRemaining(newExpiresAt, now);
 
       auditAction = "extend_subscription";
       auditDetails = {
-        daysAdded: body.days || null,
+        mode,
+        months: body.months || null,
+        days: body.days || null,
+        entryDate,
         newExpiresAt,
+        daysRemaining,
       };
-      successMessage = `تم تمديد اشتراك الكابتن "${user.name}" بنجاح حتى ${newExpiresAt.toISOString().slice(0, 10)}.`;
+
+      const formattedDate = newExpiresAt.toISOString().slice(0, 10);
+      successMessage = mode === "from_entry"
+        ? `تم ضبط صلاحية اشتراك الكابتن "${user.name}" بنجاح حتى ${formattedDate} (محسوبة من تاريخ الدخول).`
+        : `تم تمديد اشتراك الكابتن "${user.name}" بنجاح حتى ${formattedDate}.`;
     }
 
     // 4. Toggle or Set Payment Status (Auto-reactivates and auto-renews when paid)

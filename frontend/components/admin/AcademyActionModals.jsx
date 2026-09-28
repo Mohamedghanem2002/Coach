@@ -12,6 +12,7 @@ import {
   Trash2,
   Users,
   Building2,
+  Info,
 } from "lucide-react";
 
 /**
@@ -128,37 +129,70 @@ export function SuspendModal({ isOpen, onClose, onConfirm, academy, isBusy }) {
 }
 
 /**
- * Modal to extend subscription duration with presets (+30, +90, +180, +365 days)
- * or a custom expiration date.
+ * Modal to set / extend subscription duration.
+ * Accurately supports:
+ * 1. "حساب الصلاحية من تاريخ الدخول (الموصى به)" -> Exact calendar months from entry date (e.g. Sept 6 + 1 month = Oct 6).
+ * 2. "تمديد إضافي على الصلاحية الحالية" -> Additive extension on top of current expiry.
+ * 3. "تحديد تاريخ انتهاء مخصص" -> Specific calendar date.
  */
 export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, isBusy }) {
-  const [selectedDays, setSelectedDays] = useState(30);
+  // Mode: "from_entry" (default) | "additive" | "custom_date"
+  const [calcMode, setCalcMode] = useState("from_entry");
+  const [selectedMonths, setSelectedMonths] = useState(1);
+  const [customMonths, setCustomMonths] = useState("");
   const [customDate, setCustomDate] = useState("");
-  const [useCustomDate, setUseCustomDate] = useState(false);
 
   if (!isOpen || !academy) return null;
 
-  // Calculate projected new expiration date
   const now = new Date();
-  const baseDate =
-    academy.subscriptionExpiresAt && new Date(academy.subscriptionExpiresAt).getTime() > now.getTime()
-      ? new Date(academy.subscriptionExpiresAt)
-      : now;
+  const entryDate = academy.subscriptionStartedAt
+    ? new Date(academy.subscriptionStartedAt)
+    : academy.createdAt
+    ? new Date(academy.createdAt)
+    : now;
 
-  let projectedDate = new Date(baseDate);
-  if (useCustomDate && customDate) {
-    const parsed = new Date(customDate);
-    if (!isNaN(parsed.getTime())) projectedDate = parsed;
-  } else if (selectedDays === 30) {
-    projectedDate.setMonth(projectedDate.getMonth() + 1);
-  } else if (selectedDays === 90) {
-    projectedDate.setMonth(projectedDate.getMonth() + 3);
-  } else if (selectedDays === 180) {
-    projectedDate.setMonth(projectedDate.getMonth() + 6);
-  } else if (selectedDays === 365) {
-    projectedDate.setFullYear(projectedDate.getFullYear() + 1);
+  const formattedEntryDate = new Intl.DateTimeFormat("ar-EG", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(entryDate);
+
+  const formattedCurrentExpiry = academy.subscriptionExpiresAt
+    ? new Intl.DateTimeFormat("ar-EG", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(academy.subscriptionExpiresAt))
+    : "غير محدد";
+
+  // Calculate projected new expiration date
+  let projectedDate = new Date();
+  const effectiveMonths = customMonths ? Math.max(1, parseInt(customMonths, 10) || 1) : selectedMonths;
+
+  if (calcMode === "custom_date") {
+    if (customDate) {
+      const parsed = new Date(customDate);
+      if (!isNaN(parsed.getTime())) projectedDate = parsed;
+    }
+  } else if (calcMode === "from_entry") {
+    projectedDate = new Date(entryDate);
+    if (effectiveMonths === 12) {
+      const targetDay = projectedDate.getDate();
+      projectedDate.setFullYear(projectedDate.getFullYear() + 1);
+      if (projectedDate.getDate() !== targetDay) projectedDate.setDate(0);
+    } else {
+      const targetDay = projectedDate.getDate();
+      projectedDate.setMonth(projectedDate.getMonth() + effectiveMonths);
+      if (projectedDate.getDate() !== targetDay) projectedDate.setDate(0);
+    }
   } else {
-    projectedDate = new Date(baseDate.getTime() + selectedDays * 24 * 60 * 60 * 1000);
+    // Additive from current expiry or now
+    const curExp = academy.subscriptionExpiresAt ? new Date(academy.subscriptionExpiresAt) : null;
+    const base = curExp && !isNaN(curExp.getTime()) && curExp.getTime() > now.getTime() ? curExp : now;
+    projectedDate = new Date(base);
+    const targetDay = projectedDate.getDate();
+    projectedDate.setMonth(projectedDate.getMonth() + effectiveMonths);
+    if (projectedDate.getDate() !== targetDay) projectedDate.setDate(0);
   }
 
   const formattedProjected = new Intl.DateTimeFormat("ar-EG", {
@@ -167,19 +201,32 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
     day: "numeric",
   }).format(projectedDate);
 
+  const diffMs = projectedDate.getTime() - now.getTime();
+  const projectedDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  const isProjectedPast = diffMs < 0;
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (useCustomDate) {
+    if (calcMode === "custom_date") {
       if (!customDate) return;
-      onConfirm({ customDate });
+      onConfirm({
+        mode: "custom_date",
+        calculationBase: "custom_date",
+        customDate,
+      });
     } else {
-      onConfirm({ days: selectedDays });
+      onConfirm({
+        mode: calcMode,
+        calculationBase: calcMode,
+        months: effectiveMonths,
+        days: calcMode === "additive" ? effectiveMonths * 30 : null,
+      });
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-backdrop" dir="rtl">
-      <div className="relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl animate-scale-up">
+      <div className="relative w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl animate-scale-up">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -190,102 +237,257 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
         </button>
 
         {/* Title */}
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
             <Clock className="w-6 h-6" />
           </div>
           <div>
             <h3 className="text-xl font-black text-slate-900">
-              تمديد اشتراك الأكاديمية
+              تحديد وصلاحية اشتراك المنصة
             </h3>
             <p className="text-xs font-bold text-slate-500">
-              الأكاديمية: <span className="text-indigo-600 font-black">{academy.academyName}</span>
+              الكابتن: <span className="text-indigo-600 font-black">{academy.name || academy.academyName}</span>
+              {academy.academyName && academy.name !== academy.academyName && (
+                <span className="text-slate-400 mr-1.5">({academy.academyName})</span>
+              )}
             </p>
           </div>
         </div>
 
+        {/* Account Entry Date & Current Status Banner */}
+        <div className="p-3.5 mb-5 rounded-2xl border border-indigo-100 bg-indigo-50/60 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
+            <span className="text-xs font-bold text-slate-700">
+              تاريخ الدخول / التسجيل:
+            </span>
+            <span className="text-xs font-black text-indigo-900 bg-white px-2 py-0.5 rounded-lg border border-indigo-200">
+              {formattedEntryDate}
+            </span>
+          </div>
+
+          <div className="text-[11px] font-bold text-slate-500 flex items-center gap-1.5">
+            <span>الانتهاء الحالي:</span>
+            <span className="font-black text-slate-700">{formattedCurrentExpiry}</span>
+            {academy.daysRemaining !== null && academy.daysRemaining !== undefined && (
+              <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${
+                academy.daysRemaining > 0 ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
+              }`}>
+                {academy.daysRemaining > 0 ? `${academy.daysRemaining} يوم متبقي` : "منتهي"}
+              </span>
+            )}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Quick Presets */}
+          {/* Calculation Mode Tabs */}
           <div>
             <label className="block text-xs font-black text-slate-700 mb-2">
-              اختر مدة التمديد السريعة:
+              طريقة احتساب الصلاحية:
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { days: 30, label: "30 يوماً", badge: "شهر" },
-                { days: 90, label: "90 يوماً", badge: "3 أشهر" },
-                { days: 180, label: "180 يوماً", badge: "6 أشهر" },
-                { days: 365, label: "365 يوماً", badge: "سنة كاملة" },
-              ].map((opt) => (
-                <button
-                  key={opt.days}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDays(opt.days);
-                    setUseCustomDate(false);
-                  }}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition cursor-pointer ${
-                    !useCustomDate && selectedDays === opt.days
-                      ? "border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                      : "border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-800"
-                  }`}
-                >
-                  <span className="text-xs font-black">{opt.label}</span>
-                  <span
-                    className={`text-[10px] font-bold mt-0.5 ${
-                      !useCustomDate && selectedDays === opt.days ? "text-indigo-100" : "text-slate-400"
-                    }`}
-                  >
-                    {opt.badge}
-                  </span>
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcMode("from_entry");
+                  setCustomMonths("");
+                }}
+                className={`py-2 px-2 rounded-xl text-xs font-black transition cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
+                  calcMode === "from_entry"
+                    ? "bg-white text-indigo-600 shadow-xs border border-indigo-100"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <span>من تاريخ الدخول</span>
+                <span className="text-[9px] font-bold text-emerald-600">الموصى به ★</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcMode("additive");
+                  setCustomMonths("");
+                }}
+                className={`py-2 px-2 rounded-xl text-xs font-black transition cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
+                  calcMode === "additive"
+                    ? "bg-white text-indigo-600 shadow-xs border border-indigo-100"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <span>تمديد إضافي</span>
+                <span className="text-[9px] font-bold text-slate-400">على الانتهاء الحالي</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCalcMode("custom_date")}
+                className={`py-2 px-2 rounded-xl text-xs font-black transition cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
+                  calcMode === "custom_date"
+                    ? "bg-white text-indigo-600 shadow-xs border border-indigo-100"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <span>تاريخ محدد</span>
+                <span className="text-[9px] font-bold text-slate-400">اختيار من التقويم</span>
+              </button>
             </div>
           </div>
 
-          {/* Or Custom Date */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-black text-slate-700">
-                أو تحديد تاريخ انتهاء مخصص:
-              </label>
-              <button
-                type="button"
-                onClick={() => setUseCustomDate(!useCustomDate)}
-                className="text-[11px] font-black text-indigo-600 hover:underline cursor-pointer"
-              >
-                {useCustomDate ? "الرجوع للباقات السريعة" : "تفعيل التاريخ المخصص"}
-              </button>
-            </div>
+          {/* Preset Buttons for Entry Date / Additive */}
+          {calcMode !== "custom_date" && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-black text-slate-700">
+                  {calcMode === "from_entry"
+                    ? "اختر فترة صلاحية الاشتراك من تاريخ الدخول:"
+                    : "اختر مدة التمديد الإضافي:"}
+                </label>
+                {customMonths && (
+                  <button
+                    type="button"
+                    onClick={() => setCustomMonths("")}
+                    className="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                  >
+                    الرجوع للباقات
+                  </button>
+                )}
+              </div>
 
-            {useCustomDate && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  {
+                    months: 1,
+                    label: "شهر واحد",
+                    badge: calcMode === "from_entry" ? "شهر من الدخول" : "+ شهر إضافي",
+                  },
+                  {
+                    months: 3,
+                    label: "3 أشهر",
+                    badge: calcMode === "from_entry" ? "ربع سنوي" : "+ 3 أشهر",
+                  },
+                  {
+                    months: 6,
+                    label: "6 أشهر",
+                    badge: calcMode === "from_entry" ? "نصف سنوي" : "+ 6 أشهر",
+                  },
+                  {
+                    months: 12,
+                    label: "سنة كاملة",
+                    badge: calcMode === "from_entry" ? "12 شهراً" : "+ سنة كاملة",
+                  },
+                ].map((opt) => {
+                  const isSelected = !customMonths && selectedMonths === opt.months;
+                  return (
+                    <button
+                      key={opt.months}
+                      type="button"
+                      onClick={() => {
+                        setSelectedMonths(opt.months);
+                        setCustomMonths("");
+                      }}
+                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition cursor-pointer ${
+                        isSelected
+                          ? "border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                          : "border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-800"
+                      }`}
+                    >
+                      <span className="text-xs font-black">{opt.label}</span>
+                      <span
+                        className={`text-[10px] font-bold mt-0.5 ${
+                          isSelected ? "text-indigo-100" : "text-slate-400"
+                        }`}
+                      >
+                        {opt.badge}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Custom Number of Months Option */}
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-500 shrink-0">أو عدد أشهر مخصص:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  placeholder="مثال: 2 أو 4 أو 5"
+                  value={customMonths}
+                  onChange={(e) => setCustomMonths(e.target.value)}
+                  className="w-24 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-black text-slate-800 outline-none focus:border-indigo-500 focus:bg-white text-center"
+                />
+                <span className="text-xs font-bold text-slate-500">شهر</span>
+              </div>
+            </div>
+          )}
+
+          {/* Custom Date Input */}
+          {calcMode === "custom_date" && (
+            <div>
+              <label className="block text-xs font-black text-slate-700 mb-2">
+                حدد تاريخ الانتهاء الدقيق من التقويم:
+              </label>
               <input
                 type="date"
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
                 min={now.toISOString().slice(0, 10)}
-                required={useCustomDate}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 focus:bg-white"
+                required={calcMode === "custom_date"}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs font-black text-slate-800 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer"
               />
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Projected Result Card */}
-          <div className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-emerald-600" />
-              <div>
-                <span className="block text-[11px] font-bold text-emerald-800">
-                  تاريخ الانتهاء الجديد المتوقع:
+          {/* Dynamic Real-Time Projected Result Card */}
+          <div className={`p-4 rounded-2xl border flex flex-col gap-2 transition ${
+            isProjectedPast
+              ? "border-amber-200 bg-amber-50/80"
+              : "border-emerald-200 bg-emerald-50/80"
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Calendar className={`w-5 h-5 shrink-0 ${isProjectedPast ? "text-amber-600" : "text-emerald-600"}`} />
+                <div>
+                  <span className={`block text-[11px] font-bold ${isProjectedPast ? "text-amber-800" : "text-emerald-800"}`}>
+                    تاريخ الانتهاء الجديد المحسوب:
+                  </span>
+                  <strong className={`text-base font-black ${isProjectedPast ? "text-amber-950" : "text-emerald-950"}`}>
+                    {formattedProjected}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="text-left">
+                <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-black ${
+                  isProjectedPast
+                    ? "bg-amber-200 text-amber-900"
+                    : "bg-emerald-200 text-emerald-950"
+                }`}>
+                  {isProjectedPast ? "منتهي الصلاحية ⛔" : `${projectedDaysRemaining} يوم متبقي ✓`}
                 </span>
-                <strong className="text-sm font-black text-emerald-950">
-                  {formattedProjected}
-                </strong>
               </div>
             </div>
-            <span className="rounded-full bg-emerald-200/80 px-2.5 py-0.5 text-[10px] font-black text-emerald-900">
-              تفعيل فوري ✓
-            </span>
+
+            {/* Clear Formula Explanation */}
+            <div className="text-[11px] font-bold pt-2 border-t border-slate-200/60 flex items-center gap-1.5 text-slate-600">
+              <Info className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <span>
+                {calcMode === "from_entry" ? (
+                  <>
+                    محسوبة بدقة من تاريخ الدخول (<strong>{formattedEntryDate}</strong>) +{" "}
+                    <strong>{effectiveMonths} شهر</strong> = <strong>{formattedProjected}</strong>
+                  </>
+                ) : calcMode === "additive" ? (
+                  <>
+                    تمديد إضافي قدره <strong>{effectiveMonths} شهر</strong> يُضاف على تاريخ الصلاحية
+                  </>
+                ) : (
+                  <>
+                    تاريخ انتهاء مخصص محدد يدوياً بالتقويم
+                  </>
+                )}
+              </span>
+            </div>
           </div>
 
           {/* Actions */}
@@ -306,10 +508,10 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
               {isBusy ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>جارٍ التمديد...</span>
+                  <span>جارٍ الحفظ...</span>
                 </>
               ) : (
-                <span>تأكيد تمديد الاشتراك</span>
+                <span>تأكيد وحفظ الصلاحية</span>
               )}
             </button>
           </div>

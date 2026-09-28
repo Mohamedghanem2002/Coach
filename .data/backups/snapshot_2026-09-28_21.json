@@ -24,8 +24,8 @@
       "phone": "01011223344",
       "passwordHash": "$2b$12$k4vtdRsaJhGrR8zkAUdNv.uPUtB1YR5QVf9MdfyYLQsFg1A9Dy.RW",
       "role": "user",
-      "status": "active",
-      "subscriptionStatus": "active",
+      "status": "suspended",
+      "subscriptionStatus": "expired",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T17:53:02.026Z",
       "subscriptionExpiresAt": "2026-10-27T17:53:02.026Z",
@@ -33,7 +33,7 @@
       "createdAt": "2026-09-27T17:53:02.026Z",
       "_id": "6ab957fe2dda5fd1a73929ca",
       "updatedAt": "2026-09-28T17:51:36.616Z",
-      "suspensionReason": null
+      "suspensionReason": "انتهت فترة اشتراك الحساب تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة."
     },
     {
       "name": "كابتن أحمد سامي",
@@ -42,15 +42,15 @@
       "phone": "01011223344",
       "passwordHash": "$2b$12$AsHeDxHe4/TpLEi/giLHY.G9jpVpyHaqGMmMEAAXMGqsHsXDXBU82",
       "role": "user",
-      "status": "active",
-      "subscriptionStatus": "active",
+      "status": "suspended",
+      "subscriptionStatus": "expired",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T17:58:35.616Z",
       "subscriptionExpiresAt": "2026-10-27T17:58:35.616Z",
       "subscriptionPaid": true,
       "createdAt": "2026-09-27T17:58:35.616Z",
       "_id": "6ab9594c2dda5fd1a73929d7",
-      "suspensionReason": null,
+      "suspensionReason": "انتهت فترة اشتراك الحساب تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة.",
       "updatedAt": "2026-09-28T17:51:36.616Z"
     },
     {
@@ -60,8 +60,8 @@
       "phone": "01012345678",
       "passwordHash": "$2b$12$VEUhtQY2C3tQ5ZFifLLg6eJJSaK8YyciVVMbH0vifwUARaNDA9wUu",
       "role": "user",
-      "status": "active",
-      "subscriptionStatus": "active",
+      "status": "suspended",
+      "subscriptionStatus": "expired",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T18:01:28.626Z",
       "subscriptionExpiresAt": "2026-10-27T18:01:29.883Z",
@@ -69,7 +69,7 @@
       "createdAt": "2026-09-27T18:01:28.626Z",
       "_id": "6ab959f9a0992fdb8db3cc42",
       "updatedAt": "2026-09-28T17:51:36.616Z",
-      "suspensionReason": null
+      "suspensionReason": "انتهت فترة اشتراك الحساب تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة."
     },
     {
       "name": "كابتن اختبار المنظومة",
@@ -78,15 +78,15 @@
       "phone": "",
       "passwordHash": "$2b$12$5cENOwDlkGvHxjekMbxB3uWUpgXkupJH.t4ojRCtesbqnBkm0EXXe",
       "role": "user",
-      "status": "active",
-      "subscriptionStatus": "active",
+      "status": "suspended",
+      "subscriptionStatus": "expired",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T20:58:41.795Z",
       "subscriptionExpiresAt": "2026-10-27T20:58:41.795Z",
       "subscriptionPaid": true,
       "createdAt": "2026-09-27T20:58:41.795Z",
       "_id": "6ab98382a8a4820d9e786c84",
-      "suspensionReason": null,
+      "suspensionReason": "انتهت فترة اشتراك الحساب تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة.",
       "updatedAt": "2026-09-28T17:51:36.616Z"
     },
     {
@@ -96,15 +96,15 @@
       "phone": "",
       "passwordHash": "$2b$12$ru.BiuU8TMvNbUcTDyFLZOW7b8gKsDq7rIoOXDEyFLCDHvSULSo62",
       "role": "user",
-      "status": "active",
-      "subscriptionStatus": "active",
+      "status": "suspended",
+      "subscriptionStatus": "expired",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T21:00:07.324Z",
       "subscriptionExpiresAt": "2026-10-27T21:00:07.324Z",
       "subscriptionPaid": true,
       "createdAt": "2026-09-27T21:00:07.324Z",
       "_id": "6ab983d7a8a4820d9e786c86",
-      "suspensionReason": null,
+      "suspensionReason": "انتهت فترة اشتراك الحساب تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة.",
       "updatedAt": "2026-09-28T17:51:36.616Z"
     },
     {
@@ -114,15 +114,15 @@
       "phone": "",
       "passwordHash": "$2b$12$vFr8Dnc6PDiqy9N1S5Jn8.G3516A32.YPKHH8kZPhv25Bm3ORXPzO",
       "role": "user",
-      "status": "active",
-      "subscriptionStatus": "active",
+      "status": "suspended",
+      "subscriptionStatus": "expired",
       "subscriptionPlan": "trial",
       "subscriptionStartedAt": "2026-09-27T21:01:40.813Z",
       "subscriptionExpiresAt": "2026-10-27T21:01:40.813Z",
       "subscriptionPaid": true,
       "createdAt": "2026-09-27T21:01:40.813Z",
       "_id": "6ab98435a8a4820d9e786c88",
-      "suspensionReason": null,
+      "suspensionReason": "انتهت فترة اشتراك الحساب تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة.",
       "updatedAt": "2026-09-28T17:51:36.616Z"
     },
     {
@@ -140,7 +140,23 @@
       "subscriptionPaid": true,
       "createdAt": "2026-09-27T21:02:51.807Z",
       "_id": "6ab9847ca8a4820d9e786c8a",
-      "updatedAt": "2026-09-28T21:58:03.305Z",
+      "updatedAt": "2026-09-28T17:51:36.759Z",
+      "suspensionReason": null
+    },
+    {
+      "_id": "6ab999999999999999999999",
+      "name": "كابتن 6 سبتمبر التجريبي",
+      "academyName": "أكاديمية اختبار سبتمبر",
+      "email": "september6_captain@example.com",
+      "role": "user",
+      "status": "active",
+      "subscriptionStatus": "active",
+      "subscriptionPlan": "trial",
+      "createdAt": "2026-09-06T10:00:00.000Z",
+      "subscriptionStartedAt": "2026-09-06T10:00:00.000Z",
+      "subscriptionExpiresAt": "2026-10-06T10:00:00.000Z",
+      "subscriptionPaid": true,
+      "updatedAt": "2026-09-28T21:58:03.194Z",
       "suspensionReason": null
     }
   ],
@@ -1246,74 +1262,6 @@
       },
       "createdAt": "2026-09-28T17:51:36.760Z",
       "_id": "6abaa9287d6682b8e532355c"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab999999999999999999999",
-      "targetAcademyName": "أكاديمية اختبار سبتمبر",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "mode": "from_entry",
-        "months": 1,
-        "days": null,
-        "entryDate": "2026-09-06T10:00:00.000Z",
-        "newExpiresAt": "2026-10-06T10:00:00.000Z",
-        "daysRemaining": 8
-      },
-      "createdAt": "2026-09-28T21:58:03.196Z",
-      "_id": "6abae2eb7d6682b8e532355d"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab999999999999999999999",
-      "targetAcademyName": "أكاديمية اختبار سبتمبر",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "mode": "from_entry",
-        "months": 3,
-        "days": null,
-        "entryDate": "2026-09-06T10:00:00.000Z",
-        "newExpiresAt": "2026-12-06T11:00:00.000Z",
-        "daysRemaining": 69
-      },
-      "createdAt": "2026-09-28T21:58:03.263Z",
-      "_id": "6abae2eb7d6682b8e532355e"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab999999999999999999999",
-      "targetAcademyName": "أكاديمية اختبار سبتمبر",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "mode": "from_entry",
-        "months": 1,
-        "days": null,
-        "entryDate": "2026-09-06T10:00:00.000Z",
-        "newExpiresAt": "2026-10-06T10:00:00.000Z",
-        "daysRemaining": 8
-      },
-      "createdAt": "2026-09-28T22:06:56.693Z",
-      "_id": "6abae5000c0f5b0fe93d032d"
-    },
-    {
-      "action": "extend_subscription",
-      "targetAcademyId": "6ab999999999999999999999",
-      "targetAcademyName": "أكاديمية اختبار سبتمبر",
-      "adminEmail": "mg0447837@gmail.com",
-      "adminId": "6aa1d2acc20ba8a6e482c3a3",
-      "details": {
-        "mode": "from_entry",
-        "months": 3,
-        "days": null,
-        "entryDate": "2026-09-06T10:00:00.000Z",
-        "newExpiresAt": "2026-12-06T11:00:00.000Z",
-        "daysRemaining": 69
-      },
-      "createdAt": "2026-09-28T22:06:56.819Z",
-      "_id": "6abae5000c0f5b0fe93d032e"
     }
   ]
 }

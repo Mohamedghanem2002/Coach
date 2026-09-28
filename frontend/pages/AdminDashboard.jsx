@@ -247,8 +247,8 @@ export default function AdminDashboard() {
     }
   };
 
-  // 5. Admin Action: Extend Subscription
-  const handleExtendConfirm = async ({ days, customDate }) => {
+  // 5. Admin Action: Extend / Set Subscription
+  const handleExtendConfirm = async ({ days, months, mode, calculationBase, customDate }) => {
     if (!extendTargetAcademy) return;
     setActionBusy(true);
     try {
@@ -257,14 +257,17 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "extend_subscription",
+          mode,
+          calculationBase,
+          months,
           days,
           customDate,
         }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "فشل التمديد");
+      if (!res.ok) throw new Error(result.error || "فشل تحديث الاشتراك");
 
-      showToast(result.message || "تم تمديد اشتراك الكابتن بنجاح");
+      showToast(result.message || "تم تحديث اشتراك الكابتن بنجاح");
       setExtendTargetAcademy(null);
       loadOverview();
       refreshCaptains();

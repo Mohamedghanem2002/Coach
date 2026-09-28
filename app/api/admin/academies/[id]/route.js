@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import clientPromise from "../../../../../backend/mongodb";
 import { requireAdmin } from "../../../../../backend/admin-auth";
 import { recordAuditLog } from "../../../../../backend/audit";
+import {
+  computeSubscriptionExpiry,
+  calculateDaysRemaining,
+} from "../../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -230,41 +234,70 @@ export async function PATCH(request, context) {
       successMessage = `تمت إعادة تفعيل أكاديمية "${targetAcademyName}" واستئناف الخدمة.`;
     }
 
-    // 3. Extend Subscription
+    // 3. Extend / Set Subscription Validity (Counts from Entry Date or Additive)
     else if (action === "extend_subscription") {
+      const mode = body.calculationBase || body.mode || (body.customDate ? "custom_date" : "from_entry");
+      const entryDate = user.subscriptionStartedAt || user.createdAt || now;
+
       let newExpiresAt = null;
 
-      if (body.customDate) {
+      if (mode === "custom_date" || body.customDate) {
         newExpiresAt = new Date(body.customDate);
         if (isNaN(newExpiresAt.getTime())) {
           return NextResponse.json({ error: "تاريخ الانتهاء المخصص غير صالح" }, { status: 400 });
         }
       } else {
-        const days = parseInt(body.days, 10);
-        if (isNaN(days) || days <= 0) {
-          return NextResponse.json({ error: "عدد الأيام غير صالح (يجب أن يكون رقماً أكبر من صفر)" }, { status: 400 });
+        const months = body.months ? parseInt(body.months, 10) : null;
+        const days = body.days ? parseInt(body.days, 10) : null;
+
+        if ((!months || months <= 0) && (!days || days <= 0)) {
+          return NextResponse.json({ error: "مدة الاشتراك المحددة غير صالحة" }, { status: 400 });
         }
 
-        // If current expiration is in the future, extend from that date; otherwise from now
-        const baseDate = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() > now.getTime()
-          ? new Date(user.subscriptionExpiresAt)
-          : now;
+        newExpiresAt = computeSubscriptionExpiry({
+          entryDate,
+          currentExpiry: user.subscriptionExpiresAt,
+          mode,
+          months,
+          days,
+          now,
+        });
+      }
 
-        newExpiresAt = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000);
+      if (!user.subscriptionStartedAt) {
+        updateFields.subscriptionStartedAt = entryDate;
       }
 
       updateFields.subscriptionExpiresAt = newExpiresAt;
-      updateFields.status = "active";
-      updateFields.subscriptionStatus = "active";
-      updateFields.suspensionReason = null;
+
+      // Auto-update account status based on new expiration
+      const isPast = newExpiresAt.getTime() < now.getTime();
+      if (isPast) {
+        updateFields.status = "suspended";
+        updateFields.subscriptionStatus = "expired";
+        updateFields.suspensionReason = "انتهت فترة الصلاحية المحددة للاشتراك تلقائياً.";
+      } else {
+        updateFields.status = "active";
+        updateFields.subscriptionStatus = "active";
+        updateFields.suspensionReason = null;
+      }
+
+      const daysRemaining = calculateDaysRemaining(newExpiresAt, now);
 
       auditAction = "extend_subscription";
       auditDetails = {
-        daysAdded: body.days || "custom",
+        mode,
+        months: body.months || null,
+        days: body.days || null,
+        entryDate,
         newExpiresAt,
-        previousExpiresAt: user.subscriptionExpiresAt,
+        daysRemaining,
       };
-      successMessage = `تم تمديد اشتراك أكاديمية "${targetAcademyName}" بنجاح حتى ${newExpiresAt.toISOString().slice(0, 10)}.`;
+
+      const formattedDate = newExpiresAt.toISOString().slice(0, 10);
+      successMessage = mode === "from_entry"
+        ? `تم ضبط صلاحية اشتراك أكاديمية "${targetAcademyName}" بنجاح حتى ${formattedDate} (محسوبة من تاريخ الدخول).`
+        : `تم تمديد اشتراك أكاديمية "${targetAcademyName}" بنجاح حتى ${formattedDate}.`;
     }
 
     // 4. Set Payment Status

@@ -16,14 +16,94 @@ export function addCalendarPeriod(startDate, count = 1, unit = "months") {
   if (isNaN(d.getTime())) return new Date();
 
   if (unit === "months") {
+    const targetDay = d.getDate();
     d.setMonth(d.getMonth() + count);
+    if (d.getDate() !== targetDay) {
+      d.setDate(0); // clamp to last day of previous month
+    }
   } else if (unit === "years") {
+    const targetDay = d.getDate();
     d.setFullYear(d.getFullYear() + count);
+    if (d.getDate() !== targetDay) {
+      d.setDate(0);
+    }
   } else {
     d.setDate(d.getDate() + count);
   }
 
   return d;
+}
+
+/**
+ * Computes exact subscription expiration date based on mode (from_entry, additive, or custom).
+ *
+ * @param {Object} options
+ * @param {Date|string} options.entryDate
+ * @param {Date|string} options.currentExpiry
+ * @param {string} options.mode "from_entry" | "additive" | "custom_date"
+ * @param {number} [options.months]
+ * @param {number} [options.days]
+ * @param {string|Date} [options.customDate]
+ * @param {Date} [options.now]
+ * @returns {Date}
+ */
+export function computeSubscriptionExpiry({
+  entryDate,
+  currentExpiry,
+  mode = "from_entry",
+  months,
+  days,
+  customDate,
+  now = new Date(),
+}) {
+  if (mode === "custom_date" || customDate) {
+    const parsed = new Date(customDate);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+
+  let resolvedMonths = months;
+  if (!resolvedMonths && days) {
+    if (days === 30) resolvedMonths = 1;
+    else if (days === 90) resolvedMonths = 3;
+    else if (days === 180) resolvedMonths = 6;
+    else if (days === 365) resolvedMonths = 12;
+  }
+
+  if (mode === "from_entry" || !mode) {
+    const base = entryDate ? new Date(entryDate) : new Date(now);
+    const validBase = isNaN(base.getTime()) ? new Date(now) : base;
+
+    if (resolvedMonths) {
+      if (resolvedMonths === 12) {
+        return addCalendarPeriod(validBase, 1, "years");
+      }
+      return addCalendarPeriod(validBase, resolvedMonths, "months");
+    }
+    if (days) {
+      return addCalendarPeriod(validBase, days, "days");
+    }
+    return addCalendarPeriod(validBase, 1, "months");
+  }
+
+  if (mode === "additive") {
+    const curExp = currentExpiry ? new Date(currentExpiry) : null;
+    const base = curExp && !isNaN(curExp.getTime()) && curExp.getTime() > now.getTime()
+      ? curExp
+      : new Date(now);
+
+    if (resolvedMonths) {
+      if (resolvedMonths === 12) {
+        return addCalendarPeriod(base, 1, "years");
+      }
+      return addCalendarPeriod(base, resolvedMonths, "months");
+    }
+    if (days) {
+      return addCalendarPeriod(base, days, "days");
+    }
+    return addCalendarPeriod(base, 1, "months");
+  }
+
+  return addCalendarPeriod(now, 1, "months");
 }
 
 /**
@@ -71,13 +151,12 @@ export async function autoSyncExpiredAccounts(usersCollection, now = new Date())
   if (!usersCollection) return 0;
 
   try {
-    const expiredActiveUsers = await usersCollection
-      .find({
-        role: { $ne: "admin" },
-        status: "active",
-        subscriptionExpiresAt: { $lt: now },
-      })
-      .toArray();
+    const allUsers = await usersCollection.find({}).toArray();
+    const expiredActiveUsers = allUsers.filter((u) => {
+      if (!u || u.role === "admin") return false;
+      // Only accounts that are currently marked active but have expired
+      return u.status === "active" && isSubscriptionExpired(u, now);
+    });
 
     if (expiredActiveUsers.length === 0) return 0;
 
