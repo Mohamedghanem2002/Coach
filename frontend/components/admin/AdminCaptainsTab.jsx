@@ -358,31 +358,48 @@ export default function AdminCaptainsTab({
                       </div>
                     </div>
 
-                    {/* Status & Options Menu */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {isSuspended ? (
-                        <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-black border border-rose-200">
-                          موقوف ⛔
-                        </span>
-                      ) : isExpired ? (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-black border border-amber-200">
-                          منتهي ⏳
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-black border border-emerald-200">
-                          نشط 🟢
+                    {/* Status & Options Menu with Countdown */}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <div className="flex items-center gap-1.5">
+                        {isSuspended ? (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-black border border-rose-200">
+                            {isExpired ? "منتهي الصلاحية ⛔" : "موقوف ⛔"}
+                          </span>
+                        ) : isExpired ? (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-black border border-amber-200">
+                            منتهي ⏳
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-black border border-emerald-200">
+                            نشط 🟢
+                          </span>
+                        )}
+
+                        {/* 3-Dots Action Sheet Trigger */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedActionCaptain(c)}
+                          className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                          title="إجراءات الحساب"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {c.daysRemaining !== null && !c.isAdmin && (
+                        <span
+                          className={`text-[10px] font-mono font-black ${
+                            c.daysRemaining <= 0
+                              ? "text-rose-600"
+                              : c.daysRemaining <= 7
+                              ? "text-amber-600"
+                              : "text-slate-500"
+                          }`}
+                        >
+                          {c.daysRemaining <= 0
+                            ? "انتهت الصلاحية"
+                            : `متبقي ${c.daysRemaining} يوم`}
                         </span>
                       )}
-
-                      {/* 3-Dots Action Sheet Trigger */}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedActionCaptain(c)}
-                        className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
-                        title="إجراءات الحساب"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
 
@@ -597,21 +614,38 @@ export default function AdminCaptainsTab({
                           </span>
                         </td>
 
-                        {/* Status Badge */}
+                        {/* Status Badge & Dynamic Countdown */}
                         <td className="p-4">
-                          {isSuspended ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200">
-                              موقوف ⛔
-                            </span>
-                          ) : isExpired ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200">
-                              منتهي ⏳
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
-                              نشط 🟢
-                            </span>
-                          )}
+                          <div className="space-y-1">
+                            {isSuspended ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200">
+                                {isExpired ? "منتهي الصلاحية ⛔" : "موقوف ⛔"}
+                              </span>
+                            ) : isExpired ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200">
+                                منتهي ⏳
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
+                                نشط 🟢
+                              </span>
+                            )}
+                            {c.daysRemaining !== null && !c.isAdmin && (
+                              <span
+                                className={`block text-[10px] font-mono font-black ${
+                                  c.daysRemaining <= 0
+                                    ? "text-rose-600"
+                                    : c.daysRemaining <= 7
+                                    ? "text-amber-600"
+                                    : "text-slate-500"
+                                }`}
+                              >
+                                {c.daysRemaining <= 0
+                                  ? "انتهت الصلاحية"
+                                  : `متبقي ${c.daysRemaining} يوم`}
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Action Buttons */}

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import clientPromise from "../../../../backend/mongodb";
 import { sendAdminRegistrationNotification } from "../../../../backend/email";
 import { recordAuditLog } from "../../../../backend/audit";
+import { addCalendarPeriod } from "../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -79,8 +80,8 @@ export async function POST(request) {
     const isSystemAdmin = email === adminEmail;
 
     const now = new Date();
-    // Default 30 days subscription trial for new academies
-    const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    // Default 1 calendar month trial starting from entry date (e.g. Sept 3 -> Oct 3)
+    const expiresAt = addCalendarPeriod(now, 1, "months");
 
     const newUser = {
       name,

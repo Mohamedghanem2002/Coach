@@ -117,6 +117,24 @@ export async function requireActiveTenant() {
   if (user.subscriptionExpiresAt) {
     const expiresAtTime = new Date(user.subscriptionExpiresAt).getTime();
     if (expiresAtTime < Date.now()) {
+      // Automatically synchronize suspended status in DB
+      if (user.status !== "suspended" || user.subscriptionStatus !== "expired") {
+        users
+          .updateOne(
+            { _id: user._id },
+            {
+              $set: {
+                status: "suspended",
+                subscriptionStatus: "expired",
+                suspensionReason:
+                  "انتهت فترة اشتراك الأكاديمية في النظام تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة.",
+                updatedAt: new Date(),
+              },
+            }
+          )
+          .catch(() => {});
+      }
+
       return {
         allowed: false,
         response: NextResponse.json(

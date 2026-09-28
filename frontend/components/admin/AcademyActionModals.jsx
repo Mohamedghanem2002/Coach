@@ -145,10 +145,20 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
       ? new Date(academy.subscriptionExpiresAt)
       : now;
 
-  let projectedDate = new Date(baseDate.getTime() + selectedDays * 24 * 60 * 60 * 1000);
+  let projectedDate = new Date(baseDate);
   if (useCustomDate && customDate) {
     const parsed = new Date(customDate);
     if (!isNaN(parsed.getTime())) projectedDate = parsed;
+  } else if (selectedDays === 30) {
+    projectedDate.setMonth(projectedDate.getMonth() + 1);
+  } else if (selectedDays === 90) {
+    projectedDate.setMonth(projectedDate.getMonth() + 3);
+  } else if (selectedDays === 180) {
+    projectedDate.setMonth(projectedDate.getMonth() + 6);
+  } else if (selectedDays === 365) {
+    projectedDate.setFullYear(projectedDate.getFullYear() + 1);
+  } else {
+    projectedDate = new Date(baseDate.getTime() + selectedDays * 24 * 60 * 60 * 1000);
   }
 
   const formattedProjected = new Intl.DateTimeFormat("ar-EG", {

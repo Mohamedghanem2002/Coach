@@ -129,6 +129,14 @@ export default function CaptainDetailsModal({
       }).format(new Date(captain.createdAt))
     : "غير محدد";
 
+  const formattedStarted = captain?.subscriptionStartedAt || captain?.createdAt
+    ? new Intl.DateTimeFormat("ar-EG", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(captain.subscriptionStartedAt || captain.createdAt))
+    : "غير محدد";
+
   const formattedExpires = captain?.subscriptionExpiresAt
     ? new Intl.DateTimeFormat("ar-EG", {
         year: "numeric",
@@ -490,10 +498,40 @@ export default function CaptainDetailsModal({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                   <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">تاريخ البداية (الدخول):</span>
+                    <strong className="text-slate-900 font-black">
+                      {formattedStarted}
+                    </strong>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">
                     <span className="text-slate-500 font-bold">تاريخ الانتهاء:</span>
                     <strong className="text-slate-900 font-black">
                       {captain.isAdmin ? "غير محدد (دائم)" : formattedExpires}
                     </strong>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">الأيام المتبقية:</span>
+                    <span
+                      className={`font-mono font-black ${
+                        captain.isAdmin || captain.daysRemaining === null
+                          ? "text-slate-400"
+                          : captain.daysRemaining <= 0
+                          ? "text-rose-600"
+                          : captain.daysRemaining <= 7
+                          ? "text-amber-600"
+                          : "text-emerald-600"
+                      }`}
+                    >
+                      {captain.isAdmin
+                        ? "دائم"
+                        : captain.daysRemaining !== null
+                        ? captain.daysRemaining <= 0
+                          ? "انتهت الصلاحية"
+                          : `${captain.daysRemaining} يوم`
+                        : "غير محدد"}
+                    </span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">

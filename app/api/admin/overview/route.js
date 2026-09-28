@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import clientPromise from "../../../../backend/mongodb";
 import { requireAdmin } from "../../../../backend/admin-auth";
+import {
+  autoSyncExpiredAccounts,
+  calculateDaysRemaining,
+  isSubscriptionExpired,
+} from "../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +24,9 @@ export async function GET() {
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
     const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+
+    // Auto-sync and suspend expired accounts in DB
+    await autoSyncExpiredAccounts(db.collection("users"), now);
     const isSystemAdmin = (u) => {
       if (!u) return false;
       if (u.role === "admin") return true;
@@ -142,11 +150,11 @@ export async function GET() {
       const branchesCount = (branchesByOwner.get(uId) || []).length;
       const eventsCount = (eventsByOwner.get(uId) || []).length;
 
-      const isSuspended = u.status === "suspended" || u.subscriptionStatus === "suspended";
-      const isExpired = u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt).getTime() < now.getTime();
+      const isExpired = isSubscriptionExpired(u, now);
+      const isSuspended = u.status === "suspended" || u.subscriptionStatus === "suspended" || isExpired;
       let computedStatus = "active";
-      if (isSuspended) computedStatus = "suspended";
-      else if (isExpired) computedStatus = "expired";
+      if (isSuspended) computedStatus = isExpired ? "expired" : "suspended";
+      const daysRemaining = calculateDaysRemaining(u.subscriptionExpiresAt, now);
 
       return {
         id: uId,
@@ -162,6 +170,7 @@ export async function GET() {
         subscriptionPlan: u.subscriptionPlan || "Standard",
         subscriptionExpiresAt: u.subscriptionExpiresAt || null,
         subscriptionPaid: u.subscriptionPaid !== false,
+        daysRemaining,
         playersCount,
         branchesCount,
         hallsCount: branchesCount,

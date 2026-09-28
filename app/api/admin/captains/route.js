@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import clientPromise from "../../../../backend/mongodb";
 import { requireAdmin } from "../../../../backend/admin-auth";
+import {
+  autoSyncExpiredAccounts,
+  calculateDaysRemaining,
+  isSubscriptionExpired,
+} from "../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +27,9 @@ export async function GET(request) {
 
     const now = new Date();
     const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+
+    // Auto-sync and suspend expired accounts in the database
+    await autoSyncExpiredAccounts(db.collection("users"), now);
 
     const isSystemAdmin = (u) => {
       if (!u) return false;
@@ -85,18 +93,13 @@ export async function GET(request) {
         };
       });
 
-      const isSuspended = u.status === "suspended" || u.subscriptionStatus === "suspended";
-      const isExpired = u.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt).getTime() < now.getTime();
+      const isExpired = isSubscriptionExpired(u, now);
+      const isSuspended = u.status === "suspended" || u.subscriptionStatus === "suspended" || isExpired;
 
       let computedStatus = "active";
-      if (isSuspended) computedStatus = "suspended";
-      else if (isExpired) computedStatus = "expired";
+      if (isSuspended) computedStatus = isExpired ? "expired" : "suspended";
 
-      let daysRemaining = null;
-      if (u.subscriptionExpiresAt) {
-        const diffMs = new Date(u.subscriptionExpiresAt).getTime() - now.getTime();
-        daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      }
+      const daysRemaining = calculateDaysRemaining(u.subscriptionExpiresAt, now);
 
       return {
         id: uId,

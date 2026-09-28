@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import clientPromise from "../../../../../backend/mongodb";
 import { requireAdmin } from "../../../../../backend/admin-auth";
 import { recordAuditLog } from "../../../../../backend/audit";
+import {
+  addCalendarPeriod,
+  calculateDaysRemaining,
+  isSubscriptionExpired,
+} from "../../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -64,17 +69,32 @@ export async function GET(request, context) {
     }
 
     const now = new Date();
-    const isSuspended = user.status === "suspended" || user.subscriptionStatus === "suspended";
-    const isExpired = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() < now.getTime();
+    const isExpired = isSubscriptionExpired(user, now);
+    const isSuspended = user.status === "suspended" || user.subscriptionStatus === "suspended" || isExpired;
 
     let computedStatus = "active";
-    if (isSuspended) computedStatus = "suspended";
-    else if (isExpired) computedStatus = "expired";
+    if (isSuspended) computedStatus = isExpired ? "expired" : "suspended";
 
-    let daysRemaining = null;
-    if (user.subscriptionExpiresAt) {
-      const diffMs = new Date(user.subscriptionExpiresAt).getTime() - now.getTime();
-      daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const daysRemaining = calculateDaysRemaining(user.subscriptionExpiresAt, now);
+
+    // Auto-sync in DB if expired but still marked active in DB
+    if (isExpired && user.status === "active" && !isUserAdmin) {
+      db.collection("users")
+        .updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              status: "suspended",
+              subscriptionStatus: "expired",
+              suspensionReason: "انتهت فترة اشتراك الحساب تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة.",
+              updatedAt: now,
+            },
+          }
+        )
+        .catch(() => {});
+      user.status = "suspended";
+      user.subscriptionStatus = "expired";
+      user.suspensionReason = "انتهت فترة اشتراك الحساب تلقائياً. يرجى تجديد أو سداد الاشتراك لاستئناف الخدمة.";
     }
 
     // Query real DB records belonging to this account
@@ -289,19 +309,19 @@ export async function PATCH(request, context) {
       updateFields.subscriptionStatus = "active";
       updateFields.suspensionReason = null;
 
-      const isPast = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() < now.getTime();
-      if (isPast || !user.subscriptionExpiresAt) {
-        updateFields.subscriptionExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const isPast = isSubscriptionExpired(user, now) || !user.subscriptionExpiresAt;
+      if (isPast) {
+        updateFields.subscriptionExpiresAt = addCalendarPeriod(now, 1, "months");
       }
 
       auditAction = "reactivate_academy";
       auditDetails = {
         restoredExpiresAt: updateFields.subscriptionExpiresAt || user.subscriptionExpiresAt,
       };
-      successMessage = `تمت إعادة تفعيل حساب الكابتن "${user.name}" واستئناف الخدمة بنجاح.`;
+      successMessage = `تمت إعادة تفعيل وتشغيل حساب الكابتن "${user.name}" واستئناف الخدمة بنجاح.`;
     }
 
-    // 3. Extend Subscription
+    // 3. Extend Subscription (Calendar-aware month/year math)
     else if (action === "extend_subscription") {
       let newExpiresAt = null;
 
@@ -320,7 +340,17 @@ export async function PATCH(request, context) {
           ? new Date(user.subscriptionExpiresAt)
           : now;
 
-        newExpiresAt = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000);
+        if (days === 30) {
+          newExpiresAt = addCalendarPeriod(baseDate, 1, "months");
+        } else if (days === 90) {
+          newExpiresAt = addCalendarPeriod(baseDate, 3, "months");
+        } else if (days === 180) {
+          newExpiresAt = addCalendarPeriod(baseDate, 6, "months");
+        } else if (days === 365) {
+          newExpiresAt = addCalendarPeriod(baseDate, 1, "years");
+        } else {
+          newExpiresAt = addCalendarPeriod(baseDate, days, "days");
+        }
       }
 
       updateFields.subscriptionExpiresAt = newExpiresAt;
@@ -336,7 +366,7 @@ export async function PATCH(request, context) {
       successMessage = `تم تمديد اشتراك الكابتن "${user.name}" بنجاح حتى ${newExpiresAt.toISOString().slice(0, 10)}.`;
     }
 
-    // 4. Toggle or Set Payment Status (supports both action names)
+    // 4. Toggle or Set Payment Status (Auto-reactivates and auto-renews when paid)
     else if (action === "toggle_payment" || action === "set_payment_status") {
       let newPaid;
       if (action === "set_payment_status" && body.paid !== undefined) {
@@ -347,9 +377,27 @@ export async function PATCH(request, context) {
       }
       updateFields.subscriptionPaid = newPaid;
 
+      if (newPaid) {
+        // Automatically reactivate and resume service
+        updateFields.status = "active";
+        updateFields.subscriptionStatus = "active";
+        updateFields.suspensionReason = null;
+
+        const isPast = isSubscriptionExpired(user, now) || !user.subscriptionExpiresAt;
+        if (isPast) {
+          // Auto-renew for 1 calendar month from today
+          const renewedExpiry = addCalendarPeriod(now, 1, "months");
+          updateFields.subscriptionExpiresAt = renewedExpiry;
+          successMessage = `تم تأكيد سداد الاشتراك وتفعيل وتشغيل حساب الكابتن "${user.name}" تلقائياً حتى ${renewedExpiry.toISOString().slice(0, 10)}.`;
+        } else {
+          successMessage = `تم تأكيد سداد الاشتراك وتفعيل حساب الكابتن "${user.name}" بنجاح.`;
+        }
+      } else {
+        successMessage = `تم تحديث حالة السداد للكابتن "${user.name}" إلى: غير مدفوع ✗.`;
+      }
+
       auditAction = newPaid ? "mark_subscription_paid" : "mark_subscription_unpaid";
-      auditDetails = { paid: newPaid };
-      successMessage = `تم تحديث حالة السداد إلى: ${newPaid ? "مدفوع ✓" : "غير مدفوع ✗"}.`;
+      auditDetails = { paid: newPaid, autoReactivated: newPaid };
     }
 
     // 5. Update Subscription Plan
