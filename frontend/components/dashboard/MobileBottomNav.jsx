@@ -41,7 +41,7 @@ export default function MobileBottomNav({
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-[80] mobile-bottom-bar pb-safe w-full max-w-full"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-30 mobile-bottom-bar pb-safe w-full max-w-full"
       dir="rtl"
       aria-label="شريط التنقل الرئيسي للهاتف"
     >

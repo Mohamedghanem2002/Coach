@@ -1559,76 +1559,39 @@ export default function Home() {
           )}
 
 
-          {/* محتوى تبويب المؤشرات والإحصائيات على الموبايل (Mobile Executive Dashboard) */}
+          {/* محتوى تبويب المؤشرات والإحصائيات على الموبايل (Mobile App Analytics Hub) */}
           {mobileTab === "stats" && (
-            <div className="space-y-5 mb-6 animate-fade-in">
-              <DashboardHero
-                captainName={captainName}
-                academyName={academyName}
+            <div className="mb-6 animate-fade-in">
+              <StatsGrid
                 players={players}
                 branches={branches}
                 branch={branch}
-                events={events}
                 sessionDate={sessionDate}
-                attendanceRateToday={attendanceRateToday}
-                presentToday={presentToday}
-                absentToday={absentToday}
-                paidCount={paidCount}
-                totalPendingPaymentCount={totalPendingPaymentCount}
-                purchasesDebtCount={purchasesDebtCount}
+                paymentMonth={paymentMonth}
+                paymentMonthLabel={paymentMonthLabel}
+                events={events}
                 todayBirthdays={todayBirthdaysList}
-                isCloudBackingUp={isCloudBackingUp}
-                isBackingUp={isBackingUp}
-                isRestoring={isRestoring}
-                onAddPlayer={() => setShowForm(true)}
+                onSelectBranch={handleSelectBranch}
+                onFilterStatus={(status) => {
+                  setStatusFilter(status);
+                  setMobileTab("players");
+                  setActiveView("players");
+                }}
+                onOpenEvents={() => {
+                  setActiveView("events");
+                  setMobileTab("events");
+                }}
+                onOpenBirthdays={() => {
+                  setActiveView("birthdays");
+                  setMobileTab("birthdays");
+                }}
                 onOpenAttendanceReport={(bName) =>
                   setBranchAttendanceReport({
                     branchName: bName,
                     date: sessionDate,
                   })
                 }
-                onInstantCloudBackup={handleInstantCloudBackup}
-                onRestore={() => setShowRestoreModal(true)}
-                onMarkBranchPresent={markBranchPresent}
-                onOpenEvents={() => {
-                  setActiveView("events");
-                  setMobileTab("events");
-                }}
-                onOpenAddEvent={() => {
-                  setEditingEvent(null);
-                  setShowAddEventModal(true);
-                }}
-                onOpenBirthdays={() => {
-                  setActiveView("birthdays");
-                  setMobileTab("birthdays");
-                }}
-                onOpenFinances={() => {
-                  setActiveView("finances");
-                  setMobileTab("stats");
-                }}
-                onFilterStatus={(status) => {
-                  setStatusFilter(status);
-                  setMobileTab("players");
-                  setActiveView("players");
-                }}
               />
-
-              <div className="pt-2">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-cairo text-sm font-black text-slate-900">
-                    التحليل المالي وتوزيع الاشتراكات
-                  </h3>
-                  <span className="text-xs font-bold text-slate-500">{branch}</span>
-                </div>
-                <StatsGrid
-                  players={players}
-                  branches={branches}
-                  branch={branch}
-                  sessionDate={sessionDate}
-                  paymentMonth={paymentMonth}
-                  paymentMonthLabel={paymentMonthLabel}
-                />
-              </div>
             </div>
           )}
 
@@ -1862,6 +1825,21 @@ export default function Home() {
               sessionDate={sessionDate}
               paymentMonth={paymentMonth}
               paymentMonthLabel={paymentMonthLabel}
+              events={events}
+              todayBirthdays={todayBirthdaysList}
+              onSelectBranch={handleSelectBranch}
+              onFilterStatus={(status) => {
+                setStatusFilter(status);
+                setActiveView("players");
+              }}
+              onOpenEvents={() => setActiveView("events")}
+              onOpenBirthdays={() => setActiveView("birthdays")}
+              onOpenAttendanceReport={(bName) =>
+                setBranchAttendanceReport({
+                  branchName: bName,
+                  date: sessionDate,
+                })
+              }
             />
           </div>
         )}

@@ -72,7 +72,7 @@ export default function BranchManager({
         onMouseDown={(event) => event.target === event.currentTarget && onClose()}
         dir="rtl"
       >
-        <div className="relative w-full max-w-lg rounded-t-3xl border border-slate-200/90 bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-8 animate-bottom-sheet sm:animate-none pb-safe">
+        <div className="relative w-full max-w-lg rounded-t-3xl border border-slate-200/90 bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-8 animate-bottom-sheet sm:animate-none pb-safe max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto">
           {/* مقبض سحب الموبايل */}
           <div className="sheet-drag-handle sm:hidden" />
 

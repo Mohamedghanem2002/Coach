@@ -198,16 +198,10 @@
       "createdAt": "2026-09-27T18:01:29.068Z"
     },
     {
-      "_id": "6ab9dc48c95fee0cff035b62",
-      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
-      "name": "صالة الكاتا الرئيسية",
-      "createdAt": "2026-09-28T03:17:28.118Z"
-    },
-    {
-      "_id": "6ab9dc48c95fee0cff035b63",
+      "_id": "6ab9d1e91ceee4bed19cfcaf",
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",
       "name": "دوجو الكوميتيه للأبطال",
-      "createdAt": "2026-09-28T03:17:28.118Z"
+      "createdAt": "2026-09-28T02:33:13.700Z"
     }
   ],
   "players": [
