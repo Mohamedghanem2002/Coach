@@ -89,6 +89,16 @@ export default function Header({
     };
   }, [showBirthdayMenu]);
 
+  const handleSignOut = async () => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      if (!window.confirm("هل تريد بالتأكيد تسجيل الخروج من النظام؟")) {
+        return;
+      }
+    }
+    await signOut({ redirect: false });
+    router.push("/auth/signin");
+  };
+
   return (
     <header className="sticky top-0 z-40 glass-nav border-b border-slate-200/80" dir="rtl">
       <div className="mx-auto flex min-h-[56px] sm:min-h-[68px] w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] items-center justify-between gap-2 px-3 sm:px-8 py-2">
@@ -411,25 +421,33 @@ export default function Header({
             type="button"
             onClick={() => setShowMobileCoachSheet(true)}
             className="flex md:hidden relative h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black text-xs shadow-xs ring-2 ring-red-100 active-press transition cursor-pointer touch-manipulation"
-            title="ملف الكابتن وإعدادات الأكاديمية"
+            title="ملف الكابتن ولوحة التحكم السريعة"
           >
             <span>{initials}</span>
             <span className="absolute -bottom-0.5 -left-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
           </button>
 
-          {/* Desktop Sign Out Button */}
+          {/* Settings Icon Button (Mobile Only) */}
+          <button
+            type="button"
+            id="mobile-settings-btn"
+            onClick={onOpenAccountSettings}
+            className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 active-press transition cursor-pointer touch-manipulation"
+            title="إعدادات الحساب والأكاديمية"
+          >
+            <Settings className="h-4 w-4 text-slate-700" />
+          </button>
+
+          {/* Sign Out Button (Visible on Both Desktop & Mobile) */}
           <button
             type="button"
             id="signout-btn"
-            className="hidden md:flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 transition-all duration-200 hover:bg-red-600 hover:border-red-600 hover:text-white hover:shadow-md hover:shadow-red-500/20 active:scale-95 cursor-pointer"
-            onClick={async () => {
-              await signOut({ redirect: false });
-              router.push("/auth/signin");
-            }}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50/70 hover:bg-red-600 hover:border-red-600 text-red-600 hover:text-white px-2.5 sm:px-3 h-9 sm:h-10 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-md hover:shadow-red-500/20 active-press cursor-pointer touch-manipulation"
+            onClick={handleSignOut}
             title="تسجيل الخروج من النظام"
           >
-            <span>خروج</span>
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">خروج</span>
           </button>
         </div>
       </div>
@@ -592,8 +610,7 @@ export default function Header({
                 type="button"
                 onClick={async () => {
                   setShowMobileCoachSheet(false);
-                  await signOut({ redirect: false });
-                  router.push("/auth/signin");
+                  await handleSignOut();
                 }}
                 className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border border-red-200 bg-red-50/70 hover:bg-red-100 text-red-600 text-xs font-black active-press transition cursor-pointer min-h-[44px]"
               >
