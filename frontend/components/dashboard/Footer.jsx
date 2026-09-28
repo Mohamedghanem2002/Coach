@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Copy, Check, ExternalLink, Code2 } from "lucide-react";
+import { Phone, Copy, Check, ExternalLink, Code2, Sparkles } from "lucide-react";
 
 function FacebookIcon({ className = "w-4 h-4" }) {
   return (
@@ -41,11 +41,15 @@ export default function Footer({ academyName = "Re_action DOJO" } = {}) {
       number: "01552488179",
       display: "0155 248 8179",
       rawWhatsApp: "201552488179",
+      label: "الخط الأول (دعم وطلبات)",
+      tag: "أساسي",
     },
     {
       number: "01028138408",
       display: "0102 813 8408",
       rawWhatsApp: "201028138408",
+      label: "الخط الثاني (مباشر وسريع)",
+      tag: "إضافي",
     },
   ];
 
@@ -63,222 +67,143 @@ export default function Footer({ academyName = "Re_action DOJO" } = {}) {
 
   return (
     <footer
-      className="w-full mt-4 md:mt-10 border-t-0 md:border-t md:border-slate-200/80 bg-transparent md:bg-white/95 md:backdrop-blur-sm text-slate-700 pt-1 md:pt-7 pb-28 md:pb-8 shadow-none md:shadow-xs transition-colors"
+      className="w-full mt-8 sm:mt-12 border-t border-slate-200/90 bg-gradient-to-b from-white via-slate-50/80 to-slate-100/90 pt-6 sm:pt-10 pb-28 md:pb-10 transition-colors"
       dir="rtl"
     >
-      {/* ══════════════════ MOBILE-SPECIFIC APP FOOTER (< md) ══════════════════ */}
-      <div className="md:hidden mx-auto max-w-lg px-3 mb-2">
-        <div className="rounded-3xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-3">
-          {/* Developer Identity Row */}
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-red-600 to-rose-500 text-white shadow-xs">
-                <Code2 className="h-5 w-5" />
+      <div className="mx-auto max-w-7xl px-3.5 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
+        {/* ━━━ بطاقة هوية المطور ورابط الفيسبوك ━━━ */}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-6 shadow-xs">
+          {/* إضاءات جمالية متناسقة مع ألوان الموقع (Red & Rose ambient blurs) */}
+          <div className="pointer-events-none absolute -left-10 -top-10 h-36 w-36 rounded-full bg-red-500/10 blur-2xl" />
+          <div className="pointer-events-none absolute -right-10 -bottom-10 h-36 w-36 rounded-full bg-rose-500/10 blur-2xl" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* معلومات المطور */}
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-red-600 via-rose-600 to-red-700 text-white shadow-md shadow-red-600/20 ring-4 ring-red-50">
+                <Code2 className="h-6 w-6 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <strong className="font-cairo text-sm font-black text-slate-900">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-cairo text-base sm:text-xl font-black text-slate-900 tracking-tight">
                     محمد غانم
-                  </strong>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/70 px-2 py-0.2 text-[9px] font-black text-emerald-700">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    مطور المنظومة
+                  </h3>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200/80 px-2.5 py-0.5 text-[10px] font-black text-red-700">
+                    <Sparkles className="h-3 w-3 text-red-600 animate-spin-slow" />
+                    مطور المنظومة 🥋
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
-                  برمجة وتطوير الأنظمة والتطبيقات
+                <p className="text-xs sm:text-sm text-slate-500 font-semibold truncate mt-0.5">
+                  برمجة وتطوير الأنظمة وإدارة أندية وأكاديميات الكاراتيه
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Quick Action Contact Buttons (2 Big Touch Targets) */}
-          <div className="grid grid-cols-2 gap-2">
-            {/* WhatsApp Direct */}
-            <a
-              href="https://wa.me/201552488179"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black shadow-xs shadow-emerald-500/20 active-press transition cursor-pointer touch-manipulation"
-              title="محادثة واتساب مباشرة"
-            >
-              <WhatsAppIcon className="h-4 w-4 fill-white" />
-              <span>واتساب الدعم</span>
-            </a>
-
-            {/* Direct Phone Call */}
-            <a
-              href="tel:01552488179"
-              className="flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-xs active-press transition cursor-pointer touch-manipulation"
-              title="اتصال هاتفي مباشر"
-            >
-              <Phone className="h-4 w-4" />
-              <span>اتصال هاتفي</span>
-            </a>
-          </div>
-
-          {/* Secondary Links: Facebook + Copy Number */}
-          <div className="flex items-center justify-between gap-2 pt-1 text-[11px] font-bold">
+            {/* رابط فيسبوك المباشر */}
             <a
               href={facebookLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[#1877F2] bg-blue-50/80 border border-blue-200/60 rounded-xl px-2.5 py-1.5 transition active-press cursor-pointer"
+              className="flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-[#1877F2] hover:bg-[#1565cf] text-white text-xs sm:text-sm font-black shadow-md shadow-blue-500/25 active-press transition cursor-pointer touch-manipulation group shrink-0"
+              title="زيارة صفحة فيسبوك الرسمية"
             >
-              <FacebookIcon className="h-3.5 w-3.5 fill-current" />
-              <span>فيسبوك</span>
-              <ExternalLink className="h-3 w-3 opacity-60" />
+              <FacebookIcon className="h-4 w-4 fill-white group-hover:scale-110 transition-transform" />
+              <span>صفحة فيسبوك الرسمية</span>
+              <ExternalLink className="h-3.5 w-3.5 text-white/80 group-hover:translate-x-[-2px] transition-transform" />
             </a>
-
-            <button
-              type="button"
-              onClick={() => handleCopy("01552488179")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border transition active-press cursor-pointer ${
-                copiedNumber === "01552488179"
-                  ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              {copiedNumber === "01552488179" ? (
-                <>
-                  <Check className="h-3 w-3 text-emerald-600" />
-                  <span>تم النسخ</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3 text-slate-400" />
-                  <span className="font-mono text-xs" dir="ltr">0155 248 8179</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Minimal Copyright */}
-          <div className="border-t border-slate-100 pt-2 text-center text-[10px] text-slate-400 font-semibold">
-            <span>جميع الحقوق محفوظة © {currentYear} • </span>
-            <strong className="text-slate-600 font-bold">{academyName}</strong>
           </div>
         </div>
-      </div>
 
-      {/* ══════════════════ DESKTOP FOOTER (>= md) ══════════════════ */}
-      <div className="hidden md:block mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* ━━━ شبكة بطاقات الأرقام (اتصال + مراسلة واتس جنب كل رقم) ━━━ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+          {phoneContacts.map((contact, idx) => {
+            const isCopied = copiedNumber === contact.number;
+            return (
+              <div
+                key={contact.number}
+                className="relative rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs hover:shadow-sm hover:border-slate-300 transition-all space-y-3.5"
+              >
+                {/* رأس كارت الرقم */}
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white font-mono text-xs font-black shadow-2xs">
+                      0{idx + 1}
+                    </div>
+                    <div>
+                      <span className="block text-[11px] font-bold text-slate-400">
+                        {contact.label}
+                      </span>
+                      <strong className="block font-mono text-base sm:text-lg font-black text-slate-900 tracking-wider" dir="ltr">
+                        {contact.display}
+                      </strong>
+                    </div>
+                  </div>
 
-        {/* Top / Main Smart Bar */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-5 pb-6 border-b border-slate-100">
+                  <span className="rounded-lg bg-slate-100 border border-slate-200/80 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                    {contact.tag}
+                  </span>
+                </div>
 
-          {/* Identity & Developer */}
-          <div className="flex items-center gap-3.5 w-full lg:w-auto justify-start">
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-red-600 to-rose-500 text-white shadow-xs">
-              <Code2 className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-cairo text-base font-extrabold text-slate-900 tracking-tight">
-                  محمد غانم
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  مطور برمجيات
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-slate-500">
-                برمجة وتطوير الأنظمة والتطبيقات
-              </p>
-            </div>
-          </div>
+                {/* أزرار الإجراءات لكل رقم: اتصال + مراسلة واتس + نسخ */}
+                <div className="grid grid-cols-12 gap-2">
+                  {/* زر الاتصال الهاتفي المباشر */}
+                  <a
+                    href={`tel:${contact.number}`}
+                    className="col-span-5 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white text-xs font-black shadow-xs shadow-red-600/20 active-press transition cursor-pointer touch-manipulation text-center"
+                    title={`إجراء اتصال هاتفي (${contact.number})`}
+                  >
+                    <Phone className="h-4 w-4" />
+                    <span>اتصال</span>
+                  </a>
 
-          {/* Smart Contact & Social Pills */}
-          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end">
-
-            {/* Phone & WhatsApp interactive badges */}
-            {phoneContacts.map((contact) => {
-              const isCopied = copiedNumber === contact.number;
-              return (
-                <div
-                  key={contact.number}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-slate-50/70 p-1 pl-2 transition-all hover:border-slate-300 hover:bg-slate-50 shadow-2xs"
-                >
-                  {/* WhatsApp Quick Link */}
+                  {/* زر مراسلة واتساب الفورية */}
                   <a
                     href={`https://wa.me/${contact.rawWhatsApp}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
-                    title={`محادثة واتساب (${contact.number})`}
+                    className="col-span-5 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs shadow-emerald-600/20 active-press transition cursor-pointer touch-manipulation text-center"
+                    title={`مراسلة عبر واتساب (${contact.number})`}
                   >
-                    <WhatsAppIcon className="h-3.5 w-3.5 fill-current" />
+                    <WhatsAppIcon className="h-4 w-4 fill-white" />
+                    <span>مراسلة واتس</span>
                   </a>
 
-                  {/* Phone Call Quick Link */}
-                  <a
-                    href={`tel:${contact.number}`}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
-                    title={`اتصال هاتفي (${contact.number})`}
-                  >
-                    <Phone className="h-3.5 w-3.5" />
-                  </a>
-
-                  {/* Phone Number Display */}
-                  <span className="font-mono text-xs font-bold text-slate-800 dir-ltr px-1">
-                    {contact.display}
-                  </span>
-
-                  {/* Copy Button */}
+                  {/* زر نسخ الرقم */}
                   <button
                     type="button"
                     onClick={() => handleCopy(contact.number)}
-                    className={`flex h-6 items-center gap-1 px-2 rounded-md text-[10px] font-bold transition-all cursor-pointer ${isCopied
-                        ? "bg-emerald-500 text-white"
-                        : "bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/60"
-                      }`}
-                    title="نسخ الرقم"
+                    className={`col-span-2 flex items-center justify-center rounded-xl border text-xs font-bold transition active-press cursor-pointer touch-manipulation ${
+                      isCopied
+                        ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-2xs"
+                        : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600"
+                    }`}
+                    title={isCopied ? "تم نسخ الرقم بنجاح" : "نسخ رقم الهاتف"}
                   >
                     {isCopied ? (
-                      <>
-                        <Check className="h-2.5 w-2.5" />
-                        <span>تم</span>
-                      </>
+                      <Check className="h-4 w-4 text-emerald-600 stroke-[3]" />
                     ) : (
-                      <>
-                        <Copy className="h-2.5 w-2.5" />
-                        <span>نسخ</span>
-                      </>
+                      <Copy className="h-4 w-4 text-slate-500" />
                     )}
                   </button>
                 </div>
-              );
-            })}
-
-            {/* Facebook Profile Pill */}
-            <a
-              href={facebookLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl border border-blue-200/80 bg-blue-50/60 px-3.5 py-1.5 text-xs font-bold text-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-all shadow-2xs cursor-pointer group"
-              title="فتح البروفايل الشخصي على فيسبوك"
-            >
-              <FacebookIcon className="h-4 w-4 fill-current group-hover:scale-105 transition-transform" />
-              <span>فيسبوك</span>
-              <ExternalLink className="h-3 w-3 opacity-60 group-hover:opacity-100" />
-            </a>
-          </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Bottom Minimal Strip */}
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-right text-[11px] font-medium text-slate-400">
+        {/* ━━━ شريط الحقوق السفلي (بنفس هوية الموقع) ━━━ */}
+        <div className="pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-right text-xs font-semibold text-slate-500">
           <div>
             <span>جميع الحقوق محفوظة © {currentYear} • تصميم وتطوير </span>
-            <span className="font-bold text-slate-700">محمد غانم</span>
+            <strong className="text-slate-800 font-black">محمد غانم</strong>
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-            <span>نظام أكاديمية</span>
-            <span className="font-extrabold text-red-600">{academyName || "Re_action DOJO"}</span>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+            <span>نظام إدارة أكاديمية</span>
+            <span className="font-cairo font-black text-red-600">{academyName || "Re_action DOJO"}</span>
             <span className="text-slate-300">•</span>
-            <span>إدارة تدريب وبطولات الكاراتيه</span>
+            <span>كاراتيه وبطولات 🥋</span>
           </div>
         </div>
-
       </div>
     </footer>
   );
