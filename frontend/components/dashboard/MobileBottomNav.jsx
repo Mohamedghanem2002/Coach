@@ -8,6 +8,7 @@ export default function MobileBottomNav({
   playersCount = 0,
   branchesCount = 0,
   eventsCount = 0,
+  birthdayCount = 0,
 }) {
   const tabs = [
     {
@@ -32,9 +33,9 @@ export default function MobileBottomNav({
     },
     {
       id: "stats",
-      label: "الإحصائيات",
+      label: "المؤشرات",
       icon: BarChart3,
-      badge: null,
+      badge: birthdayCount > 0 ? "🎂" : null,
     },
   ];
 

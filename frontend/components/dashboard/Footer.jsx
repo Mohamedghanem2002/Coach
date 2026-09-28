@@ -63,10 +63,106 @@ export default function Footer({ academyName = "Re_action DOJO" } = {}) {
 
   return (
     <footer
-      className="w-full mt-10 border-t border-slate-200/80 bg-white/95 backdrop-blur-sm text-slate-700 pt-7 pb-24 md:pb-8 shadow-xs transition-colors"
+      className="w-full mt-4 md:mt-10 border-t-0 md:border-t md:border-slate-200/80 bg-transparent md:bg-white/95 md:backdrop-blur-sm text-slate-700 pt-1 md:pt-7 pb-28 md:pb-8 shadow-none md:shadow-xs transition-colors"
       dir="rtl"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* ══════════════════ MOBILE-SPECIFIC APP FOOTER (< md) ══════════════════ */}
+      <div className="md:hidden mx-auto max-w-lg px-3 mb-2">
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-3">
+          {/* Developer Identity Row */}
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-red-600 to-rose-500 text-white shadow-xs">
+                <Code2 className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <strong className="font-cairo text-sm font-black text-slate-900">
+                    محمد غانم
+                  </strong>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/70 px-2 py-0.2 text-[9px] font-black text-emerald-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    مطور المنظومة
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                  برمجة وتطوير الأنظمة والتطبيقات
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Action Contact Buttons (2 Big Touch Targets) */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* WhatsApp Direct */}
+            <a
+              href="https://wa.me/201552488179"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black shadow-xs shadow-emerald-500/20 active-press transition cursor-pointer touch-manipulation"
+              title="محادثة واتساب مباشرة"
+            >
+              <WhatsAppIcon className="h-4 w-4 fill-white" />
+              <span>واتساب الدعم</span>
+            </a>
+
+            {/* Direct Phone Call */}
+            <a
+              href="tel:01552488179"
+              className="flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-xs active-press transition cursor-pointer touch-manipulation"
+              title="اتصال هاتفي مباشر"
+            >
+              <Phone className="h-4 w-4" />
+              <span>اتصال هاتفي</span>
+            </a>
+          </div>
+
+          {/* Secondary Links: Facebook + Copy Number */}
+          <div className="flex items-center justify-between gap-2 pt-1 text-[11px] font-bold">
+            <a
+              href={facebookLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[#1877F2] bg-blue-50/80 border border-blue-200/60 rounded-xl px-2.5 py-1.5 transition active-press cursor-pointer"
+            >
+              <FacebookIcon className="h-3.5 w-3.5 fill-current" />
+              <span>فيسبوك</span>
+              <ExternalLink className="h-3 w-3 opacity-60" />
+            </a>
+
+            <button
+              type="button"
+              onClick={() => handleCopy("01552488179")}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border transition active-press cursor-pointer ${
+                copiedNumber === "01552488179"
+                  ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {copiedNumber === "01552488179" ? (
+                <>
+                  <Check className="h-3 w-3 text-emerald-600" />
+                  <span>تم النسخ</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3 text-slate-400" />
+                  <span className="font-mono text-xs" dir="ltr">0155 248 8179</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Minimal Copyright */}
+          <div className="border-t border-slate-100 pt-2 text-center text-[10px] text-slate-400 font-semibold">
+            <span>جميع الحقوق محفوظة © {currentYear} • </span>
+            <strong className="text-slate-600 font-bold">{academyName}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════ DESKTOP FOOTER (>= md) ══════════════════ */}
+      <div className="hidden md:block mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* Top / Main Smart Bar */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-5 pb-6 border-b border-slate-100">

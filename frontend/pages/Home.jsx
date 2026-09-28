@@ -1055,54 +1055,56 @@ export default function Home() {
           className="hidden"
         />
 
-        {/* ━━━ لوحة البداية والمؤشرات الذكية (Dashboard Hero & Executive Metrics) ━━━ */}
+        {/* ━━━ لوحة البداية والمؤشرات الذكية على الديسكتوب (Desktop Executive Dashboard) ━━━ */}
         {activeView === "players" && (
-          <DashboardHero
-            captainName={captainName}
-            academyName={academyName}
-            players={players}
-            branches={branches}
-            branch={branch}
-            events={events}
-            sessionDate={sessionDate}
-            attendanceRateToday={attendanceRateToday}
-            presentToday={presentToday}
-            absentToday={absentToday}
-            paidCount={paidCount}
-            totalPendingPaymentCount={totalPendingPaymentCount}
-            purchasesDebtCount={purchasesDebtCount}
-            todayBirthdays={todayBirthdaysList}
-            isCloudBackingUp={isCloudBackingUp}
-            isBackingUp={isBackingUp}
-            isRestoring={isRestoring}
-            onAddPlayer={() => setShowForm(true)}
-            onOpenAttendanceReport={(bName) =>
-              setBranchAttendanceReport({
-                branchName: bName,
-                date: sessionDate,
-              })
-            }
-            onInstantCloudBackup={handleInstantCloudBackup}
-            onRestore={() => setShowRestoreModal(true)}
-            onMarkBranchPresent={markBranchPresent}
-            onOpenEvents={() => {
-              setActiveView("events");
-              setMobileTab("events");
-            }}
-            onOpenAddEvent={() => {
-              setEditingEvent(null);
-              setShowAddEventModal(true);
-            }}
-            onOpenBirthdays={() => {
-              setActiveView("birthdays");
-              setMobileTab("birthdays");
-            }}
-            onOpenFinances={() => {
-              setActiveView("finances");
-              setMobileTab("stats");
-            }}
-            onFilterStatus={(status) => setStatusFilter(status)}
-          />
+          <div className="hidden md:block">
+            <DashboardHero
+              captainName={captainName}
+              academyName={academyName}
+              players={players}
+              branches={branches}
+              branch={branch}
+              events={events}
+              sessionDate={sessionDate}
+              attendanceRateToday={attendanceRateToday}
+              presentToday={presentToday}
+              absentToday={absentToday}
+              paidCount={paidCount}
+              totalPendingPaymentCount={totalPendingPaymentCount}
+              purchasesDebtCount={purchasesDebtCount}
+              todayBirthdays={todayBirthdaysList}
+              isCloudBackingUp={isCloudBackingUp}
+              isBackingUp={isBackingUp}
+              isRestoring={isRestoring}
+              onAddPlayer={() => setShowForm(true)}
+              onOpenAttendanceReport={(bName) =>
+                setBranchAttendanceReport({
+                  branchName: bName,
+                  date: sessionDate,
+                })
+              }
+              onInstantCloudBackup={handleInstantCloudBackup}
+              onRestore={() => setShowRestoreModal(true)}
+              onMarkBranchPresent={markBranchPresent}
+              onOpenEvents={() => {
+                setActiveView("events");
+                setMobileTab("events");
+              }}
+              onOpenAddEvent={() => {
+                setEditingEvent(null);
+                setShowAddEventModal(true);
+              }}
+              onOpenBirthdays={() => {
+                setActiveView("birthdays");
+                setMobileTab("birthdays");
+              }}
+              onOpenFinances={() => {
+                setActiveView("finances");
+                setMobileTab("stats");
+              }}
+              onFilterStatus={(status) => setStatusFilter(status)}
+            />
+          </div>
         )}
 
         {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
@@ -1111,6 +1113,35 @@ export default function Home() {
           {/* ━━━ لوحة التحكم السريعة للموبايل (Native Mobile Command Surface) ━━━ */}
           {mobileTab === "players" && activeView === "players" && (
             <div className="space-y-2 mb-3">
+              {/* شريط مؤشر حضور اليوم السريع للموبايل (~38px) */}
+              <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                  <span className="text-xs font-black text-slate-800 shrink-0">
+                    حضور اليوم:
+                  </span>
+                  <span className="text-xs font-black text-emerald-700 shrink-0">
+                    {attendanceRateToday}%
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-400 truncate">
+                    ({presentToday} من {dashboardPlayers.length})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setBranchAttendanceReport({
+                      branchName: branch === "كل الصالات" ? (branches[0]?.name || "كل الصالات") : branch,
+                      date: sessionDate,
+                    })
+                  }
+                  className="shrink-0 flex items-center gap-1 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 px-2.5 py-1 text-[11px] font-black transition active-press cursor-pointer touch-manipulation"
+                  title="توليد كارت تقرير غياب وحضور الصالة للواتساب"
+                >
+                  <FileText className="h-3 w-3 text-red-600 shrink-0" />
+                  <span>تقرير الحضور 📋</span>
+                </button>
+              </div>
               {/* Row 1: Search Bar + Integrated Branch Selector + Advanced Filters Button */}
               <div className="flex items-center gap-2">
                 <div className="relative flex-1 flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-3.5 shadow-2xs focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 transition-all">
@@ -1482,21 +1513,76 @@ export default function Home() {
           )}
 
 
-          {/* محتوى تبويب الإحصائيات على الموبايل */}
+          {/* محتوى تبويب المؤشرات والإحصائيات على الموبايل (Mobile Executive Dashboard) */}
           {mobileTab === "stats" && (
-            <div className="space-y-4 mb-6">
-              <div className="flex items-center justify-between">
-                <h2 className="font-cairo text-base font-black text-slate-900">إحصائيات الأكاديمية والالتزام</h2>
-                <span className="text-xs font-bold text-slate-500">{branch}</span>
-              </div>
-              <StatsGrid
+            <div className="space-y-5 mb-6 animate-fade-in">
+              <DashboardHero
+                captainName={captainName}
+                academyName={academyName}
                 players={players}
                 branches={branches}
                 branch={branch}
+                events={events}
                 sessionDate={sessionDate}
-                paymentMonth={paymentMonth}
-                paymentMonthLabel={paymentMonthLabel}
+                attendanceRateToday={attendanceRateToday}
+                presentToday={presentToday}
+                absentToday={absentToday}
+                paidCount={paidCount}
+                totalPendingPaymentCount={totalPendingPaymentCount}
+                purchasesDebtCount={purchasesDebtCount}
+                todayBirthdays={todayBirthdaysList}
+                isCloudBackingUp={isCloudBackingUp}
+                isBackingUp={isBackingUp}
+                isRestoring={isRestoring}
+                onAddPlayer={() => setShowForm(true)}
+                onOpenAttendanceReport={(bName) =>
+                  setBranchAttendanceReport({
+                    branchName: bName,
+                    date: sessionDate,
+                  })
+                }
+                onInstantCloudBackup={handleInstantCloudBackup}
+                onRestore={() => setShowRestoreModal(true)}
+                onMarkBranchPresent={markBranchPresent}
+                onOpenEvents={() => {
+                  setActiveView("events");
+                  setMobileTab("events");
+                }}
+                onOpenAddEvent={() => {
+                  setEditingEvent(null);
+                  setShowAddEventModal(true);
+                }}
+                onOpenBirthdays={() => {
+                  setActiveView("birthdays");
+                  setMobileTab("birthdays");
+                }}
+                onOpenFinances={() => {
+                  setActiveView("finances");
+                  setMobileTab("stats");
+                }}
+                onFilterStatus={(status) => {
+                  setStatusFilter(status);
+                  setMobileTab("players");
+                  setActiveView("players");
+                }}
               />
+
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-cairo text-sm font-black text-slate-900">
+                    التحليل المالي وتوزيع الاشتراكات
+                  </h3>
+                  <span className="text-xs font-bold text-slate-500">{branch}</span>
+                </div>
+                <StatsGrid
+                  players={players}
+                  branches={branches}
+                  branch={branch}
+                  sessionDate={sessionDate}
+                  paymentMonth={paymentMonth}
+                  paymentMonthLabel={paymentMonthLabel}
+                />
+              </div>
             </div>
           )}
 

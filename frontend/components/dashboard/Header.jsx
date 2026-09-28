@@ -32,6 +32,7 @@ export default function Header({
   const { data: session } = useSession();
   const router = useRouter();
   const [showBirthdayMenu, setShowBirthdayMenu] = useState(false);
+  const [showMobileCoachSheet, setShowMobileCoachSheet] = useState(false);
   const menuRef = useRef(null);
 
   const todayFormatted = new Intl.DateTimeFormat("ar-EG", {
@@ -396,32 +397,149 @@ export default function Header({
             <Settings className="h-3.5 w-3.5 text-slate-400 group-hover:text-red-600 transition-colors ml-0.5" />
           </button>
 
-          {/* User settings icon button (Mobile) */}
+          {/* Coach Profile Avatar Trigger (Mobile Only) */}
           <button
             type="button"
-            onClick={onOpenAccountSettings}
-            className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 hover:text-red-600 hover:bg-slate-50 shadow-xs transition cursor-pointer"
-            title="إعدادات الحساب وتعديل اسم الأكاديمية"
+            onClick={() => setShowMobileCoachSheet(true)}
+            className="flex md:hidden relative h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black text-xs shadow-xs ring-2 ring-red-100 active-press transition cursor-pointer touch-manipulation"
+            title="ملف الكابتن وإعدادات الأكاديمية"
           >
-            <Settings className="h-4 w-4" />
+            <span>{initials}</span>
+            <span className="absolute -bottom-0.5 -left-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
           </button>
 
-          {/* Sign out */}
+          {/* Desktop Sign Out Button */}
           <button
             type="button"
             id="signout-btn"
-            className="group flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 transition-all duration-200 hover:bg-red-600 hover:border-red-600 hover:text-white hover:shadow-md hover:shadow-red-500/20 active:scale-95 cursor-pointer"
+            className="hidden md:flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-600 transition-all duration-200 hover:bg-red-600 hover:border-red-600 hover:text-white hover:shadow-md hover:shadow-red-500/20 active:scale-95 cursor-pointer"
             onClick={async () => {
               await signOut({ redirect: false });
               router.push("/auth/signin");
             }}
             title="تسجيل الخروج من النظام"
           >
-            <span className="hidden sm:inline">خروج</span>
-            <LogOut className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            <span>خروج</span>
+            <LogOut className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
+
+      {/* ══════════════════ MOBILE COACH BOTTOM SHEET ══════════════════ */}
+      {showMobileCoachSheet && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 backdrop-blur-xs md:hidden animate-backdrop"
+          onClick={() => setShowMobileCoachSheet(false)}
+        >
+          <div
+            className="relative w-full max-w-lg rounded-t-3xl border border-slate-200/90 bg-white p-5 shadow-2xl space-y-4 animate-bottom-sheet pb-safe"
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+          >
+            {/* Sheet Drag Handle */}
+            <div className="sheet-drag-handle" />
+
+            {/* Coach Profile Card */}
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-black text-base shadow-sm ring-2 ring-red-100">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <strong className="font-cairo text-sm font-black text-slate-900 truncate">
+                    {fullName}
+                  </strong>
+                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.2 text-[9px] font-black text-emerald-700">
+                    كابتن معتمد 🥋
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 font-bold truncate mt-0.5">
+                  {academyName}
+                </p>
+                {email && (
+                  <p className="text-[10px] text-slate-400 font-mono truncate" dir="ltr">
+                    {email}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMobileCoachSheet(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500 hover:bg-slate-200 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Quick Actions List */}
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileCoachSheet(false);
+                  onOpenAccountSettings?.();
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-100 active-press transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-700 shadow-2xs">
+                    <Settings className="h-4 w-4" />
+                  </div>
+                  <div className="text-right">
+                    <strong className="block text-xs font-black text-slate-800">
+                      إعدادات الحساب والأكاديمية
+                    </strong>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      تعديل اسم النادي، الكابتن، وكلمة المرور
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 rotate-180" />
+              </button>
+
+              {onNavigateToBirthdays && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMobileCoachSheet(false);
+                    onNavigateToBirthdays();
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl border border-rose-200/80 bg-rose-50/50 hover:bg-rose-100/70 active-press transition cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-rose-200 text-rose-600 shadow-2xs">
+                      <Cake className="h-4 w-4" />
+                    </div>
+                    <div className="text-right">
+                      <strong className="block text-xs font-black text-rose-900">
+                        أعياد ميلاد الأبطال
+                      </strong>
+                      <span className="text-[10px] text-rose-600 font-semibold">
+                        مركز كروت التهنئة ومتابعة المناسبات
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-rose-400 rotate-180" />
+                </button>
+              )}
+
+              {/* Sign out button */}
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowMobileCoachSheet(false);
+                  await signOut({ redirect: false });
+                  router.push("/auth/signin");
+                }}
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border border-red-200 bg-red-50/70 hover:bg-red-100 text-red-600 text-xs font-black active-press transition cursor-pointer min-h-[44px]"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>تسجيل الخروج من المنظومة</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
