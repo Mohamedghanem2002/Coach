@@ -224,6 +224,75 @@ export default function AddPlayerModal({
     }
   }
 
+  if (branches.length === 0) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md animate-fade-in-scale"
+        onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+        dir="rtl"
+      >
+        <div
+          className="relative w-full max-w-md rounded-3xl border border-slate-200/90 bg-white p-6 shadow-2xl animate-fade-in-scale space-y-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* رأس النافذة */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 border border-amber-200 text-xl font-bold">
+                🏢
+              </div>
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">
+                  تنبيه مطلوب
+                </p>
+                <h3 className="font-cairo text-base font-black text-slate-900">
+                  يرجى إضافة صالة أولاً
+                </h3>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer"
+              onClick={onClose}
+              title="إغلاق"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* محتوى التنبيه */}
+          <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 p-4 text-center space-y-2">
+            <p className="text-xs font-bold text-slate-700 leading-relaxed">
+              لا يمكن تسجيل أي لاعب جديد دون تحديد صالة التدريب التابع لها.
+            </p>
+            <p className="text-[11px] text-slate-500 leading-normal">
+              أضف صالتك الأولى (مثل: صالة النادي الرئيسي) ثم عُد لتسجيل أبطالك بكل سهولة.
+            </p>
+          </div>
+
+          {/* الأزرار */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+            <button
+              type="button"
+              className="w-full flex-1 h-11 flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-cairo text-xs font-black shadow-sm shadow-red-600/20 active-press transition cursor-pointer"
+              onClick={onManageBranches}
+            >
+              <span>+ إضافة وإدارة الصالات الآن</span>
+            </button>
+            <button
+              type="button"
+              className="w-full sm:w-auto h-11 px-5 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-cairo text-xs font-bold active-press transition cursor-pointer"
+              onClick={onClose}
+            >
+              <span>إلغاء</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 p-0 sm:p-4 backdrop-blur-md animate-fade-in-scale"
@@ -261,30 +330,7 @@ export default function AddPlayerModal({
           </button>
         </div>
 
-        {branches.length === 0 ? (
-          <div className="p-6">
-            <div className="grid gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-7 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-2xl text-amber-600">
-                🏢
-              </div>
-              <strong className="font-cairo text-base font-extrabold text-slate-800">
-                يرجى إضافة صالة أو فرع أولاً
-              </strong>
-              <p className="text-xs text-slate-500">
-                لا يمكن تسجيل أي لاعب دون تحديد الصالة التابع لها.
-              </p>
-              <button
-                type="button"
-                className="mx-auto mt-2 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-red-700 active:scale-95 cursor-pointer"
-                onClick={onManageBranches}
-              >
-                إدارة صالات الأكاديمية
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 space-y-4 touch-scroll">
+        <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 space-y-4 touch-scroll">
               {/* اسم اللاعب */}
               <div>
                 <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
@@ -517,10 +563,8 @@ export default function AddPlayerModal({
                 )}
               </button>
             </div>
-          </>
-        )}
-      </form>
-    </div>
-  );
-}
+          </form>
+        </div>
+      );
+    }
 
