@@ -23,25 +23,30 @@ import { localDate, getPaymentDetailsFor } from "../../lib/dashboard-utils";
 
 /* ── Animated counter hook ─────────────────────────────────────────────── */
 function useCountUp(target, duration = 600) {
-  const [value, setValue] = useState(0);
-  const prevTarget = useRef(target);
+  const [value, setValue] = useState(typeof target === "number" ? target : 0);
+
   useEffect(() => {
-    if (target === prevTarget.current && value !== 0) return;
-    prevTarget.current = target;
-    if (target === 0) {
-      setValue(0);
-      return;
-    }
+    if (typeof target !== "number") return undefined;
+    let animId;
     const start = Date.now();
+    const startVal = 0;
+
     function tick() {
       const elapsed = Date.now() - start;
       const progress = Math.min(elapsed / duration, 1);
       const ease = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(target * ease));
-      if (progress < 1) requestAnimationFrame(tick);
+      setValue(Math.round(startVal + (target - startVal) * ease));
+      if (progress < 1) {
+        animId = requestAnimationFrame(tick);
+      }
     }
-    requestAnimationFrame(tick);
+
+    animId = requestAnimationFrame(tick);
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
   }, [target, duration]);
+
   return value;
 }
 
