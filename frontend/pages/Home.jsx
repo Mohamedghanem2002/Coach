@@ -1046,7 +1046,7 @@ export default function Home() {
         onOpenAccountSettings={() => setShowAccountSettings(true)}
       />
 
-      <section className="mx-auto w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] px-3 sm:px-6 py-3.5 sm:py-7 lg:px-8 overflow-x-hidden">
+      <section className="mx-auto w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] px-3 sm:px-6 pt-3.5 pb-28 sm:py-7 lg:px-8 overflow-x-hidden">
         <input
           ref={restoreFileRef}
           type="file"
@@ -1170,22 +1170,6 @@ export default function Home() {
 
               {/* Row 2: Swipeable Horizontal Filter Capsules with Live Counts */}
               <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
-                {/* Branch Attendance Report Button */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setBranchAttendanceReport({
-                      branchName: branch === "كل الصالات" ? (branches[0]?.name || "كل الصالات") : branch,
-                      date: sessionDate,
-                    })
-                  }
-                  className="shrink-0 flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 text-red-700 border border-red-200 shadow-2xs"
-                  title="توليد كارت تقرير غياب وحضور الصالة للمشاركة على واتساب"
-                >
-                  <FileText className="h-3.5 w-3.5 text-red-600 shrink-0" />
-                  <span>تقرير الحضور 📋</span>
-                </button>
-
                 {/* All */}
                 <button
                   type="button"
@@ -1338,28 +1322,6 @@ export default function Home() {
                     </span>
                   </button>
                 )}
-              </div>
-
-              {/* Row 3: Slim Pulse Metric Strip (~32px) */}
-              <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
-                <div className="flex items-center gap-2 text-slate-700 font-bold min-w-0">
-                  <span className="flex h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                  <span className="text-[11px] font-extrabold text-slate-800 shrink-0">
-                    حضور اليوم ({sessionDate}):
-                  </span>
-                  <span className="font-black text-emerald-700 shrink-0">
-                    {attendanceRateToday}%
-                  </span>
-                  <span className="text-slate-400 text-[10px] truncate">
-                    ({presentToday} من {dashboardPlayers.length})
-                  </span>
-                </div>
-                <div className="w-20 sm:w-28 h-2 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                  <div
-                    className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-                    style={{ width: `${attendanceRateToday}%` }}
-                  />
-                </div>
               </div>
 
               {/* نافذة الفلاتر السفلية المنبثقة للموبايل (Mobile Bottom Sheet) */}

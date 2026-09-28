@@ -213,7 +213,7 @@ export default function AccountSettingsModal({
   const coachInitial = name ? name.charAt(0) : "ك";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 selection:bg-red-500 selection:text-white" dir="rtl">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-red-500 selection:text-white" dir="rtl">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
@@ -221,7 +221,9 @@ export default function AccountSettingsModal({
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-2xl z-10 max-h-[92vh] overflow-y-auto animate-slide-up">
+      <div className="relative w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-2xl z-10 max-h-[92dvh] sm:max-h-[92vh] overflow-y-auto animate-bottom-sheet sm:animate-fade-in-scale pb-safe">
+        {/* Mobile Drag Indicator */}
+        <div className="mx-auto -mt-2 mb-3.5 h-1 w-10 shrink-0 rounded-full bg-slate-300 sm:hidden" />
         
         {/* Header Bar */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -295,7 +297,7 @@ export default function AccountSettingsModal({
                 required
                 maxLength={80}
                 placeholder="مثال: كابتن أحمد محمود"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-3 sm:py-2.5 text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100 min-h-[44px]"
               />
               <User className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
             </div>
@@ -314,7 +316,7 @@ export default function AccountSettingsModal({
                 required
                 maxLength={100}
                 placeholder="مثال: أكاديمية أبطال المستقبل للكاراتيه"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-3 sm:py-2.5 text-base sm:text-xs font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100 min-h-[44px]"
               />
               <Building2 className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
             </div>
@@ -336,7 +338,7 @@ export default function AccountSettingsModal({
                 required
                 placeholder="coach@example.com"
                 dir="ltr"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-2.5 text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pr-10 pl-3 py-3 sm:py-2.5 text-base sm:text-xs font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100 min-h-[44px]"
               />
               <Mail className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
             </div>
@@ -474,14 +476,14 @@ export default function AccountSettingsModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center rounded-xl border border-slate-200 px-4 py-3 sm:py-2.5 min-h-[44px] text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer touch-manipulation active-press"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={loading || fetching}
-              className="flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-5 py-2.5 text-xs font-black text-white shadow-sm shadow-red-600/20 transition active:scale-98 disabled:opacity-60 cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-5 py-3 sm:py-2.5 min-h-[44px] text-xs font-black text-white shadow-sm shadow-red-600/20 transition active-press disabled:opacity-60 cursor-pointer touch-manipulation"
             >
               {loading ? (
                 <>

@@ -2,7 +2,7 @@ import { memo, useState, useMemo } from "react";
 import {
   Check, X, CreditCard, Clock, ChevronRight, ChevronLeft,
   UserRound, Cake, Phone, MessageCircle, MoreHorizontal,
-  AlertCircle, ShoppingBag, Sparkles,
+  AlertCircle, ShoppingBag, Sparkles, Building2,
 } from "lucide-react";
 import {
   paymentStatusFor,
@@ -101,7 +101,7 @@ function AttendBtn({ active, color, busy, onClick, children }) {
       type="button"
       disabled={Boolean(busy)}
       onClick={onClick}
-      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer disabled:opacity-60 touch-manipulation font-black text-xs ${active ? colors[color].active : colors[color].inactive}`}
+      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl min-h-[44px] px-3 py-2 transition-all duration-150 active:scale-95 cursor-pointer disabled:opacity-60 touch-manipulation font-black text-xs ${active ? colors[color].active : colors[color].inactive}`}
     >
       {busy ? <span className="h-3.5 w-3.5 rounded-full border-2 border-current/30 border-t-current animate-spin" /> : children}
     </button>
@@ -274,10 +274,12 @@ function PlayerRow({
         <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] font-bold text-slate-500">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 max-w-[130px] truncate">
-              🏢 {player.branch}
+              <Building2 className="h-3 w-3 text-slate-400 shrink-0" />
+              <span className="truncate">{player.branch}</span>
             </span>
             <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 shrink-0">
-              🎂 {currentAge} سنة
+              <Cake className="h-3 w-3 text-slate-400 shrink-0" />
+              <span>{currentAge} سنة</span>
             </span>
             {totalSessions > 0 && (
               <span className={`rounded-md px-1.5 py-0.5 font-extrabold shrink-0 ${
@@ -291,10 +293,10 @@ function PlayerRow({
           </div>
           {phone && (
             <div className="flex items-center gap-1.5 shrink-0">
-              <a href={`tel:${phone}`} className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 hover:bg-blue-100 active-press transition-all touch-manipulation" title={`اتصال (${phone})`}>
+              <a href={`tel:${phone}`} className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 hover:bg-blue-100 active-press transition-all touch-manipulation" title={`اتصال (${phone})`}>
                 <Phone className="h-3.5 w-3.5" />
               </a>
-              <a href={cleanPhone ? `whatsapp://send?phone=${cleanPhone}` : "whatsapp://send"} className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 hover:bg-emerald-100 active-press transition-all touch-manipulation" title={`واتساب (${phone})`}>
+              <a href={cleanPhone ? `whatsapp://send?phone=${cleanPhone}` : "whatsapp://send"} className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 hover:bg-emerald-100 active-press transition-all touch-manipulation" title={`واتساب (${phone})`}>
                 <MessageCircle className="h-3.5 w-3.5" />
               </a>
             </div>

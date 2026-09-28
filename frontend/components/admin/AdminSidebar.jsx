@@ -211,7 +211,7 @@ export default function AdminSidebar({
 
         {/* Mobile Bottom Navigation Bar */}
         <nav
-          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-1.5 px-2 shadow-lg"
+          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around pt-1.5 pb-safe px-1.5 shadow-lg"
           dir="rtl"
         >
           {navItems.map((item) => {
@@ -222,7 +222,7 @@ export default function AdminSidebar({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-0.5 min-h-[44px] py-1 px-1.5 rounded-xl transition cursor-pointer touch-manipulation active-press ${
                   active ? "text-red-600 font-black" : "text-slate-500 font-bold"
                 }`}
               >
