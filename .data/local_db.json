@@ -74,7 +74,7 @@
       "academyName": "أكاديمية النخبة للكاراتيه",
       "email": "coach_auth_test@example.com",
       "phone": "",
-      "passwordHash": "$2b$12$e.RBcZA8pdXielefkEGTFuYy5QUaDYqoRTxkdHmB19Zkx4568efoi",
+      "passwordHash": "$2b$12$5cENOwDlkGvHxjekMbxB3uWUpgXkupJH.t4ojRCtesbqnBkm0EXXe",
       "role": "user",
       "status": "active",
       "subscriptionStatus": "active",

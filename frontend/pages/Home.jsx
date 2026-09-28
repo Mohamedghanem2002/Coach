@@ -66,6 +66,7 @@ import WelcomeCardModal from "../components/dashboard/WelcomeCardModal";
 import BranchAttendanceModal from "../components/dashboard/BranchAttendanceModal";
 import AccountSettingsModal from "../components/dashboard/AccountSettingsModal";
 import SubscriptionSuspended from "../components/SubscriptionSuspended";
+import DashboardHero from "../components/dashboard/DashboardHero";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 
@@ -538,6 +539,9 @@ export default function Home() {
     const bday = getBirthdayInfo(player);
     return Boolean(bday?.isToday || bday?.daysLeft === 1);
   }).length;
+  const todayBirthdaysList = useMemo(() => {
+    return getTodayBirthdays(players);
+  }, [players]);
   async function updatePlayer(id, data) {
     if (data.attendanceStatus && data.date > today) {
       setNotice("لا يمكن تسجيل حضور أو غياب في تاريخ مستقبلي.");
@@ -1051,43 +1055,58 @@ export default function Home() {
           className="hidden"
         />
 
+        {/* ━━━ لوحة البداية والمؤشرات الذكية (Dashboard Hero & Executive Metrics) ━━━ */}
+        {activeView === "players" && (
+          <DashboardHero
+            captainName={captainName}
+            academyName={academyName}
+            players={players}
+            branches={branches}
+            branch={branch}
+            events={events}
+            sessionDate={sessionDate}
+            attendanceRateToday={attendanceRateToday}
+            presentToday={presentToday}
+            absentToday={absentToday}
+            paidCount={paidCount}
+            totalPendingPaymentCount={totalPendingPaymentCount}
+            purchasesDebtCount={purchasesDebtCount}
+            todayBirthdays={todayBirthdaysList}
+            isCloudBackingUp={isCloudBackingUp}
+            isBackingUp={isBackingUp}
+            isRestoring={isRestoring}
+            onAddPlayer={() => setShowForm(true)}
+            onOpenAttendanceReport={(bName) =>
+              setBranchAttendanceReport({
+                branchName: bName,
+                date: sessionDate,
+              })
+            }
+            onInstantCloudBackup={handleInstantCloudBackup}
+            onRestore={() => setShowRestoreModal(true)}
+            onMarkBranchPresent={markBranchPresent}
+            onOpenEvents={() => {
+              setActiveView("events");
+              setMobileTab("events");
+            }}
+            onOpenAddEvent={() => {
+              setEditingEvent(null);
+              setShowAddEventModal(true);
+            }}
+            onOpenBirthdays={() => {
+              setActiveView("birthdays");
+              setMobileTab("birthdays");
+            }}
+            onOpenFinances={() => {
+              setActiveView("finances");
+              setMobileTab("stats");
+            }}
+            onFilterStatus={(status) => setStatusFilter(status)}
+          />
+        )}
+
         {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
         <div className="md:hidden">
-          {/* شريط الإجراءات والنسخ الاحتياطي السريع للهاتف */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <button
-              type="button"
-              onClick={handleInstantCloudBackup}
-              disabled={isCloudBackingUp || isBackingUp || isRestoring}
-              className="flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-2xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
-              title="حفظ نسخة سحابية فورية بضغطة واحدة"
-            >
-              <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span className="truncate">{isCloudBackingUp ? "جارٍ..." : "نسخ سحابي"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowRestoreModal(true)}
-              disabled={isRestoring || isBackingUp || isCloudBackingUp}
-              className="flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-2xl border border-amber-200/90 bg-white hover:bg-amber-50 text-amber-800 text-[11px] font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
-              title="استعادة اللاعبين والبيانات سحابياً بضغطة واحدة"
-            >
-              <RotateCcw className="h-4 w-4 text-amber-600 shrink-0" />
-              <span className="truncate">{isRestoring ? "جارٍ..." : "استعادة"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDownloadBackup}
-              disabled={isBackingUp || isRestoring}
-              className="flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-black shadow-2xs active-press cursor-pointer touch-manipulation transition"
-              title="تنزيل نسخة احتياطية محلية (ملف JSON)"
-            >
-              <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
-              <span className="truncate">{isBackingUp ? "جارٍ..." : "نسخ محلي"}</span>
-            </button>
-          </div>
 
           {/* ━━━ لوحة التحكم السريعة للموبايل (Native Mobile Command Surface) ━━━ */}
           {mobileTab === "players" && activeView === "players" && (
@@ -1816,72 +1835,6 @@ export default function Home() {
         {/* ━━━ Workspace 1: الأبطال والتحضير اليومي على الديسكتوب ━━━ */}
         {activeView === "players" && (
           <div className="hidden md:block space-y-3 mb-5 animate-fade-in-scale">
-            {/* KPI Summary Strip */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm shadow-red-600/20">
-                    <Users className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-cairo text-sm font-bold text-slate-900">
-                        {branch === "كل الصالات" ? "جميع صالات الأكاديمية" : `صالة ${branch}`}
-                      </h3>
-                      <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
-                        {dashboardPlayers.length} لاعب
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      حصة {sessionDate} • نسبة الحضور اليوم: <strong className="text-emerald-700 font-bold">{attendanceRateToday}% ({presentToday} حاضر)</strong>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setBranchAttendanceReport({
-                        branchName: branch === "كل الصالات" ? (branches[0]?.name || "كل الصالات") : branch,
-                        date: sessionDate,
-                      })
-                    }
-                    className="flex items-center gap-1.5 rounded-xl border border-red-200/90 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 px-3.5 py-1.5 text-xs font-black text-red-700 transition active-press cursor-pointer shadow-2xs hover:shadow-xs"
-                    title="توليد كارت تقرير الحضور والغياب للصالة للمشاركة على جروب أولياء الأمور عبر واتساب"
-                  >
-                    <FileText className="h-3.5 w-3.5 text-red-600 shrink-0" />
-                    <span>تقرير غياب وحضور 📋</span>
-                  </button>
-
-                  <div className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-1.5 text-xs font-bold text-emerald-800">
-                    <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />
-                    <span>حاضر: {presentToday}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/60 px-3 py-1.5 text-xs font-bold text-rose-800">
-                    <X className="h-3.5 w-3.5 text-rose-600" strokeWidth={2.5} />
-                    <span>غائب: {absentToday}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50/60 px-3 py-1.5 text-xs font-bold text-sky-800">
-                    <CreditCard className="h-3.5 w-3.5 text-sky-600" />
-                    <span>مسدد: {paidCount}</span>
-                  </div>
-                  {totalPendingPaymentCount > 0 && (
-                    <div className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-1.5 text-xs font-bold text-amber-800">
-                      <Clock className="h-3.5 w-3.5 text-amber-600" />
-                      <span>متأخر: {totalPendingPaymentCount}</span>
-                    </div>
-                  )}
-                  {purchasesDebtCount > 0 && (
-                    <div className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900">
-                      <ShoppingBag className="h-3.5 w-3.5 text-amber-600" />
-                      <span>أدوات: {purchasesDebtCount}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
             {/* Unified Command Bar */}
             <div className="command-bar-surface p-4 space-y-3">
               {/* Row 1: Search + Branches Segment + Branch Management */}
