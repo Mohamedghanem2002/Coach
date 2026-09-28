@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import {
   ShieldAlert,
   Calendar,
+  CalendarDays,
   CheckCircle2,
   X,
   AlertTriangle,
@@ -134,19 +135,21 @@ export function SuspendModal({ isOpen, onClose, onConfirm, academy, isBusy }) {
 
 /**
  * Modal to set / extend subscription duration.
- * Streamlined, comfortable UX (سهل ومريح):
- * 1. Immediate visual clarity with 4 primary interactive cards (شهر، 3 أشهر، 6 أشهر، سنة).
- * 2. Each card directly displays its computed expiration date based on the captain's entry date.
- * 3. Clear approved summary bar with real-time countdown.
- * 4. Collapsible advanced options for custom dates or additive calculations without visual clutter.
+ * Native Mobile App Experience (ستايل تطبيق هاتف ذكي):
+ * 1. Bottom Sheet / Native Card form factor with top grab handle and rounded-[32px] squircles.
+ * 2. Centered App Store style badge and clean typography.
+ * 3. Native captain profile tile with avatar, joined date, and pulsing status badge.
+ * 4. Apple-style in-app purchase plan rows with real-time calculated expiry dates.
+ * 5. Native iOS segmented picker for presets vs custom calendar date.
+ * 6. Live iOS widget result card showing confirmed expiry date and countdown.
+ * 7. Prominent full-width native CTA button with tactile feedback.
  */
 export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, isBusy }) {
-  // Mode: "from_entry" (default) | "additive" | "custom_date"
+  const [tab, setTab] = useState("presets"); // "presets" | "custom"
   const [calcMode, setCalcMode] = useState("from_entry");
   const [selectedMonths, setSelectedMonths] = useState(1);
   const [customMonths, setCustomMonths] = useState("");
   const [customDate, setCustomDate] = useState("");
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   if (!isOpen || !academy) return null;
 
@@ -162,14 +165,6 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
     month: "long",
     day: "numeric",
   }).format(entryDate);
-
-  const formattedCurrentExpiry = academy.subscriptionExpiresAt
-    ? new Intl.DateTimeFormat("ar-EG", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(new Date(academy.subscriptionExpiresAt))
-    : "غير محدد";
 
   // Helper to compute projected date from entry date for standard cards
   const computeCardDate = (months) => {
@@ -223,25 +218,29 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
       months: 1,
       title: "شهر واحد",
       tag: "أساسي",
-      tagColor: "bg-slate-100 text-slate-600",
+      tagColor: "bg-slate-100 text-slate-600 border border-slate-200/60",
+      durationBadge: "30 يوم",
     },
     {
       months: 3,
       title: "3 أشهر",
       tag: "الأكثر طلباً ⭐",
-      tagColor: "bg-indigo-100 text-indigo-700",
+      tagColor: "bg-indigo-50 text-indigo-700 border border-indigo-200/80",
+      durationBadge: "90 يوم",
     },
     {
       months: 6,
       title: "6 أشهر",
       tag: "نصف سنوي",
-      tagColor: "bg-emerald-100 text-emerald-700",
+      tagColor: "bg-emerald-50 text-emerald-700 border border-emerald-200/80",
+      durationBadge: "180 يوم",
     },
     {
       months: 12,
       title: "سنة كاملة",
-      tag: "12 شهراً",
-      tagColor: "bg-amber-100 text-amber-800",
+      tag: "أفضل قيمة 🏆",
+      tagColor: "bg-amber-50 text-amber-800 border border-amber-200/80",
+      durationBadge: "365 يوم",
     },
   ];
 
@@ -264,295 +263,252 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-backdrop" dir="rtl">
-      <div className="relative w-full max-w-lg rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-2xl animate-scale-up overflow-hidden">
-        {/* Subtle decorative background gradient */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-indigo-50/70 via-transparent to-transparent rounded-full -mr-20 -mt-20 pointer-events-none" />
+  const initialLetter = (academy.name || academy.academyName || "ك").trim().charAt(0);
 
-        {/* Close Button */}
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-backdrop" dir="rtl">
+      <div className="relative w-full max-w-md rounded-t-[32px] sm:rounded-[36px] border border-slate-150 bg-white p-5 sm:p-6 shadow-2xl animate-scale-up max-h-[92vh] flex flex-col overflow-hidden">
+        {/* Native Top Drag Handle */}
+        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-3 shrink-0" />
+
+        {/* Circular Dismiss Button */}
         <button
           onClick={onClose}
           disabled={isBusy}
-          className="absolute top-5 left-5 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer z-10"
+          className="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-700 active:scale-90 transition cursor-pointer z-20"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        {/* Modal Header */}
-        <div className="flex items-start gap-3.5 mb-5 relative z-10">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-xs">
-            <Clock className="w-6 h-6" />
+        {/* App Header Badge & Title */}
+        <div className="text-center mb-3.5 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 text-white flex items-center justify-center mx-auto mb-2 shadow-md shadow-indigo-500/25">
+            <Sparkles className="w-6 h-6" />
           </div>
-          <div className="flex-1 min-w-0 pr-1">
-            <h3 className="text-lg font-black text-slate-900 leading-tight">
-              تمديد وتحديد صلاحية الاشتراك
-            </h3>
-            <p className="text-xs font-bold text-slate-500 mt-1 truncate">
-              الكابتن: <span className="text-indigo-600 font-black">{academy.name || academy.academyName}</span>
-              {academy.academyName && academy.name !== academy.academyName && (
-                <span className="text-slate-400 font-medium mr-1.5">({academy.academyName})</span>
-              )}
-            </p>
-          </div>
+          <h3 className="text-lg font-black text-slate-900 tracking-tight leading-none">
+            صلاحية اشتراك الكابتن
+          </h3>
+          <p className="text-xs font-bold text-slate-400 mt-1">
+            حدد باقة الاشتراك لتطبيقها ديناميكياً
+          </p>
         </div>
 
-        {/* Concise Status Bar */}
-        <div className="mb-5 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3 flex flex-wrap items-center justify-between gap-2.5 text-xs">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
-            <span className="text-slate-500 font-bold">تاريخ الدخول:</span>
-            <span className="font-black text-slate-800 bg-white px-2 py-0.5 rounded-lg border border-slate-200/60 shadow-2xs">
-              {formattedEntryDate}
+        {/* Native Captain Profile Card */}
+        <div className="mb-3.5 bg-slate-50/90 rounded-2xl p-3 border border-slate-200/70 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
+              {initialLetter}
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-black text-slate-900 truncate">
+                {academy.name || academy.academyName}
+              </div>
+              <div className="text-[11px] font-bold text-slate-500 flex items-center gap-1 mt-0.5">
+                <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>تاريخ التسجيل:</span>
+                <strong className="text-slate-800">{formattedEntryDate}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-left shrink-0">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black ${
+              academy.daysRemaining > 0 ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${academy.daysRemaining > 0 ? "bg-emerald-500" : "bg-red-500 animate-pulse"}`} />
+              {academy.daysRemaining > 0 ? `${academy.daysRemaining} يوم متبقي` : "منتهي"}
             </span>
           </div>
-
-          <div className="flex items-center gap-1.5 font-bold">
-            <span className="text-slate-500">الانتهاء الحالي:</span>
-            <span className="font-black text-slate-700">{formattedCurrentExpiry}</span>
-            {academy.daysRemaining !== null && academy.daysRemaining !== undefined && (
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
-                academy.daysRemaining > 0 ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
-              }`}>
-                {academy.daysRemaining > 0 ? `${academy.daysRemaining} يوم متبقي` : "منتهي"}
-              </span>
-            )}
-          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
-          {/* Main 4 Plan Cards */}
-          <div>
-            <div className="flex items-center justify-between mb-2.5">
-              <label className="text-xs font-black text-slate-700">
-                اختر مدة الاشتراك (تُحسب تلقائياً من تاريخ الدخول):
-              </label>
-              {(customMonths || calcMode !== "from_entry") && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCalcMode("from_entry");
-                    setCustomMonths("");
-                    setCustomDate("");
-                    setSelectedMonths(1);
-                  }}
-                  className="text-[11px] font-black text-indigo-600 hover:underline cursor-pointer"
-                >
-                  الرجوع للباقات الأساسية
-                </button>
-              )}
-            </div>
+        {/* iOS Native Segmented Control */}
+        <div className="p-1 bg-slate-100/90 rounded-2xl flex gap-1 mb-3 border border-slate-200/60 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setTab("presets");
+              setCalcMode("from_entry");
+              setCustomDate("");
+            }}
+            className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              tab === "presets"
+                ? "bg-white text-indigo-600 shadow-xs font-black"
+                : "text-slate-500 hover:text-slate-800 font-bold"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>الباقات الموصى بها</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTab("custom");
+              setCalcMode("custom_date");
+            }}
+            className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              tab === "custom"
+                ? "bg-white text-indigo-600 shadow-xs font-black"
+                : "text-slate-500 hover:text-slate-800 font-bold"
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            <span>تاريخ مخصص</span>
+          </button>
+        </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              {presetPlans.map((plan) => {
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          {/* Scrollable Plan Choices */}
+          <div className="flex-1 min-h-0 overflow-y-auto pr-0.5 space-y-2">
+            {tab === "presets" ? (
+              presetPlans.map((plan) => {
                 const isSelected = calcMode === "from_entry" && !customMonths && selectedMonths === plan.months;
+                const expiryText = computeCardDate(plan.months);
                 return (
-                  <button
+                  <div
                     key={plan.months}
-                    type="button"
                     onClick={() => {
                       setCalcMode("from_entry");
                       setSelectedMonths(plan.months);
                       setCustomMonths("");
                       setCustomDate("");
                     }}
-                    className={`group relative flex flex-col p-3 rounded-2xl border-2 text-right transition-all cursor-pointer ${
+                    className={`group relative flex items-center justify-between p-3 rounded-2xl border-2 cursor-pointer transition-all duration-150 active:scale-[0.98] ${
                       isSelected
-                        ? "border-indigo-600 bg-indigo-50/70 shadow-sm ring-4 ring-indigo-500/10"
-                        : "border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/70"
+                        ? "border-indigo-600 bg-gradient-to-r from-indigo-50/90 to-violet-50/40 shadow-xs ring-2 ring-indigo-500/15"
+                        : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/60"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-1 mb-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-xs font-black ${isSelected ? "text-indigo-950" : "text-slate-800"}`}>
-                          {plan.title}
-                        </span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${plan.tagColor}`}>
-                          {plan.tag}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2.5">
+                      {/* Apple-style Radio Button */}
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                         isSelected
-                          ? "bg-indigo-600 text-white"
+                          ? "bg-indigo-600 text-white shadow-xs"
                           : "border-2 border-slate-300 text-transparent group-hover:border-slate-400"
                       }`}>
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
+
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-xs font-black ${isSelected ? "text-indigo-950" : "text-slate-800"}`}>
+                            {plan.title}
+                          </span>
+                          <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${plan.tagColor}`}>
+                            {plan.tag}
+                          </span>
+                        </div>
+                        <div className="text-[11px] font-bold text-slate-500 mt-0.5">
+                          ينتهي في: <span className={`font-black ${isSelected ? "text-indigo-900" : "text-slate-700"}`}>{expiryText}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center gap-1 text-[11px]">
-                      <span className={`font-medium ${isSelected ? "text-indigo-700" : "text-slate-400"}`}>
-                        ينتهي في:
-                      </span>
-                      <span className={`font-black ${isSelected ? "text-indigo-900" : "text-slate-700"}`}>
-                        {computeCardDate(plan.months)}
+                    <div className="text-left shrink-0">
+                      <span className={`text-[11px] font-black px-2 py-0.5 rounded-lg ${
+                        isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600"
+                      }`}>
+                        {plan.durationBadge}
                       </span>
                     </div>
-                  </button>
+                  </div>
                 );
-              })}
-            </div>
+              })
+            ) : (
+              <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/80 space-y-3">
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1.5">
+                    اختر تاريخ الانتهاء من التقويم:
+                  </label>
+                  <input
+                    type="date"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                    min={now.toISOString().slice(0, 10)}
+                    required={calcMode === "custom_date"}
+                    className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-black text-slate-800 outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                  />
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-600">أو عدد أشهر يدوي:</span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      placeholder="2"
+                      value={customMonths}
+                      onChange={(e) => {
+                        setCustomMonths(e.target.value);
+                        setCalcMode("from_entry");
+                      }}
+                      className="w-20 rounded-xl border border-slate-300 bg-white px-2 py-1 text-xs font-black text-slate-800 text-center outline-none focus:border-indigo-500"
+                    />
+                    <span className="text-xs font-bold text-slate-600">شهر</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Approved Result Preview Banner */}
-          <div className={`p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+          {/* iOS Widget Live Result Card */}
+          <div className={`p-3 rounded-2xl border transition-all mt-3 shrink-0 flex items-center justify-between gap-2 ${
             isProjectedPast
-              ? "border-amber-200 bg-amber-50/80"
-              : "border-emerald-200 bg-emerald-50/80"
+              ? "border-amber-200 bg-amber-50/80 text-amber-950"
+              : "border-emerald-200 bg-emerald-50/90 text-emerald-950"
           }`}>
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                 isProjectedPast ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
               }`}>
                 <CheckCircle2 className="w-4 h-4" />
               </div>
               <div className="truncate">
-                <span className="block text-[10px] font-bold text-slate-500">
-                  تاريخ الانتهاء المعتمد الجديد:
-                </span>
-                <strong className={`text-sm font-black truncate block ${isProjectedPast ? "text-amber-950" : "text-emerald-950"}`}>
+                <div className="text-[10px] font-bold text-slate-500">
+                  تاريخ الانتهاء المعتمد:
+                </div>
+                <div className="text-xs font-black truncate">
                   {formattedProjected}
-                </strong>
+                </div>
               </div>
             </div>
 
             <div className="text-left shrink-0">
-              <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-black ${
-                isProjectedPast
-                  ? "bg-amber-200 text-amber-900"
-                  : "bg-emerald-200 text-emerald-950"
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${
+                isProjectedPast ? "bg-amber-200 text-amber-900" : "bg-emerald-200 text-emerald-950"
               }`}>
                 {isProjectedPast ? "منتهي الصلاحية ⛔" : `متبقي ${projectedDaysRemaining} يوم ✓`}
               </span>
             </div>
           </div>
 
-          {/* Advanced / Custom Options Accordion */}
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center justify-between w-full py-1.5 px-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition cursor-pointer"
-            >
-              <div className="flex items-center gap-1.5">
-                <Settings2 className="w-3.5 h-3.5 text-slate-400" />
-                <span>خيارات مخصصة (تاريخ من التقويم أو أشهر أخرى)</span>
-              </div>
-              {showAdvanced ? (
-                <ChevronUp className="w-4 h-4 text-slate-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              )}
-            </button>
-
-            {showAdvanced && (
-              <div className="mt-2 p-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 space-y-3 animate-scale-up">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1.5">
-                    طريقة الاحتساب:
-                  </label>
-                  <div className="grid grid-cols-3 gap-1 p-1 bg-white rounded-xl border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCalcMode("from_entry");
-                        setCustomDate("");
-                      }}
-                      className={`py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer ${
-                        calcMode === "from_entry"
-                          ? "bg-indigo-50 text-indigo-700 font-black shadow-2xs"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      من تاريخ الدخول
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCalcMode("additive");
-                        setCustomDate("");
-                      }}
-                      className={`py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer ${
-                        calcMode === "additive"
-                          ? "bg-indigo-50 text-indigo-700 font-black shadow-2xs"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      تمديد تراكمي
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCalcMode("custom_date")}
-                      className={`py-1.5 px-1 rounded-lg text-[11px] font-black transition cursor-pointer ${
-                        calcMode === "custom_date"
-                          ? "bg-indigo-50 text-indigo-700 font-black shadow-2xs"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      تاريخ محدد
-                    </button>
-                  </div>
-                </div>
-
-                {calcMode !== "custom_date" ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-600 shrink-0">أو حدد عدد أشهر يدوي:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="120"
-                      placeholder="مثال: 2 أو 5"
-                      value={customMonths}
-                      onChange={(e) => setCustomMonths(e.target.value)}
-                      className="w-24 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-800 outline-none focus:border-indigo-500 text-center"
-                    />
-                    <span className="text-xs font-bold text-slate-600">شهر</span>
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      اختر تاريخ الانتهاء من التقويم:
-                    </label>
-                    <input
-                      type="date"
-                      value={customDate}
-                      onChange={(e) => setCustomDate(e.target.value)}
-                      min={now.toISOString().slice(0, 10)}
-                      required={calcMode === "custom_date"}
-                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-black text-slate-800 outline-none focus:border-indigo-500 cursor-pointer"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isBusy}
-              className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-black transition cursor-pointer"
-            >
-              إلغاء
-            </button>
+          {/* Full-Width Native Action Bar */}
+          <div className="pt-3 space-y-1.5 shrink-0">
             <button
               type="submit"
               disabled={isBusy}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black shadow-md shadow-indigo-600/20 transition cursor-pointer"
+              className="w-full h-12 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-700 hover:to-violet-800 active:scale-[0.98] text-white text-xs font-black shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               {isBusy ? (
                 <>
-                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   <span>جارٍ الحفظ...</span>
                 </>
               ) : (
                 <>
-                  <Check className="w-4 h-4 stroke-[2.5]" />
-                  <span>تأكيد وحفظ الصلاحية</span>
+                  <Sparkles className="w-4 h-4" />
+                  <span>تأكيد وتفعيل الصلاحية الآن</span>
                 </>
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isBusy}
+              className="w-full py-1.5 text-center text-xs font-bold text-slate-400 hover:text-slate-600 transition cursor-pointer"
+            >
+              إلغاء الأمر
             </button>
           </div>
         </form>
