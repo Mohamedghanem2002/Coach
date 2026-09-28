@@ -21,16 +21,16 @@ function PlayerAvatar({ player, birthdayInfo, isNew, size = "md" }) {
   const sizeClass = size === "sm"
     ? "h-9 w-9 text-xs"
     : size === "lg"
-    ? "h-12 w-12 text-base"
-    : "h-11 w-11 text-sm";
+      ? "h-12 w-12 text-base"
+      : "h-11 w-11 text-sm";
 
   const ringClass = birthdayInfo?.isToday
     ? "ring-rose-400 ring-offset-1"
     : birthdayInfo?.daysLeft === 1
-    ? "ring-amber-400 ring-offset-1"
-    : isNew
-    ? "ring-emerald-400 ring-offset-1"
-    : "ring-white";
+      ? "ring-amber-400 ring-offset-1"
+      : isNew
+        ? "ring-emerald-400 ring-offset-1"
+        : "ring-white";
 
   return (
     <div
@@ -88,11 +88,11 @@ function SpecialBadge({ birthdayInfo, isNew }) {
 function AttendBtn({ active, color, busy, onClick, children }) {
   const colors = {
     green: {
-      active:   "bg-emerald-600 text-white ring-2 ring-emerald-200 shadow-xs",
+      active: "bg-emerald-600 text-white ring-2 ring-emerald-200 shadow-xs",
       inactive: "bg-slate-50 text-slate-600 border border-slate-200/70 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200",
     },
     red: {
-      active:   "bg-rose-600 text-white ring-2 ring-rose-200 shadow-xs",
+      active: "bg-rose-600 text-white ring-2 ring-rose-200 shadow-xs",
       inactive: "bg-slate-50 text-slate-600 border border-slate-200/70 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200",
     },
   };
@@ -122,17 +122,17 @@ function PlayerRow({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalTab, setPaymentModalTab] = useState("subscription");
 
-  const record        = (player.attendance || []).find((item) => item.date === sessionDate);
-  const present       = record?.status === "present";
-  const absent        = record?.status === "absent";
+  const record = (player.attendance || []).find((item) => item.date === sessionDate);
+  const present = record?.status === "present";
+  const absent = record?.status === "absent";
   const paymentDetails = getPaymentDetailsFor(player, paymentMonth);
-  const paymentStatus  = paymentDetails.status;
+  const paymentStatus = paymentDetails.status;
   const { totalAmount, paidAmount, remainingAmount } = paymentDetails;
-  const birthdayInfo  = getBirthdayInfo(player);
-  const beltStyle     = getBeltStyle(player.belt);
-  const currentAge    = player.dateOfBirth ? calculateAge(player.dateOfBirth) : player.age;
+  const birthdayInfo = getBirthdayInfo(player);
+  const beltStyle = getBeltStyle(player.belt);
+  const currentAge = player.dateOfBirth ? calculateAge(player.dateOfBirth) : player.age;
   const purchasesSummary = getPurchasesSummary(player);
-  const isNew         = useMemo(() => isNewPlayer(player), [player]);
+  const isNew = useMemo(() => isNewPlayer(player), [player]);
 
   const unpaidPurchases = useMemo(() =>
     (purchasesSummary.purchases || []).filter((p) => (Number(p.remainingAmount) || 0) > 0),
@@ -164,11 +164,11 @@ function PlayerRow({
     return `باقي أدوات: ${purchasesSummary.remainingAmount} ج.م`;
   }, [purchasesSummary, unpaidPurchases]);
 
-  const totalSessions   = Array.isArray(player.attendance) ? player.attendance.length : 0;
+  const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
   const attendedSessions = Array.isArray(player.attendance)
     ? player.attendance.filter((item) => item.status === "present").length
     : 0;
-  const attendanceRate  = totalSessions ? Math.round((attendedSessions / totalSessions) * 100) : 0;
+  const attendanceRate = totalSessions ? Math.round((attendedSessions / totalSessions) * 100) : 0;
 
   async function updateAttendance(status) {
     if (attendanceBusy) return;
@@ -184,37 +184,37 @@ function PlayerRow({
   const cardBg = isSelected
     ? "border-red-300 bg-red-50/60 shadow-xs"
     : birthdayInfo?.isToday
-    ? "border-rose-300/90 bg-gradient-to-br from-rose-50/70 to-pink-50/50 shadow-xs"
-    : birthdayInfo?.daysLeft === 1
-    ? "border-amber-300/80 bg-amber-50/30 shadow-xs"
-    : isNew
-    ? "border-emerald-300/70 bg-emerald-50/20 shadow-xs"
-    : "border-slate-200/80 bg-white shadow-xs hover:border-slate-300 hover:shadow-sm";
+      ? "border-rose-300/90 bg-gradient-to-br from-rose-50/70 to-pink-50/50 shadow-xs"
+      : birthdayInfo?.daysLeft === 1
+        ? "border-amber-300/80 bg-amber-50/30 shadow-xs"
+        : isNew
+          ? "border-emerald-300/70 bg-emerald-50/20 shadow-xs"
+          : "border-slate-200/80 bg-white shadow-xs hover:border-slate-300 hover:shadow-sm";
 
   // ─── Payment styling helpers ───────────────────────────────────────────
   const paymentBtnClass = paymentStatus === "paid"
     ? "border-emerald-200 bg-emerald-50/90 text-emerald-950"
     : paymentStatus === "partially_paid"
-    ? "border-amber-300 bg-amber-50/90 text-amber-950 shadow-2xs"
-    : "border-rose-200 bg-rose-50/80 text-rose-950";
+      ? "border-amber-300 bg-amber-50/90 text-amber-950 shadow-2xs"
+      : "border-rose-200 bg-rose-50/80 text-rose-950";
 
   const paymentBadgeClass = paymentStatus === "paid"
     ? "bg-white text-emerald-700 border border-emerald-200"
     : paymentStatus === "partially_paid"
-    ? "bg-amber-500 text-white"
-    : "bg-rose-600 text-white";
+      ? "bg-amber-500 text-white"
+      : "bg-rose-600 text-white";
 
   const purchaseBtnClass = purchasesSummary.count === 0
     ? "border-dashed border-slate-200 bg-slate-50/70 text-slate-600 hover:border-amber-300 hover:bg-amber-50/50"
     : purchasesSummary.remainingAmount > 0
-    ? "border-amber-300/90 bg-amber-50/90 text-amber-950 shadow-2xs"
-    : "border-emerald-200 bg-emerald-50/80 text-emerald-950";
+      ? "border-amber-300/90 bg-amber-50/90 text-amber-950 shadow-2xs"
+      : "border-emerald-200 bg-emerald-50/80 text-emerald-950";
 
   const purchaseBadgeClass = purchasesSummary.count === 0
     ? "bg-white text-slate-600 border border-slate-200"
     : purchasesSummary.remainingAmount > 0
-    ? "bg-amber-600 text-white"
-    : "bg-white text-emerald-700 border border-emerald-200";
+      ? "bg-amber-600 text-white"
+      : "bg-white text-emerald-700 border border-emerald-200";
 
   return (
     <>
@@ -282,11 +282,10 @@ function PlayerRow({
               <span>{currentAge} سنة</span>
             </span>
             {totalSessions > 0 && (
-              <span className={`rounded-md px-1.5 py-0.5 font-extrabold shrink-0 ${
-                attendanceRate >= 75 ? "bg-emerald-50 text-emerald-700"
-                : attendanceRate >= 50 ? "bg-amber-50 text-amber-700"
-                : "bg-rose-50 text-rose-700"
-              }`}>
+              <span className={`rounded-md px-1.5 py-0.5 font-extrabold shrink-0 ${attendanceRate >= 75 ? "bg-emerald-50 text-emerald-700"
+                  : attendanceRate >= 50 ? "bg-amber-50 text-amber-700"
+                    : "bg-rose-50 text-rose-700"
+                }`}>
                 التزام {attendanceRate}%
               </span>
             )}
@@ -296,7 +295,13 @@ function PlayerRow({
               <a href={`tel:${phone}`} className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 hover:bg-blue-100 active-press transition-all touch-manipulation" title={`اتصال (${phone})`}>
                 <Phone className="h-3.5 w-3.5" />
               </a>
-              <a href={cleanPhone ? `whatsapp://send?phone=${cleanPhone}` : "whatsapp://send"} className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 hover:bg-emerald-100 active-press transition-all touch-manipulation" title={`واتساب (${phone})`}>
+              <a
+                href={cleanPhone ? `https://wa.me/${cleanPhone}` : "https://wa.me"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 hover:bg-emerald-100 active-press transition-all touch-manipulation"
+                title={`واتساب (${phone})`}
+              >
                 <MessageCircle className="h-3.5 w-3.5" />
               </a>
             </div>
@@ -328,10 +333,10 @@ function PlayerRow({
                   {paymentStatus === "paid"
                     ? <span className="text-emerald-700">{paidAmount > 0 ? `${paidAmount} ج.م ✓` : "مسدد ✓"}</span>
                     : paymentStatus === "partially_paid"
-                    ? <span className="text-amber-800">باقي {remainingAmount} ج.م</span>
-                    : totalAmount > 0
-                    ? <span className="text-rose-700">مطلوب {totalAmount || remainingAmount}</span>
-                    : <span className="text-rose-700">غير مسدد</span>}
+                      ? <span className="text-amber-800">باقي {remainingAmount} ج.م</span>
+                      : totalAmount > 0
+                        ? <span className="text-rose-700">مطلوب {totalAmount || remainingAmount}</span>
+                        : <span className="text-rose-700">غير مسدد</span>}
                 </div>
               </div>
             </div>
@@ -351,8 +356,8 @@ function PlayerRow({
                   {purchasesSummary.count === 0
                     ? <span className="text-slate-500">+ تسجيل أدوات</span>
                     : purchasesSummary.remainingAmount > 0
-                    ? <span className="text-amber-800">باقي {purchasesSummary.remainingAmount} ج.م</span>
-                    : <span className="text-emerald-700">خالصة بالكامل ✓</span>}
+                      ? <span className="text-amber-800">باقي {purchasesSummary.remainingAmount} ج.م</span>
+                      : <span className="text-emerald-700">خالصة بالكامل ✓</span>}
                 </div>
               </div>
             </div>
@@ -364,13 +369,12 @@ function PlayerRow({
       </div>
 
       {/* ════════════════════ DESKTOP TABLE ROW (>= md) ════════════════════ */}
-      <div className={`group relative hidden min-w-0 md:grid md:grid-cols-[minmax(240px,2.2fr)_75px_110px_160px_minmax(240px,2.2fr)_48px] xl:grid-cols-[minmax(280px,2.5fr)_85px_130px_180px_minmax(280px,2.5fr)_52px] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3.5 md:hover:bg-slate-50/60 transition-all duration-200 ${
-        isSelected         ? "md:bg-red-50/30"
-        : birthdayInfo?.isToday ? "bg-rose-50/20"
-        : birthdayInfo?.daysLeft === 1 ? "bg-amber-50/15"
-        : isNew            ? "bg-emerald-50/10"
-        : "bg-white"
-      }`}>
+      <div className={`group relative hidden min-w-0 md:grid md:grid-cols-[minmax(240px,2.2fr)_75px_110px_160px_minmax(240px,2.2fr)_48px] xl:grid-cols-[minmax(280px,2.5fr)_85px_130px_180px_minmax(280px,2.5fr)_52px] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3.5 md:hover:bg-slate-50/60 transition-all duration-200 ${isSelected ? "md:bg-red-50/30"
+          : birthdayInfo?.isToday ? "bg-rose-50/20"
+            : birthdayInfo?.daysLeft === 1 ? "bg-amber-50/15"
+              : isNew ? "bg-emerald-50/10"
+                : "bg-white"
+        }`}>
 
         {/* Accent right border on hover / selected */}
         <div className={`absolute right-0 top-0 bottom-0 hidden w-[3px] rounded-l-full md:block transition-all duration-200 ${isSelected ? "bg-red-500 opacity-100" : "bg-red-400 opacity-0 group-hover:opacity-100"}`} />
@@ -405,11 +409,10 @@ function PlayerRow({
 
         {/* ── Col 2: Age ── */}
         <div>
-          <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 font-bold text-[11px] ${
-            birthdayInfo?.isToday ? "bg-rose-100 text-rose-800 ring-1 ring-rose-300 animate-pulse"
-            : birthdayInfo?.daysLeft === 1 ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300 animate-pulse"
-            : "bg-slate-100/80 text-slate-700"
-          }`}>
+          <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 font-bold text-[11px] ${birthdayInfo?.isToday ? "bg-rose-100 text-rose-800 ring-1 ring-rose-300 animate-pulse"
+              : birthdayInfo?.daysLeft === 1 ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300 animate-pulse"
+                : "bg-slate-100/80 text-slate-700"
+            }`}>
             <UserRound className="h-3 w-3" />
             {currentAge} سنة
             {birthdayInfo?.isToday && <Cake className="h-3 w-3 text-rose-500 animate-bounce" />}
@@ -439,11 +442,10 @@ function PlayerRow({
         <div className="flex flex-col gap-1 min-w-0">
           {/* Subscription */}
           <button type="button"
-            className={`min-h-9 rounded-xl px-2.5 text-xs font-extrabold transition-all duration-200 flex items-center justify-between gap-1.5 cursor-pointer active:scale-95 border ${
-              paymentStatus === "paid" ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-              : paymentStatus === "partially_paid" ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-black"
-              : "border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
-            }`}
+            className={`min-h-9 rounded-xl px-2.5 text-xs font-extrabold transition-all duration-200 flex items-center justify-between gap-1.5 cursor-pointer active:scale-95 border ${paymentStatus === "paid" ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                : paymentStatus === "partially_paid" ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-black"
+                  : "border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+              }`}
             onClick={() => { setPaymentModalTab("subscription"); setShowPaymentModal(true); }}
             title={`تحصيل اشتراك شهر ${paymentMonth}`}
           >
@@ -451,8 +453,8 @@ function PlayerRow({
               {paymentStatus === "paid"
                 ? <><CreditCard className="h-3.5 w-3.5 shrink-0 text-emerald-600" /><span className="truncate font-black text-xs">اشتراك مدفوع ({paidAmount} ج.م) ✓</span></>
                 : paymentStatus === "partially_paid"
-                ? <><span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" /><span className="truncate font-black text-xs">دفع {paidAmount} • باقي {remainingAmount} ج.م</span></>
-                : <><Clock className="h-3.5 w-3.5 shrink-0 text-rose-600" /><span className="truncate font-black text-xs">{totalAmount > 0 ? `غير مسدد (${totalAmount || remainingAmount} ج.م)` : "غير مسدد"}</span></>}
+                  ? <><span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" /><span className="truncate font-black text-xs">دفع {paidAmount} • باقي {remainingAmount} ج.م</span></>
+                  : <><Clock className="h-3.5 w-3.5 shrink-0 text-rose-600" /><span className="truncate font-black text-xs">{totalAmount > 0 ? `غير مسدد (${totalAmount || remainingAmount} ج.م)` : "غير مسدد"}</span></>}
             </div>
             <span className="text-[10px] font-black text-slate-400 shrink-0">💳</span>
           </button>
@@ -461,11 +463,10 @@ function PlayerRow({
           {purchasesSummary.count > 0 ? (
             <button type="button"
               onClick={() => { setPaymentModalTab("purchases"); setShowPaymentModal(true); }}
-              className={`min-h-7 text-[10px] font-black rounded-lg px-2 py-0.5 text-center transition cursor-pointer flex items-center justify-between gap-1 border ${
-                purchasesSummary.remainingAmount > 0
+              className={`min-h-7 text-[10px] font-black rounded-lg px-2 py-0.5 text-center transition cursor-pointer flex items-center justify-between gap-1 border ${purchasesSummary.remainingAmount > 0
                   ? "text-amber-950 bg-amber-50/95 border-amber-300 hover:bg-amber-100 shadow-2xs"
                   : "text-emerald-800 bg-emerald-50/60 border-emerald-200/80 hover:bg-emerald-100"
-              }`}
+                }`}
             >
               <div className="flex items-center gap-1 min-w-0 truncate">
                 <ShoppingBag className={`h-3 w-3 shrink-0 ${purchasesSummary.remainingAmount > 0 ? "text-amber-600" : "text-emerald-600"}`} />

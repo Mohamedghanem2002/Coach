@@ -102,14 +102,26 @@ export default function BranchOverview({
                     </div>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => onSelectBranch(branch.name)}
-                    className="shrink-0 flex items-center gap-0.5 rounded-lg border border-slate-200/80 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                  <span
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-[11px] font-black border shadow-2xs ${
+                      attendanceRate === 100
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : attendanceRate > 0
+                        ? "bg-sky-50 text-sky-700 border-sky-200"
+                        : "bg-slate-50 text-slate-500 border-slate-200"
+                    }`}
                   >
-                    عرض
-                    <ChevronLeft className="h-3 w-3" />
-                  </button>
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        attendanceRate === 100
+                          ? "bg-emerald-500"
+                          : attendanceRate > 0
+                          ? "bg-sky-500 animate-pulse"
+                          : "bg-slate-300"
+                      }`}
+                    />
+                    <span>{attendanceRate}% حضور</span>
+                  </span>
                 </div>
 
                 {/* Attendance progress bar */}
@@ -159,6 +171,7 @@ export default function BranchOverview({
                       type="button"
                       className="min-h-11 sm:min-h-9 flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 text-xs font-black text-slate-700 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 active-press cursor-pointer"
                       onClick={() => onSelectBranch(branch.name)}
+                      title={`عرض قائمة لاعبي فرع ${branch.name}`}
                     >
                       عرض اللاعبين
                     </button>
@@ -167,6 +180,7 @@ export default function BranchOverview({
                       className="relative min-h-11 sm:min-h-9 flex-1 overflow-hidden rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 text-xs font-black text-white shadow-xs transition-all active-press cursor-pointer disabled:cursor-wait disabled:opacity-60"
                       disabled={!branchPlayers.length || busy}
                       onClick={() => onMarkPresent(branch.name)}
+                      title={`تسجيل حضور جميع لاعبي فرع ${branch.name} لحصة اليوم بضغطة واحدة`}
                     >
                       {busy ? (
                         <span className="flex items-center justify-center gap-1.5">

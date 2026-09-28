@@ -1433,7 +1433,18 @@ export default function Home() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-extrabold text-slate-600">تاريخ الحصة</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-slate-600">تاريخ الحصة</span>
+                          <button
+                            type="button"
+                            onClick={() => setSessionDate(today)}
+                            className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition cursor-pointer ${
+                              sessionDate === today ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            اليوم
+                          </button>
+                        </div>
                         <input
                           type="date"
                           max={today}
@@ -1443,7 +1454,18 @@ export default function Home() {
                         />
                       </label>
                       <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-extrabold text-slate-600">شهر الاشتراك</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-slate-600">شهر الاشتراك</span>
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMonth(currentMonth)}
+                            className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition cursor-pointer ${
+                              paymentMonth === currentMonth ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            الشهر الحالي
+                          </button>
+                        </div>
                         <input
                           type="month"
                           value={paymentMonth}
@@ -1483,73 +1505,17 @@ export default function Home() {
                         className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-black text-slate-800 active:scale-95 transition cursor-pointer"
                       >
                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        <span>تحديد كل المعروض</span>
+                        <span>تحديد كل المعروض للتحضير السريع</span>
                       </button>
                     </div>
 
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowMobileFilters(false);
-                          setBranchAttendanceReport({
-                            branchName: branch === "كل الصالات" ? (branches[0]?.name || "كل الصالات") : branch,
-                            date: sessionDate,
-                          });
-                        }}
-                        className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 text-xs font-black text-red-700 active:scale-95 transition cursor-pointer shadow-2xs"
-                      >
-                        <FileText className="h-4 w-4 text-red-600" />
-                        <span>كارت تقرير غياب وحضور الصالة 📋</span>
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-1.5 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowMobileFilters(false);
-                          handleInstantCloudBackup();
-                        }}
-                        disabled={isCloudBackingUp || isBackingUp || isRestoring}
-                        className="flex items-center justify-center gap-1 h-11 rounded-xl border border-emerald-300 bg-emerald-50 text-xs font-black text-emerald-800 active:scale-95 transition cursor-pointer"
-                      >
-                        <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
-                        <span className="truncate">{isCloudBackingUp ? "جارٍ..." : "نسخ سحابي"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowMobileFilters(false);
-                          setShowRestoreModal(true);
-                        }}
-                        disabled={isRestoring || isBackingUp || isCloudBackingUp}
-                        className="flex items-center justify-center gap-1 h-11 rounded-xl border border-amber-200 bg-amber-50 text-xs font-black text-amber-800 active:scale-95 transition cursor-pointer"
-                      >
-                        <RotateCcw className="h-4 w-4 text-amber-600 shrink-0" />
-                        <span className="truncate">{isRestoring ? "جارٍ..." : "استعادة"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleDownloadBackup();
-                          setShowMobileFilters(false);
-                        }}
-                        disabled={isBackingUp || isRestoring}
-                        className="flex items-center justify-center gap-1 h-11 rounded-xl border border-slate-200 bg-slate-50 text-xs font-black text-slate-700 active:scale-95 transition cursor-pointer"
-                      >
-                        <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
-                        <span className="truncate">{isBackingUp ? "جارٍ..." : "نسخ محلي"}</span>
-                      </button>
-                    </div>
-
-                    <div className="pt-1">
+                    <div className="pt-2">
                       <button
                         type="button"
                         onClick={() => setShowMobileFilters(false)}
-                        className="w-full h-11 rounded-xl bg-slate-900 font-cairo text-xs font-black text-white active:scale-98 transition cursor-pointer"
+                        className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 font-cairo text-xs font-black text-white active:scale-98 transition cursor-pointer shadow-sm"
                       >
-                        تطبيق وإغلاق
+                        تطبيق الفلاتر وإغلاق
                       </button>
                     </div>
                   </div>
