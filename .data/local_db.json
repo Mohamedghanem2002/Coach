@@ -138,12 +138,6 @@
   ],
   "branches": [
     {
-      "_id": "6aa28a77131cd6a66b5f1aea",
-      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
-      "name": "دوجو الكوميتيه للأبطال",
-      "createdAt": "2026-09-10T10:46:15.057Z"
-    },
-    {
       "_id": "6ab6feeb39e4b81002b51ffe",
       "ownerId": "test_owner_123",
       "name": "صالة الكاتا الرئيسية",
