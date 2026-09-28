@@ -22,7 +22,8 @@ export default function MobileBottomNav({
       icon: Compass,
       badge: eventsCount > 0 ? eventsCount : null,
     },
-    // Center FAB: Add Player
+    // Center FAB placeholder
+    null,
     {
       id: "branches",
       label: "الصالات",
@@ -39,156 +40,103 @@ export default function MobileBottomNav({
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 mobile-bottom-bar px-2 pt-1.5 pb-safe w-full max-w-full overflow-visible"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-[80] mobile-bottom-bar pb-safe w-full max-w-full"
       dir="rtl"
       aria-label="شريط التنقل الرئيسي للهاتف"
     >
-      <div className="mx-auto flex max-w-md w-full items-center justify-between gap-1 overflow-visible">
-        {/* Tab 1: Players */}
-        {(() => {
-          const tab = tabs[0];
+      <div className="mx-auto flex max-w-lg w-full items-end pt-1.5">
+        {tabs.map((tab, idx) => {
+          // Center FAB
+          if (tab === null) {
+            return (
+              <div
+                key="fab"
+                className="flex flex-1 items-center justify-center"
+              >
+                <button
+                  type="button"
+                  onClick={onOpenAddPlayer}
+                  className="
+                    flex h-[52px] w-[52px] -translate-y-3
+                    items-center justify-center
+                    rounded-full
+                    bg-red-600
+                    text-white
+                    shadow-lg shadow-red-600/35
+                    ring-[3px] ring-white
+                    active:scale-95
+                    transition-all duration-150
+                    touch-manipulation cursor-pointer select-none
+                  "
+                  title="تسجيل لاعب جديد"
+                  aria-label="تسجيل لاعب جديد"
+                >
+                  <Plus className="h-6 w-6 stroke-[2.5]" />
+                </button>
+              </div>
+            );
+          }
+
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
+
           return (
             <button
               key={tab.id}
               type="button"
               onClick={() => onChangeTab(tab.id)}
-              className={`relative flex flex-1 flex-col items-center justify-center py-1 px-1 transition-all touch-manipulation cursor-pointer active-press min-h-[50px] ${
-                isActive
-                  ? "text-red-600 font-black"
-                  : "text-slate-400 hover:text-slate-600 font-bold"
-              }`}
+              className={`
+                relative flex flex-1 flex-col items-center justify-center
+                py-1.5 px-1 gap-0.5
+                min-h-[52px] min-w-0
+                touch-manipulation cursor-pointer
+                transition-all duration-150
+                ${isActive ? "text-red-600" : "text-slate-400 hover:text-slate-600"}
+              `}
+              aria-current={isActive ? "page" : undefined}
             >
-              <div className="relative flex h-6 items-center justify-center">
-                <Icon className={`h-5 w-5 transition-transform ${isActive ? "scale-110 stroke-[2.5]" : "stroke-[1.8]"}`} />
+              {/* Icon with badge */}
+              <div className="relative flex h-7 w-7 items-center justify-center">
+                <Icon
+                  className={`h-[22px] w-[22px] transition-all duration-200 ${
+                    isActive ? "scale-110 stroke-[2.5]" : "stroke-[1.8]"
+                  }`}
+                />
                 {tab.badge && (
-                  <span className="absolute -top-1.5 -left-2.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-slate-100 border border-slate-300 px-1 text-[9px] font-black text-slate-700">
-                    {tab.badge}
+                  <span
+                    className={`
+                      absolute -top-1.5 -right-1.5
+                      flex h-[15px] min-w-[15px] items-center justify-center
+                      rounded-full px-0.5
+                      text-[9px] font-black leading-none
+                      ${tab.id === "events"
+                        ? "bg-amber-500 text-white"
+                        : "bg-slate-100 border border-slate-300/80 text-slate-700"
+                      }
+                    `}
+                  >
+                    {tab.badge > 99 ? "99+" : tab.badge}
                   </span>
                 )}
               </div>
-              <span className={`mt-1 text-[11px] leading-tight truncate ${isActive ? "font-black" : "font-semibold"}`}>
+
+              {/* Label */}
+              <span
+                className={`text-[10px] leading-none font-bold tracking-tight ${
+                  isActive ? "font-extrabold" : ""
+                }`}
+              >
                 {tab.label}
               </span>
+
+              {/* Active indicator */}
               {isActive && (
-                <span className="mt-0.5 h-1 w-5 rounded-full bg-red-600 animate-slide-up" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[2.5px] w-6 rounded-full bg-red-600 animate-slide-down" />
               )}
             </button>
           );
-        })()}
-
-        {/* Tab 2: Events */}
-        {(() => {
-          const tab = tabs[1];
-          const isActive = activeTab === tab.id;
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onChangeTab(tab.id)}
-              className={`relative flex flex-1 flex-col items-center justify-center py-1 px-1 transition-all touch-manipulation cursor-pointer active-press min-h-[50px] ${
-                isActive
-                  ? "text-red-600 font-black"
-                  : "text-slate-400 hover:text-slate-600 font-bold"
-              }`}
-            >
-              <div className="relative flex h-6 items-center justify-center">
-                <Icon className={`h-5 w-5 transition-transform ${isActive ? "scale-110 stroke-[2.5]" : "stroke-[1.8]"}`} />
-                {tab.badge && (
-                  <span className="absolute -top-1.5 -left-2.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-black text-white shadow-2xs">
-                    {tab.badge}
-                  </span>
-                )}
-              </div>
-              <span className={`mt-1 text-[11px] leading-tight truncate ${isActive ? "font-black" : "font-semibold"}`}>
-                {tab.label}
-              </span>
-              {isActive && (
-                <span className="mt-0.5 h-1 w-5 rounded-full bg-red-600 animate-slide-up" />
-              )}
-            </button>
-          );
-        })()}
-
-        {/* Center Prominent Elevated FAB: Add Player */}
-        <div className="flex shrink-0 items-center justify-center px-1 overflow-visible">
-          <button
-            type="button"
-            onClick={onOpenAddPlayer}
-            className="flex h-12 w-12 -translate-y-4 items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30 ring-4 ring-white active:scale-95 transition-all touch-manipulation cursor-pointer select-none"
-            title="تسجيل لاعب جديد"
-            aria-label="تسجيل لاعب جديد"
-          >
-            <Plus className="h-6 w-6 stroke-[3]" />
-          </button>
-        </div>
-
-        {/* Tab 3: Branches */}
-        {(() => {
-          const tab = tabs[2];
-          const isActive = activeTab === tab.id;
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onChangeTab(tab.id)}
-              className={`relative flex flex-1 flex-col items-center justify-center py-1 px-1 transition-all touch-manipulation cursor-pointer active-press min-h-[50px] ${
-                isActive
-                  ? "text-red-600 font-black"
-                  : "text-slate-400 hover:text-slate-600 font-bold"
-              }`}
-            >
-              <div className="relative flex h-6 items-center justify-center">
-                <Icon className={`h-5 w-5 transition-transform ${isActive ? "scale-110 stroke-[2.5]" : "stroke-[1.8]"}`} />
-                {tab.badge && (
-                  <span className="absolute -top-1.5 -left-2.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-slate-100 border border-slate-300 px-1 text-[9px] font-black text-slate-700">
-                    {tab.badge}
-                  </span>
-                )}
-              </div>
-              <span className={`mt-1 text-[11px] leading-tight truncate ${isActive ? "font-black" : "font-semibold"}`}>
-                {tab.label}
-              </span>
-              {isActive && (
-                <span className="mt-0.5 h-1 w-5 rounded-full bg-red-600 animate-slide-up" />
-              )}
-            </button>
-          );
-        })()}
-
-        {/* Tab 4: Stats */}
-        {(() => {
-          const tab = tabs[3];
-          const isActive = activeTab === tab.id;
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onChangeTab(tab.id)}
-              className={`relative flex flex-1 flex-col items-center justify-center py-1 px-1 transition-all touch-manipulation cursor-pointer active-press min-h-[50px] ${
-                isActive
-                  ? "text-red-600 font-black"
-                  : "text-slate-400 hover:text-slate-600 font-bold"
-              }`}
-            >
-              <div className="relative flex h-6 items-center justify-center">
-                <Icon className={`h-5 w-5 transition-transform ${isActive ? "scale-110 stroke-[2.5]" : "stroke-[1.8]"}`} />
-              </div>
-              <span className={`mt-1 text-[11px] leading-tight truncate ${isActive ? "font-black" : "font-semibold"}`}>
-                {tab.label}
-              </span>
-              {isActive && (
-                <span className="mt-0.5 h-1 w-5 rounded-full bg-red-600 animate-slide-up" />
-              )}
-            </button>
-          );
-        })()}
+        })}
       </div>
     </nav>
   );
 }
-

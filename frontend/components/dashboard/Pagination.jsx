@@ -12,14 +12,10 @@ export default function Pagination({
   if (totalItems === 0) return null;
 
   const startItem = pageSize === 0 ? 1 : (currentPage - 1) * pageSize + 1;
-  const endItem =
-    pageSize === 0 ? totalItems : Math.min(currentPage * pageSize, totalItems);
+  const endItem   = pageSize === 0 ? totalItems : Math.min(currentPage * pageSize, totalItems);
 
-  // Generate page numbers with ellipsis
   const getPageNumbers = () => {
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
     const pages = [];
     if (currentPage <= 3) {
       pages.push(1, 2, 3, 4, "...", totalPages);
@@ -31,23 +27,21 @@ export default function Pagination({
     return pages;
   };
 
+  const navBtnBase = "flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer";
+
   return (
     <div
-      className="mt-5 flex flex-col items-center justify-between gap-3.5 rounded-2xl border border-slate-200/70 bg-white p-3.5 shadow-sm sm:flex-row sm:px-5"
+      className="mt-5 flex flex-col items-center justify-between gap-3.5 rounded-2xl border border-slate-200/70 bg-white p-3.5 shadow-xs sm:flex-row sm:px-5"
       dir="rtl"
     >
-      {/* Items counter and page size selector */}
+      {/* Items counter + page size selector */}
       <div className="flex items-center gap-3 text-xs font-semibold text-slate-500">
         <span>
           عرض{" "}
-          <strong className="font-cairo text-slate-900 font-bold">
-            {startItem} - {endItem}
-          </strong>{" "}
-          من أصل{" "}
-          <strong className="font-cairo text-red-600 font-black">
-            {totalItems}
-          </strong>{" "}
-          لاعب
+          <strong className="text-slate-900 font-bold">{startItem} - {endItem}</strong>
+          {" "}من أصل{" "}
+          <strong className="text-red-600 font-black">{totalItems}</strong>
+          {" "}لاعب
         </span>
 
         <span className="h-4 w-px bg-slate-200 hidden sm:inline" />
@@ -68,70 +62,49 @@ export default function Pagination({
         </div>
       </div>
 
-      {/* Pagination controls (only if totalPages > 1) */}
+      {/* Page navigation */}
       {totalPages > 1 && pageSize !== 0 && (
         <>
-          {/* تحكم التصفح السريع والمريح للموبايل */}
+          {/* Mobile: simple prev/next */}
           <div className="flex sm:hidden w-full items-center justify-between gap-2 pt-2 border-t border-slate-100">
             <button
               type="button"
               disabled={currentPage === 1}
               onClick={() => onPageChange(currentPage - 1)}
-              className="flex-1 flex items-center justify-center gap-1.5 min-h-[42px] rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition active-press disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+              className="flex-1 flex items-center justify-center gap-1.5 min-h-[42px] rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition active-press disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
             >
               <ChevronRight className="h-4 w-4" />
               <span>السابق</span>
             </button>
 
-            <span className="text-xs font-black text-slate-800 shrink-0 px-2 font-cairo">
-              صفحة {currentPage} من {totalPages}
+            <span className="text-xs font-black text-slate-800 shrink-0 px-2">
+              {currentPage} / {totalPages}
             </span>
 
             <button
               type="button"
               disabled={currentPage === totalPages}
               onClick={() => onPageChange(currentPage + 1)}
-              className="flex-1 flex items-center justify-center gap-1.5 min-h-[42px] rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition active-press disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+              className="flex-1 flex items-center justify-center gap-1.5 min-h-[42px] rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition active-press disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
             >
               <span>التالي</span>
               <ChevronLeft className="h-4 w-4" />
             </button>
           </div>
 
-          {/* أزرار الصفحات الكاملة للشاشات الأكبر */}
+          {/* Desktop: full page buttons */}
           <div className="hidden sm:flex items-center gap-1">
-            {/* First page */}
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => onPageChange(1)}
-              title="الصفحة الأولى"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
+            <button type="button" disabled={currentPage === 1} onClick={() => onPageChange(1)} title="الصفحة الأولى" className={navBtnBase}>
               <ChevronsRight className="h-4 w-4" />
             </button>
-
-            {/* Previous page */}
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => onPageChange(currentPage - 1)}
-              title="الصفحة السابقة"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
+            <button type="button" disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)} title="الصفحة السابقة" className={navBtnBase}>
               <ChevronRight className="h-4 w-4" />
             </button>
 
-            {/* Page numbers */}
             <div className="flex items-center gap-1 mx-1">
               {getPageNumbers().map((page, idx) =>
                 page === "..." ? (
-                  <span
-                    key={`ellipsis-${idx}`}
-                    className="px-1.5 text-xs text-slate-400"
-                  >
-                    ...
-                  </span>
+                  <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-slate-400">...</span>
                 ) : (
                   <button
                     key={`page-${page}`}
@@ -139,7 +112,7 @@ export default function Pagination({
                     onClick={() => onPageChange(page)}
                     className={`flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-xs font-bold transition-all cursor-pointer ${
                       currentPage === page
-                        ? "bg-red-600 font-bold text-white shadow-sm shadow-red-600/20"
+                        ? "bg-red-600 text-white shadow-sm shadow-red-600/20"
                         : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300"
                     }`}
                   >
@@ -149,25 +122,10 @@ export default function Pagination({
               )}
             </div>
 
-            {/* Next page */}
-            <button
-              type="button"
-              disabled={currentPage === totalPages}
-              onClick={() => onPageChange(currentPage + 1)}
-              title="الصفحة التالية"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
+            <button type="button" disabled={currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)} title="الصفحة التالية" className={navBtnBase}>
               <ChevronLeft className="h-4 w-4" />
             </button>
-
-            {/* Last page */}
-            <button
-              type="button"
-              disabled={currentPage === totalPages}
-              onClick={() => onPageChange(totalPages)}
-              title="الصفحة الأخيرة"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
+            <button type="button" disabled={currentPage === totalPages} onClick={() => onPageChange(totalPages)} title="الصفحة الأخيرة" className={navBtnBase}>
               <ChevronsLeft className="h-4 w-4" />
             </button>
           </div>
