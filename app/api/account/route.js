@@ -42,6 +42,18 @@ export async function GET() {
       );
     }
 
+    const now = new Date();
+    let daysRemaining = null;
+    let isExpired = false;
+    if (user.subscriptionExpiresAt) {
+      const exp = new Date(user.subscriptionExpiresAt);
+      if (!isNaN(exp.getTime())) {
+        const diff = exp.getTime() - now.getTime();
+        daysRemaining = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+        isExpired = diff < 0;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       user: {
@@ -55,8 +67,10 @@ export async function GET() {
         subscriptionStatus: user.subscriptionStatus || "active",
         subscriptionPlan: user.subscriptionPlan || "trial",
         subscriptionExpiresAt: user.subscriptionExpiresAt,
-        subscriptionStartedAt: user.subscriptionStartedAt,
+        subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
         subscriptionPaid: user.subscriptionPaid !== false,
+        daysRemaining,
+        isExpired,
         suspensionReason: user.suspensionReason || null,
         createdAt: user.createdAt,
       },
@@ -86,6 +100,8 @@ export async function PUT(request) {
       typeof body.academyName === "string" ? body.academyName.trim() : "";
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const phone =
+      typeof body.phone === "string" ? body.phone.trim() : "";
     const currentPassword =
       typeof body.currentPassword === "string" ? body.currentPassword : "";
     const newPassword =
@@ -101,6 +117,13 @@ export async function PUT(request) {
     if (!academyName || academyName.length > 100) {
       return NextResponse.json(
         { error: "يرجى كتابة اسم الأكاديمية بشكل صحيح (حتى 100 حرف)" },
+        { status: 400 }
+      );
+    }
+
+    if (phone && phone.length > 30) {
+      return NextResponse.json(
+        { error: "يرجى كتابة رقم هاتف صحيح (حتى 30 حرفاً)" },
         { status: 400 }
       );
     }
@@ -170,6 +193,7 @@ export async function PUT(request) {
       name,
       academyName,
       email,
+      phone,
       updatedAt: new Date(),
     };
 
@@ -222,6 +246,7 @@ export async function PUT(request) {
         name,
         academyName,
         email,
+        phone,
       },
     });
   } catch (error) {

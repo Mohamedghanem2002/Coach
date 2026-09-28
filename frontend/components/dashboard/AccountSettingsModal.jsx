@@ -5,6 +5,10 @@ import {
   User,
   Building2,
   Mail,
+  Phone,
+  Calendar,
+  Clock,
+  CalendarDays,
   Lock,
   Eye,
   EyeOff,
@@ -31,6 +35,16 @@ export default function AccountSettingsModal({
     session?.user?.academyName || "Re_action DOJO"
   );
   const [email, setEmail] = useState(session?.user?.email || "");
+  const [phone, setPhone] = useState(session?.user?.phone || "");
+
+  // Subscription Details (set by platform admin)
+  const [subscriptionInfo, setSubscriptionInfo] = useState({
+    startedAt: null,
+    expiresAt: null,
+    daysRemaining: null,
+    isExpired: false,
+    status: "active",
+  });
 
   // Native tab: "profile" | "security"
   const [activeTab, setActiveTab] = useState("profile");
@@ -72,6 +86,14 @@ export default function AccountSettingsModal({
             setName(data.user.name || "");
             setAcademyName(data.user.academyName || "Re_action DOJO");
             setEmail(data.user.email || "");
+            setPhone(data.user.phone || "");
+            setSubscriptionInfo({
+              startedAt: data.user.subscriptionStartedAt || data.user.createdAt,
+              expiresAt: data.user.subscriptionExpiresAt,
+              daysRemaining: data.user.daysRemaining,
+              isExpired: data.user.isExpired,
+              status: data.user.subscriptionStatus || data.user.status || "active",
+            });
           }
         }
       } catch (err) {
@@ -97,6 +119,7 @@ export default function AccountSettingsModal({
     const trimmedName = name.trim();
     const trimmedAcademy = academyName.trim();
     const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPhone = phone.trim();
 
     if (!trimmedName) {
       setNotice({ type: "error", message: "يرجى كتابة اسم الكابتن / المدرب" });
@@ -112,6 +135,12 @@ export default function AccountSettingsModal({
 
     if (!trimmedEmail) {
       setNotice({ type: "error", message: "يرجى إدخال بريد إلكتروني صالح" });
+      setActiveTab("profile");
+      return;
+    }
+
+    if (trimmedPhone && trimmedPhone.length > 30) {
+      setNotice({ type: "error", message: "رقم الهاتف غير صالح (الحد الأقصى 30 حرفاً)" });
       setActiveTab("profile");
       return;
     }
@@ -158,6 +187,7 @@ export default function AccountSettingsModal({
         name: trimmedName,
         academyName: trimmedAcademy,
         email: trimmedEmail,
+        phone: trimmedPhone,
       };
 
       if (newPassword && currentPassword) {
@@ -187,6 +217,7 @@ export default function AccountSettingsModal({
         name: trimmedName,
         academyName: trimmedAcademy,
         email: trimmedEmail,
+        phone: trimmedPhone,
       });
 
       // Clear password fields
@@ -200,7 +231,7 @@ export default function AccountSettingsModal({
       });
 
       if (onUserUpdated) {
-        onUserUpdated(result.user);
+        onUserUpdated(result.user || payload);
       }
 
       if (showToast) {
@@ -222,6 +253,35 @@ export default function AccountSettingsModal({
   }
 
   const coachInitial = name ? name.trim().charAt(0) : "ك";
+
+  // Formatted subscription dates
+  const formattedStartedAt = subscriptionInfo.startedAt
+    ? new Intl.DateTimeFormat("ar-EG", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(subscriptionInfo.startedAt))
+    : "غير محدد";
+
+  const formattedExpiresAt = subscriptionInfo.expiresAt
+    ? new Intl.DateTimeFormat("ar-EG", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(subscriptionInfo.expiresAt))
+    : "غير محدد (مفتوح)";
+
+  // Dynamically resolve remaining days with fallback
+  let resolvedDaysRemaining = subscriptionInfo.daysRemaining;
+  let resolvedIsExpired = subscriptionInfo.isExpired;
+  if (resolvedDaysRemaining === null && subscriptionInfo.expiresAt) {
+    const exp = new Date(subscriptionInfo.expiresAt);
+    if (!isNaN(exp.getTime())) {
+      const diff = exp.getTime() - new Date().getTime();
+      resolvedDaysRemaining = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+      resolvedIsExpired = diff < 0;
+    }
+  }
 
   return (
     <div
@@ -294,9 +354,93 @@ export default function AccountSettingsModal({
                 <p className="mt-0.5 text-xs font-bold text-slate-300 truncate">
                   {academyName || "اسم الأكاديمية"}
                 </p>
-                <p className="text-[10px] text-slate-400 font-mono truncate mt-0.5" dir="ltr">
-                  {email || "coach@example.com"}
-                </p>
+                <div className="flex items-center gap-3 text-[11px] text-slate-300 mt-1 flex-wrap">
+                  <span className="font-mono" dir="ltr">
+                    {email || "coach@example.com"}
+                  </span>
+                  {phone ? (
+                    <span className="flex items-center gap-1 font-mono text-emerald-300 font-bold" dir="ltr">
+                      <Phone className="h-3 w-3" />
+                      {phone}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400">لم يُسجل رقم هاتف بعد</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ━━━ Subscription Validity Card (تاريخ التسجيل والانتهاء والأيام المتبقية) ━━━ */}
+          <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/40 p-3.5 sm:p-4 shadow-xs">
+            {/* Card Header & Status Badge */}
+            <div className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b border-indigo-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 leading-tight">
+                    صلاحية اشتراك المنظومة
+                  </h4>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    معتمدة وتُدار بواسطة إدارة المنصة
+                  </span>
+                </div>
+              </div>
+
+              {/* Status Pill with live pulse */}
+              <div>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black ${
+                  !resolvedIsExpired && resolvedDaysRemaining > 0
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                    : "bg-red-100 text-red-800 border border-red-200"
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${!resolvedIsExpired && resolvedDaysRemaining > 0 ? "bg-emerald-500" : "bg-red-500 animate-pulse"}`} />
+                  {!resolvedIsExpired && resolvedDaysRemaining > 0 ? "الاشتراك نشط ✓" : "منتهي الصلاحية ⛔"}
+                </span>
+              </div>
+            </div>
+
+            {/* 3 Metrics Grid: تاريخ التسجيل، تاريخ الانتهاء، متبقي كام يوم */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
+              {/* 1. تاريخ التسجيل */}
+              <div className="bg-white/95 rounded-xl p-2.5 border border-indigo-100 shadow-2xs">
+                <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-400 mb-1">
+                  <Calendar className="w-3 h-3 text-indigo-500" />
+                  <span>تاريخ التسجيل</span>
+                </div>
+                <strong className="text-xs font-black text-slate-800 block truncate">
+                  {formattedStartedAt}
+                </strong>
+              </div>
+
+              {/* 2. تاريخ الانتهاء */}
+              <div className="bg-white/95 rounded-xl p-2.5 border border-indigo-100 shadow-2xs">
+                <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-400 mb-1">
+                  <CalendarDays className="w-3 h-3 text-purple-500" />
+                  <span>تاريخ الانتهاء</span>
+                </div>
+                <strong className="text-xs font-black text-slate-800 block truncate">
+                  {formattedExpiresAt}
+                </strong>
+              </div>
+
+              {/* 3. المدة المتبقية */}
+              <div className={`rounded-xl p-2.5 border shadow-2xs ${
+                !resolvedIsExpired && resolvedDaysRemaining > 0
+                  ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
+                  : "bg-red-50/80 border-red-200 text-red-900"
+              }`}>
+                <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-400 mb-1">
+                  <Clock className="w-3 h-3 text-emerald-600" />
+                  <span>المدة المتبقية</span>
+                </div>
+                <strong className="text-xs font-black block truncate">
+                  {resolvedDaysRemaining !== null
+                    ? (!resolvedIsExpired && resolvedDaysRemaining > 0 ? `${resolvedDaysRemaining} يوماً` : "انتهت المدة")
+                    : "غير محدد"}
+                </strong>
               </div>
             </div>
           </div>
@@ -376,6 +520,28 @@ export default function AccountSettingsModal({
                   </div>
                   <span className="mt-1 block text-[10px] font-semibold text-slate-400">
                     يظهر في أعلى المنظومة، وعلى بطاقات الأبطال والشهادات والتقارير.
+                  </span>
+                </div>
+
+                {/* Coach Phone Number */}
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                    رقم هاتف الكابتن / الواتساب
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      maxLength={30}
+                      placeholder="مثال: 01028138408"
+                      dir="ltr"
+                      className="w-full rounded-xl border border-slate-200 bg-white pr-10 pl-3 py-2.5 text-xs sm:text-sm font-bold text-slate-900 outline-none transition focus:border-red-500 focus:ring-3 focus:ring-red-100 min-h-[44px]"
+                    />
+                    <Phone className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />
+                  </div>
+                  <span className="mt-1 block text-[10px] font-semibold text-slate-400">
+                    يُستخدم للتواصل المباشر مع إدارة المنظومة وإشعارات واتساب الأكاديمية.
                   </span>
                 </div>
 

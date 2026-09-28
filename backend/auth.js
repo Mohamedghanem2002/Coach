@@ -138,6 +138,7 @@ export const { handlers, auth } = NextAuth({
           id: user._id.toString(),
           name: user.name,
           email: user.email,
+          phone: user.phone || "",
           academyName: user.academyName || "Re_action DOJO",
           role,
           status: user.status || "active",
@@ -155,6 +156,7 @@ export const { handlers, auth } = NextAuth({
         token.sub = user.id;
         token.name = user.name;
         token.email = user.email;
+        token.phone = user.phone || "";
         token.academyName = user.academyName || "Re_action DOJO";
         token.role = user.role || "user";
         token.status = user.status || "active";
@@ -167,6 +169,8 @@ export const { handlers, auth } = NextAuth({
         if (session.user?.academyName) token.academyName = session.user.academyName;
         if (session.email) token.email = session.email;
         if (session.user?.email) token.email = session.user.email;
+        if (session.phone !== undefined) token.phone = session.phone;
+        if (session.user?.phone !== undefined) token.phone = session.user.phone;
         if (session.role) token.role = session.role;
         if (session.user?.role) token.role = session.user.role;
         if (session.status) token.status = session.status;
@@ -181,6 +185,7 @@ export const { handlers, auth } = NextAuth({
         if (token.sub) session.user.id = token.sub;
         if (token.name) session.user.name = token.name;
         if (token.email) session.user.email = token.email;
+        session.user.phone = token.phone || "";
         session.user.academyName = token.academyName || "Re_action DOJO";
         session.user.role = token.role || "user";
         session.user.status = token.status || "active";
