@@ -47,6 +47,7 @@ import {
   Cake,
   Sparkles,
   Maximize2,
+  FileText,
 } from "lucide-react";
 
 
@@ -1218,7 +1219,12 @@ export default function Profile({
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
       dir="rtl"
     >
-      <aside className="relative flex flex-col h-full h-dvh sm:h-auto sm:max-h-[90vh] lg:max-h-[88vh] w-full max-w-full sm:max-w-3xl lg:max-w-5xl overflow-hidden rounded-none sm:rounded-3xl border-0 sm:border sm:border-slate-200/80 bg-slate-50 shadow-2xl animate-fade-in-scale pb-safe">
+      <aside className="relative flex flex-col h-full h-dvh sm:h-auto sm:max-h-[90vh] lg:max-h-[88vh] w-full max-w-full sm:max-w-3xl lg:max-w-5xl overflow-hidden rounded-t-[32px] sm:rounded-3xl border-0 sm:border sm:border-slate-200/80 bg-slate-50 shadow-2xl animate-fade-in-scale pb-safe">
+        {/* Mobile Pull / Drag Handle */}
+        <div className="pt-2.5 pb-1 flex justify-center sm:hidden bg-white/95">
+          <div className="h-1.5 w-11 rounded-full bg-slate-300" />
+        </div>
+
         {/* ════════════ شريط التطبيق العلوي الذكي ════════════ */}
         <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-slate-200/80 bg-white/95 px-3.5 sm:px-6 py-2.5 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -1251,12 +1257,6 @@ export default function Profile({
                   <h1 className="truncate font-cairo text-sm sm:text-base font-black text-slate-900 leading-tight">
                     {player.name}
                   </h1>
-                  {isNew && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white shadow-xs ring-1 ring-emerald-300/50 animate-pulse shrink-0">
-                      <Sparkles className="h-3 w-3 text-amber-200 shrink-0" />
-                      <span>لاعب جديد ✨</span>
-                    </span>
-                  )}
                   <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.2 text-[10px] font-bold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
                     🥋 {player.belt || "أبيض"}
                   </span>
@@ -1264,27 +1264,20 @@ export default function Profile({
                     🏢 {player.branch}
                   </span>
                 </div>
-                <span className="block text-[10px] font-semibold text-slate-400">
-                  عضوية الأكاديمية • مستوى {player.level || "A"} • السن: {currentAge} سنة
+                <span className="block text-[10px] font-medium text-slate-400">
+                  مستوى {player.level || "A"} • {currentAge} سنة
                 </span>
               </div>
             </div>
 
             {/* Mobile Player Title */}
             <div className="sm:hidden min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  ملف بطل الكاراتيه
-                </span>
-                {isNew && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-1.5 py-0.2 text-[9px] font-black text-white shadow-2xs animate-pulse">
-                    ✨ جديد
-                  </span>
-                )}
-              </div>
-              <h1 className="truncate font-cairo text-sm sm:text-base font-black text-slate-900 leading-tight">
+              <h1 className="truncate font-cairo text-sm font-black text-slate-900 leading-tight">
                 {player.name}
               </h1>
+              <span className="block text-[10px] font-medium text-slate-400">
+                🥋 حزام {player.belt || "أبيض"} • {player.branch}
+              </span>
             </div>
           </div>
 
@@ -1582,16 +1575,16 @@ export default function Profile({
           ) : (
             /* ════════════ العرض الأساسي - تطبيق موبايل أصيل ════════════ */
             <>
-              {/* 1. بطاقة هوية اللاعب الموحدة مع شبكة الإجراءات السريعة الفورية */}
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-2xs space-y-3.5">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  {/* صورة / أفاتار اللاعب بحزام الكاراتيه المشع */}
+              {/* 1. كارت هوية اللاعب وشبكة الإجراءات السريعة (App Profile Header) */}
+              <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
+                <div className="flex items-center gap-3.5 sm:gap-4">
+                  {/* صورة / أفاتار اللاعب بحزام الكاراتيه مع إشارة التكبير */}
                   <div
                     onClick={() => {
                       if (player.photo) setShowZoomPhoto(true);
                     }}
-                    className={`relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-xl sm:text-2xl font-black text-white shadow-xs ring-2 ${beltStyle.border} ${
-                      player.photo ? "cursor-pointer hover:ring-4 hover:ring-red-400/70 transition active-press group" : ""
+                    className={`relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 font-cairo text-2xl sm:text-3xl font-black text-white shadow-xs ring-4 ring-offset-2 ring-offset-white ${beltStyle.border} ${
+                      player.photo ? "cursor-pointer hover:scale-105 transition-transform group" : ""
                     }`}
                     title={player.photo ? "انقر لتكبير صورة اللاعب 🔍" : player.name}
                   >
@@ -1602,7 +1595,7 @@ export default function Profile({
                           alt={player.name}
                           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                           <Maximize2 className="h-5 w-5 text-white drop-shadow" />
                         </div>
                       </>
@@ -1617,23 +1610,23 @@ export default function Profile({
                         {player.name}
                       </h2>
                       {isNew && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 px-3 py-0.5 text-xs font-black text-white shadow-sm ring-2 ring-emerald-300/40 animate-pulse shrink-0">
-                          <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-spin-slow shrink-0" />
-                          <span>لاعب جديد ✨</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-2.5 py-0.5 text-[11px] font-black text-white shadow-2xs">
+                          <Sparkles className="h-3 w-3 text-amber-200" />
+                          <span>بطل جديد</span>
                         </span>
                       )}
                     </div>
 
-                    {/* أشرطة وشارات الهوية */}
+                    {/* شارات الهوية المنظمة */}
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-bold shadow-2xs ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
+                      <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-bold shadow-2xs ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
                         <span className={`h-2 w-2 rounded-full ${beltStyle.dot}`} />
                         🥋 حزام {player.belt || "أبيض"}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 border border-slate-200/80 px-2 py-0.5 text-[11px] font-bold text-slate-700">
                         🏢 {player.branch}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 border border-slate-200/80 px-2 py-0.5 text-[11px] font-bold text-slate-700">
                         🎂 {currentAge} سنة
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 border border-red-200 px-2 py-0.5 text-[11px] font-black text-red-700">
@@ -1641,131 +1634,157 @@ export default function Profile({
                       </span>
                     </div>
 
-                    <span className="mt-1.5 block text-[10px] sm:text-[11px] font-semibold text-slate-400">
-                      عضو مسجل منذ: {registrationDate} {isNew ? "• (خلال أسبوع الانضمام ⭐)" : ""}
+                    <span className="mt-1.5 block text-[10px] sm:text-[11px] font-medium text-slate-400">
+                      عضو منذ: {registrationDate}
                     </span>
                   </div>
                 </div>
 
-                {/* بانر ترحيبي فخم للاعبين الجدد (خلال الأسبوع الأول) */}
-                {isNew && (
-                  <div className="rounded-xl border border-emerald-300/80 bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 p-3 shadow-2xs flex items-center justify-between gap-3 animate-fade-in">
+                {/* بنر سياقي ذكي (يظهر فقط إذا كان هناك مناسبة خاصة أو كارت ترحيب متاح - بدون تكرار) */}
+                {hasActiveBirthday ? (
+                  <div className="rounded-2xl border border-rose-200 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3 shadow-2xs flex items-center justify-between gap-3 animate-slide-up">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs text-base">
+                      <span className="text-2xl shrink-0 animate-bounce">🎂</span>
+                      <div className="min-w-0">
+                        <strong className="block font-cairo text-xs sm:text-sm font-black text-rose-950 truncate">
+                          {birthdayInfo.isToday ? `اليوم عيد ميلاد ${player.name}!` : `غداً عيد ميلاد ${player.name}!`}
+                        </strong>
+                        <span className="block text-[11px] font-bold text-amber-900 truncate">
+                          يُتم {birthdayInfo.turningAge} عاماً · كل عام وبطلنا بألف خير! 🎉
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        disabled={isSendingBirthdayText}
+                        onClick={shareBirthdayText}
+                        className="flex items-center gap-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition cursor-pointer disabled:opacity-60"
+                        title="إرسال تهنئة عبر واتساب"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        <span className="hidden xs:inline">تهنئة واتساب</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowBirthdayModal(true)}
+                        className="flex items-center gap-1 rounded-xl border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-black text-amber-900 shadow-2xs hover:bg-amber-50 active:scale-95 transition cursor-pointer"
+                        title="معاينة كارت عيد الميلاد"
+                      >
+                        <Eye className="h-3.5 w-3.5 text-amber-700" />
+                        <span>الكارت</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : showWelcomeCardButton ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50/60 p-3 shadow-2xs flex items-center justify-between gap-3 animate-fade-in">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-2xs text-sm">
                         🥋
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-cairo text-xs sm:text-sm font-black text-emerald-950">
-                            بطل جديد انضم للأكاديمية حديثاً!
-                          </span>
-                          <span className="rounded-md bg-emerald-200/70 border border-emerald-300 px-1.5 py-0.2 text-[10px] font-black text-emerald-900">
-                            أسبوع الترحيب ✨
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-emerald-800 font-medium truncate mt-0.5">
-                          تاريخ التسجيل: {registrationDate} • مرحباً ببطلنا في مسيرة التدريب وصناعة الأبطال 🏆
-                        </p>
+                        <strong className="block font-cairo text-xs sm:text-sm font-black text-emerald-950 truncate">
+                          مرحباً ببطلنا الجديد في الأكاديمية!
+                        </strong>
+                        <span className="block text-[11px] font-medium text-emerald-800 truncate">
+                          كارت الترحيب جاهز للمشاركة على السوشيال ميديا ✨
+                        </span>
                       </div>
                     </div>
-                    {showWelcomeCardButton && (
-                      <button
-                        type="button"
-                        onClick={() => setShowWelcomeCardModal(true)}
-                        className="shrink-0 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3 py-1.5 text-xs font-black shadow-xs transition active:scale-95 cursor-pointer ring-2 ring-emerald-300/60 animate-pulse"
-                        title="معاينة كارت الترحيب بالبطل"
-                      >
-                        <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                        <span className="hidden xs:inline">كارت الترحيب</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* شبكة الإجراءات السريعة بأسلوب تطبيقات الموبايل الفاخرة */}
-                <div className="pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {/* إجراء 1: إرسال تقرير نصي فوري */}
-                  <button
-                    type="button"
-                    disabled={isSendingText}
-                    onClick={shareReportText}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100/80 p-2.5 text-xs font-black text-emerald-900 transition active-press cursor-pointer touch-manipulation shadow-2xs disabled:opacity-60"
-                    title="إرسال تقرير نصي شامل بالحضور والاشتراكات لولي الأمر عبر واتساب فوراً من أول نقرة"
-                  >
-                    <MessageCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span className="truncate">إرسال تقرير نصي</span>
-                  </button>
-
-                  {/* إجراء 2: بطاقة اللاعب (معاينة كصورة) */}
-                  <button
-                    type="button"
-                    onClick={() => setShowCardModal(true)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100/80 p-2.5 text-xs font-black text-red-800 transition active-press cursor-pointer touch-manipulation shadow-2xs"
-                    title="معاينة بطاقة اللاعب كصورة وحفظها أو إرسالها عبر واتساب"
-                  >
-                    <Eye className="h-4 w-4 text-red-600 shrink-0" />
-                    <span className="truncate">بطاقة اللاعب 🖼️</span>
-                  </button>
-
-                  {/* إجراء 3: كارت الترحيب (روش للسوشيال ميديا) - يظهر فقط إذا كان متاحاً */}
-                  {showWelcomeCardButton && (
                     <button
                       type="button"
                       onClick={() => setShowWelcomeCardModal(true)}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs ring-2 ring-amber-300/60 animate-pulse"
-                      title="معاينة كارت الترحيب بالبطل ومشاركته على السوشيال ميديا"
+                      className="shrink-0 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3 py-1.5 text-xs font-black shadow-xs transition active:scale-95 cursor-pointer ring-2 ring-emerald-300/60"
+                      title="معاينة كارت الترحيب بالبطل"
                     >
-                      <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-                      <span className="truncate">كارت الترحيب 🥋</span>
+                      <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                      <span>كارت الترحيب</span>
                     </button>
-                  )}
+                  </div>
+                ) : null}
 
-                  {/* إجراء 3: محادثة شات واتساب ولي الأمر */}
+                {/* شبكة الإجراءات السريعة الأربعة - تطبيق أصيل (4 Quick Action Buttons) */}
+                <div className="pt-2 border-t border-slate-100 grid grid-cols-4 gap-2">
+                  {/* 1. واتساب ولي الأمر */}
                   {guardianPhone ? (
                     <button
                       type="button"
                       onClick={openGuardianChat}
                       disabled={isOpeningChat}
-                      className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 p-2.5 text-xs font-black text-white transition active-press cursor-pointer touch-manipulation shadow-2xs disabled:opacity-60"
-                      title="محادثة واتساب مباشرة مع ولي الأمر"
+                      className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 py-2.5 px-1 text-emerald-900 transition active-press cursor-pointer touch-manipulation disabled:opacity-60 shadow-2xs"
+                      title="فتح محادثة واتساب مع ولي الأمر"
                     >
-                      <MessageCircle className="h-4 w-4 text-emerald-400 shrink-0" />
-                      <span className="truncate">شات ولي الأمر</span>
+                      <div className="h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                        <MessageCircle className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-black truncate max-w-full">واتساب</span>
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => startEditing("")}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 p-2.5 text-xs font-bold text-slate-600 transition active-press cursor-pointer touch-manipulation"
+                      className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 py-2.5 px-1 text-slate-500 transition active-press cursor-pointer touch-manipulation"
                       title="إضافة رقم ولي الأمر"
                     >
-                      <Phone className="h-4 w-4 text-slate-400 shrink-0" />
-                      <span className="truncate">+ هاتف ولي الأمر</span>
+                      <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center">
+                        <Phone className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-bold truncate max-w-full">+ هاتف</span>
                     </button>
                   )}
 
-                  {/* إجراء 4: تهنئة عيد الميلاد (إذا حل موعده) أو تعديل البيانات */}
-                  {hasActiveBirthday ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowBirthdayModal(true)}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 via-rose-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 p-2.5 text-xs font-black text-amber-900 transition active-press cursor-pointer touch-manipulation shadow-2xs ring-2 ring-amber-300/70 animate-pulse"
-                      title="معاينة كارت تهنئة عيد الميلاد"
+                  {/* 2. اتصال هاتفي مباشر */}
+                  {guardianPhone ? (
+                    <a
+                      href={`tel:${guardianPhone}`}
+                      onClick={handlePhoneCallClick}
+                      className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-blue-50 hover:bg-blue-100/80 border border-blue-200/80 py-2.5 px-1 text-blue-900 transition active-press touch-manipulation shadow-2xs text-center"
+                      title="اتصال هاتفي مباشر"
                     >
-                      <PartyPopper className="h-4 w-4 text-amber-600 shrink-0" />
-                      <span className="truncate">كارت العيد 🎂</span>
-                    </button>
+                      <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                        <Phone className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-black truncate max-w-full">اتصال</span>
+                    </a>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => startEditing()}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 p-2.5 text-xs font-bold text-slate-700 transition active-press cursor-pointer touch-manipulation"
-                      title="تعديل بيانات اللاعب"
+                      disabled
+                      className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-slate-50 border border-slate-200 py-2.5 px-1 text-slate-300 opacity-60 cursor-not-allowed text-center"
                     >
-                      <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                      <span className="truncate">تعديل الملف</span>
+                      <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center">
+                        <Phone className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-bold truncate max-w-full">اتصال</span>
                     </button>
                   )}
+
+                  {/* 3. تقرير نصي فوري */}
+                  <button
+                    type="button"
+                    disabled={isSendingText}
+                    onClick={shareReportText}
+                    className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 py-2.5 px-1 text-slate-800 transition active-press cursor-pointer touch-manipulation disabled:opacity-60 shadow-2xs"
+                    title="إرسال تقرير نصي شامل لولي الأمر عبر واتساب"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-xs">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <span className="text-[11px] font-black truncate max-w-full">تقرير فوري</span>
+                  </button>
+
+                  {/* 4. كارت ID اللاعب */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCardModal(true)}
+                    className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-red-50 hover:bg-red-100/80 border border-red-200/80 py-2.5 px-1 text-red-900 transition active-press cursor-pointer touch-manipulation shadow-2xs"
+                    title="معاينة ومشاركة كارت هوية اللاعب"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xs">
+                      <Eye className="h-4 w-4" />
+                    </div>
+                    <span className="text-[11px] font-black truncate max-w-full">كارت اللاعب</span>
+                  </button>
                 </div>
               </div>
 
@@ -1980,7 +1999,7 @@ export default function Profile({
                       </div>
                     </div>
 
-                    {/* كارت الإحصائيات الحيوية الثلاثية */}
+                    {/* كارت الإحصائيات الحيوية الثلاثية (بدون تكرار لاشتراك الشهر) */}
                     <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
                       <div className="rounded-2xl border border-slate-200/80 bg-white p-3 sm:p-4 text-center shadow-2xs">
                         <strong className="block font-cairo text-lg sm:text-2xl font-black text-slate-900">
@@ -2000,155 +2019,87 @@ export default function Profile({
                         </span>
                       </div>
 
+                      {/* كارت متبقي المشتريات / المستلزمات (معلومة حيوية بدلاً من تكرار الاشتراك) */}
                       <div
                         className={`rounded-2xl border p-3 sm:p-4 text-center cursor-pointer transition active:scale-95 shadow-2xs ${
-                          monthlyStatus === "paid"
-                            ? "border-emerald-200 bg-emerald-50/60"
-                            : monthlyStatus === "partially_paid"
-                              ? "border-amber-300 bg-amber-50/70"
-                              : "border-rose-200 bg-rose-50/60"
+                          purchasesSummary.remainingAmount > 0
+                            ? "border-amber-300 bg-amber-50/70"
+                            : "border-slate-200/80 bg-white"
                         }`}
-                        onClick={() => {
-                          setTargetPaymentMonth(paymentMonth);
-                          setTargetPaymentDetails(paymentDetails);
-                          setShowPaymentModal(true);
-                        }}
-                        title="انقر لتسجيل أو تعديل الاشتراك"
+                        onClick={() => setMobileProfileTab("purchases")}
+                        title="انقر لعرض تفاصيل مشتريات ومستلزمات اللاعب"
                       >
                         <strong
-                          className={`block font-cairo text-xs sm:text-base font-black truncate ${
-                            monthlyStatus === "paid"
-                              ? "text-emerald-700"
-                              : monthlyStatus === "partially_paid"
-                                ? "text-amber-900"
-                                : "text-rose-700"
+                          className={`block font-cairo text-base sm:text-xl font-black truncate ${
+                            purchasesSummary.remainingAmount > 0 ? "text-amber-950" : "text-emerald-700"
                           }`}
                         >
-                          {monthlyStatus === "paid"
-                            ? "✓ مدفوع"
-                            : monthlyStatus === "partially_paid"
-                              ? `دفع ${paidAmount}`
-                              : `لم يدفع (${remainingAmount})`}
+                          {purchasesSummary.remainingAmount > 0
+                            ? `${purchasesSummary.remainingAmount} ج.م`
+                            : purchasesSummary.count > 0
+                              ? "خالص ✓"
+                              : "لا يوجد"}
                         </strong>
-                        <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-400 truncate">
-                          شهر {paymentMonth}
+                        <span className="mt-0.5 block text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate">
+                          {purchasesSummary.remainingAmount > 0 ? "متبقي مشتريات" : "رصيد المستلزمات"}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* العمود الجانبي (التواصل والمناسبات والإجراءات) */}
+                  {/* العمود الجانبي (بيانات العضوية والتواصل) */}
                   <div className="lg:col-span-5 space-y-3.5 sm:space-y-4">
-                    {/* كارت تواصل ولي الأمر المباشر */}
-                    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                          <Phone className="h-4 w-4 text-red-600 shrink-0" />
-                          هاتف ولي الأمر:
-                        </span>
-                        {guardianPhone ? (
-                          <span className="font-cairo text-xs sm:text-sm font-black text-slate-900 tracking-wider" dir="ltr">
-                            {guardianPhone}
-                          </span>
-                        ) : (
-                          <span className="text-[11px] font-medium text-slate-400">غير مسجل</span>
-                        )}
-                      </div>
-
-                      {guardianPhone ? (
-                        <div className="grid grid-cols-2 gap-2">
-                          <a
-                            href={`tel:${guardianPhone}`}
-                            onClick={handlePhoneCallClick}
-                            className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 px-3 py-2.5 text-xs font-bold text-blue-800 transition active:scale-95 text-center touch-manipulation"
-                            title="إجراء اتصال هاتفي مباشر بولي الأمر"
-                          >
-                            {isCallingGuardian ? (
-                              <>
-                                <span className="h-3.5 w-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin shrink-0" />
-                                <span className="truncate">جاري الاتصال...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                                <span className="truncate">اتصال هاتفي</span>
-                              </>
-                            )}
-                          </a>
-
-                          <button
-                            type="button"
-                            onClick={openGuardianChat}
-                            disabled={isOpeningChat}
-                            className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-2.5 text-xs font-bold text-white transition active:scale-95 disabled:opacity-60 cursor-pointer text-center touch-manipulation shadow-2xs"
-                            title="فتح محادثة واتساب مباشرة مع ولي الأمر"
-                          >
-                            {isOpeningChat ? (
-                              <>
-                                <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin shrink-0" />
-                                <span className="truncate">جاري الفتح...</span>
-                              </>
-                            ) : (
-                              <>
-                                <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">محادثة واتساب</span>
-                              </>
-                            )}
-                          </button>
+                    {/* بطاقة معلومات ولي الأمر والعضوية */}
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-2xs space-y-3">
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+                            <Phone className="h-3.5 w-3.5 text-slate-600" />
+                          </div>
+                          <span className="text-xs font-black text-slate-900 font-cairo">بيانات العضوية والتواصل</span>
                         </div>
-                      ) : (
                         <button
                           type="button"
-                          onClick={() => startEditing("")}
-                          className="w-full text-center text-xs font-bold text-red-600 hover:underline py-1.5 cursor-pointer"
+                          onClick={() => startEditing()}
+                          className="text-[11px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer transition active:scale-95"
+                          title="تعديل البيانات"
                         >
-                          + اضغط هنا لإضافة رقم هاتف ولي الأمر
+                          <Pencil className="h-3 w-3" />
+                          <span>تعديل</span>
                         </button>
-                      )}
-                    </div>
-
-                    {/* تنبيه عيد الميلاد التفاعلي إن وُجد */}
-                    {hasActiveBirthday && (
-                      <div className="rounded-2xl border-2 border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 p-3.5 text-xs shadow-xs animate-slide-up space-y-2.5 ring-2 ring-rose-200/60">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-2xl animate-bounce shrink-0">🎂</span>
-                          <div>
-                            <strong className="block font-cairo text-sm font-black text-rose-900 leading-snug">
-                              {birthdayInfo.isToday
-                                ? `اليوم عيد ميلاد ${player.name}! 🎉`
-                                : `غداً عيد ميلاد ${player.name}! 🎉 (قبلها بيوم)`}
-                            </strong>
-                            <span className="block text-[11px] font-bold text-amber-900 mt-0.5">
-                              {birthdayInfo.isToday
-                                ? `يُتم اليوم ${birthdayInfo.turningAge} سنة · كل عام وبطلنا بألف خير! 🥋`
-                                : `يُتم غداً ${birthdayInfo.turningAge} سنة · يمكنك إرسال كارت التهنئة مسبقاً! 🥋`}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-rose-200/60">
-                          <button
-                            type="button"
-                            disabled={isSendingBirthdayText}
-                            onClick={shareBirthdayText}
-                            className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-2 font-black text-white shadow-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-60 text-xs touch-manipulation"
-                            title="إرسال تهنئة نصية لشات واتساب ولي الأمر فوراً من أول نقرة"
-                          >
-                            <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                            <span>تهنئة نصية 🎉</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setShowBirthdayModal(true)}
-                            className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 font-black text-amber-900 shadow-2xs hover:bg-amber-100 active:scale-95 transition-all cursor-pointer text-xs touch-manipulation"
-                            title="معاينة كارت التهنئة كصورة وحفظه أو إرساله عبر واتساب"
-                          >
-                            <Eye className="h-3.5 w-3.5 shrink-0 text-amber-700" />
-                            <span>معاينة الكارت 🎂</span>
-                          </button>
-                        </div>
                       </div>
-                    )}
+
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="font-bold text-slate-500 text-[11px]">هاتف ولي الأمر</span>
+                          {guardianPhone ? (
+                            <span className="font-cairo font-black text-slate-900 tracking-wider" dir="ltr">
+                              {guardianPhone}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => startEditing("")}
+                              className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer"
+                            >
+                              + إضافة رقم
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="font-bold text-slate-500 text-[11px]">الفرع والتدريب</span>
+                          <span className="font-bold text-slate-800 text-[11px]">{player.branch} • حزام {player.belt || "أبيض"}</span>
+                        </div>
+
+                        {player.notes && (
+                          <div className="p-2.5 rounded-xl bg-amber-50/60 border border-amber-200/60 text-[11px] text-amber-950 font-medium">
+                            <span className="font-bold text-amber-900 block mb-0.5">ملاحظات الكابتن:</span>
+                            <p className="line-clamp-2 leading-relaxed">{player.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
                     {/* كارت ملخص المشتريات إن وُجدت */}
                     {purchasesSummary.count > 0 && (

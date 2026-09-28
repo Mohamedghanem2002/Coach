@@ -278,6 +278,23 @@
       "attendance": [],
       "createdAt": "2026-09-27T18:01:29.487Z",
       "_id": "6ab959f9a0992fdb8db3cc46"
+    },
+    {
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "ؤؤؤؤؤ",
+      "age": 6,
+      "dateOfBirth": "2020-05-05",
+      "guardianPhone": "",
+      "branch": "صالة الكاتا الرئيسية",
+      "belt": "أبيض",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "unpaid",
+      "paymentHistory": [],
+      "purchases": [],
+      "attendance": [],
+      "createdAt": "2026-09-28T03:29:54.665Z",
+      "_id": "6ab9df32c95fee0cff035b64"
     }
   ],
   "events": [],
