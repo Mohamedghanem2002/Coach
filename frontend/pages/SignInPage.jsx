@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye, EyeOff, Mail, Lock, User, CheckCircle2, ShieldCheck,
   Zap, Sparkles, Building2, Crown, KeyRound,
-  RefreshCw, AlertCircle, ShieldAlert,
+  RefreshCw, AlertCircle, ShieldAlert, Users, CalendarCheck,
+  CreditCard, Trophy, Cake, CloudUpload, ArrowRight, ChevronDown, ChevronUp,
 } from "lucide-react";
 
 const STRENGTH_LABELS = ["ضعيفة جداً", "مقبولة", "جيدة", "قوية ومثالية"];
@@ -38,10 +39,10 @@ function ErrorBanner({ msg }) {
   return (
     <div
       role="alert"
-      className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 animate-slide-up flex items-start gap-2"
+      className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 animate-slide-up flex items-start gap-2"
     >
-      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-      <span>{msg}</span>
+      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+      <span className="leading-relaxed">{msg}</span>
     </div>
   );
 }
@@ -51,13 +52,58 @@ function SuccessBanner({ msg }) {
   return (
     <div
       role="status"
-      className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-700 animate-slide-up flex items-center gap-2"
+      className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-700 animate-slide-up flex items-center gap-2"
     >
-      <CheckCircle2 className="w-4 h-4 shrink-0" />
-      <span>{msg}</span>
+      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+      <span className="leading-relaxed">{msg}</span>
     </div>
   );
 }
+
+const ACADEMY_FEATURES = [
+  {
+    icon: Users,
+    title: "إدارة الأبطال والأحزمة",
+    desc: "ملف رياضي متكامل لكل لاعب، صورته الشخصية، تاريخ ميلاده، وتدرج الأحزمة من الأبيض إلى الأسود مع سجل الترقيات.",
+    badge: "ملفات الأبطال",
+    color: "text-red-600 bg-red-50 border-red-200",
+  },
+  {
+    icon: CalendarCheck,
+    title: "تسجيل الحضور وكروت الواتساب",
+    desc: "تحضير الحصص بلمسة واحدة، واحتساب نسب الالتزام، وتوليد كروت تقرير حضور وغياب أنيقة لمشاركتها بضغطة زر مع أولياء الأمور.",
+    badge: "حضور ذكي",
+    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+  },
+  {
+    icon: CreditCard,
+    title: "المحاسبة وفصل الاشتراكات",
+    desc: "فصل مالي ذكي تماماً بين اشتراك الشهر، ومتبقي الأدوات والمشتريات والبدل، ورسوم الفعاليات بدون أي اختلاط أو أخطاء حسابية.",
+    badge: "فصل مالي",
+    color: "text-sky-600 bg-sky-50 border-sky-200",
+  },
+  {
+    icon: Trophy,
+    title: "إدارة البطولات والمعسكرات",
+    desc: "تنظيم المسابقات والرحلات واختبارات الأحزمة، وتحديد المشتركين، ورسوم كل بطل، ومتابعة المتحصلات المالية بسهولة.",
+    badge: "بطولات وفعاليات",
+    color: "text-amber-600 bg-amber-50 border-amber-200",
+  },
+  {
+    icon: Cake,
+    title: "مركز احتفالات أعياد الميلاد",
+    desc: "تنبيه تلقائي بأعياد ميلاد الأبطال اليوم وغداً، وتوليد كروت تهنئة رسمية مصممة خصيصاً لمشاركتها عبر واتساب لإسعاد اللاعبين.",
+    badge: "تهنئة آلية",
+    color: "text-rose-600 bg-rose-50 border-rose-200",
+  },
+  {
+    icon: CloudUpload,
+    title: "النسخ الاحتياطي السحابي الفوري",
+    desc: "حفظ فوري ومشفر لكافة بيانات ناديك في حسابك السحابي بضغطة واحدة، مع استعادة سريعة لحماية سجلات الأكاديمية بنسبة 100%.",
+    badge: "أمان سحابي",
+    color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+  },
+];
 
 export default function SignInPage() {
   const router = useRouter();
@@ -75,6 +121,8 @@ export default function SignInPage() {
     }
     return "login";
   });
+
+  const [showFeaturesMobile, setShowFeaturesMobile] = useState(false);
 
   // Redirect already authenticated users
   useEffect(() => {
@@ -126,9 +174,6 @@ export default function SignInPage() {
     if (/[^A-Za-z0-9]/.test(target)) score += 1;
     return score;
   }, [mode, password, newPassword]);
-
-  const strengthLabels = ["ضعيفة جداً", "مقبولة", "جيدة", "قوية ومثالية"];
-  const strengthColors = ["bg-rose-500", "bg-amber-500", "bg-blue-500", "bg-emerald-500"];
 
   // 1. Submit Authentication (Login, Register, or Admin)
   async function submitAuth(e) {
@@ -228,7 +273,6 @@ export default function SignInPage() {
     finally { setBusy(false); }
   }
 
-  // ─── Shared Helpers ───────────────────────────────────────────────────────
   function clearAndSetMode(m) {
     setError(""); setSuccess(""); setSuspendedDetails(null); setMode(m);
   }
@@ -236,31 +280,26 @@ export default function SignInPage() {
   const isAdmin = mode === "admin";
   const isForgot = mode === "forgot";
 
-  // ─── Accent config per mode ────────────────────────────────────────────────
   const accent = {
-    login:    { from: "from-red-600", to: "to-red-700",   ring: "focus:ring-red-100",   border: "focus:border-red-500",   btnBg: "bg-red-600 hover:bg-red-700 shadow-red-600/25" },
-    register: { from: "from-red-600", to: "to-rose-600",  ring: "focus:ring-red-100",   border: "focus:border-red-500",   btnBg: "bg-red-600 hover:bg-red-700 shadow-red-600/25" },
+    login:    { from: "from-red-600", to: "to-rose-700", ring: "focus:ring-red-100", border: "focus:border-red-500", btnBg: "bg-red-600 hover:bg-red-700 shadow-red-600/25" },
+    register: { from: "from-red-600", to: "to-rose-600", ring: "focus:ring-red-100", border: "focus:border-red-500", btnBg: "bg-red-600 hover:bg-red-700 shadow-red-600/25" },
     admin:    { from: "from-amber-500", to: "to-red-600", ring: "focus:ring-amber-100", border: "focus:border-amber-500", btnBg: "bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 hover:brightness-110 shadow-amber-500/30" },
     forgot:   { from: "from-blue-600", to: "to-indigo-600", ring: "focus:ring-blue-100", border: "focus:border-blue-500", btnBg: "bg-red-600 hover:bg-red-700 shadow-red-600/25" },
   }[mode] || {};
 
-  const inputClass = `w-full rounded-xl border border-slate-200 bg-slate-50/80 pr-10 pl-3 py-3 text-sm font-semibold text-slate-900 outline-none transition ${accent.border} ${accent.ring} focus:ring-3 focus:bg-white placeholder:text-slate-400 placeholder:font-normal`;
-  const inputWithToggleClass = `w-full rounded-xl border border-slate-200 bg-slate-50/80 pr-10 pl-10 py-3 text-sm font-semibold text-slate-900 outline-none transition ${accent.border} ${accent.ring} focus:ring-3 focus:bg-white placeholder:text-slate-400 placeholder:font-normal`;
-
-
+  const inputClass = `w-full rounded-2xl border border-slate-200 bg-slate-50/80 pr-10 pl-3.5 py-3 text-sm font-semibold text-slate-900 outline-none transition ${accent.border} ${accent.ring} focus:ring-3 focus:bg-white placeholder:text-slate-400 placeholder:font-normal`;
+  const inputWithToggleClass = `w-full rounded-2xl border border-slate-200 bg-slate-50/80 pr-10 pl-11 py-3 text-sm font-semibold text-slate-900 outline-none transition ${accent.border} ${accent.ring} focus:ring-3 focus:bg-white placeholder:text-slate-400 placeholder:font-normal`;
 
   return (
     <main
-      className="min-h-screen flex flex-col justify-center items-center selection:bg-red-600 selection:text-white relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1a0a0a 100%)" }}
+      className="min-h-screen flex flex-col justify-between selection:bg-red-600 selection:text-white relative overflow-x-hidden bg-slate-950 font-sans"
       dir="rtl"
     >
-      {/* ── Ambient Glow ──────────────────────────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full bg-red-600/10 blur-[120px]" />
+      {/* ── Ambient Background Accents ──────────────────────────────────── */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[450px] rounded-full bg-red-600/15 blur-[120px]" />
         <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-rose-900/15 blur-[100px]" />
-        <div className="absolute top-1/3 left-0 w-[300px] h-[300px] rounded-full bg-violet-900/10 blur-[100px]" />
-        {/* Grid pattern */}
+        <div className="absolute top-1/2 left-0 w-[350px] h-[350px] rounded-full bg-indigo-900/15 blur-[100px]" />
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -270,339 +309,579 @@ export default function SignInPage() {
         />
       </div>
 
-      {/* ── Main Card ─────────────────────────────────────────────────────── */}
-      <section className="relative z-10 w-full max-w-[900px] mx-auto px-4 sm:px-6 animate-fade-in-scale">
-        <div className="grid md:grid-cols-[1fr_1.1fr] rounded-3xl border border-white/8 overflow-hidden shadow-2xl"
-          style={{ background: "rgba(15,23,42,0.85)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
-        >
+      {/* ── Main Container ─────────────────────────────────────────────────── */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1 flex flex-col justify-center">
 
-          {/* ── LEFT: Brand Panel ───────────────────────────────────────── */}
-          <div
-            className="relative flex flex-col justify-between p-7 sm:p-10 border-b md:border-b-0 md:border-l border-white/8 overflow-hidden"
-            style={{ background: "linear-gradient(160deg, rgba(30,15,30,0.9) 0%, rgba(10,5,25,0.95) 100%)" }}
-          >
-            {/* Subtle left glow */}
-            <div className="pointer-events-none absolute top-0 right-0 w-40 h-40 rounded-full bg-red-600/10 blur-3xl" />
-
-            <div className="relative z-10">
-              {/* Logo */}
-              <div className="flex items-center gap-3 mb-8">
-                <div className={`
-                  relative flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg shrink-0
-                  bg-gradient-to-br ${accent.from} ${accent.to}
-                  ring-2 ring-white/20
-                `}>
-                  {isAdmin ? <Crown className="h-6 w-6" /> : isForgot ? <KeyRound className="h-6 w-6" /> : <Zap className="h-6 w-6 fill-white stroke-white" />}
-                  <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                    <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
-                  </span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <strong className="text-lg font-black tracking-tight text-white">Re_action</strong>
-                    <span className={`rounded-md px-2 py-0.5 text-[9px] font-black border tracking-widest ${isAdmin ? "bg-amber-500/20 text-amber-300 border-amber-500/40" : "bg-red-500/20 text-red-400 border-red-500/30"}`}>
-                      {isAdmin ? "ADMIN" : "DOJO"}
-                    </span>
-                  </div>
-                  <p className="text-[11px] font-medium text-slate-400 mt-0.5">
-                    {isAdmin ? "بوابة الإدارة المركزية" : "منظومة إدارة أكاديمية الكاراتيه"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Dynamic headline */}
-              <div className="space-y-3">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-extrabold ${
-                  isAdmin  ? "bg-amber-950/60 border-amber-700/50 text-amber-300" :
-                  isForgot ? "bg-blue-950/60 border-blue-700/50 text-blue-300"   :
-                             "bg-red-950/60 border-red-800/40 text-red-400"
-                }`}>
-                  {isAdmin ? <Crown className="h-3.5 w-3.5" /> : isForgot ? <ShieldCheck className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  <span>{isAdmin ? "لوحة التحكم المركزية العليا" : isForgot ? "استعادة الحساب الآمنة" : mode === "register" ? "ابدأ تجربتك المجانية 30 يوماً" : "إدارة تدريبية ذكية"}</span>
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
-                  {isAdmin  ? (<>التحكم الشامل بالمنصة.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-300">متابعة الاشتراكات والأكاديميات.</span></>) :
-                   isForgot ? (<>استرجع الوصول لحسابك.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">حماية كاملة لبياناتك.</span></>) :
-                   mode === "register" ? (<>انضم لأبطال الكاراتيه.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-amber-200">إدارة متطورة بلمسة واحدة.</span></>) :
-                   (<>قيادة تدريبية ذكية.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-amber-200">متابعة دقيقة للأبطال.</span></>)}
-                </h2>
-
-                <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
-                  {isAdmin  ? "أهلاً في بوابة المشرف العام. تابع فترات صلاحية الأكاديميات، تمديد وتجميد الاشتراكات، وسجلات العمليات الإدارية." :
-                   isForgot ? "سوف نرسل لك رمز تحقق من 6 أرقام ورابطاً آمناً لتعيين كلمة مرور جديدة." :
-                   mode === "register" ? "سجل حضور اللاعبين، تابع الاشتراكات، نظم بطولات الأكاديمية وصالات التدريب." :
-                   "سجل حضور وغياب لاعبيك بلمسة واحدة، تابع الاشتراكات الشهرية، وشارك تقارير التدريب فوراً."}
-                </p>
-              </div>
+        {/* ── Top Header Brand Strip (Ultra-crisp on Mobile & Desktop) ────── */}
+        <header className="flex items-center justify-between gap-3 mb-4 sm:mb-7">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-red-600 to-rose-700 text-white shadow-lg shadow-red-600/30 ring-2 ring-white/10 shrink-0">
+              <Zap className="h-5 w-5 sm:h-6 sm:w-6 fill-white stroke-white" />
+              <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
+              </span>
             </div>
-
-            {/* Feature Highlights */}
-            <div className="relative z-10 hidden sm:flex flex-col gap-2.5 pt-7 mt-7 border-t border-white/8">
-              {(isAdmin ? [
-                "إدارة مركزية للكباتن والأكاديميات وفترات الصلاحية",
-                "تمديد أو إيقاف أو حذف الحسابات بنقرة زر واحدة",
-                "سجل تدقيق أمني فوري وتفصيلي لكافة العمليات",
-              ] : isForgot ? [
-                "رمز تحقق مشفر ورابط آمن بصلاحية 15 دقيقة",
-                "تحديث فوري وآمن لكلمة المرور في قاعدة البيانات",
-              ] : [
-                "تسجيل حضور وغياب فوري بنظام اللمس السريع",
-                "فصل مالي تام بين الاشتراكات الشهرية والبطولات والأدوات",
-                "نسخ احتياطي واستعادة سحابية مشفرة لبياناتك",
-              ]).map((item, i) => (
-                <div key={i} className="flex items-center gap-2.5 text-slate-300 text-xs">
-                  <CheckCircle2 className={`h-4 w-4 shrink-0 ${isAdmin ? "text-amber-400" : isForgot ? "text-blue-400" : "text-emerald-400"}`} />
-                  <span className="font-semibold">{item}</span>
-                </div>
-              ))}
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-cairo text-lg sm:text-2xl font-black text-white tracking-tight">
+                  DOJO PRO
+                </span>
+                <span className="rounded-full bg-red-600/20 border border-red-500/40 text-red-400 px-2 py-0.5 text-[10px] font-black">
+                  دوجو برو 🥋
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs font-semibold text-slate-400">
+                المنظومة الاحترافية الشاملة لإدارة أكاديميات الكاراتيه والأبطال
+              </p>
             </div>
           </div>
 
-          {/* ── RIGHT: Forms Panel ──────────────────────────────────────── */}
-          <div className="flex items-center justify-center p-6 sm:p-10 bg-white">
-            <div className="w-full max-w-md space-y-5">
+          {/* Quick Info Tag on Desktop */}
+          <div className="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-bold text-slate-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span>نظام إداري معتمد للأندية والأكاديميات</span>
+          </div>
+        </header>
 
-              {/* ── Mode Tabs ─────────────────────────────────────────────── */}
+        {/* ── Core Layout Grid (Desktop 2-Col / Mobile Streamlined Stack) ─── */}
+        <div className="grid lg:grid-cols-[1fr_1.05fr] rounded-3xl border border-white/10 overflow-hidden shadow-2xl bg-slate-900/80 backdrop-blur-xl">
+
+          {/* ═════════════════════════════════════════════════════════════════
+              PANEL 1: Interactive Features Showcase (شرح ما تقدمه المنظومة)
+          ═════════════════════════════════════════════════════════════════ */}
+          <section className="relative flex flex-col justify-between p-5 sm:p-8 lg:p-10 border-b lg:border-b-0 lg:border-l border-white/10 bg-gradient-to-br from-slate-900/90 via-slate-950/95 to-slate-900/90 text-white order-2 lg:order-1">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-2 rounded-full bg-red-950/70 border border-red-800/50 px-3 py-1 text-xs font-extrabold text-red-400">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>ماذا تقدم منظومة DOJO PRO للأكاديمية؟</span>
+                </div>
+
+                {/* Mobile accordion toggle button */}
+                <button
+                  type="button"
+                  onClick={() => setShowFeaturesMobile(!showFeaturesMobile)}
+                  className="lg:hidden text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                >
+                  <span>{showFeaturesMobile ? "طي المميزات" : "عرض كل المميزات"}</span>
+                  {showFeaturesMobile ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
+                  منظومة سحابية متطورة مصممة خصيصاً{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-300 to-amber-200">
+                    لكباتن ومدربي الكاراتيه
+                  </span>
+                </h2>
+                <p className="mt-1 text-xs text-slate-400 leading-relaxed max-w-lg">
+                  تحكم كامل في الحضور والغياب، الاشتراكات والمشتريات، البطولات والأحزمة، مع تواصل فوري مع أولياء الأمور عبر واتساب.
+                </p>
+              </div>
+
+              {/* Feature Cards Grid (Always visible on desktop, toggleable on mobile) */}
+              <div className={`${showFeaturesMobile ? "grid" : "hidden lg:grid"} grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2`}>
+                {ACADEMY_FEATURES.map((feat, idx) => {
+                  const Icon = feat.icon;
+                  return (
+                    <article
+                      key={idx}
+                      className="rounded-2xl border border-white/5 bg-white/[0.03] p-3.5 transition-all hover:bg-white/[0.06] hover:border-white/10"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-600/20 text-red-400 border border-red-500/30">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="text-[10px] font-black text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
+                          {feat.badge}
+                        </span>
+                      </div>
+                      <h3 className="text-xs font-extrabold text-slate-200 font-cairo">
+                        {feat.title}
+                      </h3>
+                      <p className="mt-1 text-[11px] text-slate-400 leading-relaxed font-normal">
+                        {feat.desc}
+                      </p>
+                    </article>
+                  );
+                })}
+              </div>
+
+              {/* Quick Summary Pill for Mobile when collapsed */}
+              {!showFeaturesMobile && (
+                <div className="lg:hidden flex flex-wrap gap-1.5 pt-1">
+                  {["حضور بلمسة", "فصل مالي تام", "كروت واتساب", "أعياد ميلاد", "نسخ سحابي", "بطولات وأحزمة"].map((tag, i) => (
+                    <span key={i} className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-slate-300">
+                      ✓ {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Bottom trust statement */}
+            <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
+              <span>تطوير وإشراف: <strong className="text-slate-200">محمد غانم</strong></span>
+              <span>نظام آمن ومشفر 100% 🛡️</span>
+            </div>
+          </section>
+
+          {/* ═════════════════════════════════════════════════════════════════
+              PANEL 2: Auth Forms (Login / Register / Admin / Forgot)
+          ═════════════════════════════════════════════════════════════════ */}
+          <section className="p-5 sm:p-8 lg:p-10 bg-white flex flex-col justify-center order-1 lg:order-2">
+            <div className="w-full max-w-md mx-auto space-y-4 sm:space-y-5">
+
+              {/* ── Segmented Mode Switcher (The 3 Main Tabs) ───────────── */}
               <nav
                 aria-label="نوع تسجيل الدخول"
-                className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/80"
+                className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/90 shadow-2xs"
               >
                 {[
-                  { id: "login",    label: "تسجيل الدخول" },
-                  { id: "register", label: "حساب جديد" },
-                  { id: "admin",    label: "لوحة التحكم", icon: <Crown className="w-3.5 h-3.5" /> },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    id={`tab-${tab.id}`}
-                    onClick={() => clearAndSetMode(tab.id)}
-                    className={`
-                      py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation
-                      flex items-center justify-center gap-1
-                      ${(mode === tab.id || (tab.id === "login" && mode === "forgot"))
-                        ? tab.id === "admin"
-                          ? "bg-gradient-to-r from-amber-500 to-red-600 text-white shadow-sm shadow-amber-500/20"
-                          : "bg-white text-slate-900 shadow-sm border border-slate-200/60"
-                        : tab.id === "admin"
-                          ? "text-amber-700 hover:text-amber-900 hover:bg-amber-50/60"
-                          : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
-                      }
-                    `}
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
+                  { id: "login", label: "تسجيل الدخول", icon: <Zap className="w-3.5 h-3.5" /> },
+                  { id: "register", label: "حساب جديد", icon: <Sparkles className="w-3.5 h-3.5" /> },
+                  { id: "admin", label: "لوحة التحكم", icon: <Crown className="w-3.5 h-3.5 text-amber-500" /> },
+                ].map((tab) => {
+                  const isActive = (mode === tab.id || (tab.id === "login" && mode === "forgot"));
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      id={`tab-${tab.id}`}
+                      onClick={() => clearAndSetMode(tab.id)}
+                      className={`
+                        py-2.5 px-2 rounded-xl text-xs font-black transition-all cursor-pointer touch-manipulation
+                        flex items-center justify-center gap-1.5
+                        ${isActive
+                          ? tab.id === "admin"
+                            ? "bg-gradient-to-r from-amber-500 to-red-600 text-white shadow-sm shadow-amber-500/25"
+                            : "bg-white text-slate-900 shadow-sm border border-slate-200/80"
+                          : tab.id === "admin"
+                            ? "text-amber-800 hover:text-amber-950 hover:bg-amber-50/70"
+                            : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                        }
+                      `}
+                    >
+                      {tab.icon}
+                      <span className="truncate">{tab.label}</span>
+                    </button>
+                  );
+                })}
               </nav>
 
-              {/* ── Form Header ────────────────────────────────────────────── */}
+              {/* ── Dynamic Form Header ─────────────────────────────────── */}
               <header className="text-right space-y-1">
-                <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  {isAdmin  ? <><span>دخول لوحة التحكم</span><span className="text-amber-500">👑</span></> :
-                   isForgot ? <><span>استعادة كلمة المرور</span><KeyRound className="w-5 h-5 text-red-600" /></> :
-                   mode === "register" ? "إنشاء حساب كابتن جديد" :
-                   "أهلاً بك مجدداً يا كابتن 👋"}
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                  {isAdmin ? (
+                    <>
+                      <span>دخول لوحة التحكم المركزية</span>
+                      <Crown className="w-5 h-5 text-amber-500" />
+                    </>
+                  ) : isForgot ? (
+                    <>
+                      <span>استعادة كلمة المرور</span>
+                      <KeyRound className="w-5 h-5 text-red-600" />
+                    </>
+                  ) : mode === "register" ? (
+                    "إنشاء حساب كابتن وأكاديمية جديدة ✨"
+                  ) : (
+                    "مرحباً بك يا كابتن 👋"
+                  )}
                 </h1>
                 <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                  {isAdmin  ? "أدخل بريد المدير العام وكلمة المرور الإدارية لفتح لوحة التحكم." :
-                   isForgot ? (forgotStep === 1 ? "أدخل بريدك الإلكتروني وسنرسل لك رمز تحقق ورابطاً لتعيين كلمة مرور جديدة." : "أدخل رمز التحقق المكون من 6 أرقام وكلمة المرور الجديدة.") :
-                   mode === "register" ? "سجّل بياناتك للبدء في إدارة لاعبي الأكاديمية وصالات التدريب." :
-                   "أدخل بريدك الإلكتروني وكلمة المرور للمتابعة."}
+                  {isAdmin
+                    ? "أدخل البريد الإداري وكلمة المرور الخاصة بإدارة منصة الأكاديميات."
+                    : isForgot
+                    ? (forgotStep === 1
+                        ? "أدخل بريدك الإلكتروني المسجل وسنرسل لك رمز تحقق سريعاً."
+                        : "أدخل رمز التحقق المكون من 6 أرقام لتعيين كلمة مرور جديدة.")
+                    : mode === "register"
+                    ? "سجّل بياناتك وبيانات الأكاديمية لبدء إدارة الحضور والاشتراكات فوراً."
+                    : "سجّل دخولك للمتابعة وإدارة حصص واشتراكات الأبطال اليوم."}
                 </p>
               </header>
 
-              {/* ═══════════════════════════════════════════════════════════
-                  FORGOT PASSWORD SUB-FLOW
-              ═══════════════════════════════════════════════════════════ */}
+              {/* ── Forgot Password Flow ────────────────────────────────── */}
               {isForgot ? (
                 forgotStep === 1 ? (
-                  <form className="space-y-4 text-right" onSubmit={submitForgotStep1}>
-                    <div className="form-field">
-                      <label htmlFor="forgot-email" className="form-label form-label-required">البريد الإلكتروني المسجل</label>
-                      <div className="input-group">
-                        <input id="forgot-email" className={`${inputClass} focus:border-blue-500 focus:ring-blue-100`} type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="coach@example.com" autoComplete="email" dir="ltr" />
-                        <Mail className="input-icon" />
+                  <form className="space-y-3.5 text-right" onSubmit={submitForgotStep1}>
+                    <div>
+                      <label htmlFor="forgot-email" className="block text-xs font-bold text-slate-700 mb-1.5">
+                        البريد الإلكتروني المسجل <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="forgot-email"
+                          className={inputClass}
+                          type="email"
+                          required
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          placeholder="coach@example.com"
+                          autoComplete="email"
+                          dir="ltr"
+                        />
+                        <Mail className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       </div>
                     </div>
+
                     <ErrorBanner msg={error} />
-                    <button className={`btn btn-lg btn-full ${accent.btnBg} text-white font-black`} type="submit" disabled={busy}>
-                      {busy ? <><span className="btn-spinner" /><span>جاري إرسال التعليمات...</span></> : <><Mail className="h-4 w-4" /><span>إرسال رمز ورابط الاستعادة</span></>}
+
+                    <button
+                      className="w-full h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-sm shadow-red-600/25 active-press transition cursor-pointer flex items-center justify-center gap-2"
+                      type="submit"
+                      disabled={busy}
+                    >
+                      {busy ? (
+                        <>
+                          <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                          <span>جاري إرسال الرمز...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="h-4 w-4" />
+                          <span>إرسال رمز الاستعادة</span>
+                        </>
+                      )}
                     </button>
-                    <div className="text-center">
-                      <button type="button" onClick={() => clearAndSetMode("login")} className="text-xs font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer">← العودة لتسجيل الدخول</button>
+
+                    <div className="text-center pt-1">
+                      <button
+                        type="button"
+                        onClick={() => clearAndSetMode("login")}
+                        className="text-xs font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                      >
+                        ← العودة لتسجيل الدخول
+                      </button>
                     </div>
                   </form>
                 ) : (
-                  <form className="space-y-4 text-right" onSubmit={submitForgotStep2}>
-                    {/* Email display */}
-                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                      <div className="truncate min-w-0"><span className="text-slate-500 font-medium">البريد: </span><strong className="text-slate-800 font-bold" dir="ltr">{forgotEmail}</strong></div>
-                      <button type="button" onClick={() => setForgotStep(1)} className="text-red-600 hover:text-red-700 font-bold underline shrink-0 mr-2 cursor-pointer">تعديل</button>
+                  <form className="space-y-3.5 text-right" onSubmit={submitForgotStep2}>
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                      <div className="truncate min-w-0">
+                        <span className="text-slate-500 font-medium">البريد: </span>
+                        <strong className="text-slate-800 font-bold" dir="ltr">{forgotEmail}</strong>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setForgotStep(1)}
+                        className="text-red-600 hover:text-red-700 font-bold underline shrink-0 mr-2 cursor-pointer"
+                      >
+                        تعديل
+                      </button>
                     </div>
 
-                    {/* OTP dev notice */}
                     {simulatedOtpNotice && (
-                      <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-2">
-                        <div className="flex items-center gap-1.5 font-black text-amber-900"><span>🔐</span><span>رمز التحقق التجريبي (للاختبار الفوري):</span></div>
-                        <div className="flex items-center justify-between gap-2 bg-white px-3 py-2 rounded-xl border border-amber-200">
-                          <span className="font-mono text-xl font-black tracking-widest text-red-600 select-all">{simulatedOtpNotice}</span>
-                          <button type="button" onClick={() => setForgotOtp(simulatedOtpNotice)} className="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] transition cursor-pointer">تعبئة تلقائياً ✍️</button>
+                      <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1.5">
+                        <div className="flex items-center gap-1.5 font-black text-amber-900">
+                          <span>🔐</span>
+                          <span>رمز التحقق السريع للاختبار:</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-xl border border-amber-200">
+                          <span className="font-mono text-lg font-black tracking-widest text-red-600 select-all">
+                            {simulatedOtpNotice}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setForgotOtp(simulatedOtpNotice)}
+                            className="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] transition cursor-pointer"
+                          >
+                            تعبئة تلقائياً ✍️
+                          </button>
                         </div>
                       </div>
                     )}
 
                     <SuccessBanner msg={success} />
 
-                    {/* OTP input */}
-                    <div className="form-field">
-                      <label htmlFor="forgot-otp" className="form-label form-label-required">رمز التحقق (6 أرقام)</label>
-                      <input id="forgot-otp" className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-3 px-3 text-center text-xl font-black tracking-widest text-slate-900 outline-none transition focus:border-red-500 focus:ring-3 focus:ring-red-100 focus:bg-white font-mono" type="text" maxLength={6} required value={forgotOtp} onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ""))} placeholder="••••••" dir="ltr" />
+                    <div>
+                      <label htmlFor="forgot-otp" className="block text-xs font-bold text-slate-700 mb-1.5">
+                        رمز التحقق (6 أرقام) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="forgot-otp"
+                        className="w-full rounded-2xl border border-slate-200 bg-slate-50/80 py-3 px-3 text-center text-xl font-black tracking-widest text-slate-900 outline-none transition focus:border-red-500 focus:ring-3 focus:ring-red-100 focus:bg-white font-mono"
+                        type="text"
+                        maxLength={6}
+                        required
+                        value={forgotOtp}
+                        onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ""))}
+                        placeholder="••••••"
+                        dir="ltr"
+                      />
                     </div>
 
-                    {/* New password */}
-                    <div className="form-field">
-                      <label htmlFor="forgot-new-password" className="form-label form-label-required">كلمة المرور الجديدة</label>
-                      <div className="input-group">
-                        <input id="forgot-new-password" className={inputWithToggleClass} type={showNewPass ? "text" : "password"} minLength={8} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" autoComplete="new-password" dir="ltr" />
-                        <Lock className="input-icon" />
-                        <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer" title={showNewPass ? "إخفاء" : "إظهار"} style={{ top: "50%", transform: "translateY(-50%)" }}>
+                    <div>
+                      <label htmlFor="forgot-new-password" className="block text-xs font-bold text-slate-700 mb-1.5">
+                        كلمة المرور الجديدة <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="forgot-new-password"
+                          className={inputWithToggleClass}
+                          type={showNewPass ? "text" : "password"}
+                          minLength={8}
+                          required
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          autoComplete="new-password"
+                          dir="ltr"
+                        />
+                        <Lock className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPass(!showNewPass)}
+                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                          title={showNewPass ? "إخفاء" : "إظهار"}
+                        >
                           {showNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                       <StrengthBar pw={newPassword} strength={passwordStrength} />
                     </div>
 
-                    {/* Confirm new password */}
-                    <div className="form-field">
-                      <label htmlFor="forgot-confirm-password" className="form-label form-label-required">تأكيد كلمة المرور الجديدة</label>
-                      <div className="input-group">
-                        <input id="forgot-confirm-password" className={inputWithToggleClass} type={showConfirmNewPass ? "text" : "password"} minLength={8} required value={confirmNewPass} onChange={(e) => setConfirmNewPass(e.target.value)} placeholder="••••••••" autoComplete="new-password" dir="ltr" />
-                        <Lock className="input-icon" />
-                        <button type="button" onClick={() => setShowConfirmNewPass(!showConfirmNewPass)} className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer" title={showConfirmNewPass ? "إخفاء" : "إظهار"} style={{ top: "50%", transform: "translateY(-50%)" }}>
+                    <div>
+                      <label htmlFor="forgot-confirm-password" className="block text-xs font-bold text-slate-700 mb-1.5">
+                        تأكيد كلمة المرور الجديدة <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="forgot-confirm-password"
+                          className={inputWithToggleClass}
+                          type={showConfirmNewPass ? "text" : "password"}
+                          minLength={8}
+                          required
+                          value={confirmNewPass}
+                          onChange={(e) => setConfirmNewPass(e.target.value)}
+                          placeholder="••••••••"
+                          autoComplete="new-password"
+                          dir="ltr"
+                        />
+                        <Lock className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmNewPass(!showConfirmNewPass)}
+                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                          title={showConfirmNewPass ? "إخفاء" : "إظهار"}
+                        >
                           {showConfirmNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
 
                     <ErrorBanner msg={error} />
-                    <button className="btn btn-lg btn-full bg-red-600 hover:bg-red-700 text-white font-black shadow-red-600/25" type="submit" disabled={busy}>
-                      {busy ? <><span className="btn-spinner" /><span>جاري حفظ كلمة المرور...</span></> : <><CheckCircle2 className="h-4 w-4" /><span>تأكيد وتغيير كلمة المرور</span></>}
+
+                    <button
+                      className="w-full h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-sm shadow-red-600/25 active-press transition cursor-pointer flex items-center justify-center gap-2"
+                      type="submit"
+                      disabled={busy}
+                    >
+                      {busy ? (
+                        <>
+                          <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                          <span>جاري حفظ كلمة المرور...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>تأكيد وتغيير كلمة المرور</span>
+                        </>
+                      )}
                     </button>
+
                     <div className="flex items-center justify-between text-xs pt-1">
-                      <button type="button" onClick={() => clearAndSetMode("login")} className="font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer">← إلغاء والعودة للدخول</button>
-                      <button type="button" onClick={submitForgotStep1} disabled={busy} className="font-bold text-red-600 hover:text-red-700 transition cursor-pointer flex items-center gap-1"><RefreshCw className="h-3 w-3" />إعادة إرسال الرمز</button>
+                      <button
+                        type="button"
+                        onClick={() => clearAndSetMode("login")}
+                        className="font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                      >
+                        ← إلغاء والعودة للدخول
+                      </button>
+                      <button
+                        type="button"
+                        onClick={submitForgotStep1}
+                        disabled={busy}
+                        className="font-bold text-red-600 hover:text-red-700 transition cursor-pointer flex items-center gap-1"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        <span>إعادة إرسال الرمز</span>
+                      </button>
                     </div>
                   </form>
                 )
               ) : (
-                /* ═══════════════════════════════════════════════════════════
-                   MAIN AUTH FORMS (Login / Register / Admin)
-                ═══════════════════════════════════════════════════════════ */
-                <form className="space-y-4 text-right" onSubmit={submitAuth}>
+                /* ── Main Auth Form (Login / Register / Admin) ───────────── */
+                <form className="space-y-3.5 text-right" onSubmit={submitAuth}>
 
-                  {/* Register-only fields */}
+                  {/* Register-only: Name & Academy */}
                   {mode === "register" && (
                     <>
-                      <div className="form-field">
-                        <label htmlFor="reg-name" className="form-label form-label-required">اسم الكابتن / المدرب</label>
-                        <div className="input-group">
-                          <input id="reg-name" className={inputClass} required value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: كابتن أحمد محمود" autoComplete="name" />
-                          <User className="input-icon" />
+                      <div>
+                        <label htmlFor="reg-name" className="block text-xs font-bold text-slate-700 mb-1.5">
+                          اسم الكابتن / المدرب <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="reg-name"
+                            className={inputClass}
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="مثال: كابتن أحمد محمود"
+                            autoComplete="name"
+                          />
+                          <User className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         </div>
                       </div>
 
-                      <div className="form-field">
-                        <label htmlFor="reg-academy" className="form-label form-label-required">اسم الأكاديمية / النادي</label>
-                        <div className="input-group">
-                          <input id="reg-academy" className={inputClass} required value={academyName} onChange={(e) => setAcademyName(e.target.value)} placeholder="مثال: أكاديمية أبطال المستقبل للكاراتيه" autoComplete="organization" />
-                          <Building2 className="input-icon" />
+                      <div>
+                        <label htmlFor="reg-academy" className="block text-xs font-bold text-slate-700 mb-1.5">
+                          اسم الأكاديمية أو النادي <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="reg-academy"
+                            className={inputClass}
+                            required
+                            value={academyName}
+                            onChange={(e) => setAcademyName(e.target.value)}
+                            placeholder="مثال: أكاديمية الأبطال للكاراتيه"
+                            autoComplete="organization"
+                          />
+                          <Building2 className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         </div>
-                        <p className="form-hint">💡 سيظهر هذا الاسم على الكروت والشهادات (يمكن تعديله لاحقاً)</p>
+                        <p className="mt-1 text-[11px] text-slate-400 font-medium">
+                          💡 يظهر الاسم تلقائياً على كروت الحضور والشهادات (قابل للتعديل).
+                        </p>
                       </div>
                     </>
                   )}
 
                   {/* Email */}
-                  <div className="form-field">
-                    <label htmlFor="auth-email" className="form-label form-label-required">
-                      {isAdmin ? "البريد الإلكتروني للوحة التحكم" : "البريد الإلكتروني"}
+                  <div>
+                    <label htmlFor="auth-email" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      {isAdmin ? "البريد الإلكتروني للإدارة" : "البريد الإلكتروني"} <span className="text-red-500">*</span>
                     </label>
-                    <div className="input-group">
+                    <div className="relative">
                       <input
                         id="auth-email"
                         className={`${inputClass} ${isAdmin ? "border-amber-200 focus:border-amber-500 focus:ring-amber-100" : ""}`}
-                        type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         placeholder={isAdmin ? "mg0447837@gmail.com" : "coach@example.com"}
-                        autoComplete="email" dir="ltr"
+                        autoComplete="email"
+                        dir="ltr"
                       />
-                      <Mail className={`input-icon ${isAdmin ? "text-amber-500" : ""}`} />
+                      <Mail className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${isAdmin ? "text-amber-500" : "text-slate-400"}`} />
                     </div>
                   </div>
 
                   {/* Password */}
-                  <div className="form-field">
-                    <label htmlFor="auth-password" className="form-label form-label-required">
-                      {isAdmin ? "كلمة المرور الإدارية" : "كلمة المرور"}
+                  <div>
+                    <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700 mb-1.5">
+                      {isAdmin ? "كلمة المرور الإدارية" : "كلمة المرور"} <span className="text-red-500">*</span>
                     </label>
-                    <div className="input-group">
+                    <div className="relative">
                       <input
                         id="auth-password"
                         className={`${inputWithToggleClass} ${isAdmin ? "border-amber-200 focus:border-amber-500 focus:ring-amber-100" : ""}`}
-                        type={showPassword ? "text" : "password"} minLength={8} required value={password}
-                        onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
-                        autoComplete={mode === "register" ? "new-password" : "current-password"} dir="ltr"
+                        type={showPassword ? "text" : "password"}
+                        minLength={8}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        autoComplete={mode === "register" ? "new-password" : "current-password"}
+                        dir="ltr"
                       />
-                      <Lock className={`input-icon ${isAdmin ? "text-amber-500" : ""}`} />
-                      <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer" style={{ top: "50%", transform: "translateY(-50%)" }} title={showPassword ? "إخفاء" : "إظهار"}>
+                      <Lock className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${isAdmin ? "text-amber-500" : "text-slate-400"}`} />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((p) => !p)}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                        title={showPassword ? "إخفاء" : "إظهار"}
+                      >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
 
-                    {/* Password strength — register only */}
                     {mode === "register" && <StrengthBar pw={password} strength={passwordStrength} />}
 
-                    {/* Remember me + Forgot link — login only */}
                     {mode === "login" && (
                       <div className="mt-2.5 flex items-center justify-between">
                         <label className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
-                          <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="checkbox-input w-3.5 h-3.5" />
+                          <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="rounded border-slate-300 text-red-600 focus:ring-red-500 w-3.5 h-3.5 cursor-pointer"
+                          />
                           <span>تذكرني</span>
                         </label>
-                        <button type="button" onClick={() => { setError(""); setSuccess(""); setSuspendedDetails(null); setForgotEmail(email); setMode("forgot"); setForgotStep(1); }} className="text-xs font-bold text-red-600 hover:text-red-700 hover:underline transition cursor-pointer">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setError(""); setSuccess(""); setSuspendedDetails(null);
+                            setForgotEmail(email); setMode("forgot"); setForgotStep(1);
+                          }}
+                          className="text-xs font-bold text-red-600 hover:text-red-700 hover:underline transition cursor-pointer"
+                        >
                           نسيت كلمة المرور؟
                         </button>
                       </div>
                     )}
                   </div>
 
-                  {/* Confirm password — register only */}
+                  {/* Register-only: Confirm password */}
                   {mode === "register" && (
-                    <div className="form-field">
-                      <label htmlFor="reg-confirm-password" className="form-label form-label-required">تأكيد كلمة المرور</label>
-                      <div className="input-group">
-                        <input id="reg-confirm-password" className={inputWithToggleClass} type={showConfirmPassword ? "text" : "password"} minLength={8} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" autoComplete="new-password" dir="ltr" />
-                        <Lock className="input-icon" />
-                        <button type="button" onClick={() => setShowConfirmPassword((p) => !p)} className="absolute left-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer" style={{ top: "50%", transform: "translateY(-50%)" }} title={showConfirmPassword ? "إخفاء" : "إظهار"}>
+                    <div>
+                      <label htmlFor="reg-confirm-password" className="block text-xs font-bold text-slate-700 mb-1.5">
+                        تأكيد كلمة المرور <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="reg-confirm-password"
+                          className={inputWithToggleClass}
+                          type={showConfirmPassword ? "text" : "password"}
+                          minLength={8}
+                          required
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          autoComplete="new-password"
+                          dir="ltr"
+                        />
+                        <Lock className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((p) => !p)}
+                          className="absolute left-3.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                          title={showConfirmPassword ? "إخفاء" : "إظهار"}
+                        >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
                   )}
 
-                  {/* Suspended account alert */}
+                  {/* Suspended account alert banner */}
                   {suspendedDetails && (
                     <div role="alert" className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-4 text-rose-950 space-y-2 animate-slide-up">
                       <div className="flex items-center gap-2 font-black text-rose-900 text-sm">
                         <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
                         <span>الحساب موقوف من قِبل إدارة المنصة</span>
                       </div>
-                      <p className="text-xs leading-relaxed text-rose-800"><strong>سبب الإيقاف:</strong> {suspendedDetails.reason || "مخالفة الشروط أو انتهاء فترة الصلاحية"}</p>
-                      <div className="text-[11px] text-rose-700 pt-1 border-t border-rose-200 flex items-center justify-between flex-wrap gap-1">
+                      <p className="text-xs leading-relaxed text-rose-800">
+                        <strong>سبب الإيقاف:</strong> {suspendedDetails.reason || "مخالفة الشروط أو انتهاء فترة الصلاحية"}
+                      </p>
+                      <div className="text-[11px] text-rose-700 pt-1.5 border-t border-rose-200 flex items-center justify-between flex-wrap gap-1">
                         <span>للتواصل مع الإدارة:</span>
-                        <strong dir="ltr" className="select-all font-mono">{suspendedDetails.adminEmail || "mg0447837@gmail.com"}</strong>
+                        <strong dir="ltr" className="select-all font-mono font-bold">{suspendedDetails.adminEmail || "mg0447837@gmail.com"}</strong>
                       </div>
                     </div>
                   )}
@@ -610,34 +889,86 @@ export default function SignInPage() {
                   {!suspendedDetails && <ErrorBanner msg={error} />}
                   <SuccessBanner msg={success} />
 
-                  {/* Submit button */}
+                  {/* Submit Button */}
                   <button
                     id="submit-auth-btn"
-                    className={`btn btn-lg btn-full font-black text-white ${accent.btnBg}`}
+                    className={`w-full h-12 rounded-2xl font-black text-white text-xs sm:text-sm active-press transition cursor-pointer flex items-center justify-center gap-2 shadow-sm ${accent.btnBg}`}
                     type="submit"
                     disabled={busy}
                   >
                     {busy ? (
-                      <><span className="btn-spinner" /><span>جاري المعالجة...</span></>
+                      <>
+                        <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                        <span>جاري المعالجة...</span>
+                      </>
                     ) : isAdmin ? (
-                      <><Crown className="h-4 w-4" /><span>فتح لوحة التحكم المركزية</span></>
+                      <>
+                        <Crown className="h-4 w-4" />
+                        <span>فتح لوحة التحكم المركزية</span>
+                      </>
                     ) : mode === "register" ? (
-                      <><ShieldCheck className="h-4 w-4" /><span>إنشاء الحساب والدخول</span></>
+                      <>
+                        <ShieldCheck className="h-4 w-4" />
+                        <span>إنشاء الحساب وبدء التجربة المجانية</span>
+                      </>
                     ) : (
-                      <><Zap className="h-4 w-4 fill-current" /><span>تسجيل الدخول إلى الأكاديمية</span></>
+                      <>
+                        <Zap className="h-4 w-4 fill-current" />
+                        <span>تسجيل الدخول إلى الأكاديمية 🥋</span>
+                      </>
                     )}
                   </button>
                 </form>
               )}
 
-              {/* Footer */}
-              <footer className="text-center text-[11px] font-medium text-slate-400 pt-2 border-t border-slate-100">
-                أكاديمية Re_action للكاراتيه • منظومة الأبطال {new Date().getFullYear()}
-              </footer>
+              {/* Bottom Quick Switch Hint */}
+              <div className="text-center pt-2 border-t border-slate-100 text-xs text-slate-500">
+                {mode === "login" ? (
+                  <span>
+                    ليس لديك حساب كابتن بعد؟{" "}
+                    <button
+                      type="button"
+                      onClick={() => clearAndSetMode("register")}
+                      className="font-black text-red-600 hover:text-red-700 underline cursor-pointer"
+                    >
+                      أنشئ حسابك الآن مجاناً
+                    </button>
+                  </span>
+                ) : mode === "register" ? (
+                  <span>
+                    لديك حساب بالفعل؟{" "}
+                    <button
+                      type="button"
+                      onClick={() => clearAndSetMode("login")}
+                      className="font-black text-red-600 hover:text-red-700 underline cursor-pointer"
+                    >
+                      تسجيل الدخول
+                    </button>
+                  </span>
+                ) : (
+                  <span>
+                    العودة لبوابة الكباتن؟{" "}
+                    <button
+                      type="button"
+                      onClick={() => clearAndSetMode("login")}
+                      className="font-black text-red-600 hover:text-red-700 underline cursor-pointer"
+                    >
+                      دخول الكابتن
+                    </button>
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          </section>
         </div>
-      </section>
+      </div>
+
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      <footer className="relative z-10 py-4 text-center text-xs text-slate-500 border-t border-white/5">
+        <span>منظومة </span>
+        <strong className="text-slate-300 font-bold">DOJO PRO (دوجو برو)</strong>
+        <span> • جميع الحقوق محفوظة © {new Date().getFullYear()}</span>
+      </footer>
     </main>
   );
 }
