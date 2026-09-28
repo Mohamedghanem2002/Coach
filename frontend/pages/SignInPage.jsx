@@ -8,6 +8,57 @@ import {
   RefreshCw, AlertCircle, ShieldAlert,
 } from "lucide-react";
 
+const STRENGTH_LABELS = ["ضعيفة جداً", "مقبولة", "جيدة", "قوية ومثالية"];
+const STRENGTH_COLORS = ["bg-rose-500", "bg-amber-500", "bg-blue-500", "bg-emerald-500"];
+
+function StrengthBar({ pw, strength = 0 }) {
+  if (!pw) return null;
+  return (
+    <div className="mt-2 space-y-1">
+      <div className="flex items-center justify-between text-[11px] font-bold">
+        <span className="text-slate-400">قوة كلمة المرور:</span>
+        <span className="text-slate-700">{STRENGTH_LABELS[strength - 1] || "ضعيفة"}</span>
+      </div>
+      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex gap-1">
+        {[1, 2, 3, 4].map((step) => (
+          <div
+            key={step}
+            className={`h-full flex-1 rounded-full transition-all duration-300 ${
+              strength >= step ? STRENGTH_COLORS[strength - 1] : "bg-slate-200"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ErrorBanner({ msg }) {
+  if (!msg) return null;
+  return (
+    <div
+      role="alert"
+      className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 animate-slide-up flex items-start gap-2"
+    >
+      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+      <span>{msg}</span>
+    </div>
+  );
+}
+
+function SuccessBanner({ msg }) {
+  if (!msg) return null;
+  return (
+    <div
+      role="status"
+      className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-700 animate-slide-up flex items-center gap-2"
+    >
+      <CheckCircle2 className="w-4 h-4 shrink-0" />
+      <span>{msg}</span>
+    </div>
+  );
+}
+
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -196,44 +247,7 @@ export default function SignInPage() {
   const inputClass = `w-full rounded-xl border border-slate-200 bg-slate-50/80 pr-10 pl-3 py-3 text-sm font-semibold text-slate-900 outline-none transition ${accent.border} ${accent.ring} focus:ring-3 focus:bg-white placeholder:text-slate-400 placeholder:font-normal`;
   const inputWithToggleClass = `w-full rounded-xl border border-slate-200 bg-slate-50/80 pr-10 pl-10 py-3 text-sm font-semibold text-slate-900 outline-none transition ${accent.border} ${accent.ring} focus:ring-3 focus:bg-white placeholder:text-slate-400 placeholder:font-normal`;
 
-  // ─── Password strength meter ───────────────────────────────────────────────
-  function StrengthBar({ pw }) {
-    if (!pw) return null;
-    return (
-      <div className="mt-2 space-y-1">
-        <div className="flex items-center justify-between text-[11px] font-bold">
-          <span className="text-slate-400">قوة كلمة المرور:</span>
-          <span className="text-slate-700">{strengthLabels[passwordStrength - 1] || "ضعيفة"}</span>
-        </div>
-        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex gap-1">
-          {[1, 2, 3, 4].map((step) => (
-            <div key={step} className={`h-full flex-1 rounded-full transition-all duration-300 ${passwordStrength >= step ? strengthColors[passwordStrength - 1] : "bg-slate-200"}`} />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
-  // ─── Error / Success banners ───────────────────────────────────────────────
-  function ErrorBanner({ msg }) {
-    if (!msg) return null;
-    return (
-      <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 animate-slide-up flex items-start gap-2">
-        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-        <span>{msg}</span>
-      </div>
-    );
-  }
-
-  function SuccessBanner({ msg }) {
-    if (!msg) return null;
-    return (
-      <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-700 animate-slide-up flex items-center gap-2">
-        <CheckCircle2 className="w-4 h-4 shrink-0" />
-        <span>{msg}</span>
-      </div>
-    );
-  }
 
   return (
     <main
@@ -458,7 +472,7 @@ export default function SignInPage() {
                           {showNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-                      <StrengthBar pw={newPassword} />
+                      <StrengthBar pw={newPassword} strength={passwordStrength} />
                     </div>
 
                     {/* Confirm new password */}
@@ -548,7 +562,7 @@ export default function SignInPage() {
                     </div>
 
                     {/* Password strength — register only */}
-                    {mode === "register" && <StrengthBar pw={password} />}
+                    {mode === "register" && <StrengthBar pw={password} strength={passwordStrength} />}
 
                     {/* Remember me + Forgot link — login only */}
                     {mode === "login" && (
