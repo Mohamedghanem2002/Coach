@@ -24,7 +24,13 @@ export default function AdminDashboard() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "captains" | "academies" | "audit"
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const urlTab = new URLSearchParams(window.location.search).get("tab");
+      if (urlTab) return urlTab;
+    }
+    return "accounts";
+  });
   const [overviewData, setOverviewData] = useState(null);
   const [captainsData, setCaptainsData] = useState({
     captains: [],
@@ -342,7 +348,7 @@ export default function AdminDashboard() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+      <main className="flex-1 min-w-0 p-3 sm:p-6 lg:p-8 pb-28 lg:pb-8">
         <div className="max-w-7xl mx-auto">
           {activeTab === "overview" && (
             <AdminOverviewTab

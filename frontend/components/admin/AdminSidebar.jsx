@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -12,6 +12,8 @@ import {
   Crown,
   ChevronLeft,
   UserCheck,
+  LayoutGrid,
+  X,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -27,25 +29,26 @@ export default function AdminSidebar({
   captainsCount = 0,
   academiesCount = 0,
 }) {
+  const [showMoreMobile, setShowMoreMobile] = useState(false);
   const displayAccounts = accountsCount || captainsCount || academiesCount || 0;
 
   const navItems = [
     {
       id: "overview",
-      label: "لوحة الإحصائيات",
+      label: "الإحصائيات",
       icon: LayoutDashboard,
       badge: null,
     },
     {
       id: "accounts",
-      label: "إدارة الحسابات",
+      label: "الحسابات",
       icon: Users,
       badge: displayAccounts ? String(displayAccounts) : null,
       aliases: ["captains", "academies"],
     },
     {
       id: "players",
-      label: "إدارة اللاعبين",
+      label: "اللاعبين",
       icon: UserCheck,
       badge: playersCount ? String(playersCount) : null,
     },
@@ -57,7 +60,7 @@ export default function AdminSidebar({
     },
     {
       id: "events",
-      label: "إدارة الفعاليات",
+      label: "الفعاليات والبطولات",
       icon: Trophy,
       badge: eventsCount ? String(eventsCount) : null,
     },
@@ -69,9 +72,33 @@ export default function AdminSidebar({
     },
   ];
 
+  const mobilePrimaryTabs = [
+    {
+      id: "accounts",
+      label: "الحسابات",
+      icon: Users,
+      badge: displayAccounts ? String(displayAccounts) : null,
+      aliases: ["captains", "academies"],
+    },
+    {
+      id: "overview",
+      label: "الإحصائيات",
+      icon: LayoutDashboard,
+      badge: null,
+    },
+    {
+      id: "players",
+      label: "اللاعبين",
+      icon: UserCheck,
+      badge: playersCount ? String(playersCount) : null,
+    },
+  ];
+
+  const isMoreActive = ["halls", "events", "audit"].includes(activeTab);
+
   return (
     <>
-      {/* 1. Desktop Sidebar */}
+      {/* ── 1. Desktop Sidebar (Full Menu) ── */}
       <aside
         className="hidden lg:flex w-72 flex-col justify-between border-l border-slate-200/80 bg-white p-5 shrink-0 min-h-screen"
         dir="rtl"
@@ -171,29 +198,31 @@ export default function AdminSidebar({
         </div>
       </aside>
 
-      {/* 2. Mobile Top Bar + Bottom Navigation */}
+      {/* ── 2. Mobile App Native Header + Bottom Bar ── */}
       <div className="lg:hidden">
-        {/* Top Header */}
+        {/* Native Mobile App Header */}
         <div
-          className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-slate-200"
+          className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs"
           dir="rtl"
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-red-600 to-amber-600 flex items-center justify-center text-white shadow-xs">
-              <Crown className="w-5 h-5 fill-white/20 stroke-white" />
+            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-red-600 to-amber-600 flex items-center justify-center text-white shadow-xs">
+              <Crown className="w-4 h-4 fill-white/20 stroke-white" />
             </div>
             <div>
-              <span className="block text-xs font-black text-slate-900">تحكم المنصة 👑</span>
-              <span className="block text-[10px] text-slate-400 font-mono truncate max-w-[160px]" dir="ltr">
+              <span className="block text-xs font-black text-slate-900 leading-tight">
+                لوحة تحكم المنصة 👑
+              </span>
+              <span className="block text-[10px] text-slate-400 font-mono truncate max-w-[170px]" dir="ltr">
                 {adminUser?.email || "mg0447837@gmail.com"}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Link
               href="/"
-              className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-black flex items-center gap-1"
+              className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1"
             >
               <span>التطبيق</span>
               <ExternalLink className="w-3 h-3 text-slate-400" />
@@ -201,7 +230,7 @@ export default function AdminSidebar({
 
             <button
               onClick={() => signOut({ callbackUrl: "/auth/signin?admin=true" })}
-              className="p-2 rounded-xl text-red-600 hover:bg-red-50"
+              className="p-1.5 rounded-xl text-red-600 hover:bg-red-50"
               title="تسجيل الخروج"
             >
               <LogOut className="w-4 h-4" />
@@ -209,29 +238,122 @@ export default function AdminSidebar({
           </div>
         </div>
 
-        {/* Mobile Bottom Navigation Bar */}
+        {/* Native Mobile App Bottom Navigation Bar (4 Spacious Tabs) */}
         <nav
-          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around pt-1.5 pb-safe px-1.5 shadow-lg"
+          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around h-16 px-2 shadow-lg"
           dir="rtl"
         >
-          {navItems.map((item) => {
+          {mobilePrimaryTabs.map((item) => {
             const Icon = item.icon;
             const active =
               activeTab === item.id || (item.aliases && item.aliases.includes(activeTab));
             return (
               <button
                 key={item.id}
-                onClick={() => onSelectTab(item.id)}
-                className={`flex flex-col items-center justify-center gap-0.5 min-h-[44px] py-1 px-1.5 rounded-xl transition cursor-pointer touch-manipulation active-press ${
+                onClick={() => {
+                  setShowMoreMobile(false);
+                  onSelectTab(item.id);
+                }}
+                className={`relative flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-xl transition cursor-pointer touch-manipulation active-press ${
                   active ? "text-red-600 font-black" : "text-slate-500 font-bold"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${active ? "stroke-[2.5]" : ""}`} />
-                <span className="text-[9px] truncate max-w-[55px]">{item.label}</span>
+                <div className="relative">
+                  <Icon className={`w-5 h-5 ${active ? "stroke-[2.5]" : ""}`} />
+                  {item.badge && (
+                    <span className="absolute -top-1 -right-2 px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[9px] font-mono font-black">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] truncate">{item.label}</span>
               </button>
             );
           })}
+
+          {/* 4th Tab: "المزيد" opens mobile sheet */}
+          <button
+            type="button"
+            onClick={() => setShowMoreMobile(!showMoreMobile)}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-xl transition cursor-pointer touch-manipulation active-press ${
+              isMoreActive || showMoreMobile ? "text-red-600 font-black" : "text-slate-500 font-bold"
+            }`}
+          >
+            <LayoutGrid className="w-5 h-5" />
+            <span className="text-[10px] truncate">المزيد</span>
+          </button>
         </nav>
+
+        {/* Native Slide-up Drawer for "المزيد" */}
+        {showMoreMobile && (
+          <div
+            className="fixed inset-0 z-50 flex flex-col justify-end bg-slate-950/60 backdrop-blur-xs animate-backdrop pb-16"
+            onClick={() => setShowMoreMobile(false)}
+            dir="rtl"
+          >
+            <div
+              className="w-full bg-white rounded-t-3xl border-t border-slate-200 p-5 space-y-3 shadow-2xl animate-slide-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto mb-2" />
+
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 className="text-sm font-black text-slate-900">الأقسام والخدمات الإدارية</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowMoreMobile(false)}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreMobile(false);
+                    onSelectTab("halls");
+                  }}
+                  className={`flex items-center gap-2.5 p-3 rounded-xl border text-right transition cursor-pointer ${
+                    activeTab === "halls" ? "bg-red-50 border-red-200 text-red-700" : "bg-slate-50 border-slate-200 text-slate-800"
+                  }`}
+                >
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                  <span>الصالات والملاعب</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreMobile(false);
+                    onSelectTab("events");
+                  }}
+                  className={`flex items-center gap-2.5 p-3 rounded-xl border text-right transition cursor-pointer ${
+                    activeTab === "events" ? "bg-red-50 border-red-200 text-red-700" : "bg-slate-50 border-slate-200 text-slate-800"
+                  }`}
+                >
+                  <Trophy className="w-4 h-4 text-amber-600" />
+                  <span>الفعاليات والبطولات</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreMobile(false);
+                    onSelectTab("audit");
+                  }}
+                  className={`col-span-2 flex items-center gap-2.5 p-3 rounded-xl border text-right transition cursor-pointer ${
+                    activeTab === "audit" ? "bg-red-50 border-red-200 text-red-700" : "bg-slate-50 border-slate-200 text-slate-800"
+                  }`}
+                >
+                  <History className="w-4 h-4 text-slate-600" />
+                  <span>سجل عمليات المنصة (Audit Logs)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

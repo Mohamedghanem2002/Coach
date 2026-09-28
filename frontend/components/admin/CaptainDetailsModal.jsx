@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
   Building2,
@@ -17,9 +17,30 @@ import {
   Sparkles,
   Trophy,
   Trash2,
-  DollarSign,
-  IdCard,
+  Copy,
+  Check,
+  Zap,
+  ArrowUpRight,
+  CreditCard,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
+  Award,
 } from "lucide-react";
+import { getBeltStyle } from "../../lib/dashboard-utils";
+
+function WhatsAppIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
 
 export default function CaptainDetailsModal({
   captainId,
@@ -32,9 +53,12 @@ export default function CaptainDetailsModal({
   onTogglePayment,
 }) {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loadedCaptainId, setLoadedCaptainId] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [playerSearch, setPlayerSearch] = useState("");
+  const [playerFilter, setPlayerFilter] = useState("all"); // "all" | "paid" | "unpaid"
   const [activeTab, setActiveTab] = useState("overview"); // "overview" | "players" | "halls" | "events" | "audit"
+  const [copiedKey, setCopiedKey] = useState(null);
 
   useEffect(() => {
     if (!isOpen || !captainId) return;
@@ -48,13 +72,16 @@ export default function CaptainDetailsModal({
       .then((resData) => {
         if (!cancelled && resData.success) {
           setData(resData);
+          setLoadedCaptainId(captainId);
+          setFetchError(null);
         }
       })
       .catch((err) => {
         console.error("Failed to load captain details:", err);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setFetchError(err.message || "فشل تحميل البيانات");
+          setLoadedCaptainId(captainId);
+        }
       });
 
     return () => {
@@ -62,16 +89,58 @@ export default function CaptainDetailsModal({
     };
   }, [isOpen, captainId]);
 
+  const loading = !data || loadedCaptainId !== captainId;
+
   if (!isOpen) return null;
 
   const captain = data?.captain || data?.academy;
-  const stats = data?.stats || { playersCount: 0, branchesCount: 0, hallsCount: 0, eventsCount: 0 };
+  const stats = data?.stats || {
+    playersCount: 0,
+    branchesCount: 0,
+    hallsCount: 0,
+    eventsCount: 0,
+  };
   const players = data?.players || [];
   const halls = data?.halls || data?.branches || [];
   const events = data?.events || [];
   const auditLogs = data?.auditLogs || [];
 
+  const handleCopy = (text, key) => {
+    if (!text) return;
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    }
+  };
+
+  const isSuspended =
+    captain?.subscriptionStatus === "suspended" || captain?.status === "suspended";
+  const isExpired = captain?.subscriptionStatus === "expired";
+  const cleanPhone = (captain?.phone || "").replace(/\D/g, "");
+  const waPhone = cleanPhone.startsWith("0") ? `2${cleanPhone}` : cleanPhone;
+
+  const formattedCreated = captain?.createdAt
+    ? new Intl.DateTimeFormat("ar-EG", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(captain.createdAt))
+    : "غير محدد";
+
+  const formattedExpires = captain?.subscriptionExpiresAt
+    ? new Intl.DateTimeFormat("ar-EG", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(captain.subscriptionExpiresAt))
+    : "غير محدد";
+
+  // Filtered Players
   const filteredPlayers = players.filter((p) => {
+    if (playerFilter === "paid" && p.paymentStatus !== "paid") return false;
+    if (playerFilter === "unpaid" && p.paymentStatus === "paid") return false;
+
     if (!playerSearch) return true;
     const q = playerSearch.toLowerCase();
     return (
@@ -82,126 +151,251 @@ export default function CaptainDetailsModal({
     );
   });
 
-  const isSuspended = captain?.subscriptionStatus === "suspended" || captain?.status === "suspended";
-  const isExpired = captain?.subscriptionStatus === "expired";
-
-  const formattedCreated = captain?.createdAt
-    ? new Intl.DateTimeFormat("ar-EG", { year: "numeric", month: "long", day: "numeric" }).format(
-        new Date(captain.createdAt)
-      )
-    : "غير محدد";
-
-  const formattedExpires = captain?.subscriptionExpiresAt
-    ? new Intl.DateTimeFormat("ar-EG", { year: "numeric", month: "long", day: "numeric" }).format(
-        new Date(captain.subscriptionExpiresAt)
-      )
-    : "غير محدد";
+  const modalTabs = [
+    { id: "overview", label: "نظرة عامة والاشتراك", icon: Sparkles },
+    {
+      id: "players",
+      label: "الأبطال واللاعبين",
+      count: stats.playersCount ?? players.length,
+      icon: Users,
+    },
+    {
+      id: "halls",
+      label: "صالات التدريب",
+      count: stats.branchesCount || stats.hallsCount || halls.length,
+      icon: Building2,
+    },
+    {
+      id: "events",
+      label: "الفعاليات والبطولات",
+      count: stats.eventsCount ?? events.length,
+      icon: Trophy,
+    },
+    {
+      id: "audit",
+      label: "سجل العمليات",
+      count: auditLogs.length,
+      icon: History,
+    },
+  ];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-xs animate-backdrop"
+      className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 md:p-6 bg-slate-950/65 backdrop-blur-xs animate-backdrop"
       dir="rtl"
+      onClick={onClose}
     >
-      <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl border border-slate-200 bg-white shadow-2xl overflow-hidden animate-scale-up">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-red-600 via-rose-600 to-amber-600 flex items-center justify-center text-white shadow-sm shrink-0">
-              <User className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black text-slate-900 truncate max-w-xs sm:max-w-md">
-                  {captain ? captain.name : "تفاصيل الكابتن"}
-                </h2>
-                {isSuspended ? (
-                  <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-black border border-red-200">
-                    موقوف
-                  </span>
-                ) : isExpired ? (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black border border-amber-200">
-                    منتهي
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black border border-emerald-200">
-                    نشط
-                  </span>
-                )}
-              </div>
-              <p className="text-xs font-bold text-slate-400 truncate">
-                {captain?.academyName || "أكاديمية تدريب"} &bull; معرف:{" "}
-                <span className="font-mono text-slate-500" dir="ltr">{captain?.id || captainId}</span>
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer"
-            title="إغلاق"
-          >
-            <X className="w-5 h-5" />
-          </button>
+      <div
+        className="relative w-full max-w-4xl h-[92vh] max-h-[92vh] sm:h-[86vh] sm:max-h-[820px] flex flex-col rounded-t-[28px] sm:rounded-3xl border border-slate-200/90 bg-slate-50 shadow-2xl overflow-hidden animate-slide-up sm:animate-scale-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Mobile Drag Indicator */}
+        <div className="sm:hidden pt-2.5 pb-1 flex justify-center bg-white shrink-0">
+          <div className="w-12 h-1.5 rounded-full bg-slate-300" />
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-1 px-6 border-b border-slate-100 bg-white shrink-0 overflow-x-auto scrollbar-none">
-          {[
-            { id: "overview", label: "نظرة عامة والاشتراك", icon: Sparkles },
-            { id: "players", label: `قائمة اللاعبين (${stats.playersCount})`, icon: Users },
-            { id: "halls", label: `صالات التدريب (${stats.branchesCount || stats.hallsCount})`, icon: Building2 },
-            { id: "events", label: `الفعاليات والبطولات (${stats.eventsCount})`, icon: Trophy },
-            { id: "audit", label: `سجل العمليات (${auditLogs.length})`, icon: History },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 py-3 px-3.5 text-xs font-black border-b-2 whitespace-nowrap transition cursor-pointer ${
-                  active
-                    ? "border-red-600 text-red-600"
-                    : "border-transparent text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Body content (scrollable) */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        {/* ── 1. App-Style Profile Header ── */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 bg-white shrink-0 shadow-2xs">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <div className="w-8 h-8 border-3 border-red-500 border-t-transparent rounded-full animate-spin mb-3" />
-              <span className="text-xs font-bold">جارٍ استرداد بيانات وسجلات الكابتن من قاعدة البيانات...</span>
+            <div className="flex items-center gap-3 w-full animate-pulse">
+              <div className="w-12 h-12 rounded-2xl bg-slate-200 shrink-0" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 w-40 bg-slate-200 rounded-md" />
+                <div className="h-3 w-28 bg-slate-100 rounded-md" />
+              </div>
+              <div className="w-8 h-8 rounded-xl bg-slate-100 shrink-0" />
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-red-600 via-rose-600 to-amber-600 flex items-center justify-center text-white shadow-md font-black text-lg shrink-0">
+                  {(captain?.name || "ك").charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base sm:text-lg font-black text-slate-900 truncate">
+                      {captain ? captain.name : "ملف الكابتن"}
+                    </h2>
+                    {isSuspended ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[11px] font-black border border-rose-200 shrink-0">
+                        <AlertTriangle className="w-3 h-3 text-rose-600" />
+                        <span>موقوف ⛔</span>
+                      </span>
+                    ) : isExpired ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] font-black border border-amber-200 shrink-0">
+                        <Clock className="w-3 h-3 text-amber-600" />
+                        <span>منتهي الصلاحية ⏳</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-black border border-emerald-200 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>نشط 🟢</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                    <span className="font-bold text-red-600 inline-flex items-center gap-1 truncate">
+                      🥋 {captain?.academyName || "أكاديمية تدريب"}
+                    </span>
+                    {captain?.phone && (
+                      <span className="font-mono text-slate-600 font-semibold hidden sm:inline" dir="ltr">
+                        {captain.phone}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Contact & Close Actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                {captain?.phone && (
+                  <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-2xl border border-slate-200/80">
+                    <a
+                      href={`tel:${cleanPhone}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200/60 shadow-2xs transition-all cursor-pointer"
+                      title="اتصال هاتفي بالكابتن"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                    </a>
+                    <a
+                      href={`https://wa.me/${waPhone}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 border border-slate-200/60 shadow-2xs transition-all cursor-pointer"
+                      title="مراسلة واتساب مباشرة"
+                    >
+                      <WhatsAppIcon className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                  title="إغلاق النافذة"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── 2. Modern Segmented Tabs Bar ── */}
+        <div className="px-4 sm:px-6 py-2.5 border-b border-slate-200 bg-white/80 shrink-0 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 min-w-max">
+            {modalTabs.map((tab) => {
+              const Icon = tab.icon;
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 py-1.5 px-3.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    active
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  <Icon
+                    className={`w-3.5 h-3.5 ${
+                      active ? "text-red-400" : "text-slate-400"
+                    }`}
+                  />
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && (
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                        active
+                          ? "bg-white/20 text-white"
+                          : "bg-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── 3. Body Content (Scrollable) ── */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 text-slate-400">
+              <div className="w-9 h-9 border-3 border-red-500 border-t-transparent rounded-full animate-spin mb-3" />
+              <span className="text-xs font-black text-slate-600">
+                جارٍ جلب وتنسيق بيانات الكابتن والأكاديمية...
+              </span>
+              <span className="text-[11px] text-slate-400 mt-1 font-medium">
+                استرجاع اللاعبين، الصالات، والاشتراك
+              </span>
             </div>
           ) : !captain ? (
-            <div className="text-center py-16 text-slate-500 text-sm font-bold">
-              تعذر العثور على بيانات هذا الكابتن
+            <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 p-8">
+              <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+              <h3 className="text-sm font-black text-slate-700">
+                تعذر العثور على بيانات هذا الكابتن
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                قد يكون تم حذف الحساب أو المعرف غير صالح
+              </p>
             </div>
           ) : activeTab === "overview" ? (
-            <>
-              {/* 3 Main Highlights Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-4 rounded-2xl border border-violet-100 bg-violet-50/60 text-center shadow-xs">
-                  <span className="block text-[11px] font-black text-violet-600 mb-1">👥 إجمالي اللاعبين</span>
-                  <span className="text-2xl font-black text-violet-900">{stats.playersCount}</span>
+            /* ═════════════════════════════════════════════════════════════
+                TAB 1: EXECUTIVE OVERVIEW & SUBSCRIPTION
+            ═════════════════════════════════════════════════════════════ */
+            <div className="space-y-4">
+              {/* 4 Clean Metric Glance Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="p-3.5 rounded-2xl border border-violet-100 bg-white shadow-2xs">
+                  <div className="flex items-center justify-between text-violet-700 mb-1">
+                    <span className="text-xs font-black">👥 إجمالي الأبطال</span>
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <strong className="text-2xl font-black text-violet-950">
+                    {stats.playersCount}
+                  </strong>
+                  <span className="block text-[10px] text-slate-400 font-bold mt-0.5">
+                    لاعب مسجل
+                  </span>
                 </div>
-                <div className="p-4 rounded-2xl border border-blue-100 bg-blue-50/60 text-center shadow-xs">
-                  <span className="block text-[11px] font-black text-blue-600 mb-1">🏟️ صالات التدريب</span>
-                  <span className="text-2xl font-black text-blue-900">{stats.branchesCount || stats.hallsCount}</span>
+
+                <div className="p-3.5 rounded-2xl border border-blue-100 bg-white shadow-2xs">
+                  <div className="flex items-center justify-between text-blue-700 mb-1">
+                    <span className="text-xs font-black">🏟️ صالات التدريب</span>
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <strong className="text-2xl font-black text-blue-950">
+                    {stats.branchesCount || stats.hallsCount}
+                  </strong>
+                  <span className="block text-[10px] text-slate-400 font-bold mt-0.5">
+                    مقر تدريب
+                  </span>
                 </div>
-                <div className="p-4 rounded-2xl border border-amber-100 bg-amber-50/60 text-center shadow-xs">
-                  <span className="block text-[11px] font-black text-amber-600 mb-1">🏆 الفعاليات المنشأة</span>
-                  <span className="text-2xl font-black text-amber-900">{stats.eventsCount}</span>
+
+                <div className="p-3.5 rounded-2xl border border-amber-100 bg-white shadow-2xs">
+                  <div className="flex items-center justify-between text-amber-700 mb-1">
+                    <span className="text-xs font-black">🏆 الفعاليات</span>
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <strong className="text-2xl font-black text-amber-950">
+                    {stats.eventsCount}
+                  </strong>
+                  <span className="block text-[10px] text-slate-400 font-bold mt-0.5">
+                    بطولة ونشاط
+                  </span>
                 </div>
-                <div className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/60 text-center shadow-xs">
-                  <span className="block text-[11px] font-black text-slate-500 mb-1">⏰ الأيام المتبقية</span>
-                  <span
+
+                <div className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs">
+                  <div className="flex items-center justify-between text-slate-600 mb-1">
+                    <span className="text-xs font-black">⏰ الأيام المتبقية</span>
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <strong
                     className={`text-2xl font-black ${
                       captain.daysRemaining === null
                         ? "text-slate-400"
@@ -212,181 +406,258 @@ export default function CaptainDetailsModal({
                         : "text-emerald-600"
                     }`}
                   >
-                    {captain.daysRemaining !== null ? captain.daysRemaining : "-"}
+                    {captain.daysRemaining !== null
+                      ? `${captain.daysRemaining} يوم`
+                      : "غير محدد"}
+                  </strong>
+                  <span className="block text-[10px] text-slate-400 font-bold mt-0.5">
+                    حتى التجديد
                   </span>
                 </div>
               </div>
 
-              {/* Status & Subscription Control Center */}
-              <div className="rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
-                  <div>
-                    <h3 className="text-sm font-black text-slate-800">حالة الحساب وصلاحية الاشتراك</h3>
-                    <p className="text-xs font-bold text-slate-400">
-                      إدارة تفعيل وتعليق الخدمة والتحكم في فترات الصلاحية
-                    </p>
+              {/* Suspended Alert Banner */}
+              {isSuspended && captain.suspensionReason && (
+                <div className="p-4 rounded-2xl border border-rose-200 bg-rose-50/90 text-rose-900 shadow-2xs space-y-1">
+                  <div className="flex items-center gap-2 text-rose-700 font-black text-xs">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>سبب تعليق حساب الكابتن:</span>
+                  </div>
+                  <p className="pr-6 text-xs text-rose-800 font-semibold leading-relaxed">
+                    {captain.suspensionReason}
+                  </p>
+                </div>
+              )}
+
+              {/* Subscription & Service Card */}
+              <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-3.5">
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900">
+                        صلاحية اشتراك المنصة
+                      </h3>
+                      <span className="text-[11px] text-slate-400 font-bold">
+                        الخطة الحالية:{" "}
+                        <span className="text-slate-800 uppercase font-black">
+                          {captain.subscriptionPlan || "Standard"}
+                        </span>
+                      </span>
+                    </div>
                   </div>
 
-                  <div>
-                    {isSuspended ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black border border-red-200">
-                        <ShieldAlert className="w-3.5 h-3.5" />
-                        <span>معلق وموقوف</span>
-                      </span>
-                    ) : isExpired ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black border border-amber-200">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>منتهي الصلاحية</span>
-                      </span>
+                  {/* 1-Tap Payment Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => onTogglePayment && onTogglePayment(captain)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-black cursor-pointer transition flex items-center gap-1.5 shadow-2xs ${
+                      captain.subscriptionPaid
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
+                        : "bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100"
+                    }`}
+                    title="انقر لتعديل حالة السداد"
+                  >
+                    {captain.subscriptionPaid ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>الاشتراك: مسدد ✓</span>
+                      </>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black border border-emerald-200">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>نشط ويعمل</span>
-                      </span>
+                      <>
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                        <span>الاشتراك: غير مسدد ✗</span>
+                      </>
                     )}
-                  </div>
+                  </button>
                 </div>
 
-                {isSuspended && captain.suspensionReason && (
-                  <div className="mb-4 p-4 rounded-2xl border border-red-200 bg-red-50/80 text-xs text-red-900 font-bold space-y-1">
-                    <div className="flex items-center gap-1.5 text-red-700 font-black">
-                      <AlertTriangle className="w-4 h-4" />
-                      <span>سبب التعليق المكتوب للكابتن:</span>
-                    </div>
-                    <p className="pr-5 text-sm">{captain.suspensionReason}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">تاريخ الانتهاء:</span>
+                    <strong className="text-slate-900 font-black">
+                      {formattedExpires}
+                    </strong>
                   </div>
-                )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-bold mb-5">
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                    <span className="text-slate-500">خطة الاشتراك:</span>
-                    <span className="text-slate-900 font-black uppercase">{captain.subscriptionPlan || "Standard"}</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                    <span className="text-slate-500">تاريخ انتهاء الاشتراك:</span>
-                    <span className="text-slate-900 font-black">{formattedExpires}</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                    <span className="text-slate-500">حالة السداد المالي:</span>
-                    <button
-                      type="button"
-                      onClick={() => onTogglePayment && onTogglePayment(captain)}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-black cursor-pointer transition ${
-                        captain.subscriptionPaid
-                          ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                          : "bg-red-100 text-red-800 hover:bg-red-200"
+                  <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">حالة الخدمة:</span>
+                    <span
+                      className={`font-black ${
+                        isSuspended
+                          ? "text-rose-600"
+                          : isExpired
+                          ? "text-amber-600"
+                          : "text-emerald-600"
                       }`}
                     >
-                      {captain.subscriptionPaid ? "مدفوع ✓ (اضغط للتغيير)" : "غير مدفوع ✗ (اضغط للتغيير)"}
-                    </button>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                    <span className="text-slate-500">تاريخ انضمام الحساب:</span>
-                    <span className="text-slate-900 font-black">{formattedCreated}</span>
+                      {isSuspended
+                        ? "الخدمة معلقة مؤقتاً"
+                        : isExpired
+                        ? "منتهي الصلاحية"
+                        : "الخدمة سارية ونشطة"}
+                    </span>
                   </div>
                 </div>
 
-                {/* Primary Admin Actions */}
-                <div className="flex flex-wrap gap-2.5 pt-2">
+                {/* Primary Action Buttons */}
+                <div className="flex flex-wrap gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => onOpenExtend && onOpenExtend(captain)}
-                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
+                    className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-xs transition cursor-pointer"
                   >
-                    <Clock className="w-4 h-4" />
-                    <span>تمديد الاشتراك</span>
+                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>تمديد صلاحية الاشتراك</span>
                   </button>
 
-                  {isSuspended ? (
-                    <button
-                      type="button"
-                      onClick={() => onOpenReactivate && onOpenReactivate(captain)}
-                      className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      <span>إعادة تفعيل الحساب</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onOpenSuspend && onOpenSuspend(captain)}
-                      className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-black transition cursor-pointer"
-                    >
-                      <ShieldAlert className="w-4 h-4" />
-                      <span>تعليق الحساب مؤقتاً</span>
-                    </button>
-                  )}
+                  {!captain.isAdmin &&
+                    (isSuspended ? (
+                      <button
+                        type="button"
+                        onClick={() => onOpenReactivate && onOpenReactivate(captain)}
+                        className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>إعادة تفعيل الحساب</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onOpenSuspend && onOpenSuspend(captain)}
+                        className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-black transition cursor-pointer"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        <span>تعليق الحساب مؤقتاً</span>
+                      </button>
+                    ))}
                 </div>
               </div>
 
-              {/* Captain Profile & Contact Card */}
-              <div className="rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs">
-                <h3 className="text-sm font-black text-slate-800 mb-3">بيانات الكابتن والأكاديمية</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
-                    <User className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <span className="block text-[10px] text-slate-400 font-bold">اسم الكابتن</span>
-                      <strong className="text-slate-800 font-black">{captain.name}</strong>
-                    </div>
+              {/* Coach Profile & Account Info Grid */}
+              <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-3">
+                <h3 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <User className="w-4 h-4 text-slate-500" />
+                  <span>بيانات الكابتن ومعلومات الاتصال</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {/* Captain Name */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">اسم الكابتن:</span>
+                    <strong className="text-slate-900 font-black text-sm">
+                      {captain.name}
+                    </strong>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
-                    <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <span className="block text-[10px] text-slate-400 font-bold">اسم الأكاديمية</span>
-                      <strong className="text-slate-800 font-black">{captain.academyName}</strong>
-                    </div>
+                  {/* Academy Name */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">الأكاديمية:</span>
+                    <strong className="text-red-600 font-black text-sm">
+                      🥋 {captain.academyName}
+                    </strong>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
-                    <Mail className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <span className="block text-[10px] text-slate-400 font-bold">البريد الإلكتروني</span>
-                      <strong className="text-slate-800 font-mono" dir="ltr">{captain.email}</strong>
-                    </div>
-                  </div>
-
-                  {captain.phone && (
-                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
-                      <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                      <div>
-                        <span className="block text-[10px] text-slate-400 font-bold">رقم الهاتف</span>
-                        <strong className="text-slate-800 font-mono" dir="ltr">{captain.phone}</strong>
+                  {/* Phone with quick call / WA / copy */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">الهاتف:</span>
+                    {captain.phone ? (
+                      <div className="flex items-center gap-2">
+                        <strong
+                          className="text-slate-900 font-mono font-black"
+                          dir="ltr"
+                        >
+                          {captain.phone}
+                        </strong>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(captain.phone, "phone")}
+                          className="text-slate-400 hover:text-slate-800 p-1"
+                          title="نسخ رقم الهاتف"
+                        >
+                          {copiedKey === "phone" ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <span className="text-slate-400">غير مسجل</span>
+                    )}
+                  </div>
 
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
-                    <IdCard className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <span className="block text-[10px] text-slate-400 font-bold">معرف الحساب (ID)</span>
-                      <strong className="text-slate-800 font-mono text-[11px]" dir="ltr">{captain.id}</strong>
+                  {/* Email with quick copy */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">البريد الإلكتروني:</span>
+                    <div className="flex items-center gap-1.5 max-w-[65%]">
+                      <strong
+                        className="text-slate-700 font-mono text-[11px] truncate"
+                        dir="ltr"
+                        title={captain.email}
+                      >
+                        {captain.email}
+                      </strong>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(captain.email, "email")}
+                        className="text-slate-400 hover:text-slate-800 p-1 shrink-0"
+                        title="نسخ البريد"
+                      >
+                        {copiedKey === "email" ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50">
-                    <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <span className="block text-[10px] text-slate-400 font-bold">تاريخ الانضمام الفعلي</span>
-                      <strong className="text-slate-800 font-black">{formattedCreated}</strong>
+                  {/* Join Date */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">تاريخ الانضمام:</span>
+                    <strong className="text-slate-800 font-bold">
+                      {formattedCreated}
+                    </strong>
+                  </div>
+
+                  {/* Account ID */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">معرف الحساب:</span>
+                    <div className="flex items-center gap-1.5">
+                      <strong className="text-slate-500 font-mono text-[10px]" dir="ltr">
+                        {captain.id || captain._id}
+                      </strong>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(captain.id || captain._id, "id")}
+                        className="text-slate-400 hover:text-slate-800 p-1 shrink-0"
+                        title="نسخ المعرف"
+                      >
+                        {copiedKey === "id" ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Danger Zone: Delete Entire Account Permanently */}
-              {onOpenDelete && (
-                <div className="p-4 sm:p-5 rounded-3xl border-2 border-red-200 bg-red-50/60 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              {/* Danger Zone: Delete Permanently */}
+              {!captain.isAdmin && onOpenDelete && (
+                <div className="p-4 rounded-2xl border border-rose-200 bg-rose-50/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                      <h4 className="text-xs sm:text-sm font-black text-red-800">
-                        حذف الحساب نهائياً من قاعدة البيانات
-                      </h4>
-                    </div>
-                    <p className="text-[11px] text-red-700/80 font-medium leading-relaxed">
-                      سيؤدي هذا الإجراء إلى مسح حساب الكابتن وجميع لاعبيه ({stats.playersCount}) وصالاته ({stats.branchesCount || stats.hallsCount}) وفعالياته ({stats.eventsCount}) نهائياً دون رجعة.
+                    <h4 className="text-xs font-black text-rose-900 flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>حذف الحساب نهائياً من قاعدة البيانات</span>
+                    </h4>
+                    <p className="text-[11px] text-rose-700/90 font-medium mt-0.5">
+                      سيؤدي هذا الإجراء لمسح الكابتن وجميع لاعبيه (
+                      {stats.playersCount} لاعب) وصالاته نهائياً.
                     </p>
                   </div>
                   <button
@@ -395,166 +666,373 @@ export default function CaptainDetailsModal({
                       onClose();
                       onOpenDelete(captain);
                     }}
-                    className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm transition cursor-pointer shrink-0"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black transition cursor-pointer shrink-0 shadow-2xs"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    <span>حذف الحساب بجميع بياناته 🗑️</span>
+                    حذف الحساب نهائياً
                   </button>
                 </div>
               )}
-            </>
+            </div>
           ) : activeTab === "players" ? (
-            /* Players List Tab */
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="relative flex-1">
+            /* ═════════════════════════════════════════════════════════════
+                TAB 2: PLAYERS & CHAMPIONS LIST
+            ═════════════════════════════════════════════════════════════ */
+            <div className="space-y-3">
+              {/* Search + Quick Filters */}
+              <div className="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2">
+                <div className="relative">
                   <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={playerSearch}
                     onChange={(e) => setPlayerSearch(e.target.value)}
-                    placeholder="ابحث في لاعبي هذا الكابتن بالاسم أو الصالة أو الحزام..."
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 pr-10 pl-4 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-red-500 focus:bg-white"
+                    placeholder="ابحث باسم البطل، الفرع، الحزام أو هاتف ولي الأمر..."
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 pr-10 pl-9 py-2.5 text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-red-500 focus:ring-2 focus:ring-red-100 transition"
                   />
+                  {playerSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setPlayerSearch("")}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs hover:bg-slate-300 transition cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
-                <span className="text-xs font-black text-slate-500 shrink-0">
-                  {filteredPlayers.length} لاعب مسجل
-                </span>
+
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-xs">
+                  <span className="text-[11px] font-bold text-slate-400 ml-1">تصفية:</span>
+                  {[
+                    { id: "all", label: `الكل (${players.length})` },
+                    {
+                      id: "paid",
+                      label: `مسددين (${
+                        players.filter((p) => p.paymentStatus === "paid").length
+                      })`,
+                    },
+                    {
+                      id: "unpaid",
+                      label: `غير مسددين (${
+                        players.filter((p) => p.paymentStatus !== "paid").length
+                      })`,
+                    },
+                  ].map((chip) => (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      onClick={() => setPlayerFilter(chip.id)}
+                      className={`px-3 py-1 rounded-full text-[11px] font-bold shrink-0 transition cursor-pointer ${
+                        playerFilter === chip.id
+                          ? "bg-slate-900 text-white shadow-2xs"
+                          : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {filteredPlayers.length === 0 ? (
-                <div className="text-center py-16 bg-slate-50 rounded-3xl border border-slate-100 text-slate-400 text-xs font-bold">
-                  {players.length === 0 ? "لا يوجد لاعبين مسجلين لدى هذا الكابتن حتى الآن" : "لا يوجد لاعبين يطابقون عبارة البحث"}
+                <div className="text-center py-14 bg-white rounded-2xl border border-slate-200 p-6 text-slate-400 text-xs font-bold space-y-1">
+                  <Users className="w-10 h-10 mx-auto text-slate-300" />
+                  <p className="text-slate-600 font-black">
+                    {players.length === 0
+                      ? "لا يوجد لاعبين مسجلين لدى هذا الكابتن حتى الآن"
+                      : "لا يوجد لاعبين يطابقون خيارات البحث أو التصفية"}
+                  </p>
+                  {playerSearch && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPlayerSearch("");
+                        setPlayerFilter("all");
+                      }}
+                      className="text-red-600 hover:underline text-[11px] font-bold pt-1 inline-block cursor-pointer"
+                    >
+                      إعادة ضبط الفلتر
+                    </button>
+                  )}
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                  <table className="w-full text-right text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-black border-b border-slate-200">
-                      <tr>
-                        <th className="p-3">اسم البطل</th>
-                        <th className="p-3">صالة التدريب</th>
-                        <th className="p-3">الحزام</th>
-                        <th className="p-3">العمر</th>
-                        <th className="p-3">الهاتف</th>
-                        <th className="p-3">تاريخ التسجيل</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-bold text-slate-800">
-                      {filteredPlayers.map((player) => (
-                        <tr key={player.id || player._id} className="hover:bg-slate-50/80">
-                          <td className="p-3 font-black text-slate-900 flex items-center gap-1.5">
-                            <span>🥋</span>
-                            <span>{player.name}</span>
-                          </td>
-                          <td className="p-3 text-slate-600">{player.branch || "الرئيسية"}</td>
-                          <td className="p-3">
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-black">
-                              {player.belt || "أبيض"}
+                <>
+                  {/* Mobile Players Cards */}
+                  <div className="sm:hidden space-y-2">
+                    {filteredPlayers.map((player) => {
+                      const beltStyle = getBeltStyle(player.belt);
+                      const pPhone = (player.phone || "").replace(/\D/g, "");
+                      const pWa = pPhone.startsWith("0") ? `2${pPhone}` : pPhone;
+
+                      return (
+                        <div
+                          key={player.id || player._id}
+                          className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-700 text-xs shrink-0">
+                                {(player.name || "ب").charAt(0)}
+                              </div>
+                              <div>
+                                <strong className="text-xs font-black text-slate-900 block">
+                                  {player.name}
+                                </strong>
+                                <span className="text-[10px] text-slate-400 font-bold">
+                                  فرع: {player.branch || "الرئيسية"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${beltStyle.dot}`}
+                              />
+                              <span>{player.belt || "حزام أبيض"}</span>
                             </span>
-                          </td>
-                          <td className="p-3 text-slate-600">{player.age ? `${player.age} سنة` : "-"}</td>
-                          <td className="p-3 font-mono text-slate-500" dir="ltr">
-                            {player.phone || "-"}
-                          </td>
-                          <td className="p-3 text-slate-400 text-[11px]">
-                            {player.createdAt ? new Date(player.createdAt).toLocaleDateString("ar-EG") : "-"}
-                          </td>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
+                            <span className="text-slate-500 font-bold">
+                              العمر:{" "}
+                              <strong className="text-slate-800">
+                                {player.age ? `${player.age} سنة` : "-"}
+                              </strong>
+                            </span>
+
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                                player.paymentStatus === "paid"
+                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                  : "bg-amber-50 text-amber-800 border border-amber-200"
+                              }`}
+                            >
+                              {player.paymentStatus === "paid"
+                                ? "مسدد ✓"
+                                : "مستحق ⚠️"}
+                            </span>
+                          </div>
+
+                          {player.phone && (
+                            <div
+                              className="text-[11px] text-slate-600 font-mono flex items-center justify-between pt-1 bg-slate-50 p-2 rounded-xl"
+                              dir="ltr"
+                            >
+                              <span className="font-bold">{player.phone}</span>
+                              <div className="flex items-center gap-2">
+                                <a
+                                  href={`tel:${pPhone}`}
+                                  className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-red-600 hover:bg-red-50"
+                                  title="اتصال"
+                                >
+                                  <Phone className="w-3 h-3" />
+                                </a>
+                                <a
+                                  href={`https://wa.me/${pWa}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-600 hover:bg-emerald-50"
+                                  title="واتساب"
+                                >
+                                  <WhatsAppIcon className="w-3 h-3" />
+                                </a>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Desktop Players Table */}
+                  <div className="hidden sm:block rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-slate-50 text-slate-500 font-black border-b border-slate-200">
+                        <tr>
+                          <th className="p-3.5">اسم البطل</th>
+                          <th className="p-3.5">الحزام</th>
+                          <th className="p-3.5">الصالة / المقر</th>
+                          <th className="p-3.5">السن</th>
+                          <th className="p-3.5">حالة السداد</th>
+                          <th className="p-3.5">ولي الأمر</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-bold text-slate-800">
+                        {filteredPlayers.map((player) => {
+                          const beltStyle = getBeltStyle(player.belt);
+                          const pPhone = (player.phone || "").replace(/\D/g, "");
+                          const pWa = pPhone.startsWith("0") ? `2${pPhone}` : pPhone;
+
+                          return (
+                            <tr
+                              key={player.id || player._id}
+                              className="hover:bg-slate-50/70 transition-colors"
+                            >
+                              <td className="p-3.5 text-slate-900 font-black">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-black text-slate-700">
+                                    {(player.name || "ب").charAt(0)}
+                                  </div>
+                                  <span>{player.name}</span>
+                                </div>
+                              </td>
+
+                              <td className="p-3.5">
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}
+                                >
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full ${beltStyle.dot}`}
+                                  />
+                                  <span>{player.belt || "أبيض"}</span>
+                                </span>
+                              </td>
+
+                              <td className="p-3.5 text-slate-600">
+                                {player.branch || "الرئيسية"}
+                              </td>
+
+                              <td className="p-3.5 text-slate-600">
+                                {player.age ? `${player.age} سنة` : "-"}
+                              </td>
+
+                              <td className="p-3.5">
+                                <span
+                                  className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                                    player.paymentStatus === "paid"
+                                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                      : "bg-amber-50 text-amber-800 border border-amber-200"
+                                  }`}
+                                >
+                                  {player.paymentStatus === "paid"
+                                    ? "مسدد ✓"
+                                    : "مستحق ⚠️"}
+                                </span>
+                              </td>
+
+                              <td className="p-3.5">
+                                {player.phone ? (
+                                  <div className="flex items-center gap-2" dir="ltr">
+                                    <span className="font-mono text-xs text-slate-700">
+                                      {player.phone}
+                                    </span>
+                                    <a
+                                      href={`tel:${pPhone}`}
+                                      className="text-slate-400 hover:text-red-600"
+                                      title="اتصال"
+                                    >
+                                      <Phone className="w-3 h-3" />
+                                    </a>
+                                    <a
+                                      href={`https://wa.me/${pWa}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-slate-400 hover:text-emerald-600"
+                                      title="واتساب"
+                                    >
+                                      <WhatsAppIcon className="w-3 h-3" />
+                                    </a>
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400 text-[11px]">-</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           ) : activeTab === "halls" ? (
-            /* Halls List Tab */
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">
-                    صالات وفروع التدريب المسجلة ({halls.length})
-                  </h3>
-                  <p className="text-xs text-slate-500 font-bold">
-                    عرض كافة صالات التدريب التابعة لهذا الكابتن وأعداد اللاعبين في كل صالة
+            /* ═════════════════════════════════════════════════════════════
+                TAB 3: TRAINING HALLS (صالات التدريب)
+            ═════════════════════════════════════════════════════════════ */
+            <div className="space-y-3">
+              {halls.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 text-slate-400 text-xs font-bold space-y-1">
+                  <Building2 className="w-10 h-10 mx-auto text-slate-300" />
+                  <p className="text-slate-700 font-black">
+                    لم يقم الكابتن بإضافة صالات تدريب منفصلة حتى الآن
+                  </p>
+                  <p className="text-slate-400 text-[11px]">
+                    يتم تسجيل اللاعبين بالفرع الافتراضي تلقائياً.
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-black">
-                  إجمالي الصالات: {halls.length}
-                </span>
-              </div>
-
-              {halls.length === 0 ? (
-                <div className="text-center py-16 bg-slate-50 rounded-3xl border border-slate-100 text-slate-400 text-xs font-bold">
-                  لم يقم الكابتن بإضافة صالات تدريب منفصلة حتى الآن.
-                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {halls.map((hall, index) => {
-                    const hallPlayers = players.filter((p) => (p.branch || "الرئيسية") === hall.name);
+                    const hallPlayers = players.filter(
+                      (p) => (p.branch || "الرئيسية") === hall.name
+                    );
                     const count = hall.playersCount ?? hallPlayers.length;
 
                     return (
                       <div
                         key={hall._id || hall.id || index}
-                        className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between"
+                        className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-3"
                       >
-                        <div>
-                          <div className="flex items-start justify-between gap-3 mb-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-black">
-                                <Building2 className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-black text-slate-900">{hall.name}</h4>
-                                <span className="text-[11px] text-slate-400 font-bold">
-                                  {hall.createdAt
-                                    ? `تاريخ الإضافة: ${new Date(hall.createdAt).toLocaleDateString("ar-EG")}`
-                                    : "صالة نشطة"}
-                                </span>
-                              </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black">
+                              <Building2 className="w-4 h-4" />
                             </div>
-
-                            <span className="px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-black shadow-xs shrink-0">
-                              {count} {count === 1 ? "لاعب" : count === 2 ? "لاعبان" : "لاعبين"}
-                            </span>
-                          </div>
-
-                          {/* Hall Schedule / Days */}
-                          {hall.days && hall.days.length > 0 && (
-                            <div className="mb-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] font-bold text-slate-600 flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span>أيام التدريب:</span>
-                              <span className="text-slate-800">
-                                {Array.isArray(hall.days) ? hall.days.join("، ") : hall.days}
+                            <div>
+                              <strong className="text-sm font-black text-slate-900 block">
+                                {hall.name}
+                              </strong>
+                              <span className="text-[11px] text-slate-400 font-bold">
+                                مقر تدريب مسجل
                               </span>
                             </div>
-                          )}
+                          </div>
+                          <span className="px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-black">
+                            {count} لاعب
+                          </span>
+                        </div>
 
-                          {/* Registered Players in this hall */}
-                          <div>
-                            <span className="block text-[11px] font-black text-slate-400 mb-2">
-                              أبطال هذه الصالة ({hallPlayers.length}):
+                        {hall.days && hall.days.length > 0 && (
+                          <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl flex items-center gap-2">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="font-bold text-slate-500">أيام التدريب:</span>
+                            <strong className="text-slate-800">
+                              {Array.isArray(hall.days)
+                                ? hall.days.join("، ")
+                                : hall.days}
+                            </strong>
+                          </div>
+                        )}
+
+                        {/* Hall Players Chips */}
+                        <div>
+                          <span className="block text-[11px] font-black text-slate-500 mb-1.5">
+                            أبطال الصالة ({hallPlayers.length}):
+                          </span>
+                          {hallPlayers.length === 0 ? (
+                            <span className="text-[11px] text-slate-400 italic">
+                              لا يوجد لاعبين مسجلين في هذا المقر حتى الآن
                             </span>
-                            {hallPlayers.length === 0 ? (
-                              <p className="text-[11px] text-slate-400 font-medium italic">
-                                لا يوجد لاعبين مسجلين في هذه الصالة حالياً.
-                              </p>
-                            ) : (
-                              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                                {hallPlayers.map((hp) => (
+                          ) : (
+                            <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
+                              {hallPlayers.map((hp) => {
+                                const beltStyle = getBeltStyle(hp.belt);
+                                return (
                                   <span
                                     key={hp.id || hp._id}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-[11px] font-black"
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}
                                   >
-                                    <span>🥋 {hp.name}</span>
-                                    {hp.belt && (
-                                      <span className="text-[9px] text-slate-500 font-bold">({hp.belt})</span>
-                                    )}
+                                    <span
+                                      className={`w-1 h-1 rounded-full ${beltStyle.dot}`}
+                                    />
+                                    <span>{hp.name}</span>
                                   </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -563,64 +1041,62 @@ export default function CaptainDetailsModal({
               )}
             </div>
           ) : activeTab === "events" ? (
-            /* Events List Tab */
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">
-                    الفعاليات والبطولات المنشأة ({events.length})
-                  </h3>
-                  <p className="text-xs text-slate-500 font-bold">
-                    عرض جميع الفعاليات المنشأة بواسطة هذا الكابتن وتفاصيل المشاركين
+            /* ═════════════════════════════════════════════════════════════
+                TAB 4: EVENTS & TOURNAMENTS (الفعاليات والبطولات)
+            ═════════════════════════════════════════════════════════════ */
+            <div className="space-y-3">
+              {events.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 text-slate-400 text-xs font-bold space-y-1">
+                  <Trophy className="w-10 h-10 mx-auto text-slate-300" />
+                  <p className="text-slate-700 font-black">
+                    لم يقم الكابتن بتنظيم فعاليات أو بطولات حتى الآن
+                  </p>
+                  <p className="text-slate-400 text-[11px]">
+                    ستظهر هنا كافة البطولات، الاختبارات والرحلات عند إنشائها.
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black">
-                  إجمالي الفعاليات: {events.length}
-                </span>
-              </div>
-
-              {events.length === 0 ? (
-                <div className="text-center py-16 bg-slate-50 rounded-3xl border border-slate-100 text-slate-400 text-xs font-bold">
-                  لم يقم الكابتن بإنشاء فعاليات أو بطولات حتى الآن.
-                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {events.map((evt, idx) => (
                     <div
                       key={evt.id || evt._id || idx}
-                      className="p-5 rounded-3xl border border-slate-200/90 bg-white shadow-xs flex flex-col justify-between"
+                      className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-white shadow-2xs space-y-3"
                     >
-                      <div>
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center font-black">
-                              <Trophy className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-black text-slate-900">{evt.title}</h4>
-                              <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
-                                <Calendar className="w-3 h-3" />
-                                <span>{evt.date || "بدون تاريخ محدد"}</span>
-                              </span>
-                            </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
+                            <Trophy className="w-4 h-4" />
                           </div>
-
-                          <span className="px-3 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-black shrink-0">
-                            {evt.participantsCount ?? 0} مشارك
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 mt-4 text-xs font-bold">
-                          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                            <span className="block text-[10px] text-slate-400">رسوم الاشتراك</span>
-                            <span className="text-slate-800 font-black">{evt.fee ?? 0} جنيه</span>
-                          </div>
-                          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                            <span className="block text-[10px] text-slate-400">تاريخ الإنشاء</span>
-                            <span className="text-slate-800 font-black">
-                              {evt.createdAt ? new Date(evt.createdAt).toLocaleDateString("ar-EG") : "-"}
+                          <div>
+                            <strong className="text-sm font-black text-slate-900 block">
+                              {evt.title}
+                            </strong>
+                            <span className="text-[11px] text-slate-400 font-bold">
+                              نشاط تدريبي / بطولة
                             </span>
                           </div>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-black">
+                          {evt.participantsCount ?? 0} مشارك
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 font-bold">
+                            رسوم الاشتراك
+                          </span>
+                          <strong className="text-slate-900 font-black text-xs">
+                            {evt.fee ?? 0} جنيه
+                          </strong>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="block text-[10px] text-slate-400 font-bold">
+                            تاريخ النشاط
+                          </span>
+                          <strong className="text-slate-900 font-bold text-xs">
+                            {evt.date || "غير محدد"}
+                          </strong>
                         </div>
                       </div>
                     </div>
@@ -629,44 +1105,83 @@ export default function CaptainDetailsModal({
               )}
             </div>
           ) : (
-            /* Audit Log History Tab */
-            <div className="space-y-3">
+            /* ═════════════════════════════════════════════════════════════
+                TAB 5: AUDIT LOG (سجل العمليات الإدارية)
+            ═════════════════════════════════════════════════════════════ */
+            <div className="space-y-2.5">
               {auditLogs.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 text-xs font-bold">
-                  لا توجد عمليات سابقة مسجلة لهذا الكابتن
+                <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 text-slate-400 text-xs font-bold space-y-1">
+                  <History className="w-10 h-10 mx-auto text-slate-300" />
+                  <p className="text-slate-700 font-black">
+                    لا توجد سجلات لعمليات إدارية سابقة لهذا الحساب
+                  </p>
+                  <p className="text-slate-400 text-[11px]">
+                    يتم تسجيل عمليات التعليق، التمديد، والسداد تلقائياً.
+                  </p>
                 </div>
               ) : (
-                auditLogs.map((log) => (
-                  <div
-                    key={log._id || log.id}
-                    className="p-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/50 flex items-start justify-between gap-3 text-xs"
-                  >
-                    <div>
-                      <strong className="block font-black text-slate-800 mb-0.5">
-                        {log.action === "suspend_academy"
-                          ? "🚫 تعليق حساب الكابتن"
-                          : log.action === "reactivate_academy"
-                          ? "✓ إعادة تفعيل الحساب"
-                          : log.action === "extend_subscription"
-                          ? "⏰ تمديد الاشتراك"
-                          : log.action === "mark_subscription_paid"
-                          ? "💳 تسجيل سداد الاشتراك"
-                          : log.action === "mark_subscription_unpaid"
-                          ? "⚠️ إلغاء سداد الاشتراك"
-                          : log.action}
-                      </strong>
-                      <span className="text-[11px] text-slate-500 font-medium">
-                        بواسطة: {log.adminEmail}
-                        {log.details?.reason ? ` • السبب: ${log.details.reason}` : ""}
-                        {log.details?.daysAdded ? ` • المدة: +${log.details.daysAdded} يوم` : ""}
+                auditLogs.map((log) => {
+                  const isActionSuspend = log.action === "suspend_academy";
+                  const isActionReactivate = log.action === "reactivate_academy";
+                  const isActionExtend = log.action === "extend_subscription";
+                  const isActionPay = log.action === "mark_subscription_paid";
+
+                  return (
+                    <div
+                      key={log._id || log.id}
+                      className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs flex items-start justify-between gap-3 text-xs"
+                    >
+                      <div className="space-y-1">
+                        <strong
+                          className={`block font-black text-xs ${
+                            isActionSuspend
+                              ? "text-rose-700"
+                              : isActionReactivate
+                              ? "text-emerald-700"
+                              : isActionExtend
+                              ? "text-blue-700"
+                              : isActionPay
+                              ? "text-amber-800"
+                              : "text-slate-900"
+                          }`}
+                        >
+                          {isActionSuspend
+                            ? "🚫 تعليق حساب الكابتن"
+                            : isActionReactivate
+                            ? "✅ إعادة تفعيل الحساب"
+                            : isActionExtend
+                            ? "⏰ تمديد الاشتراك"
+                            : isActionPay
+                            ? "💳 تسجيل سداد الاشتراك"
+                            : log.action === "mark_subscription_unpaid"
+                            ? "⚠️ إلغاء سداد الاشتراك"
+                            : log.action}
+                        </strong>
+
+                        <div className="text-[11px] text-slate-500 font-medium">
+                          <span>بواسطة المسؤول: </span>
+                          <span className="font-mono text-slate-700 font-bold">
+                            {log.adminEmail}
+                          </span>
+                          {log.details?.reason && (
+                            <span className="block text-slate-600 mt-0.5">
+                              السبب: <strong>{log.details.reason}</strong>
+                            </span>
+                          )}
+                          {log.details?.daysAdded && (
+                            <span className="inline-block mt-0.5 px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-black">
+                              +{log.details.daysAdded} يوم
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <span className="text-[10px] text-slate-400 font-mono shrink-0 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                        {new Date(log.createdAt).toLocaleDateString("ar-EG")}
                       </span>
                     </div>
-
-                    <span className="text-[10px] text-slate-400 font-mono shrink-0">
-                      {new Date(log.createdAt).toLocaleDateString("ar-EG")}
-                    </span>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
