@@ -179,11 +179,8 @@ function StatsGrid({
     (p.attendance ?? []).some((a) => a.date === sessionDate && a.status === "present")
   ).length;
 
-  const absentToday = dashboardPlayers.filter((p) =>
-    (p.attendance ?? []).some((a) => a.date === sessionDate && a.status === "absent")
-  ).length;
-
-  const attendanceTotal = presentToday + absentToday;
+  const absentToday = Math.max(0, dashboardPlayers.length - presentToday);
+  const attendanceTotal = dashboardPlayers.length;
   const attendanceRate = attendanceTotal ? Math.round((presentToday / attendanceTotal) * 100) : 0;
 
   // 7-day Attendance Trend

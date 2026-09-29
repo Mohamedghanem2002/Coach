@@ -2,7 +2,7 @@ import { memo, useState, useMemo } from "react";
 import {
   Check, X, CreditCard, Clock, ChevronRight, ChevronLeft,
   UserRound, Cake, Phone, MessageCircle, MoreHorizontal,
-  AlertCircle, ShoppingBag, Sparkles, Building2,
+  AlertCircle, ShoppingBag, Sparkles, Building2, Lock,
 } from "lucide-react";
 import {
   paymentStatusFor,
@@ -13,6 +13,8 @@ import {
   calculateAge,
   getPurchasesSummary,
   isNewPlayer,
+  isBranchWorkingDate,
+  formatBranchDays,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 
@@ -85,7 +87,7 @@ function SpecialBadge({ birthdayInfo, isNew }) {
 }
 
 /* ── Attendance button ──────────────────────────────────────────────────── */
-function AttendBtn({ active, color, busy, onClick, children }) {
+function AttendBtn({ active, color, busy, disabled, onClick, children }) {
   const colors = {
     green: {
       active: "bg-emerald-600 text-white ring-2 ring-emerald-200 shadow-xs",
@@ -99,9 +101,13 @@ function AttendBtn({ active, color, busy, onClick, children }) {
   return (
     <button
       type="button"
-      disabled={Boolean(busy)}
-      onClick={onClick}
-      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl min-h-[44px] px-3 py-2 transition-all duration-150 active:scale-95 cursor-pointer disabled:opacity-60 touch-manipulation font-black text-xs ${active ? colors[color].active : colors[color].inactive}`}
+      disabled={Boolean(busy) || Boolean(disabled)}
+      onClick={disabled ? undefined : onClick}
+      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl min-h-[44px] px-3 py-2 transition-all duration-150 touch-manipulation font-black text-xs ${
+        disabled
+          ? "opacity-35 grayscale pointer-events-none cursor-not-allowed bg-slate-100 text-slate-400 border border-slate-200/80 shadow-none ring-0 select-none"
+          : `${active ? colors[color].active : colors[color].inactive} active:scale-95 cursor-pointer`
+      }`}
     >
       {busy ? <span className="h-3.5 w-3.5 rounded-full border-2 border-current/30 border-t-current animate-spin" /> : children}
     </button>
@@ -111,6 +117,7 @@ function AttendBtn({ active, color, busy, onClick, children }) {
 /* ── Main PlayerRow ─────────────────────────────────────────────────────── */
 function PlayerRow({
   player,
+  branches = [],
   sessionDate,
   paymentMonth,
   onOpen,
@@ -122,9 +129,27 @@ function PlayerRow({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalTab, setPaymentModalTab] = useState("subscription");
 
+  // Check branch working days
+  const playerBranch = useMemo(
+    () =>
+      (branches || []).find(
+        (b) => (b.name || "").trim() === (player.branch || "").trim()
+      ),
+    [branches, player.branch]
+  );
+  const isWorkingDay = useMemo(
+    () => isBranchWorkingDate(playerBranch, sessionDate),
+    [playerBranch, sessionDate]
+  );
+  const formattedBranchDays = useMemo(
+    () => formatBranchDays(playerBranch),
+    [playerBranch]
+  );
+
   const record = (player.attendance || []).find((item) => item.date === sessionDate);
   const present = record?.status === "present";
-  const absent = record?.status === "absent";
+  // On working days, student is default absent unless marked present
+  const absent = !present;
   const paymentDetails = getPaymentDetailsFor(player, paymentMonth);
   const paymentStatus = paymentDetails.status;
   const { totalAmount, paidAmount, remainingAmount } = paymentDetails;
@@ -171,7 +196,7 @@ function PlayerRow({
   const attendanceRate = totalSessions ? Math.round((attendedSessions / totalSessions) * 100) : 0;
 
   async function updateAttendance(status) {
-    if (attendanceBusy) return;
+    if (attendanceBusy || !isWorkingDay) return;
     setAttendanceBusy(status);
     try { await onUpdate(player._id, { attendanceStatus: status, date: sessionDate }); }
     finally { setAttendanceBusy(""); }
@@ -309,13 +334,37 @@ function PlayerRow({
         </div>
 
         {/* ── Row 3: Attendance Buttons ── */}
-        <div className="mt-2.5 grid grid-cols-2 gap-2">
-          <AttendBtn active={present} color="green" busy={attendanceBusy === "present"} onClick={() => updateAttendance("present")}>
-            <Check className="h-4 w-4 stroke-[3]" /><span>حاضر اليوم</span>
-          </AttendBtn>
-          <AttendBtn active={absent} color="red" busy={attendanceBusy === "absent"} onClick={() => updateAttendance("absent")}>
-            <X className="h-4 w-4 stroke-[3]" /><span>غائب اليوم</span>
-          </AttendBtn>
+        <div className="mt-2.5">
+          <div className="grid grid-cols-2 gap-2">
+            <AttendBtn
+              active={isWorkingDay && present}
+              color="green"
+              busy={attendanceBusy === "present"}
+              disabled={!isWorkingDay}
+              onClick={() => updateAttendance(present ? "absent" : "present")}
+            >
+              <Check className="h-4 w-4 stroke-[3]" />
+              <span>{present ? "حاضر التدريب ✓" : "تسجيل حضور"}</span>
+            </AttendBtn>
+            <AttendBtn
+              active={isWorkingDay && absent}
+              color="red"
+              busy={attendanceBusy === "absent"}
+              disabled={!isWorkingDay}
+              onClick={() => {
+                if (present) updateAttendance("absent");
+              }}
+            >
+              <X className="h-4 w-4 stroke-[3]" />
+              <span>{absent ? "غائب (تلقائي) ×" : "غائب اليوم"}</span>
+            </AttendBtn>
+          </div>
+          {!isWorkingDay && (
+            <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[10.5px] font-bold text-slate-400 select-none">
+              <Lock className="h-3 w-3 text-slate-400 shrink-0" />
+              <span>غير متاح اليوم (أيام عمل الصالة: {formattedBranchDays})</span>
+            </div>
+          )}
         </div>
 
         {/* ── Row 4: Financial Buttons ── */}
@@ -429,13 +478,40 @@ function PlayerRow({
         </div>
 
         {/* ── Col 4: Attendance ── */}
-        <div className="flex items-center gap-1.5 min-h-10">
-          <AttendBtn active={present} color="green" busy={attendanceBusy === "present"} onClick={() => updateAttendance("present")}>
-            <Check className="h-3.5 w-3.5" strokeWidth={2.5} /><span>حاضر</span>
-          </AttendBtn>
-          <AttendBtn active={absent} color="red" busy={attendanceBusy === "absent"} onClick={() => updateAttendance("absent")}>
-            <X className="h-3.5 w-3.5" strokeWidth={2.5} /><span>غياب</span>
-          </AttendBtn>
+        <div className="flex flex-col gap-1 min-h-10 justify-center">
+          <div className="flex items-center gap-1.5">
+            <AttendBtn
+              active={isWorkingDay && present}
+              color="green"
+              busy={attendanceBusy === "present"}
+              disabled={!isWorkingDay}
+              onClick={() => updateAttendance(present ? "absent" : "present")}
+            >
+              <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+              <span>{present ? "حاضر ✓" : "حضور"}</span>
+            </AttendBtn>
+            <AttendBtn
+              active={isWorkingDay && absent}
+              color="red"
+              busy={attendanceBusy === "absent"}
+              disabled={!isWorkingDay}
+              onClick={() => {
+                if (present) updateAttendance("absent");
+              }}
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+              <span>غائب</span>
+            </AttendBtn>
+          </div>
+          {!isWorkingDay && (
+            <span
+              className="text-[9.5px] text-center font-bold text-slate-400 flex items-center justify-center gap-1 select-none"
+              title={`أيام عمل الصالة: ${formattedBranchDays}`}
+            >
+              <Lock className="h-2.5 w-2.5 shrink-0" />
+              <span>غير متاح اليوم ({formattedBranchDays})</span>
+            </span>
+          )}
         </div>
 
         {/* ── Col 5: Financial ── */}

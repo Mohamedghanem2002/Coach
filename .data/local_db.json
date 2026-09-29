@@ -209,13 +209,15 @@
       "_id": "6ab9dc48c95fee0cff035b62",
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",
       "name": "صالة الكاتا الرئيسية",
-      "createdAt": "2026-09-28T03:17:28.118Z"
+      "createdAt": "2026-09-28T03:17:28.118Z",
+      "days": []
     },
     {
-      "_id": "6ab9dc48c95fee0cff035b63",
       "ownerId": "6aa1d2acc20ba8a6e482c3a3",
-      "name": "دوجو الكوميتيه للأبطال",
-      "createdAt": "2026-09-28T03:17:28.118Z"
+      "name": "رررر",
+      "createdAt": "2026-09-29T00:33:04.336Z",
+      "_id": "6abb07400c0f5b0fe93d032f",
+      "days": []
     }
   ],
   "players": [
@@ -300,9 +302,35 @@
       "paymentStatus": "unpaid",
       "paymentHistory": [],
       "purchases": [],
-      "attendance": [],
+      "attendance": [
+        {
+          "date": "2026-08-19",
+          "status": "present"
+        },
+        {
+          "date": "2026-09-29",
+          "status": "present"
+        }
+      ],
       "createdAt": "2026-09-28T03:29:54.665Z",
       "_id": "6ab9df32c95fee0cff035b64"
+    },
+    {
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "dddddd",
+      "age": 6,
+      "dateOfBirth": "2020-05-05",
+      "guardianPhone": "",
+      "branch": "رررر",
+      "belt": "أبيض",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "unpaid",
+      "paymentHistory": [],
+      "purchases": [],
+      "attendance": [],
+      "createdAt": "2026-09-29T00:40:57.572Z",
+      "_id": "6abb09190c0f5b0fe93d0330"
     }
   ],
   "events": [],

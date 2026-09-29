@@ -447,8 +447,8 @@ export function getLocalDbClient() {
               if (collectionName === "branches") {
                 return (
                   currentData.branches.find((b) => {
-                    if (filter.name && b.name !== filter.name) return false;
-                    if (filter.ownerId && b.ownerId !== filter.ownerId && !matchId(b.ownerId, filter.ownerId)) return false;
+                    if (filter.name && (b.name || "").trim() !== (filter.name || "").trim()) return false;
+                    if (filter.ownerId && !matchId(b.ownerId, filter.ownerId)) return false;
                     if ("_id" in filter && (!filter._id || !matchId(b._id, filter._id))) return false;
                     return true;
                   }) || null
@@ -604,6 +604,22 @@ export function getLocalDbClient() {
                   saveData(currentData);
                   return { modifiedCount: 1 };
                 }
+              }
+              if (collectionName === "branches") {
+                const branch = (currentData.branches || []).find((b) => {
+                  if (filter.ownerId && !matchId(b.ownerId, filter.ownerId)) return false;
+                  if (filter.name && (b.name || "").trim() !== (filter.name || "").trim()) return false;
+                  if (filter._id && !matchId(b._id, filter._id)) return false;
+                  return true;
+                });
+                if (branch) {
+                  if (update.$set) {
+                    Object.assign(branch, update.$set);
+                  }
+                  saveData(currentData);
+                  return { matchedCount: 1, modifiedCount: 1 };
+                }
+                return { matchedCount: 0, modifiedCount: 0 };
               }
               if (collectionName === "users") {
                 const user = (currentData.users || []).find((u) => {

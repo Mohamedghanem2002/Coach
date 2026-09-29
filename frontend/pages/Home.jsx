@@ -11,6 +11,8 @@ import {
   getTodayBirthdays,
   isBirthdayCongratulated,
   getPurchasesSummary,
+  isBranchWorkingDate,
+  formatBranchDays,
 } from "../lib/dashboard-utils";
 import {
   Plus,
@@ -526,15 +528,20 @@ export default function Home() {
       (item) => item.date === sessionDate && item.status === "present",
     ),
   ).length;
-  const absentToday = dashboardPlayers.filter((player) =>
-    (player.attendance || []).some(
-      (item) => item.date === sessionDate && item.status === "absent",
-    ),
-  ).length;
+  const absentToday = Math.max(0, dashboardPlayers.length - presentToday);
   const attendanceRateToday =
     dashboardPlayers.length > 0
       ? Math.round((presentToday / dashboardPlayers.length) * 100)
       : 0;
+
+  const activeBranchData = useMemo(
+    () => (branches || []).find((b) => b.name === branch),
+    [branches, branch]
+  );
+  const isBranchWorkingToday = useMemo(
+    () => isBranchWorkingDate(activeBranchData, sessionDate),
+    [activeBranchData, sessionDate]
+  );
   const todayBirthdaysCount = dashboardPlayers.filter((player) => {
     const bday = getBirthdayInfo(player);
     return Boolean(bday?.isToday || bday?.daysLeft === 1);
@@ -618,44 +625,74 @@ export default function Home() {
       setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
     }
   }
-  async function addBranch(name) {
-    const response = await fetch("/api/branches", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setNotice(data.error || "تعذر إضافة الفرع.");
+  async function addBranch(name, days = []) {
+    try {
+      const response = await fetch("/api/branches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, days }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        const errMsg = data.error || "تعذر إضافة الفرع.";
+        showToast(errMsg, "error");
+        setNotice(errMsg);
+        return null;
+      }
+      setBranches((current) => [...current, data]);
+      showToast("تمت إضافة الصالة ومواعيدها بنجاح.");
+      setNotice("تمت إضافة الفرع بنجاح.");
+      return data;
+    } catch {
+      showToast("تعذر الاتصال بالخادم لإضافة الصالة.", "error");
       return null;
     }
-    setBranches((current) => [...current, data]);
-    setNotice("تمت إضافة الفرع بنجاح.");
   }
-  async function renameBranch(oldName, newName) {
+  async function updateBranch(oldName, { newName, days }) {
     try {
       const response = await fetch("/api/branches", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oldName, newName }),
+        body: JSON.stringify({ oldName, newName, days }),
       });
       const data = await response.json();
       if (!response.ok) {
-        showToast(data.error || "تعذر تعديل اسم الفرع.", "error");
-        return;
+        const errMsg = data.error || "تعذر تعديل بيانات الفرع.";
+        showToast(errMsg, "error");
+        return { success: false, error: errMsg };
       }
+      const effectiveName = data.newName || oldName;
       setBranches((current) =>
-        current.map((b) => (b.name === oldName ? { ...b, name: newName } : b))
+        current.map((b) =>
+          (b.name || "").trim() === (oldName || "").trim()
+            ? {
+                ...b,
+                name: effectiveName,
+                days: data.days !== undefined ? data.days : b.days,
+              }
+            : b
+        )
       );
-      setPlayers((current) =>
-        current.map((p) => (p.branch === oldName ? { ...p, branch: newName } : p))
-      );
-      if (branch === oldName) setBranch(newName);
-      showToast(`تم تعديل اسم الفرع إلى "${newName}" وتحديث جميع بيانات اللاعبين.`);
+      if (data.newName && data.newName !== oldName) {
+        setPlayers((current) =>
+          current.map((p) =>
+            (p.branch || "").trim() === (oldName || "").trim()
+              ? { ...p, branch: data.newName }
+              : p
+          )
+        );
+        if (branch === oldName) setBranch(data.newName);
+        showToast(`تم تعديل اسم الفرع إلى "${data.newName}" وتحديث جميع بيانات اللاعبين.`);
+      } else {
+        showToast("تم تحديث مواعيد وأيام عمل الصالة بنجاح.");
+      }
+      return { success: true };
     } catch {
-      showToast("تعذر الاتصال بالخادم لتعديل اسم الفرع.", "error");
+      showToast("تعذر الاتصال بالخادم لتعديل بيانات الفرع.", "error");
+      return { success: false };
     }
   }
+  const renameBranch = (oldName, newName) => updateBranch(oldName, { newName });
   async function deleteBranch(name) {
     const response = await fetch("/api/branches", {
       method: "DELETE",
@@ -2302,6 +2339,7 @@ export default function Home() {
                 <PlayerRow
                   key={player._id}
                   player={player}
+                  branches={branches}
                   sessionDate={sessionDate}
                   paymentMonth={paymentMonth}
                   onOpen={() => setSelected(player)}
@@ -2381,9 +2419,10 @@ export default function Home() {
           players={players}
           onAdd={addBranch}
           onRename={renameBranch}
+          onUpdateBranch={updateBranch}
           onDelete={deleteBranch}
           onDeleteBlocked={handleBlockedBranchDelete}
-          notice={toast?.type === "error" ? toast.message : ""}
+          notice={toast?.message || ""}
           onClose={() => setShowBranches(false)}
         />
       )}

@@ -19,6 +19,7 @@ import {
   markBirthdayCongratulated,
   isNewPlayer,
   isWelcomeCardVisible,
+  formatArabicMonth,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 import ProfileCardModal from "./ProfileCardModal";
@@ -245,6 +246,7 @@ export default function Profile({
 
   // Custom Attendance & Payment
   const today = localDate();
+  const [reportMonth, setReportMonth] = useState(paymentMonth || today.slice(0, 7));
   const [customAttendanceDate, setCustomAttendanceDate] = useState(today);
   const [customAttendanceStatus, setCustomAttendanceStatus] = useState("present");
   const [customPaymentMonth, setCustomPaymentMonth] = useState(today.slice(0, 7));
@@ -419,103 +421,87 @@ export default function Profile({
     setTimeout(() => setIsOpeningChat(false), 1000);
   }
 
-  function shareReportText() {
+  function shareReportText(targetMonth = null) {
     if (isSendingText) return;
     setIsSendingText(true);
+    const activeMonth = targetMonth || reportMonth || paymentMonth || localDate().slice(0, 7);
+    const activeMonthLabel = formatArabicMonth(activeMonth);
     const cleanPhone = formatWhatsAppPhone(guardianPhone);
-    const attendanceHistory = Array.isArray(player.attendance)
-      ? [...player.attendance].reverse()
-      : [];
-    const paymentHistory = Array.isArray(player.paymentHistory)
-      ? [...player.paymentHistory].reverse()
-      : [];
-    const attendanceText = attendanceHistory.length
-      ? attendanceHistory
-        .map(
-          (item) =>
-            `${item.date}: ${item.status === "present" ? "حاضر ✓" : "غائب ×"}`,
-        )
-        .join("\n")
-      : "لا يوجد سجل حضور مسجل بعد";
-    const paymentText = paymentHistory.length
-      ? paymentHistory
-        .map((item) => {
-          const itemHasFee =
-            item.totalAmount !== undefined && item.totalAmount !== null && Number(item.totalAmount) > 0;
-          const total = itemHasFee
-            ? Number(item.totalAmount)
-            : (player?.defaultTotalAmount
-                ? Number(player.defaultTotalAmount)
-                : (player?.totalAmount && Number(player.totalAmount) > 0 ? Number(player.totalAmount) : null));
-          const hasFee = total !== null && total > 0;
-          const paid = item.paidAmount !== undefined ? Number(item.paidAmount) : (item.status === "paid" && hasFee ? total : 0);
-          const rem = hasFee ? Math.max(0, total - paid) : 0;
-          if (hasFee && paid >= total && total > 0) return `• ${item.month}: مدفوع بالكامل (${paid} ج.م) ✓`;
-          if (paid > 0 && hasFee) return `• ${item.month}: تم دفع ${paid} ج.م (المتبقي ${rem} ج.م) ⚠️`;
-          if (paid > 0 && !hasFee) return `• ${item.month}: تم دفع ${paid} ج.م ⚠️`;
-          return hasFee && rem > 0
-            ? `• ${item.month}: لم يدفع (المتبقي ${rem} ج.م) ⚠️`
-            : `• ${item.month}: لم يدفع ⚠️`;
-        })
-        .join("\n")
-      : "لا توجد مدفوعات مسجلة بعد";
+
+    // Filter attendance strictly for activeMonth:
+    const monthAttendance = (Array.isArray(player.attendance) ? player.attendance : [])
+      .filter((item) => item.date && item.date.startsWith(activeMonth))
+      .reverse();
+
+    const monthAttended = monthAttendance.filter((i) => i.status === "present").length;
+    const monthTotal = monthAttendance.length;
+    const monthRate = monthTotal ? Math.round((monthAttended / monthTotal) * 100) : 0;
+
+    const attendanceText = monthAttendance.length
+      ? monthAttendance
+          .map(
+            (item) =>
+              `• ${item.date}: ${item.status === "present" ? "حاضر التدريب ✓" : "غائب ×"}`
+          )
+          .join("\n")
+      : `لا توجد حصص تدريبية مسجلة خلال شهر ${activeMonthLabel}`;
+
+    // Target Month Payment
+    const targetPayment = getPaymentDetailsFor(player, activeMonth);
+    const mTotal = targetPayment.totalAmount || 0;
+    const mPaid = targetPayment.paidAmount || 0;
+    const mRem = targetPayment.remainingAmount || 0;
+    let paymentStatusText = "لم يدفع ⚠️";
+    if (targetPayment.status === "paid") {
+      paymentStatusText = mPaid > 0 ? `مدفوع بالكامل (${mPaid} ج.م) ✓` : "مدفوع بالكامل ✓";
+    } else if (targetPayment.status === "partially_paid") {
+      paymentStatusText = `سدد ${mPaid} من أصل ${mTotal} ج.م (فاضل عليه ${mRem} ج.م) ⚠️`;
+    } else if (mTotal > 0 || mRem > 0) {
+      paymentStatusText = `غير مدفوع (المبلغ المطلوب: ${mTotal || mRem} ج.م) ⚠️`;
+    }
 
     const purchasesList = Array.isArray(player.purchases) ? player.purchases : [];
     const purchasesText = purchasesList.length
       ? purchasesList
-        .map((p) => {
-          const tot = Number(p.totalAmount) || 0;
-          const pd = Number(p.paidAmount) || 0;
-          const rm = Math.max(0, tot - pd);
-          if (pd >= tot && tot > 0) return `• ${p.title}: مدفوع بالكامل (${pd} ج.م) ✓`;
-          if (pd > 0) return `• ${p.title}: سدد ${pd} من أصل ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
-          return `• ${p.title}: لم يسدد أي مبلغ من ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
-        })
-        .join("\n") +
+          .map((p) => {
+            const tot = Number(p.totalAmount) || 0;
+            const pd = Number(p.paidAmount) || 0;
+            const rm = Math.max(0, tot - pd);
+            if (pd >= tot && tot > 0) return `• ${p.title}: مدفوع بالكامل (${pd} ج.م) ✓`;
+            if (pd > 0) return `• ${p.title}: سدد ${pd} من أصل ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
+            return `• ${p.title}: لم يسدد أي مبلغ من ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
+          })
+          .join("\n") +
         (purchasesSummary.remainingAmount > 0
           ? `\n💰 إجمالي متبقي المشتريات والأدوات: ${purchasesSummary.remainingAmount} ج.م`
           : "\n✓ تم سداد كافة المشتريات والأدوات بالكامل")
       : "";
 
     const message = [
-      "🥋 بيانات لاعب أكاديمية الكاراتيه",
-      `📨 إشراف الكابتن: ${captainName}`,
+      `🥋 تقرير متابعة البطل - شهر ${activeMonthLabel}`,
+      `📨 إشراف وتدريب الكابتن: ${captainName}`,
       "",
-      `👤 الاسم: ${player.name}`,
-      `🎂 السن: ${currentAge} سنة`,
-      ...(guardianPhone ? [`📞 ولي الأمر: ${guardianPhone}`] : []),
+      `👤 اسم البطل: ${player.name}`,
+      `🥋 الحزام: ${player.belt || "أبيض"} (مستوى ${player.level || "A"})`,
       `🏢 الصالة: ${player.branch}`,
-      `📅 تاريخ التسجيل: ${registrationDate}`,
+      ...(guardianPhone ? [`📞 هاتف ولي الأمر: ${guardianPhone}`] : []),
       "",
-      "📊 ملخص الحضور والاشتراك:",
-      `✅ مرات الحضور: ${attended} حصة`,
-      `📝 إجمالي الحصص المسجلة: ${(player.attendance || []).length}`,
-      `💳 اشتراك شهر ${paymentMonth}: ${monthlyStatus === "paid"
-        ? (paymentDetails.hasConfiguredAmount || paidAmount > 0
-            ? `مدفوع بالكامل (${paidAmount} ج.م) ✓`
-            : "مدفوع بالكامل ✓")
-        : monthlyStatus === "partially_paid"
-          ? (paymentDetails.hasConfiguredAmount || totalAmount > 0
-              ? `سدد ${paidAmount} من أصل ${totalAmount} ج.م (فاضل عليه ${remainingAmount} ج.م) ⚠️`
-              : `سدد ${paidAmount} ج.م ⚠️`)
-          : (paymentDetails.hasConfiguredAmount && (totalAmount > 0 || remainingAmount > 0)
-              ? `غير مدفوع (المطلوب ${totalAmount || remainingAmount} ج.م) ⚠️`
-              : "لم يدفع ⚠️")
-      }`,
+      `📊 ملخص شهر ${activeMonthLabel}:`,
+      `✅ حضور تدريبات الشهر: ${monthAttended} من إجمالي ${monthTotal} حصة (${monthRate}%)`,
+      `💳 اشتراك شهر ${activeMonthLabel}: ${paymentStatusText}`,
       ...(purchasesText ? ["", "🥋 المشتريات والمستلزمات (البدل والأدوات):", purchasesText] : []),
       "",
-      "📋 سجل الحضور والغياب:",
+      `📋 سجل حضور وغياب شهر ${activeMonthLabel}:`,
       attendanceText,
       "",
-      "💰 سجل الاشتراكات السابقة:",
-      paymentText,
+      "🌟 نشكركم على حسن المتابعة وتشجيع بطلنا على الالتزام المستمر 🏆",
     ].join("\n");
 
     openWhatsAppDirect(cleanPhone, message);
     setProfileNotice(
       cleanPhone
-        ? `✓ تم فتح تطبيق واتساب لولي الأمر وإرسال التقرير النصي فوراً`
-        : "✓ تم فتح تطبيق واتساب لاختيار المحادثة وإرسال التقرير النصي فوراً"
+        ? `✓ تم تجهيز تقرير شهر ${activeMonthLabel} وفتح واتساب لولي الأمر (${cleanPhone})`
+        : `✓ تم تجهيز تقرير شهر ${activeMonthLabel} وفتح واتساب لاختيار المحادثة`
     );
     setTimeout(() => setIsSendingText(false), 800);
   }
@@ -579,18 +565,18 @@ export default function Profile({
     }
   }
 
-  async function generateProfileCanvas() {
-    const attendanceHistory = Array.isArray(player.attendance)
-      ? [...player.attendance].reverse().slice(0, 4)
-      : [];
-    const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
-    const attendedSessions = Array.isArray(player.attendance)
-      ? player.attendance.filter((item) => item.status === "present").length
-      : 0;
+  async function generateProfileCanvas(customMonth = null) {
+    const activeMonth = customMonth || reportMonth || paymentMonth || localDate().slice(0, 7);
+    const monthLabel = formatArabicMonth(activeMonth);
+
+    // Attendance filtered strictly for activeMonth:
+    const monthAttendance = (Array.isArray(player.attendance) ? player.attendance : [])
+      .filter((item) => item.date && item.date.startsWith(activeMonth));
+    const attendanceHistory = [...monthAttendance].reverse().slice(0, 5);
+    const totalSessions = monthAttendance.length;
+    const attendedSessions = monthAttendance.filter((item) => item.status === "present").length;
     const attRate = totalSessions ? Math.round((attendedSessions / totalSessions) * 100) : 0;
-    const paymentHistory = Array.isArray(player.paymentHistory)
-      ? [...player.paymentHistory].reverse().slice(0, 3)
-      : [];
+
     const purchasesList = Array.isArray(player.purchases)
       ? [...player.purchases].reverse().slice(0, 4)
       : [];
@@ -599,7 +585,7 @@ export default function Profile({
       (p) => (Number(p.remainingAmount) || 0) > 0,
     );
 
-    const targetPayment = getPaymentDetailsFor(player, paymentMonth);
+    const targetPayment = getPaymentDetailsFor(player, activeMonth);
     const mStatus = targetPayment.status;
     const mHasConfigured = Boolean(
       targetPayment.hasConfiguredAmount ||
@@ -914,54 +900,41 @@ export default function Profile({
       }
     }
 
-    // ─── Section 2: Monthly Payments History ───
+    // ─── Section 2: Active Month Financial Status ───
     y = Math.max(y + 15, 1140);
-    drawRight("💳 سجل الاشتراكات الشهرية", 1008, y, "900 28px Cairo, sans-serif", "#0f172a");
-    y += 22;
-    const pHistoryList = paymentHistory.slice(0, 3);
-    if (pHistoryList.length === 0) {
-      context.fillStyle = "#f8fafc";
-      context.beginPath();
-      context.roundRect(72, y, 936, 44, 12);
-      context.fill();
-      context.strokeStyle = "#e2e8f0";
-      context.lineWidth = 1.5;
-      context.stroke();
-      drawCenter("لا توجد اشتراكات شهرية سابقة مسجلة", 72 + 468, y + 30, "700 20px Cairo, sans-serif", "#64748b");
-      y += 54;
-    } else {
-      for (const item of pHistoryList) {
-        const itemHasFee =
-          item.totalAmount !== undefined && item.totalAmount !== null && Number(item.totalAmount) > 0;
-        const total = itemHasFee
-          ? Number(item.totalAmount)
-          : (player?.defaultTotalAmount
-              ? Number(player.defaultTotalAmount)
-              : (player?.totalAmount && Number(player.totalAmount) > 0 ? Number(player.totalAmount) : 0));
-        const hasFee = total > 0;
-        const paid = item.paidAmount !== undefined ? Number(item.paidAmount) : (item.status === "paid" && hasFee ? total : 0);
-        const rem = hasFee ? Math.max(0, total - paid) : 0;
-        const isP = hasFee ? (paid >= total && total > 0) : item.status === "paid";
-        const isPartial = paid > 0 && !isP;
+    drawRight(`💳 تفاصيل اشتراك شهر ${monthLabel}`, 1008, y, "900 28px Cairo, sans-serif", "#0f172a");
+    y += 24;
 
-        context.fillStyle = isP ? "#f0fdf4" : isPartial ? "#fffbeb" : "#fef2f2";
-        context.beginPath();
-        context.roundRect(72, y, 936, 42, 12);
-        context.fill();
-        context.strokeStyle = isP ? "#bbf7d0" : isPartial ? "#fde68a" : "#fecaca";
-        context.lineWidth = 1.5;
-        context.stroke();
+    context.fillStyle = mIsPaid ? "#f0fdf4" : mIsPartial ? "#fffbeb" : "#fef2f2";
+    context.beginPath();
+    context.roundRect(72, y, 936, 68, 16);
+    context.fill();
+    context.strokeStyle = mIsPaid ? "#86efac" : mIsPartial ? "#fde68a" : "#fca5a5";
+    context.lineWidth = 2;
+    context.stroke();
 
-        drawRight(`اشتراك شهر: ${item.month}`, 1008 - 20, y + 29, "700 22px Cairo, sans-serif", isP ? "#166534" : isPartial ? "#92400e" : "#991b1b");
-        const pStatusStr = isP
-          ? (hasFee ? `مدفوع بالكامل (${paid} ج.م) ✓` : "مدفوع بالكامل ✓")
-          : isPartial
-          ? (hasFee ? `سدد ${paid} ج.م  •  فاضل عليه: ${rem} ج.م ⚠️` : `سدد ${paid} ج.م ⚠️`)
-          : (hasFee ? `لم يدفع (مطلوب ${rem || total} ج.م) ⚠️` : "لم يدفع ⚠️");
-        drawLeft(pStatusStr, 72 + 20, y + 29, "800 22px Cairo, sans-serif", isP ? "#15803d" : isPartial ? "#b45309" : "#b91c1c");
-        y += 50;
-      }
-    }
+    drawRight(
+      mIsPaid
+        ? `✓ تم سداد اشتراك شهر ${monthLabel} بالكامل (${mPaid} ج.م)`
+        : mIsPartial
+        ? `⚠️ سداد جزئي: سدد ${mPaid} ج.م  •  فاضل عليه: ${mRemaining} ج.م`
+        : mHasConfigured
+        ? `⚠️ لم يسدد اشتراك شهر ${monthLabel} (المبلغ المطلوب: ${mTotal || mRemaining} ج.م)`
+        : `⚠️ لم يتم سداد اشتراك شهر ${monthLabel}`,
+      1008 - 24,
+      y + 42,
+      "800 26px Cairo, sans-serif",
+      mIsPaid ? "#166534" : mIsPartial ? "#92400e" : "#991b1b"
+    );
+
+    drawLeft(
+      mIsPaid ? "خالص ✓" : mIsPartial ? "سداد جزئي" : "غير مدفوع",
+      72 + 24,
+      y + 42,
+      "900 24px Cairo, sans-serif",
+      mIsPaid ? "#15803d" : mIsPartial ? "#b45309" : "#b91c1c"
+    );
+    y += 82;
 
     // ─── Section 3: Gear & Purchases Details ───
     y = Math.max(y + 15, 1325);
@@ -1763,9 +1736,9 @@ export default function Profile({
                   <button
                     type="button"
                     disabled={isSendingText}
-                    onClick={shareReportText}
+                    onClick={() => shareReportText(reportMonth)}
                     className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 py-2.5 px-1 text-slate-800 transition active-press cursor-pointer touch-manipulation disabled:opacity-60 shadow-2xs"
-                    title="إرسال تقرير نصي شامل لولي الأمر عبر واتساب"
+                    title={`إرسال تقرير شهر ${formatArabicMonth(reportMonth)} لولي الأمر عبر واتساب`}
                   >
                     <div className="h-8 w-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-xs">
                       <FileText className="h-4 w-4" />
@@ -1778,13 +1751,48 @@ export default function Profile({
                     type="button"
                     onClick={() => setShowCardModal(true)}
                     className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-red-50 hover:bg-red-100/80 border border-red-200/80 py-2.5 px-1 text-red-900 transition active-press cursor-pointer touch-manipulation shadow-2xs"
-                    title="معاينة ومشاركة كارت هوية اللاعب"
+                    title={`معاينة ومشاركة كارت شهر ${formatArabicMonth(reportMonth)}`}
                   >
                     <div className="h-8 w-8 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xs">
                       <Eye className="h-4 w-4" />
                     </div>
                     <span className="text-[11px] font-black truncate max-w-full">كارت اللاعب</span>
                   </button>
+                </div>
+
+                {/* شريط تبديل شهر التقرير والكارت في البروفايل */}
+                <div className="mt-2.5 flex items-center justify-between rounded-xl bg-slate-100 border border-slate-200/80 px-3 py-1.5 text-xs">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-700 min-w-0">
+                    <Calendar className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                    <span className="truncate">شهر التقرير والكارت:</span>
+                    <span className="text-red-700 font-extrabold truncate">{formatArabicMonth(reportMonth)}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const [y, m] = reportMonth.split("-").map(Number);
+                        const d = new Date(y, m - 2, 1);
+                        setReportMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+                      }}
+                      className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[11px] active:scale-95 cursor-pointer"
+                      title="الشهر السابق"
+                    >
+                      ◀ السابق
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const [y, m] = reportMonth.split("-").map(Number);
+                        const d = new Date(y, m, 1);
+                        setReportMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+                      }}
+                      className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[11px] active:scale-95 cursor-pointer"
+                      title="الشهر التالي"
+                    >
+                      التالي ▶
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -2775,7 +2783,8 @@ export default function Profile({
           cachedBlob={cachedCardBlob}
           isOpen={showCardModal}
           onClose={() => setShowCardModal(false)}
-          paymentMonth={paymentMonth}
+          paymentMonth={reportMonth || paymentMonth}
+          onSendWhatsApp={(month) => shareReportText(month)}
         />
       )}
 

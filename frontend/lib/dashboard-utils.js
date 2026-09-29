@@ -654,3 +654,66 @@ export async function copyBlobToClipboard(blob) {
     return false;
   }
 }
+
+export const WEEK_DAYS = [
+  { id: "sat", dayIndex: 6, label: "السبت" },
+  { id: "sun", dayIndex: 0, label: "الأحد" },
+  { id: "mon", dayIndex: 1, label: "الإثنين" },
+  { id: "tue", dayIndex: 2, label: "الثلاثاء" },
+  { id: "wed", dayIndex: 3, label: "الأربعاء" },
+  { id: "thu", dayIndex: 4, label: "الخميس" },
+  { id: "fri", dayIndex: 5, label: "الجمعة" },
+];
+
+export function getDayKeyFromDate(dateStr) {
+  if (!dateStr || typeof dateStr !== "string") return "";
+  const parts = dateStr.slice(0, 10).split("-");
+  if (parts.length < 3) return "";
+  const [y, m, d] = parts.map(Number);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return "";
+  const dateObj = new Date(y, m - 1, d);
+  const dayIndex = dateObj.getDay();
+  const found = WEEK_DAYS.find((w) => w.dayIndex === dayIndex);
+  return found ? found.id : "";
+}
+
+export function isBranchWorkingDate(branch, dateStr) {
+  if (!branch || !Array.isArray(branch.days) || branch.days.length === 0) {
+    // If no training days explicitly configured, all days are permitted
+    return true;
+  }
+  const dayKey = getDayKeyFromDate(dateStr);
+  return branch.days.includes(dayKey);
+}
+
+export function formatBranchDays(branch) {
+  if (!branch || !Array.isArray(branch.days) || branch.days.length === 0) {
+    return "طوال أيام الأسبوع";
+  }
+  const orderedKeys = WEEK_DAYS.map((w) => w.id);
+  const sortedDays = branch.days
+    .slice()
+    .sort((a, b) => orderedKeys.indexOf(a) - orderedKeys.indexOf(b));
+  const labels = sortedDays
+    .map((k) => WEEK_DAYS.find((w) => w.id === k)?.label || k)
+    .filter(Boolean);
+  return labels.length ? labels.join("، ") : "طوال أيام الأسبوع";
+}
+
+export function formatArabicMonth(monthStr) {
+  if (!monthStr || typeof monthStr !== "string") return "";
+  try {
+    const parts = monthStr.slice(0, 7).split("-");
+    if (parts.length < 2) return monthStr;
+    const [y, m] = parts.map(Number);
+    if (isNaN(y) || isNaN(m)) return monthStr;
+    const d = new Date(y, m - 1, 1);
+    return new Intl.DateTimeFormat("ar-EG", {
+      month: "long",
+      year: "numeric",
+    }).format(d);
+  } catch (_) {
+    return monthStr;
+  }
+}
+

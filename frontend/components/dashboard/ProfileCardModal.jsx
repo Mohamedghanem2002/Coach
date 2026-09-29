@@ -1,7 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X, Download, MessageCircle } from "lucide-react";
-import { formatWhatsAppPhone, openWhatsAppDirect } from "../../lib/dashboard-utils";
+import { X, Download, MessageCircle, ChevronRight, ChevronLeft, Calendar } from "lucide-react";
+import {
+  formatWhatsAppPhone,
+  openWhatsAppDirect,
+  formatArabicMonth,
+  localDate,
+} from "../../lib/dashboard-utils";
 import { copyBlobToClipboard } from "../../lib/birthday-card-utils";
 
 export default function ProfileCardModal({
@@ -12,14 +17,17 @@ export default function ProfileCardModal({
   isOpen,
   onClose,
   paymentMonth,
+  onSendWhatsApp,
 }) {
+  const [selectedMonth, setSelectedMonth] = useState(
+    paymentMonth || localDate().slice(0, 7)
+  );
   const [dataUrl, setDataUrl] = useState("");
-  const [blob, setBlob] = useState(cachedBlob || null);
+  const [blob, setBlob] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [notice, setNotice] = useState("");
-
   const [whatsAppUrl, setWhatsAppUrl] = useState("");
 
   const isLoading = isOpen && !dataUrl && !loadError;
@@ -33,29 +41,24 @@ export default function ProfileCardModal({
     "";
   const cleanPhone = guardianPhone ? formatWhatsAppPhone(guardianPhone) : "";
 
+  function handleStepMonth(delta) {
+    try {
+      const parts = selectedMonth.split("-").map(Number);
+      const y = parts[0];
+      const m = parts[1];
+      const d = new Date(y, m - 1 + delta, 1);
+      const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      setSelectedMonth(newMonth);
+    } catch (_) {}
+  }
+
   useEffect(() => {
     if (!isOpen || !player) return undefined;
 
     let isMounted = true;
 
-    if (cachedBlob) {
-      const url = URL.createObjectURL(cachedBlob);
-      Promise.resolve().then(() => {
-        if (!isMounted) {
-          URL.revokeObjectURL(url);
-          return;
-        }
-        setBlob(cachedBlob);
-        setDataUrl(url);
-      });
-      return () => {
-        isMounted = false;
-        URL.revokeObjectURL(url);
-      };
-    }
-
     if (typeof canvasGenerator === "function") {
-      canvasGenerator()
+      canvasGenerator(selectedMonth)
         .then((canvas) => {
           if (!isMounted) return;
           if (!canvas) {
@@ -85,15 +88,17 @@ export default function ProfileCardModal({
       setNotice("");
       setWhatsAppUrl("");
     };
-  }, [isOpen, player, cachedBlob, canvasGenerator]);
+  }, [isOpen, player, selectedMonth, canvasGenerator]);
 
   if (!isOpen || !player) return null;
+
+  const monthLabel = formatArabicMonth(selectedMonth);
+  const fileName = `بطاقة_اللاعب_${(player.name || "اللاعب").replace(/\s+/g, "_")}_${selectedMonth}.png`;
 
   const handleDownload = () => {
     if (!blob) return;
     setIsDownloading(true);
     try {
-      const fileName = `بطاقة_اللاعب_${(player.name || "اللاعب").replace(/\s+/g, "_")}.png`;
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -102,7 +107,7 @@ export default function ProfileCardModal({
       link.click();
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(url), 2500);
-      setNotice("✓ تم حفظ وتحميل بطاقة اللاعب بجهازك بنجاح!");
+      setNotice(`✓ تم حفظ وتحميل بطاقة شهر ${monthLabel} بجهازك بنجاح!`);
     } catch (e) {
       console.error(e);
       setNotice("❌ حدث خطأ أثناء تحميل البطاقة.");
@@ -127,13 +132,11 @@ export default function ProfileCardModal({
       } catch (_) {}
     }
 
-    const fileName = `بطاقة_اللاعب_${(player.name || "اللاعب").replace(/\s+/g, "_")}.png`;
-
     try {
-      // 1. Fast copy image to clipboard as PNG
+      // 1. Copy image to clipboard
       const copied = await copyBlobToClipboard(blob);
 
-      // 2. Fallback auto-save if clipboard is unsupported
+      // 2. Fallback auto-save if clipboard unsupported
       if (!copied) {
         try {
           const url = URL.createObjectURL(blob);
@@ -147,7 +150,7 @@ export default function ProfileCardModal({
         } catch (_) {}
       }
 
-      // 3. Open WhatsApp directly to player's chat (or manual contact selection)
+      // 3. Open WhatsApp directly to player's guardian chat
       openWhatsAppDirect(cleanPhone, "", preWin);
 
       const targetLink = cleanPhone
@@ -158,14 +161,14 @@ export default function ProfileCardModal({
       if (cleanPhone) {
         setNotice(
           copied
-            ? `✓ تم نسخ البطاقة للحافظة وجاري فتح محادثة (${cleanPhone})! الصق الصورة (Paste) ثم أرسلها 🥋`
-            : `✓ تم حفظ البطاقة بجهازك وجاري فتح محادثة (${cleanPhone}) لإرسالها فوراً 🥋`
+            ? `✓ تم نسخ بطاقة شهر ${monthLabel} للحافظة وجاري فتح محادثة (${cleanPhone})! الصق الصورة (Paste) ثم أرسلها 🥋`
+            : `✓ تم حفظ بطاقة شهر ${monthLabel} بجهازك وجاري فتح محادثة (${cleanPhone}) لإرسالها فوراً 🥋`
         );
       } else {
         setNotice(
           copied
-            ? "✓ تم نسخ البطاقة للحافظة وجاري فتح واتساب! اختر المحادثة المطلوبة ثم الصق الصورة (Paste) 🥋"
-            : "✓ تم حفظ البطاقة بجهازك وجاري فتح واتساب! اختر المحادثة المطلوبة لإرسالها 🥋"
+            ? `✓ تم نسخ بطاقة شهر ${monthLabel} للحافظة وجاري فتح واتساب! اختر المحادثة ثم الصق الصورة 🥋`
+            : `✓ تم حفظ بطاقة شهر ${monthLabel} بجهازك وجاري فتح واتساب لإرسالها 🥋`
         );
       }
     } catch (err) {
@@ -194,7 +197,7 @@ export default function ProfileCardModal({
             <span className="text-xl">🥋</span>
             <div>
               <h3 className="font-cairo text-xs sm:text-sm font-black text-red-400">
-                معاينة بطاقة اللاعب الرسمية
+                معاينة بطاقة وتقرير اللاعب
               </h3>
               <p className="text-[10px] text-slate-400">
                 للبطل: {player.name} {guardianPhone ? `• (${guardianPhone})` : ""}
@@ -210,21 +213,55 @@ export default function ProfileCardModal({
           </button>
         </div>
 
+        {/* Month Stepper Selector */}
+        <div className="mb-3 flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/90 p-2 shadow-inner">
+          <button
+            type="button"
+            onClick={() => handleStepMonth(-1)}
+            disabled={isLoading}
+            className="flex items-center gap-1 rounded-xl bg-slate-800/90 hover:bg-slate-700 px-3 py-1.5 text-xs font-black text-slate-200 transition active:scale-95 cursor-pointer disabled:opacity-50"
+            title="تقرير الشهر السابق"
+          >
+            <ChevronRight className="h-4 w-4" />
+            <span>السابق</span>
+          </button>
+
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-bold text-red-400">
+              {selectedMonth === localDate().slice(0, 7) ? "🌟 الشهر الحالي" : "📅 تقرير شهر"}
+            </span>
+            <span className="font-cairo text-xs sm:text-sm font-black text-white">
+              {monthLabel}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleStepMonth(1)}
+            disabled={isLoading}
+            className="flex items-center gap-1 rounded-xl bg-slate-800/90 hover:bg-slate-700 px-3 py-1.5 text-xs font-black text-slate-200 transition active:scale-95 cursor-pointer disabled:opacity-50"
+            title="تقرير الشهر التالي"
+          >
+            <span>التالي</span>
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        </div>
+
         {/* Card Image Display Preview */}
         <div className="relative mb-3 flex items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 p-2 min-h-[300px]">
           {isLoading ? (
             <div className="flex flex-col items-center gap-2.5 py-14">
               <span className="h-8 w-8 rounded-full border-3 border-red-500 border-t-transparent animate-spin" />
               <span className="font-cairo text-xs font-bold text-red-200">
-                جاري تصميم بطاقة اللاعب الرسمية...
+                جاري تصميم بطاقة شهر {monthLabel}...
               </span>
             </div>
           ) : dataUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={dataUrl}
-              alt={`بطاقة اللاعب ${player.name}`}
-              className="max-h-[58vh] sm:max-h-[64vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
+              alt={`بطاقة اللاعب ${player.name} شهر ${monthLabel}`}
+              className="max-h-[56vh] sm:max-h-[62vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
             />
           ) : (
             <span className="text-xs text-rose-400">تعذر إنشاء البطاقة</span>
@@ -252,14 +289,14 @@ export default function ProfileCardModal({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition active:scale-95 cursor-pointer"
                 >
                   <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                  <span>إذا لم تفتح المحادثة تلقائياً، اضغط هنا لفتح واتساب مباشرة</span>
+                  <span>إذا لم تفتح المحادثة تلقائياً، اضغط هنا لفتح واتساب</span>
                 </a>
               </div>
             )}
           </div>
         )}
 
-        {/* Under the preview: TWO clear actions: [ حفظ ] [ إرسال عبر واتساب ] */}
+        {/* Actions: [ حفظ ] [ إرسال عبر واتساب ] */}
         <div className="grid grid-cols-2 gap-2.5 pt-1">
           {/* Action 1: حفظ */}
           <button
@@ -277,7 +314,7 @@ export default function ProfileCardModal({
             ) : (
               <>
                 <Download className="h-4 w-4 shrink-0 text-emerald-400" />
-                <span>حفظ</span>
+                <span>حفظ البطاقة</span>
               </>
             )}
           </button>
@@ -287,7 +324,7 @@ export default function ProfileCardModal({
             type="button"
             disabled={isLoading || isSending || !blob}
             onClick={handleSendToWhatsApp}
-            className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 p-3 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition active-press disabled:opacity-50 cursor-pointer min-h-[48px]"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 p-3 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition active-press disabled:opacity-50 cursor-pointer min-h-[48px]"
             title="نسخ البطاقة وفتح واتساب مباشرة لإرسالها كصورة"
           >
             {isSending ? (
@@ -307,3 +344,4 @@ export default function ProfileCardModal({
     </div>
   );
 }
+
