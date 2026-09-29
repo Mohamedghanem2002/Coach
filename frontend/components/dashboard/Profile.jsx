@@ -2792,6 +2792,7 @@ export default function Profile({
         <BirthdayCardModal
           player={player}
           captainName={captainName}
+          academyName={academyName}
           cachedBlob={cachedBirthdayBlob}
           isOpen={showBirthdayModal}
           onClose={() => setShowBirthdayModal(false)}
@@ -2802,6 +2803,7 @@ export default function Profile({
         <WelcomeCardModal
           player={player}
           captainName={captainName}
+          academyName={academyName}
           isOpen={showWelcomeCardModal}
           onClose={() => setShowWelcomeCardModal(false)}
         />

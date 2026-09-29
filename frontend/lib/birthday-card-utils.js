@@ -206,19 +206,19 @@ export async function generateBirthdayCardCanvas(
   ctx.fillRect(0, 0, 1080, 1350);
 
   // 2. Radiant Celebration Ambient Highlights (Warm Gold & Rose)
-  const topGlow = ctx.createRadialGradient(540, 160, 30, 540, 160, 500);
+  const topGlow = ctx.createRadialGradient(540, 140, 30, 540, 140, 480);
   topGlow.addColorStop(0, "rgba(251, 191, 36, 0.22)");
   topGlow.addColorStop(0.5, "rgba(244, 63, 94, 0.1)");
   topGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
   ctx.fillStyle = topGlow;
-  ctx.fillRect(0, 0, 1080, 600);
+  ctx.fillRect(0, 0, 1080, 550);
 
-  const heroPhotoGlow = ctx.createRadialGradient(540, 445, 60, 540, 445, 380);
-  heroPhotoGlow.addColorStop(0, "rgba(245, 158, 11, 0.28)");
-  heroPhotoGlow.addColorStop(0.5, "rgba(225, 29, 72, 0.12)");
+  const heroPhotoGlow = ctx.createRadialGradient(540, 450, 80, 540, 450, 420);
+  heroPhotoGlow.addColorStop(0, "rgba(245, 158, 11, 0.32)");
+  heroPhotoGlow.addColorStop(0.5, "rgba(225, 29, 72, 0.14)");
   heroPhotoGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
   ctx.fillStyle = heroPhotoGlow;
-  ctx.fillRect(60, 150, 960, 600);
+  ctx.fillRect(40, 140, 1000, 630);
 
   const bottomGlow = ctx.createRadialGradient(540, 1100, 40, 540, 1100, 460);
   bottomGlow.addColorStop(0, "rgba(254, 215, 170, 0.32)");
@@ -268,18 +268,18 @@ export async function generateBirthdayCardCanvas(
 
   // 4. Vibrant Celebratory Confetti & Sparkles
   const sparkles = [
-    { x: 110, y: 130, r: 22, color: "#d97706", char: "★" },
-    { x: 970, y: 135, r: 22, color: "#dc2626", char: "★" },
-    { x: 140, y: 280, r: 24, color: "#0284c7", char: "✦" },
-    { x: 940, y: 290, r: 24, color: "#d97706", char: "✦" },
-    { x: 200, y: 180, r: 18, color: "#db2777", char: "✧" },
-    { x: 880, y: 190, r: 18, color: "#059669", char: "✧" },
-    { x: 90, y: 490, r: 22, color: "#d97706", char: "★" },
-    { x: 990, y: 500, r: 22, color: "#e11d48", char: "★" },
-    { x: 130, y: 690, r: 22, color: "#0284c7", char: "✦" },
-    { x: 950, y: 700, r: 22, color: "#d97706", char: "✦" },
-    { x: 120, y: 1230, r: 18, color: "#059669", char: "★" },
-    { x: 960, y: 1235, r: 18, color: "#d97706", char: "★" },
+    { x: 110, y: 115, r: 22, color: "#d97706", char: "★" },
+    { x: 970, y: 120, r: 22, color: "#dc2626", char: "★" },
+    { x: 130, y: 260, r: 24, color: "#0284c7", char: "✦" },
+    { x: 950, y: 270, r: 24, color: "#d97706", char: "✦" },
+    { x: 200, y: 165, r: 18, color: "#db2777", char: "✧" },
+    { x: 880, y: 175, r: 18, color: "#059669", char: "✧" },
+    { x: 85, y: 490, r: 22, color: "#d97706", char: "★" },
+    { x: 995, y: 500, r: 22, color: "#e11d48", char: "★" },
+    { x: 120, y: 700, r: 22, color: "#0284c7", char: "✦" },
+    { x: 960, y: 710, r: 22, color: "#d97706", char: "✦" },
+    { x: 120, y: 1240, r: 18, color: "#059669", char: "★" },
+    { x: 960, y: 1245, r: 18, color: "#d97706", char: "★" },
   ];
   sparkles.forEach((s) => {
     ctx.save();
@@ -294,14 +294,14 @@ export async function generateBirthdayCardCanvas(
   });
 
   const confetti = [
-    { x: 180, y: 130, r: 6, color: "#d97706" },
-    { x: 900, y: 140, r: 7, color: "#dc2626" },
-    { x: 260, y: 350, r: 5, color: "#0284c7" },
-    { x: 820, y: 360, r: 6, color: "#db2777" },
-    { x: 110, y: 610, r: 6, color: "#059669" },
-    { x: 970, y: 620, r: 6, color: "#d97706" },
-    { x: 180, y: 830, r: 6, color: "#dc2626" },
-    { x: 900, y: 840, r: 6, color: "#0284c7" },
+    { x: 180, y: 115, r: 6, color: "#d97706" },
+    { x: 900, y: 125, r: 7, color: "#dc2626" },
+    { x: 250, y: 320, r: 5, color: "#0284c7" },
+    { x: 830, y: 330, r: 6, color: "#db2777" },
+    { x: 100, y: 610, r: 6, color: "#059669" },
+    { x: 980, y: 620, r: 6, color: "#d97706" },
+    { x: 180, y: 835, r: 6, color: "#dc2626" },
+    { x: 900, y: 845, r: 6, color: "#0284c7" },
     { x: 140, y: 1140, r: 5, color: "#d97706" },
     { x: 940, y: 1145, r: 6, color: "#7c3aed" },
   ];
@@ -318,18 +318,18 @@ export async function generateBirthdayCardCanvas(
 
   // 5. Header: Academy Name & Badge (Bright & Prestigious)
   const academyBadge = `🥋 ${academyName || "أكاديمية الكاراتيه"} 🥋`;
-  ctx.font = "800 20px Cairo, sans-serif";
+  ctx.font = "800 19px Cairo, sans-serif";
   const badgeWidth = Math.max(340, Math.min(520, ctx.measureText(academyBadge).width + 48));
   drawBadge(
     academyBadge,
     540,
-    90,
+    74,
     badgeWidth,
-    44,
+    38,
     "#ffffff",
     "#991b1b",
     "#f59e0b",
-    "800 20px Cairo, sans-serif",
+    "800 19px Cairo, sans-serif",
     { color: "rgba(217, 119, 6, 0.2)", blur: 10, y: 3 }
   );
 
@@ -337,27 +337,27 @@ export async function generateBirthdayCardCanvas(
   drawCenter(
     "🎉 عـيـد مـيـلاد سـعـيـد 🎉",
     540,
-    168,
-    "900 54px Cairo, sans-serif",
+    132,
+    "900 44px Cairo, sans-serif",
     "#be123c",
-    { color: "rgba(190, 18, 60, 0.25)", blur: 14, y: 3 }
+    { color: "rgba(190, 18, 60, 0.25)", blur: 12, y: 3 }
   );
 
   drawCenter(
     "★ HAPPY BIRTHDAY CHAMPION ★",
     540,
-    214,
-    "800 19px Cairo, sans-serif",
+    166,
+    "800 16px Cairo, sans-serif",
     "#b45309",
     { color: "rgba(180, 83, 9, 0.2)", blur: 6, y: 2 }
   );
 
-  // 7. HERO PLAYER PHOTO (Large, Prominent & Surrounded by Joyful Balloons)
+  // 7. HERO PLAYER PHOTO (Massive: Radius 265px, Diameter 530px - Takes ~half the card with ultra-high quality!)
   const avatarX = 540;
-  const avatarY = 445;
-  const avatarRadius = 185;
+  const avatarY = 450;
+  const avatarRadius = 265;
 
-  // Birthday Balloons around the Photo
+  // Birthday Balloons flanking the large photo
   const drawBalloon = (bx, by, color, angle = 0) => {
     ctx.save();
     ctx.translate(bx, by);
@@ -365,7 +365,7 @@ export async function generateBirthdayCardCanvas(
 
     // Balloon body
     ctx.beginPath();
-    ctx.ellipse(0, 0, 32, 42, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 30, 40, 0, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.shadowColor = color;
     ctx.shadowBlur = 12;
@@ -373,24 +373,24 @@ export async function generateBirthdayCardCanvas(
 
     // Balloon highlight sheen
     ctx.beginPath();
-    ctx.ellipse(-10, -12, 9, 15, -0.3, 0, Math.PI * 2);
+    ctx.ellipse(-9, -11, 8, 14, -0.3, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
     ctx.fill();
 
     // Balloon knot
     ctx.beginPath();
-    ctx.moveTo(-5, 42);
-    ctx.lineTo(5, 42);
-    ctx.lineTo(0, 48);
+    ctx.moveTo(-5, 40);
+    ctx.lineTo(5, 40);
+    ctx.lineTo(0, 46);
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();
 
     // Balloon curly string
     ctx.beginPath();
-    ctx.moveTo(0, 48);
-    ctx.bezierCurveTo(10, 70, -10, 95, 5, 120);
-    ctx.strokeStyle = "rgba(100, 116, 139, 0.5)";
+    ctx.moveTo(0, 46);
+    ctx.bezierCurveTo(10, 68, -10, 92, 5, 115);
+    ctx.strokeStyle = "rgba(100, 116, 139, 0.45)";
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -398,21 +398,21 @@ export async function generateBirthdayCardCanvas(
   };
 
   // Left balloons
-  drawBalloon(avatarX - avatarRadius - 65, avatarY - 40, "#dc2626", -12);
-  drawBalloon(avatarX - avatarRadius - 105, avatarY + 30, "#f59e0b", -22);
+  drawBalloon(avatarX - avatarRadius - 55, avatarY - 30, "#dc2626", -12);
+  drawBalloon(avatarX - avatarRadius - 95, avatarY + 45, "#f59e0b", -22);
 
   // Right balloons
-  drawBalloon(avatarX + avatarRadius + 65, avatarY - 40, "#0284c7", 12);
-  drawBalloon(avatarX + avatarRadius + 105, avatarY + 30, "#db2777", 22);
+  drawBalloon(avatarX + avatarRadius + 55, avatarY - 30, "#0284c7", 12);
+  drawBalloon(avatarX + avatarRadius + 95, avatarY + 45, "#db2777", 22);
 
   // Floating Birthday Candles above the Hero Photo
-  const candleY = avatarY - avatarRadius - 28;
+  const candleY = avatarY - avatarRadius - 14;
   const drawCandle = (cx, cy) => {
     ctx.save();
     // Candle body
     ctx.fillStyle = "#f59e0b";
     ctx.beginPath();
-    ctx.roundRect(cx - 5, cy, 10, 24, 3);
+    ctx.roundRect(cx - 5, cy, 10, 22, 3);
     ctx.fill();
     // Wick
     ctx.strokeStyle = "#475569";
@@ -426,17 +426,16 @@ export async function generateBirthdayCardCanvas(
     ctx.shadowColor = "#f59e0b";
     ctx.shadowBlur = 14;
     ctx.beginPath();
-    ctx.ellipse(cx, cy - 11, 4.5, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy - 10, 4.5, 8, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#fef08a";
     ctx.beginPath();
-    ctx.ellipse(cx, cy - 9, 2.5, 4.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy - 8, 2.5, 4.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   };
-  drawCandle(avatarX - 28, candleY);
-  drawCandle(avatarX, candleY - 4);
-  drawCandle(avatarX + 28, candleY);
+  drawCandle(avatarX - 44, candleY);
+  drawCandle(avatarX + 44, candleY);
 
   // Outer Radiant Dual Rings around the Hero Avatar
   ctx.save();
@@ -451,40 +450,54 @@ export async function generateBirthdayCardCanvas(
   avatarRing.addColorStop(0.7, "#e11d48");
   avatarRing.addColorStop(1, "#d97706");
 
+  // Soft Ambient Glow
+  ctx.beginPath();
+  ctx.arc(avatarX, avatarY, avatarRadius + 14, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(245, 158, 11, 0.3)";
+  ctx.lineWidth = 14;
+  ctx.stroke();
+
   // Outer Glowing Ring
   ctx.beginPath();
-  ctx.arc(avatarX, avatarY, avatarRadius + 10, 0, Math.PI * 2);
+  ctx.arc(avatarX, avatarY, avatarRadius + 6, 0, Math.PI * 2);
   ctx.strokeStyle = avatarRing;
   ctx.lineWidth = 7;
   ctx.shadowColor = "rgba(245, 158, 11, 0.5)";
-  ctx.shadowBlur = 20;
+  ctx.shadowBlur = 18;
   ctx.stroke();
 
   // Inner White Divider Ring
   ctx.beginPath();
-  ctx.arc(avatarX, avatarY, avatarRadius + 3, 0, Math.PI * 2);
+  ctx.arc(avatarX, avatarY, avatarRadius + 1, 0, Math.PI * 2);
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 3.5;
   ctx.stroke();
   ctx.restore();
 
-  // Draw Player Photo or Athletic Martial Arts Avatar
+  // High quality image smoothing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  // Draw Player Photo (Cover & Center-Cropped to preserve native high resolution)
   let photoLoaded = false;
   if (player.photo) {
     try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = player.photo;
-      await new Promise((resolve) => {
-        img.onload = () => {
-          photoLoaded = true;
-          resolve();
-        };
-        img.onerror = () => resolve();
-        setTimeout(resolve, 350);
+      const img = await new Promise((resolve) => {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        setTimeout(() => resolve(null), 3000);
+        image.src = player.photo;
       });
 
-      if (photoLoaded) {
+      if (img && (img.naturalWidth || img.width) && (img.naturalHeight || img.height)) {
+        const pw = img.naturalWidth || img.width;
+        const ph = img.naturalHeight || img.height;
+        const minDim = Math.min(pw, ph);
+        const sx = (pw - minDim) / 2;
+        const sy = (ph - minDim) / 2;
+
         ctx.save();
         ctx.beginPath();
         ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
@@ -492,12 +505,17 @@ export async function generateBirthdayCardCanvas(
         ctx.clip();
         ctx.drawImage(
           img,
+          sx,
+          sy,
+          minDim,
+          minDim,
           avatarX - avatarRadius,
           avatarY - avatarRadius,
           avatarRadius * 2,
           avatarRadius * 2
         );
         ctx.restore();
+        photoLoaded = true;
       }
     } catch (_) {
       photoLoaded = false;
@@ -521,14 +539,14 @@ export async function generateBirthdayCardCanvas(
     ctx.fill();
 
     // Player Initial
-    ctx.font = "900 130px Cairo, sans-serif";
+    ctx.font = "900 180px Cairo, sans-serif";
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.direction = "rtl";
     ctx.shadowColor = "rgba(0,0,0,0.3)";
-    ctx.shadowBlur = 10;
-    ctx.fillText((player.name || "ب").charAt(0), avatarX, avatarY + 10);
+    ctx.shadowBlur = 12;
+    ctx.fillText((player.name || "ب").charAt(0), avatarX, avatarY + 12);
     ctx.restore();
   }
 
@@ -537,94 +555,60 @@ export async function generateBirthdayCardCanvas(
     "👑",
     avatarX,
     avatarY - avatarRadius + 4,
-    52,
-    52,
+    50,
+    50,
     "#fbbf24",
     "#78350f",
     "#ffffff",
-    "28px sans-serif",
+    "26px sans-serif",
     { color: "rgba(217, 119, 6, 0.3)", blur: 8, y: 2 }
+  );
+
+  // Floating Belt Badge overlapping bottom edge of the photo
+  const beltPillY = avatarY + avatarRadius - 10;
+  drawBadge(
+    `🥋 ${player.belt || "حزام أبيض"}  •  مستوى ${player.level || "A"}`,
+    avatarX,
+    beltPillY,
+    340,
+    46,
+    "#ffffff",
+    "#991b1b",
+    "#e11d48",
+    "800 20px Cairo, sans-serif",
+    { color: "rgba(0,0,0,0.12)", blur: 8, y: 3 }
   );
 
   // 8. Player Name (Ultra-Crisp, High Contrast Midnight Charcoal)
   drawCenter(
-    player.name,
+    `البطل / ${player.name}`,
     540,
-    695,
-    "900 50px Cairo, sans-serif",
+    782,
+    "900 46px Cairo, sans-serif",
     "#0f172a",
     { color: "rgba(0,0,0,0.12)", blur: 6, y: 2 }
   );
 
-  // 9. Badges: Age Celebration + Belt + Level + Branch
+  // 9. Badges: Age Celebration + Branch
   drawBadge(
     `🎂 كبرت سنة وبقيت ${turningAge} سنين! 🥳🎈`,
     540,
-    755,
-    470,
-    50,
+    838,
+    480,
+    46,
     "#e11d48",
     "#ffffff",
     "#fde047",
-    "900 23px Cairo, sans-serif",
+    "900 22px Cairo, sans-serif",
     { color: "rgba(225, 29, 72, 0.3)", blur: 10, y: 3 }
-  );
-
-  const beltColorHex = beltStyle.hex || "#f8fafc";
-  const isLightBelt =
-    beltColorHex === "#ffffff" ||
-    beltColorHex === "#f8fafc" ||
-    beltColorHex === "#fef08a";
-  const beltTextColor = isLightBelt ? "#0f172a" : "#ffffff";
-  const beltBorder = isLightBelt
-    ? "rgba(0, 0, 0, 0.2)"
-    : "rgba(255, 255, 255, 0.4)";
-
-  drawBadge(
-    `🥋 ${player.belt || "حزام أبيض"}`,
-    340,
-    818,
-    210,
-    42,
-    beltColorHex,
-    beltTextColor,
-    beltBorder,
-    "800 18px Cairo, sans-serif",
-    { color: "rgba(0,0,0,0.08)", blur: 6, y: 2 }
-  );
-
-  drawBadge(
-    `⭐ مستوى ${player.level || "A"}`,
-    540,
-    818,
-    140,
-    42,
-    "#fef3c7",
-    "#92400e",
-    "#f59e0b",
-    "800 18px Cairo, sans-serif",
-    { color: "rgba(217, 119, 6, 0.15)", blur: 6, y: 2 }
-  );
-
-  drawBadge(
-    `🏢 ${player.branch || "الفرع الرئيسي"}`,
-    720,
-    818,
-    180,
-    42,
-    "#f1f5f9",
-    "#1e293b",
-    "#cbd5e1",
-    "700 17px Cairo, sans-serif",
-    { color: "rgba(0,0,0,0.08)", blur: 6, y: 2 }
   );
 
   // 10. WARM, FRIENDLY CELEBRATION MESSAGE CARD
   ctx.save();
   const boxX = 75;
-  const boxY = 875;
+  const boxY = 880;
   const boxW = 930;
-  const boxH = 375;
+  const boxH = 370;
 
   // Box Card Background with soft drop shadow
   ctx.shadowColor = "rgba(0, 0, 0, 0.06)";
@@ -643,13 +627,13 @@ export async function generateBirthdayCardCanvas(
   drawBadge(
     "💌 تهنئة من القلب لبطلنا الغالي",
     540,
-    boxY + 36,
+    boxY + 34,
     360,
-    38,
+    36,
     "#fff1f2",
     "#9f1239",
     "#fca5a5",
-    "800 18px Cairo, sans-serif"
+    "800 17px Cairo, sans-serif"
   );
 
   // Warm, young, energetic celebration lines
@@ -662,29 +646,29 @@ export async function generateBirthdayCardCanvas(
     `من أسرة ${academyName || "الأكاديمية"} والكابتن / ${captainName} ❤️`,
   ];
 
-  let textY = boxY + 95;
+  let textY = boxY + 92;
   lines.forEach((line, index) => {
-    let font = "700 23px Cairo, sans-serif";
+    let font = "700 22px Cairo, sans-serif";
     let color = "#1e293b";
 
     if (index === 0) {
       color = "#0f172a";
-      font = "700 23px Cairo, sans-serif";
+      font = "700 22px Cairo, sans-serif";
     } else if (index === 1) {
       color = "#be123c"; // Hero Ruby
-      font = "900 26px Cairo, sans-serif";
+      font = "900 25px Cairo, sans-serif";
     } else if (index === 2) {
       color = "#b45309"; // Warm Gold
-      font = "900 25px Cairo, sans-serif";
+      font = "900 24px Cairo, sans-serif";
     } else if (index === 3) {
       color = "#1e293b";
-      font = "700 23px Cairo, sans-serif";
+      font = "700 22px Cairo, sans-serif";
     } else if (index === 4) {
       color = "#047857"; // Emerald Winner Green
-      font = "800 23px Cairo, sans-serif";
+      font = "800 22px Cairo, sans-serif";
     } else if (index === 5) {
       color = "#9f1239";
-      font = "800 22px Cairo, sans-serif";
+      font = "800 21px Cairo, sans-serif";
     }
 
     drawCenter(line, 540, textY, font, color, {
@@ -692,7 +676,7 @@ export async function generateBirthdayCardCanvas(
       blur: 4,
       y: 1,
     });
-    textY += 46;
+    textY += 44;
   });
   ctx.restore();
 
@@ -726,13 +710,13 @@ export async function shareBirthdayCard(
   captainName = "كابتن الأكاديمية",
   options = {}
 ) {
-  const { onProgress, onNotice } = options;
+  const { onProgress, onNotice, academyName = "أكاديمية الكاراتيه" } = options;
 
   if (onProgress) onProgress(true);
   if (onNotice) onNotice("⏳ جاري تجهيز كارت عيد الميلاد للمشاركة...");
 
   try {
-    const canvas = await generateBirthdayCardCanvas(player, captainName);
+    const canvas = await generateBirthdayCardCanvas(player, captainName, academyName);
     if (!canvas) throw new Error("Canvas generation failed");
 
     const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
@@ -839,7 +823,7 @@ export async function sendBirthdayCardViaWhatsApp(
   captainName = "كابتن الأكاديمية",
   options = {}
 ) {
-  const { onProgress, onNotice, existingBlob } = options;
+  const { onProgress, onNotice, existingBlob, academyName = "أكاديمية الكاراتيه" } = options;
 
   if (onProgress) onProgress(true);
 
@@ -847,7 +831,7 @@ export async function sendBirthdayCardViaWhatsApp(
     let blob = existingBlob;
     if (!blob) {
       if (onNotice) onNotice("⏳ جاري تجهيز كارت عيد الميلاد...");
-      const canvas = await generateBirthdayCardCanvas(player, captainName);
+      const canvas = await generateBirthdayCardCanvas(player, captainName, academyName);
       if (!canvas) {
         if (onNotice) onNotice("❌ تعذر إنشاء كارت عيد الميلاد");
         return;
@@ -928,14 +912,14 @@ export async function downloadBirthdayCard(
   captainName = "كابتن الأكاديمية",
   options = {}
 ) {
-  const { onProgress, onNotice, existingBlob } = options;
+  const { onProgress, onNotice, existingBlob, academyName = "أكاديمية الكاراتيه" } = options;
   if (onProgress) onProgress(true);
 
   try {
     let blob = existingBlob;
     if (!blob) {
       if (onNotice) onNotice("⏳ جاري إنشاء وتحميل كارت عيد الميلاد...");
-      const canvas = await generateBirthdayCardCanvas(player, captainName);
+      const canvas = await generateBirthdayCardCanvas(player, captainName, academyName);
       if (!canvas) {
         if (onNotice) onNotice("❌ تعذر إنشاء كارت عيد الميلاد");
         return;

@@ -96,18 +96,18 @@ export async function generateWelcomeCardCanvas(
   context.fill();
 
   // 3. Top Header Banner (Imperial Crimson & Ruby Red gradient)
-  const gradHeader = context.createLinearGradient(0, 36, canvas.width, 230);
+  const gradHeader = context.createLinearGradient(0, 36, canvas.width, 210);
   gradHeader.addColorStop(0, "#dc2626");
   gradHeader.addColorStop(0.5, "#b91c1c");
   gradHeader.addColorStop(1, "#881337");
   context.fillStyle = gradHeader;
   context.beginPath();
-  context.roundRect(36, 36, canvas.width - 72, 194, [44, 44, 0, 0]);
+  context.roundRect(36, 36, canvas.width - 72, 174, [44, 44, 0, 0]);
   context.fill();
 
   // Gold decorative trim line under header
   context.fillStyle = "#f59e0b";
-  context.fillRect(36, 230, canvas.width - 72, 4);
+  context.fillRect(36, 210, canvas.width - 72, 4);
 
   // Embellishment badge on the left (Dynamic Academy Brand)
   const badgeText = academyName || "Re_action DOJO";
@@ -116,44 +116,48 @@ export async function generateWelcomeCardCanvas(
   const badgeWidth = Math.max(160, Math.min(320, badgeTextWidth + 36));
   context.fillStyle = "rgba(255, 255, 255, 0.18)";
   context.beginPath();
-  context.roundRect(72, 68, badgeWidth, 52, 16);
+  context.roundRect(72, 60, badgeWidth, 50, 16);
   context.fill();
-  drawCenter(badgeText, 72 + badgeWidth / 2, 101, "900 20px Cairo, sans-serif", "#ffffff");
+  drawCenter(badgeText, 72 + badgeWidth / 2, 92, "900 20px Cairo, sans-serif", "#ffffff");
 
   // Header Title & Captain subtitle
   drawRight(
     "بطاقة ترحيب بالبطل 🥋",
     canvas.width - 80,
-    110,
-    "900 44px Cairo, sans-serif",
+    98,
+    "900 42px Cairo, sans-serif",
     "#ffffff"
   );
   drawRight(
     `إشراف وتدريب الكابتن: ${captainName}`,
     canvas.width - 80,
-    168,
-    "700 26px Cairo, sans-serif",
+    154,
+    "700 24px Cairo, sans-serif",
     "#fecaca"
   );
 
-  // 4. Hero Athlete Card (Large, majestic center box)
-  const heroBoxY = 252;
-  const heroBoxHeight = 688;
+  // 4. Hero Athlete Showcase (Huge Center Stage - occupying half the card!)
+  const heroBoxY = 230;
+  const heroBoxHeight = 880;
   const heroGrad = context.createLinearGradient(72, heroBoxY, 72, heroBoxY + heroBoxHeight);
   heroGrad.addColorStop(0, "#ffffff");
   heroGrad.addColorStop(1, "#f8fafc");
   context.fillStyle = heroGrad;
   context.beginPath();
-  context.roundRect(72, heroBoxY, canvas.width - 144, heroBoxHeight, 32);
+  context.roundRect(72, heroBoxY, canvas.width - 144, heroBoxHeight, 36);
   context.fill();
   context.strokeStyle = "#e2e8f0";
   context.lineWidth = 2.5;
   context.stroke();
 
-  // 5. Large Centered Athlete Portrait (Radius: 185px, Diameter: 370px!)
+  // 5. Massive Centered Athlete Portrait (Radius: 300px, Diameter: 600px! Takes ~half the card!)
   const photoCenterX = 540;
-  const photoCenterY = 460;
-  const photoRadius = 185;
+  const photoCenterY = 570;
+  const photoRadius = 300;
+
+  // Set high quality image smoothing
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
 
   let photoDrawn = false;
   if (player.photo) {
@@ -172,19 +176,19 @@ export async function generateWelcomeCardCanvas(
 
       // Soft outer ambient glow ring
       context.beginPath();
-      context.arc(photoCenterX, photoCenterY, photoRadius + 12, 0, Math.PI * 2);
-      context.strokeStyle = "rgba(220, 38, 38, 0.16)";
-      context.lineWidth = 12;
+      context.arc(photoCenterX, photoCenterY, photoRadius + 14, 0, Math.PI * 2);
+      context.strokeStyle = "rgba(220, 38, 38, 0.22)";
+      context.lineWidth = 14;
       context.stroke();
 
       // Gold decorative champion ring
       context.beginPath();
-      context.arc(photoCenterX, photoCenterY, photoRadius + 4, 0, Math.PI * 2);
+      context.arc(photoCenterX, photoCenterY, photoRadius + 5, 0, Math.PI * 2);
       context.strokeStyle = "#f59e0b";
-      context.lineWidth = 4;
+      context.lineWidth = 5;
       context.stroke();
 
-      // Center-crop (object-fit: cover) to preserve aspect ratio without stretching
+      // Center-crop (object-fit: cover) to preserve aspect ratio with zero stretching
       const minDim = Math.min(pw, ph);
       const sx = (pw - minDim) / 2;
       const sy = (ph - minDim) / 2;
@@ -210,7 +214,7 @@ export async function generateWelcomeCardCanvas(
       context.beginPath();
       context.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
       context.strokeStyle = "#dc2626";
-      context.lineWidth = 7;
+      context.lineWidth = 8;
       context.stroke();
       photoDrawn = true;
     }
@@ -219,21 +223,27 @@ export async function generateWelcomeCardCanvas(
   if (!photoDrawn) {
     // Soft outer ambient glow ring
     context.beginPath();
-    context.arc(photoCenterX, photoCenterY, photoRadius + 10, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(220, 38, 38, 0.16)";
-    context.lineWidth = 10;
+    context.arc(photoCenterX, photoCenterY, photoRadius + 14, 0, Math.PI * 2);
+    context.strokeStyle = "rgba(220, 38, 38, 0.22)";
+    context.lineWidth = 14;
+    context.stroke();
+
+    context.beginPath();
+    context.arc(photoCenterX, photoCenterY, photoRadius + 5, 0, Math.PI * 2);
+    context.strokeStyle = "#f59e0b";
+    context.lineWidth = 5;
     context.stroke();
 
     const avatarGrad = context.createRadialGradient(
-      photoCenterX - 50,
-      photoCenterY - 50,
-      25,
+      photoCenterX - 70,
+      photoCenterY - 70,
+      35,
       photoCenterX,
       photoCenterY,
       photoRadius
     );
-    avatarGrad.addColorStop(0, "#ef4444");
-    avatarGrad.addColorStop(0.5, "#dc2626");
+    avatarGrad.addColorStop(0, "#f87171");
+    avatarGrad.addColorStop(0.4, "#dc2626");
     avatarGrad.addColorStop(1, "#881337");
     context.fillStyle = avatarGrad;
     context.beginPath();
@@ -242,59 +252,58 @@ export async function generateWelcomeCardCanvas(
 
     context.beginPath();
     context.arc(photoCenterX, photoCenterY, photoRadius, 0, Math.PI * 2);
-    context.strokeStyle = "#ffffff";
-    context.lineWidth = 6;
+    context.strokeStyle = "#dc2626";
+    context.lineWidth = 8;
     context.stroke();
 
     drawCenter(
       player.name ? player.name.charAt(0) : "ك",
       photoCenterX,
-      photoCenterY + 55,
-      "900 150px Cairo, sans-serif",
+      photoCenterY + 80,
+      "900 240px Cairo, sans-serif",
       "#ffffff"
     );
   }
 
-  // Floating Belt Badge directly under the photo
-  const beltPillY = 620;
-  const beltPillW = 300;
-  const beltPillH = 52;
+  // Floating Belt Badge overlapping bottom edge of the photo
+  const beltPillY = 845;
+  const beltPillW = 340;
+  const beltPillH = 54;
   context.fillStyle = "#ffffff";
   context.beginPath();
-  context.roundRect(photoCenterX - beltPillW / 2, beltPillY, beltPillW, beltPillH, 26);
+  context.roundRect(photoCenterX - beltPillW / 2, beltPillY, beltPillW, beltPillH, 27);
   context.fill();
   context.strokeStyle = "#dc2626";
   context.lineWidth = 3;
   context.stroke();
   drawCenter(
-    `🥋 حزام ${player.belt || "أبيض"}`,
+    `🥋 حزام ${player.belt || "أبيض"}  •  مستوى ${player.level || "A"}`,
     photoCenterX,
-    beltPillY + 36,
-    "900 25px Cairo, sans-serif",
+    beltPillY + 37,
+    "900 24px Cairo, sans-serif",
     "#991b1b"
   );
 
-  // Athlete Name
+  // Athlete Name (Large, prominent & centered)
   drawCenter(
     `البطل / ${player.name}`,
     photoCenterX,
-    730,
+    950,
     "900 52px Cairo, sans-serif",
     "#0f172a"
   );
 
   // Athlete Info Chips Row (Centered and crisp)
-  const chipsY = 785;
+  const chipsY = 1005;
   const chipH = 48;
-  const chip1Text = `🏢 ${player.branch}`;
+  const chip1Text = `🏢 ${player.branch || "الفرع الرئيسي"}`;
   const chip2Text = `🎂 ${currentAge} سنة`;
-  const chip3Text = `⭐ مستوى ${player.level || "A"}`;
+  const chip3Text = `📅 انضمام: ${joinDate}`;
 
-  // Draw 3 neat badges side-by-side
   const badges = [
     { text: chip1Text, bg: "#f1f5f9", stroke: "#cbd5e1", color: "#1e293b", w: 230, x: 775 },
     { text: chip2Text, bg: "#fef2f2", stroke: "#fecaca", color: "#991b1b", w: 180, x: 540 },
-    { text: chip3Text, bg: "#ecfdf5", stroke: "#a7f3d0", color: "#065f46", w: 200, x: 305 },
+    { text: chip3Text, bg: "#ecfdf5", stroke: "#a7f3d0", color: "#065f46", w: 260, x: 275 },
   ];
 
   for (const b of badges) {
@@ -305,46 +314,27 @@ export async function generateWelcomeCardCanvas(
     context.strokeStyle = b.stroke;
     context.lineWidth = 1.5;
     context.stroke();
-    drawCenter(b.text, b.x, chipsY + 32, "800 22px Cairo, sans-serif", b.color);
+    drawCenter(b.text, b.x, chipsY + 32, "800 21px Cairo, sans-serif", b.color);
   }
 
-  // Join Date Badge (Bottom row of Hero box - Centered and elegant)
-  const joinPillY = 858;
-  const joinPillW = 480;
-  const joinPillH = 46;
-  context.fillStyle = "#f8fafc";
-  context.beginPath();
-  context.roundRect(photoCenterX - joinPillW / 2, joinPillY, joinPillW, joinPillH, 23);
-  context.fill();
-  context.strokeStyle = "#e2e8f0";
-  context.lineWidth = 1.5;
-  context.stroke();
-  drawCenter(
-    `📅 تاريخ الانضمام للأكاديمية: ${joinDate}`,
-    photoCenterX,
-    joinPillY + 31,
-    "700 22px Cairo, sans-serif",
-    "#475569"
-  );
-
-  // 6. Concise Welcome Celebration Card
-  const welcomeBoxY = 960;
-  const welcomeGrad = context.createLinearGradient(72, welcomeBoxY, canvas.width - 72, welcomeBoxY + 195);
+  // 6. Celebratory Welcome Card
+  const welcomeBoxY = 1135;
+  const welcomeGrad = context.createLinearGradient(72, welcomeBoxY, canvas.width - 72, welcomeBoxY + 175);
   welcomeGrad.addColorStop(0, "#f0fdf4");
   welcomeGrad.addColorStop(1, "#ecfdf5");
   context.fillStyle = welcomeGrad;
   context.beginPath();
-  context.roundRect(72, welcomeBoxY, canvas.width - 144, 195, 26);
+  context.roundRect(72, welcomeBoxY, canvas.width - 144, 175, 26);
   context.fill();
   context.strokeStyle = "#86efac";
   context.lineWidth = 2.5;
   context.stroke();
 
-  drawCenter("🌟 أهلاً وسهلاً بك في أسرة وعائلة الأكاديمية 🥋", photoCenterX, welcomeBoxY + 54, "900 32px Cairo, sans-serif", "#065f46");
-  drawCenter("يسعدنا انضمام بطلنا الواعد لمسيرة التدريب وصناعة الأبطال", photoCenterX, welcomeBoxY + 110, "800 24px Cairo, sans-serif", "#047857");
-  drawCenter("خطوتك الأولى نحو القوة، الانضباط، ومنصات التتويج العالمية 🏆🥇", photoCenterX, welcomeBoxY + 158, "800 22px Cairo, sans-serif", "#065f46");
+  drawCenter("🌟 أهلاً وسهلاً بك في أسرة وعائلة الأكاديمية 🥋", photoCenterX, welcomeBoxY + 48, "900 32px Cairo, sans-serif", "#065f46");
+  drawCenter("يسعدنا انضمام بطلنا الواعد لمسيرة التدريب وصناعة الأبطال الرياضية", photoCenterX, welcomeBoxY + 100, "800 24px Cairo, sans-serif", "#047857");
+  drawCenter("خطوتك الأولى نحو القوة، الانضباط، ومنصات التتويج العالمية 🏆🥇", photoCenterX, welcomeBoxY + 145, "800 22px Cairo, sans-serif", "#065f46");
 
-  // 7. Core Training Pillars (3 Punchy, Modern, Short Cards)
+  // 7. Core Training Pillars (2 High-Impact Streamlined Cards)
   const pillarList = [
     {
       title: "🥋 تدريب كاراتيه احترافي معتمد (كاتا وكوميتيه)",
@@ -358,9 +348,9 @@ export async function generateWelcomeCardCanvas(
       titleColor: "#0f172a",
     },
     {
-      title: "⚡ بناء الشخصية القيادية والانضباط وسرعة رد الفعل",
-      sub: "تنمية الثقة بالنفس، التركيز الذهني، والروح الرياضية العالية",
-      badge: "عزيمة وانضباط ✓",
+      title: "🥇 تدرج الأحزمة الرسمية وبناء الشخصية والانضباط",
+      sub: "تنمية الثقة بالنفس، التركيز الذهني، والتأهيل للبطولات",
+      badge: "طريق البطولة ✓",
       bg: "#fffbeb",
       border: "#fde68a",
       badgeBg: "#fef3c7",
@@ -368,51 +358,38 @@ export async function generateWelcomeCardCanvas(
       badgeColor: "#92400e",
       titleColor: "#92400e",
     },
-    {
-      title: "🥇 تدرج الأحزمة الرسمية والتأهيل للمنافسة في البطولات",
-      sub: "متابعة دورية مستمرة وخطة فردية لتطوير مستوى وأداء البطل",
-      badge: "طريق الذهب ✓",
-      bg: "#fef2f2",
-      border: "#fca5a5",
-      badgeBg: "#fee2e2",
-      badgeBorder: "#fca5a5",
-      badgeColor: "#991b1b",
-      titleColor: "#991b1b",
-    },
   ];
 
-  let pY = 1175;
+  let pY = 1330;
   for (const item of pillarList) {
     context.fillStyle = item.bg;
     context.beginPath();
-    context.roundRect(72, pY, canvas.width - 144, 98, 20);
+    context.roundRect(72, pY, canvas.width - 144, 96, 20);
     context.fill();
     context.strokeStyle = item.border;
     context.lineWidth = 2;
     context.stroke();
 
-    // Right: Title & Subtitle
-    drawRight(item.title, canvas.width - 100, pY + 41, "900 24px Cairo, sans-serif", item.titleColor);
-    drawRight(item.sub, canvas.width - 100, pY + 75, "600 19px Cairo, sans-serif", "#64748b");
+    drawRight(item.title, canvas.width - 100, pY + 40, "900 24px Cairo, sans-serif", item.titleColor);
+    drawRight(item.sub, canvas.width - 100, pY + 74, "600 19px Cairo, sans-serif", "#64748b");
 
-    // Left: Pill Badge
     context.fillStyle = item.badgeBg;
     context.beginPath();
-    context.roundRect(96, pY + 27, 170, 44, 12);
+    context.roundRect(96, pY + 26, 170, 44, 12);
     context.fill();
     context.strokeStyle = item.badgeBorder;
     context.lineWidth = 1.5;
     context.stroke();
-    drawCenter(item.badge, 96 + 85, pY + 56, "900 20px Cairo, sans-serif", item.badgeColor);
+    drawCenter(item.badge, 96 + 85, pY + 55, "900 20px Cairo, sans-serif", item.badgeColor);
 
-    pY += 118;
+    pY += 114;
   }
 
   // 8. Captain Signature Banner
-  const capBoxY = 1532;
+  const capBoxY = 1580;
   context.fillStyle = "#f8fafc";
   context.beginPath();
-  context.roundRect(72, capBoxY, canvas.width - 144, 128, 24);
+  context.roundRect(72, capBoxY, canvas.width - 144, 120, 24);
   context.fill();
   context.strokeStyle = "#e2e8f0";
   context.lineWidth = 2;
@@ -421,26 +398,26 @@ export async function generateWelcomeCardCanvas(
   drawCenter(
     "مع أطيب تمنياتنا لك بمسيرة رياضية حافلة بالبطولات والإنجازات 🏆",
     photoCenterX,
-    capBoxY + 52,
+    capBoxY + 48,
     "800 24px Cairo, sans-serif",
     "#0f172a"
   );
   drawCenter(
     `الكابتن / ${captainName}  •  ${academyName || "أكاديمية الكاراتيه"} ❤️`,
     photoCenterX,
-    capBoxY + 98,
+    capBoxY + 92,
     "900 24px Cairo, sans-serif",
     "#dc2626"
   );
 
-  // 9. Official Card Footer (Exact match to Profile Card)
+  // 9. Official Card Footer
   context.fillStyle = "#e2e8f0";
-  context.fillRect(72, 1715, canvas.width - 144, 2);
+  context.fillRect(72, 1725, canvas.width - 144, 2);
 
   drawRight(
     `تم استخراج بطاقة الترحيب رسميًا من ${academyName || "الأكاديمية"}  •  ${new Date().toLocaleDateString("ar-EG")}`,
     canvas.width - 80,
-    1770,
+    1775,
     "600 22px Cairo, sans-serif",
     "#94a3b8"
   );
@@ -448,7 +425,7 @@ export async function generateWelcomeCardCanvas(
   drawLeft(
     `${academyName || "أكاديمية الكاراتيه والرياضات القتالية"} 🥋`,
     80,
-    1770,
+    1775,
     "800 22px Cairo, sans-serif",
     "#b91c1c"
   );
