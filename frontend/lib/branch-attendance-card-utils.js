@@ -212,7 +212,7 @@ export async function generateBranchAttendanceCardCanvas({
   context.fillRect(cardX, cardY + headerH, cardW, 4);
 
   // Brand Badge (Dynamic Academy Brand)
-  const badgeText = `${academyName || "Re_action DOJO"} 🥋`;
+  const badgeText = `${academyName || "CoachMaster"} 🥋`;
   context.font = "800 20px Cairo, sans-serif";
   const badgeTextWidth = context.measureText(badgeText).width;
   const badgeWidth = Math.max(180, Math.min(320, badgeTextWidth + 36));

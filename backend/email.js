@@ -205,7 +205,7 @@ export async function sendPasswordResetCode({
     }
 
     const { transporter, fromEmail } = transportInfo;
-    const subject = `🔐 استعادة كلمة المرور: ${code} - أكاديمية Re_action`;
+    const subject = `🔐 استعادة كلمة المرور: ${code} - CoachMaster`;
 
     const html = `
       <!DOCTYPE html>
@@ -266,7 +266,7 @@ export async function sendPasswordResetCode({
           </div>
 
           <div class="footer">
-            أكاديمية Re_action للكاراتيه • منظومة DOJO 2026<br/>
+            منظومة CoachMaster لإدارة أكاديميات الكاراتيه • 2026<br/>
             جميع الحقوق محفوظة &copy; ${new Date().getFullYear()}
           </div>
         </div>
@@ -275,7 +275,7 @@ export async function sendPasswordResetCode({
     `;
 
     const info = await transporter.sendMail({
-      from: `"أكاديمية Re_action" <${fromEmail}>`,
+      from: `"CoachMaster" <${fromEmail}>`,
       to: email,
       subject,
       html,

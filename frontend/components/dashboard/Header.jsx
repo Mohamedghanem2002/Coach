@@ -48,7 +48,7 @@ export default function Header({
   }).format(new Date());
 
   const fullName = session?.user?.name || "حساب الأكاديمية";
-  const academyName = session?.user?.academyName || "Re_action DOJO";
+  const academyName = session?.user?.academyName || "CoachMaster";
   const firstName = fullName.split(" ")[0] || "كابتن";
   const email = session?.user?.email || "";
   const initials = firstName.charAt(0);
@@ -114,7 +114,7 @@ export default function Header({
                 {academyName}
               </strong>
               <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 text-[9px] font-black text-red-600 shrink-0">
-                DOJO
+                PRO
               </span>
             </div>
             {/* Subtitle / Captain greeting */}

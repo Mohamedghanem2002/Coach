@@ -113,7 +113,7 @@ export async function GET(request) {
           id: uId,
           _id: uId,
           name: u.name,
-          academyName: u.academyName || "Re_action DOJO",
+          academyName: u.academyName || "CoachMaster",
           email: u.email,
           phone: u.phone || "",
           status: u.status || "active",

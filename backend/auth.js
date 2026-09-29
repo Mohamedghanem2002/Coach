@@ -139,7 +139,7 @@ export const { handlers, auth } = NextAuth({
           name: user.name,
           email: user.email,
           phone: user.phone || "",
-          academyName: user.academyName || "Re_action DOJO",
+          academyName: user.academyName || "CoachMaster",
           role,
           status: user.status || "active",
           suspensionReason: user.suspensionReason || null,
@@ -157,7 +157,7 @@ export const { handlers, auth } = NextAuth({
         token.name = user.name;
         token.email = user.email;
         token.phone = user.phone || "";
-        token.academyName = user.academyName || "Re_action DOJO";
+        token.academyName = user.academyName || "CoachMaster";
         token.role = user.role || "user";
         token.status = user.status || "active";
         token.suspensionReason = user.suspensionReason || null;
@@ -186,7 +186,7 @@ export const { handlers, auth } = NextAuth({
         if (token.name) session.user.name = token.name;
         if (token.email) session.user.email = token.email;
         session.user.phone = token.phone || "";
-        session.user.academyName = token.academyName || "Re_action DOJO";
+        session.user.academyName = token.academyName || "CoachMaster";
         session.user.role = token.role || "user";
         session.user.status = token.status || "active";
         session.user.suspensionReason = token.suspensionReason || null;

@@ -406,11 +406,11 @@ export async function createCloudSnapshot(ownerId, userEmail = "") {
   const now = new Date();
   const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo" }).format(now);
   const timeStr = `${String(now.getHours()).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}-${String(now.getSeconds()).padStart(2, "0")}`;
-  const filename = `reaction_dojo_cloud_${dateStr}_${timeStr}.json`;
+  const filename = `coachmaster_cloud_${dateStr}_${timeStr}.json`;
 
   const backupPayload = {
     _id: new ObjectId(),
-    system: "Re_action DOJO",
+    system: "CoachMaster",
     version: "1.0",
     type: "cloud_backup",
     exportedAt: now.toISOString(),

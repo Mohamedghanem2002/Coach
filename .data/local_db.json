@@ -6,7 +6,7 @@
       "passwordHash": "$2b$12$Yf2TAYOoYytzbGBAS/BbaeZSuTzl2creVdEtV.23mJZvnEVYxGali",
       "createdAt": "2026-09-09T21:42:04.392Z",
       "_id": "6aa1d2acc20ba8a6e482c3a3",
-      "academyName": "Re_action DOJO",
+      "academyName": "CoachMaster",
       "role": "admin",
       "status": "active",
       "subscriptionStatus": "active",
@@ -339,7 +339,7 @@
   "cloud_snapshots": [
     {
       "_id": "6ab72e5a353baa9f7b289cd2",
-      "system": "Re_action DOJO",
+      "system": "CoachMaster",
       "version": "1.0",
       "type": "cloud_backup",
       "exportedAt": "2026-09-26T02:30:50.781Z",
@@ -347,7 +347,7 @@
       "ownerId": "test_owner_123",
       "userEmail": "mg0447837@gmail.com",
       "title": "نسخة سحابية محفوظة (Gmail / Cloud)",
-      "filename": "reaction_dojo_cloud_2026-09-26_05-30-50.json",
+      "filename": "coachmaster_cloud_2026-09-26_05-30-50.json",
       "stats": {
         "playersCount": 0,
         "branchesCount": 2,
@@ -425,7 +425,7 @@
     {
       "action": "suspend_academy",
       "targetAcademyId": "6aa1d2acc20ba8a6e482c3a3",
-      "targetAcademyName": "Re_action DOJO",
+      "targetAcademyName": "CoachMaster",
       "adminEmail": "mg0447837@gmail.com",
       "adminId": "6aa1d2acc20ba8a6e482c3a3",
       "details": {
@@ -507,7 +507,7 @@
     {
       "action": "suspend_academy",
       "targetAcademyId": "6aa1d2acc20ba8a6e482c3a3",
-      "targetAcademyName": "Re_action DOJO",
+      "targetAcademyName": "CoachMaster",
       "adminEmail": "mg0447837@gmail.com",
       "adminId": "6aa1d2acc20ba8a6e482c3a3",
       "details": {
@@ -535,7 +535,7 @@
     {
       "action": "suspend_academy",
       "targetAcademyId": "6aa1d2acc20ba8a6e482c3a3",
-      "targetAcademyName": "Re_action DOJO",
+      "targetAcademyName": "CoachMaster",
       "adminEmail": "mg0447837@gmail.com",
       "adminId": "6aa1d2acc20ba8a6e482c3a3",
       "details": {
@@ -617,7 +617,7 @@
     {
       "action": "suspend_academy",
       "targetAcademyId": "6aa1d2acc20ba8a6e482c3a3",
-      "targetAcademyName": "Re_action DOJO",
+      "targetAcademyName": "CoachMaster",
       "adminEmail": "mg0447837@gmail.com",
       "adminId": "6aa1d2acc20ba8a6e482c3a3",
       "details": {

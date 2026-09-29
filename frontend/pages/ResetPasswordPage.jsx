@@ -130,7 +130,7 @@ export default function ResetPasswordPage() {
             </div>
             <div className="text-right">
               <div className="flex items-center gap-2">
-                <strong className="text-xl font-black tracking-tight text-white">Re_action</strong>
+                <strong className="text-xl font-black tracking-tight text-white">CoachMaster</strong>
                 <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-[9px] font-black text-red-400 border border-red-500/30 tracking-widest">SECURITY</span>
               </div>
               <p className="text-xs font-medium text-slate-400">استعادة كلمة المرور والحساب</p>
@@ -284,7 +284,7 @@ export default function ResetPasswordPage() {
 
           {/* Footer */}
           <p className="text-center text-[11px] text-slate-600 border-t border-white/5 pt-5">
-            Re_action DOJO · منظومة الأبطال {new Date().getFullYear()}
+            CoachMaster · منظومة الأبطال {new Date().getFullYear()}
           </p>
         </div>
       </section>

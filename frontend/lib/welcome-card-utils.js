@@ -20,7 +20,7 @@ export {
 /**
  * Generates an ultra-luxurious, official Karate Welcome Card Canvas
  * Featuring a large, prominent athlete photo portrait (290px diameter),
- * punchy and concise celebratory wording, and official Re_action PRO sports franchise branding.
+ * punchy and concise celebratory wording, and official CoachMaster sports franchise branding.
  * Dimensions: 1080 x 1920 (Standard 9:16 portrait)
  */
 export async function generateWelcomeCardCanvas(
@@ -110,7 +110,7 @@ export async function generateWelcomeCardCanvas(
   context.fillRect(36, 210, canvas.width - 72, 4);
 
   // Embellishment badge on the left (Dynamic Academy Brand)
-  const badgeText = academyName || "Re_action DOJO";
+  const badgeText = academyName || "CoachMaster";
   context.font = "900 20px Cairo, sans-serif";
   const badgeTextWidth = context.measureText(badgeText).width;
   const badgeWidth = Math.max(160, Math.min(320, badgeTextWidth + 36));

@@ -33,7 +33,7 @@ function parseAndNormalizeData(raw) {
   // Ensure _id are ObjectId instances
   data.users.forEach((u) => {
     if (u._id && typeof u._id === "string") u._id = new ObjectId(u._id);
-    if (!u.academyName) u.academyName = "Re_action DOJO";
+    if (!u.academyName) u.academyName = "CoachMaster";
     if (u.email && u.email.toLowerCase() === adminEmail) {
       u.role = "admin";
     } else if (!u.role) {

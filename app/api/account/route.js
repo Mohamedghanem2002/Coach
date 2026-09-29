@@ -59,7 +59,7 @@ export async function GET() {
       user: {
         id: user._id.toString(),
         name: user.name,
-        academyName: user.academyName || "Re_action DOJO",
+        academyName: user.academyName || "CoachMaster",
         email: user.email,
         phone: user.phone || "",
         role: user.role || "user",

@@ -10,8 +10,8 @@ const cairo = Cairo({
 });
 
 export const metadata = {
-  title: "Re_action | لوحة إدارة أكاديمية الكاراتيه",
-  description: "نظام رقمي متقدم لإدارة حضور واشتراكات لاعبي أكاديمية الكاراتيه",
+  title: "CoachMaster | لوحة إدارة أكاديمية الكاراتيه",
+  description: "نظام CoachMaster الرقمي المتقدم لإدارة حضور واشتراكات لاعبي أكاديمية الكاراتيه",
   icons: {
     icon: "/favicon.ico",
   },

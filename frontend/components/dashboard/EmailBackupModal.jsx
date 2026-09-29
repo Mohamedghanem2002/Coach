@@ -292,7 +292,7 @@ export default function EmailBackupModal({ isOpen, onClose, showToast, userEmail
                     myaccount.google.com/apppasswords <ExternalLink className="h-3 w-3" />
                   </a>
                 </li>
-                <li>في خانة اسم التطبيق اكتب: <strong>Re_action DOJO</strong> واضغط على <strong>إنشاء (Create)</strong>.</li>
+                <li>في خانة اسم التطبيق اكتب: <strong>CoachMaster</strong> واضغط على <strong>إنشاء (Create)</strong>.</li>
                 <li>سيظهر لك كود أصفر مكون من <strong>16 حرفاً</strong>، انسخه وضعه في الخانة بالأسفل.</li>
               </ol>
             </div>

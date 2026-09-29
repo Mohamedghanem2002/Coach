@@ -315,7 +315,7 @@ export default function EventsView({
 ✅ *المتحصلات المالية:* ${paidRevenue.toLocaleString("ar-EG")} ج.م
 ⏳ *المستحقات المتبقية:* ${remainingRevenue.toLocaleString("ar-EG")} ج.م
 
-أكاديمية Re_action للأبطال 🥋`;
+أكاديمية CoachMaster للأبطال 🥋`;
 
     openWhatsAppDirect("", message);
   }
@@ -329,7 +329,7 @@ export default function EventsView({
     const cleanPhone = formatWhatsAppPhone(phone);
 
     const message = `السلام عليكم ورحمة الله،
-تحية طيبة من كابتن أكاديمية Re_action 🥋
+تحية طيبة من كابتن أكاديمية CoachMaster 🥋
 
 نحيطكم علماً بتفاصيل اشتراك البطل *${participant.name}* في:
 *${event.title}*

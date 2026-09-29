@@ -23,7 +23,7 @@ import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
 
 export default function DashboardHero({
   captainName = "كابتن",
-  academyName = "أكاديمية Re_action",
+  academyName = "CoachMaster",
   players = [],
   branches = [],
   branch = "كل الصالات",

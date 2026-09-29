@@ -76,7 +76,7 @@ export default function Home() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const captainName = session?.user?.name || "كابتن";
-  const academyName = session?.user?.academyName || "Re_action DOJO";
+  const academyName = session?.user?.academyName || "CoachMaster";
   const [players, setPlayers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [branch, setBranch] = useState("كل الصالات");
@@ -1045,7 +1045,7 @@ export default function Home() {
           </div>
           <div>
             <h2 className="text-lg font-black tracking-tight text-white">
-              أكاديمية Re_action
+              CoachMaster
             </h2>
             <div className="flex items-center justify-center gap-2 mt-2.5">
               <span className="h-4 w-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />

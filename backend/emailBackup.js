@@ -98,7 +98,7 @@ export async function generateBackupPayload(ownerId) {
   ]);
 
   return {
-    system: "Re_action DOJO",
+    system: "CoachMaster",
     version: "1.0",
     type: "full_database_backup",
     exportedAt: new Date().toISOString(),
@@ -145,7 +145,7 @@ export async function sendBackupToEmail({ ownerId, recipientEmailOverride = null
     day: "numeric",
   }).format(new Date());
 
-  const filename = `reaction_dojo_backup_${todayStr}.json`;
+  const filename = `coachmaster_backup_${todayStr}.json`;
 
   // Always save a local copy to cloud_backups directory for instant 1-click restore
   try {
@@ -166,8 +166,8 @@ export async function sendBackupToEmail({ ownerId, recipientEmailOverride = null
   });
 
   const subject = isAutomatic
-    ? `🛡️ [نسخ احتياطي تلقائي] أكاديمية Re_action DOJO - ${todayStr}`
-    : `🛡️ [نسخة احتياطية] أكاديمية Re_action DOJO - ${todayStr}`;
+    ? `🛡️ [نسخ احتياطي تلقائي] CoachMaster - ${todayStr}`
+    : `🛡️ [نسخة احتياطية] CoachMaster - ${todayStr}`;
 
   const html = `
     <!DOCTYPE html>
@@ -193,7 +193,7 @@ export async function sendBackupToEmail({ ownerId, recipientEmailOverride = null
     <body>
       <div class="card">
         <div class="header">
-          <span class="badge">Re_action DOJO Cloud Backup</span>
+          <span class="badge">CoachMaster Cloud Backup</span>
           <h1 class="title">نسخة احتياطية لقاعدة بيانات الأكاديمية</h1>
           <p style="color: #64748b; font-size: 13px; margin: 5px 0 0 0;">📅 ${arabicDate} (توقيت القاهرة)</p>
         </div>
@@ -227,7 +227,7 @@ export async function sendBackupToEmail({ ownerId, recipientEmailOverride = null
         </div>
 
         <div class="footer">
-          <p>تم إنشاء هذه الرسالة تلقائياً بواسطة نظام <strong>Re_action DOJO</strong> لحماية بياناتك من الضياع للأبد.</p>
+          <p>تم إنشاء هذه الرسالة تلقائياً بواسطة نظام <strong>CoachMaster</strong> لحماية بياناتك من الضياع للأبد.</p>
           <p>تطوير: محمد غانم | 01552488179</p>
         </div>
       </div>
@@ -236,7 +236,7 @@ export async function sendBackupToEmail({ ownerId, recipientEmailOverride = null
   `;
 
   const info = await transporter.sendMail({
-    from: `"Re_action DOJO" <${settings.gmailUser}>`,
+    from: `"CoachMaster" <${settings.gmailUser}>`,
     to: recipient,
     subject,
     html,

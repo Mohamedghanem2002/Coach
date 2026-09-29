@@ -23,7 +23,7 @@ export async function GET() {
     ]);
 
     const backupPayload = {
-      system: "Re_action DOJO",
+      system: "CoachMaster",
       version: "1.0",
       type: "full_database_backup",
       exportedAt: new Date().toISOString(),
@@ -41,7 +41,7 @@ export async function GET() {
     };
 
     const dateStr = new Date().toISOString().slice(0, 10);
-    const filename = `reaction_dojo_backup_${dateStr}.json`;
+    const filename = `coachmaster_backup_${dateStr}.json`;
 
     return new Response(JSON.stringify(backupPayload, null, 2), {
       status: 200,

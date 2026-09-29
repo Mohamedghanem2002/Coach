@@ -32,7 +32,7 @@ export default function AccountSettingsModal({
 
   const [name, setName] = useState(session?.user?.name || "");
   const [academyName, setAcademyName] = useState(
-    session?.user?.academyName || "Re_action DOJO"
+    session?.user?.academyName || "CoachMaster"
   );
   const [email, setEmail] = useState(session?.user?.email || "");
   const [phone, setPhone] = useState(session?.user?.phone || "");
@@ -84,7 +84,7 @@ export default function AccountSettingsModal({
           const data = await res.json();
           if (isMounted && data.user) {
             setName(data.user.name || "");
-            setAcademyName(data.user.academyName || "Re_action DOJO");
+            setAcademyName(data.user.academyName || "CoachMaster");
             setEmail(data.user.email || "");
             setPhone(data.user.phone || "");
             setSubscriptionInfo({
@@ -513,7 +513,7 @@ export default function AccountSettingsModal({
                       onChange={(e) => setAcademyName(e.target.value)}
                       required
                       maxLength={100}
-                      placeholder="مثال: أكاديمية Re_action DOJO"
+                      placeholder="مثال: أكاديمية CoachMaster"
                       className="w-full rounded-xl border border-slate-200 bg-white pr-10 pl-3 py-2.5 text-xs sm:text-sm font-bold text-slate-900 outline-none transition focus:border-red-500 focus:ring-3 focus:ring-red-100 min-h-[44px]"
                     />
                     <Building2 className="absolute right-3 h-4 w-4 text-slate-400 pointer-events-none" />

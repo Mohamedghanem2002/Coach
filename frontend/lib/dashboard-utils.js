@@ -269,7 +269,9 @@ export function getBirthdayInfo(player, referenceDate) {
 export function getCongratulatedBirthdays() {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem("reaction_congratulated_birthdays");
+    const raw =
+      localStorage.getItem("coachmaster_congratulated_birthdays") ||
+      localStorage.getItem("reaction_congratulated_birthdays");
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -300,7 +302,7 @@ export function markBirthdayCongratulated(playerId, referenceDate = new Date()) 
       (item) => !(item.playerId === playerId && item.year === currentYear)
     );
     list.push({ playerId, year: currentYear, date: dateStr, timestamp: Date.now() });
-    localStorage.setItem("reaction_congratulated_birthdays", JSON.stringify(list));
+    localStorage.setItem("coachmaster_congratulated_birthdays", JSON.stringify(list));
     window.dispatchEvent(new CustomEvent("birthday_congratulated", { detail: { playerId } }));
   } catch (e) {
     console.warn("Failed to mark birthday congratulated:", e);
@@ -331,7 +333,9 @@ export function getWelcomeCardHandledTime(player) {
   if (typeof window !== "undefined") {
     try {
       const stored = JSON.parse(
-        localStorage.getItem("reaction_welcome_cards_handled") || "{}"
+        localStorage.getItem("coachmaster_welcome_cards_handled") ||
+        localStorage.getItem("reaction_welcome_cards_handled") ||
+        "{}"
       );
       const localTime = stored[player._id || player.id];
       if (localTime) return Number(localTime);
@@ -350,12 +354,14 @@ export function markWelcomeCardHandled(playerId) {
   if (typeof window !== "undefined") {
     try {
       const stored = JSON.parse(
-        localStorage.getItem("reaction_welcome_cards_handled") || "{}"
+        localStorage.getItem("coachmaster_welcome_cards_handled") ||
+        localStorage.getItem("reaction_welcome_cards_handled") ||
+        "{}"
       );
       if (!stored[playerId]) {
         stored[playerId] = now;
         localStorage.setItem(
-          "reaction_welcome_cards_handled",
+          "coachmaster_welcome_cards_handled",
           JSON.stringify(stored)
         );
       }

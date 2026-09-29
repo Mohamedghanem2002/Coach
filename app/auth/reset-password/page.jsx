@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import ResetPasswordPage from "../../../frontend/pages/ResetPasswordPage";
 
 export const metadata = {
-  title: "استعادة كلمة المرور | أكاديمية Re_action",
+  title: "استعادة كلمة المرور | CoachMaster",
   description: "إعادة تعيين كلمة المرور الخاصة بحساب كابتن الأكاديمية",
 };
 
