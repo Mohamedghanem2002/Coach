@@ -178,6 +178,9 @@ function StatsGrid({
   const totalPurchasesAmount = allPurchases.reduce((sum, item) => sum + (Number(item.totalAmount) || 0), 0);
   const totalPurchasesPaid = allPurchases.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
   const totalPurchasesRemaining = Math.max(0, totalPurchasesAmount - totalPurchasesPaid);
+  const totalUndeliveredPurchases = allPurchases.filter(
+    (item) => item.deliveryStatus !== "received"
+  ).length;
 
   // Today Attendance
   const presentToday = dashboardPlayers.filter((p) =>
@@ -491,9 +494,17 @@ function StatsGrid({
                     </p>
                   </div>
                 </div>
-                <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-black text-amber-800">
-                  {allPurchases.length} عملية شراء
-                </span>
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                  {totalUndeliveredPurchases > 0 && (
+                    <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-black text-amber-900 flex items-center gap-1">
+                      <span>⏳</span>
+                      <span>{totalUndeliveredPurchases} بانتظار التسليم</span>
+                    </span>
+                  )}
+                  <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-black text-amber-800">
+                    {allPurchases.length} عملية شراء
+                  </span>
+                </div>
               </div>
 
               {/* Progress bar */}
@@ -548,13 +559,13 @@ function StatsGrid({
               </div>
             </div>
 
-            {totalPurchasesRemaining > 0 && onFilterStatus && (
+            {(totalPurchasesRemaining > 0 || totalUndeliveredPurchases > 0) && onFilterStatus && (
               <button
                 type="button"
                 onClick={() => onFilterStatus("purchases_debt")}
                 className="mt-3.5 w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-black transition active-press cursor-pointer"
               >
-                <span>عرض أصحاب ديون البدل والمستلزمات</span>
+                <span>عرض مستحقات وتسليمات الأدوات</span>
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
             )}

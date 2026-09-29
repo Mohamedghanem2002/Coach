@@ -257,7 +257,7 @@ export default function Home() {
           (statusFilter === "unpaid" &&
             paymentDetails.status !== "paid") ||
           (statusFilter === "purchases_debt" &&
-            purchasesSum.remainingAmount > 0) ||
+            (purchasesSum.remainingAmount > 0 || purchasesSum.undeliveredCount > 0)) ||
           (statusFilter === "birthday" &&
             Boolean(
               getBirthdayInfo(player)?.isToday ||
@@ -308,9 +308,12 @@ export default function Home() {
         });
       case "purchases-debt-first":
         return list.sort((a, b) => {
-          const aRem = getPurchasesSummary(a).remainingAmount;
-          const bRem = getPurchasesSummary(b).remainingAmount;
-          return bRem - aRem;
+          const aSum = getPurchasesSummary(a);
+          const bSum = getPurchasesSummary(b);
+          if (bSum.remainingAmount !== aSum.remainingAmount) {
+            return bSum.remainingAmount - aSum.remainingAmount;
+          }
+          return bSum.undeliveredCount - aSum.undeliveredCount;
         });
       case "attendance-desc":
         return list.sort((a, b) => {
@@ -521,7 +524,7 @@ export default function Home() {
   const totalPendingPaymentCount = unpaidCount + partialCount;
   const purchasesDebtCount = dashboardPlayers.filter((player) => {
     const s = getPurchasesSummary(player);
-    return s.remainingAmount > 0;
+    return s.remainingAmount > 0 || s.undeliveredCount > 0;
   }).length;
   const presentToday = dashboardPlayers.filter((player) =>
     isPlayerPresentOnDate(player, sessionDate),
@@ -2144,7 +2147,11 @@ export default function Home() {
                           ? "bg-amber-600 text-white shadow-xs"
                           : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300"
                       }`}
-                      onClick={() => setStatusFilter("purchases_debt")}
+                      onClick={() =>
+                        setStatusFilter(
+                          statusFilter === "purchases_debt" ? "all" : "purchases_debt"
+                        )
+                      }
                     >
                       <ShoppingBag className="h-3 w-3 text-amber-600" />
                       <span>أدوات ({purchasesDebtCount})</span>

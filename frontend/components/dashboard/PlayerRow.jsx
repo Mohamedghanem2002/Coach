@@ -167,25 +167,36 @@ function PlayerRow({
 
   const purchaseDebtLabel = useMemo(() => {
     if (purchasesSummary.count === 0) return null;
-    if (purchasesSummary.remainingAmount <= 0)
+    if (purchasesSummary.remainingAmount <= 0) {
+      if (purchasesSummary.undeliveredCount > 0) {
+        return `الأدوات مسددة بالكامل (${purchasesSummary.totalAmount} ج.م) - لم يستلم بعد ⏳`;
+      }
       return `الأدوات والمستلزمات: مسددة بالكامل (${purchasesSummary.totalAmount} ج.م) ✓`;
+    }
     if (unpaidPurchases.length === 1) {
       const p = unpaidPurchases[0];
       const name = p.title || "السلعة";
+      const delivTag = p.deliveryStatus !== "received" ? " (لم يستلم ⏳)" : "";
       if ((Number(p.paidAmount) || 0) > 0)
-        return `${name}: سدد ${p.paidAmount} من ${p.totalAmount} ج.م (فاضل عليه ${p.remainingAmount} ج.م)`;
-      return `${name}: لم يسدد (فاضل عليه ${p.remainingAmount} ج.م)`;
+        return `${name}: سدد ${p.paidAmount} من ${p.totalAmount} ج.م (فاضل عليه ${p.remainingAmount} ج.م)${delivTag}`;
+      return `${name}: لم يسدد (فاضل عليه ${p.remainingAmount} ج.م)${delivTag}`;
     }
-    return `المشتريات: سدد ${purchasesSummary.paidAmount} من ${purchasesSummary.totalAmount} ج.م (فاضل عليه ${purchasesSummary.remainingAmount} ج.م)`;
+    const delivCount = purchasesSummary.undeliveredCount > 0 ? ` (${purchasesSummary.undeliveredCount} لم يستلم)` : "";
+    return `المشتريات: سدد ${purchasesSummary.paidAmount} من ${purchasesSummary.totalAmount} ج.م (فاضل عليه ${purchasesSummary.remainingAmount} ج.م)${delivCount}`;
   }, [purchasesSummary, unpaidPurchases]);
 
   const purchaseDebtLabelDesktop = useMemo(() => {
     if (purchasesSummary.count === 0) return null;
-    if (purchasesSummary.remainingAmount <= 0)
+    if (purchasesSummary.remainingAmount <= 0) {
+      if (purchasesSummary.undeliveredCount > 0) {
+        return `الأدوات مسددة (لم يستلم ⏳)`;
+      }
       return `الأدوات مسددة (${purchasesSummary.totalAmount} ج.م) ✓`;
+    }
     if (unpaidPurchases.length === 1) {
       const p = unpaidPurchases[0];
-      return `${p.title || "السلعة"}: باقي ${p.remainingAmount} ج.م`;
+      const delivTag = p.deliveryStatus !== "received" ? " ⏳" : "";
+      return `${p.title || "السلعة"}: باقي ${p.remainingAmount} ج.م${delivTag}`;
     }
     return `باقي أدوات: ${purchasesSummary.remainingAmount} ج.م`;
   }, [purchasesSummary, unpaidPurchases]);
@@ -232,9 +243,12 @@ function PlayerRow({
       ? "bg-amber-500 text-white"
       : "bg-rose-600 text-white";
 
+  const hasPurchasePending =
+    purchasesSummary.remainingAmount > 0 || purchasesSummary.undeliveredCount > 0;
+
   const purchaseBtnClass = purchasesSummary.count === 0
     ? "border-dashed border-slate-200 bg-slate-50/70 text-slate-600 hover:border-amber-300 hover:bg-amber-50/50"
-    : purchasesSummary.remainingAmount > 0
+    : hasPurchasePending
       ? "border-amber-300/90 bg-amber-50/90 text-amber-950 shadow-2xs"
       : "border-emerald-200 bg-emerald-50/80 text-emerald-950";
 
@@ -242,7 +256,9 @@ function PlayerRow({
     ? "bg-white text-slate-600 border border-slate-200"
     : purchasesSummary.remainingAmount > 0
       ? "bg-amber-600 text-white"
-      : "bg-white text-emerald-700 border border-emerald-200";
+      : purchasesSummary.undeliveredCount > 0
+        ? "bg-amber-500 text-white font-black"
+        : "bg-white text-emerald-700 border border-emerald-200";
 
   return (
     <>
@@ -407,20 +423,33 @@ function PlayerRow({
             title="حساب مشتريات وأدوات اللاعب"
           >
             <div className="flex items-center gap-1.5 min-w-0">
-              <ShoppingBag className={`h-3.5 w-3.5 shrink-0 ${purchasesSummary.count === 0 ? "text-slate-400" : purchasesSummary.remainingAmount > 0 ? "text-amber-600" : "text-emerald-600"}`} />
+              <ShoppingBag className={`h-3.5 w-3.5 shrink-0 ${purchasesSummary.count === 0 ? "text-slate-400" : hasPurchasePending ? "text-amber-600" : "text-emerald-600"}`} />
               <div className="text-right min-w-0">
                 <div className="text-[10px] text-slate-500 font-bold leading-tight">أدوات وبدل</div>
                 <div className="font-black text-[11px] truncate">
-                  {purchasesSummary.count === 0
-                    ? <span className="text-slate-500">+ تسجيل أدوات</span>
-                    : purchasesSummary.remainingAmount > 0
-                      ? <span className="text-amber-800">باقي {purchasesSummary.remainingAmount} ج.م</span>
-                      : <span className="text-emerald-700">خالصة بالكامل ✓</span>}
+                  {purchasesSummary.count === 0 ? (
+                    <span className="text-slate-500">+ تسجيل أدوات</span>
+                  ) : purchasesSummary.remainingAmount > 0 ? (
+                    <span className="text-amber-800">
+                      باقي {purchasesSummary.remainingAmount} ج.م
+                      {purchasesSummary.undeliveredCount > 0 ? " (لم يستلم ⏳)" : ""}
+                    </span>
+                  ) : purchasesSummary.undeliveredCount > 0 ? (
+                    <span className="text-amber-700">مسدد (لم يستلم بعد ⏳)</span>
+                  ) : (
+                    <span className="text-emerald-700">خالصة ومستلمة ✓</span>
+                  )}
                 </div>
               </div>
             </div>
             <span className={`text-[9px] font-black rounded-md px-1.5 py-0.5 shrink-0 ${purchaseBadgeClass}`}>
-              {purchasesSummary.count === 0 ? "＋" : purchasesSummary.remainingAmount > 0 ? "سداد 🥋" : "عرض"}
+              {purchasesSummary.count === 0
+                ? "＋"
+                : purchasesSummary.remainingAmount > 0
+                  ? "سداد 🥋"
+                  : purchasesSummary.undeliveredCount > 0
+                    ? "تسليم ⏳"
+                    : "عرض"}
             </span>
           </button>
         </div>
@@ -554,17 +583,28 @@ function PlayerRow({
           {purchasesSummary.count > 0 ? (
             <button type="button"
               onClick={() => { setPaymentModalTab("purchases"); setShowPaymentModal(true); }}
-              className={`min-h-7 text-[10px] font-black rounded-lg px-2 py-0.5 text-center transition cursor-pointer flex items-center justify-between gap-1 border ${purchasesSummary.remainingAmount > 0
+              className={`min-h-7 text-[10px] font-black rounded-lg px-2 py-0.5 text-center transition cursor-pointer flex items-center justify-between gap-1 border ${
+                hasPurchasePending
                   ? "text-amber-950 bg-amber-50/95 border-amber-300 hover:bg-amber-100 shadow-2xs"
                   : "text-emerald-800 bg-emerald-50/60 border-emerald-200/80 hover:bg-emerald-100"
-                }`}
+              }`}
             >
               <div className="flex items-center gap-1 min-w-0 truncate">
-                <ShoppingBag className={`h-3 w-3 shrink-0 ${purchasesSummary.remainingAmount > 0 ? "text-amber-600" : "text-emerald-600"}`} />
+                <ShoppingBag className={`h-3 w-3 shrink-0 ${hasPurchasePending ? "text-amber-600" : "text-emerald-600"}`} />
                 <span className="truncate">{purchaseDebtLabelDesktop}</span>
               </div>
-              <span className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${purchasesSummary.remainingAmount > 0 ? "bg-amber-600 text-white font-black" : "bg-emerald-100 text-emerald-800 border border-emerald-200"}`}>
-                {purchasesSummary.remainingAmount > 0 ? "تحصيل 🥋" : "عرض"}
+              <span className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${
+                purchasesSummary.remainingAmount > 0
+                  ? "bg-amber-600 text-white font-black"
+                  : purchasesSummary.undeliveredCount > 0
+                    ? "bg-amber-500 text-white font-black"
+                    : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+              }`}>
+                {purchasesSummary.remainingAmount > 0
+                  ? "تحصيل 🥋"
+                  : purchasesSummary.undeliveredCount > 0
+                    ? "تسليم ⏳"
+                    : "عرض"}
               </span>
             </button>
           ) : (
