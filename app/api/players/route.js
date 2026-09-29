@@ -537,6 +537,12 @@ export async function PATCH(request) {
           status = "partially_paid";
         }
 
+        const deliveryStatus = body.deliveryStatus === "received" ? "received" : "pending";
+        const deliveredAt =
+          deliveryStatus === "received"
+            ? (body.deliveredAt || new Date().toISOString())
+            : null;
+
         const newPurchase = {
           id:
             "prc_" +
@@ -548,6 +554,8 @@ export async function PATCH(request) {
           paidAmount,
           remainingAmount,
           status,
+          deliveryStatus,
+          deliveredAt,
           date:
             typeof body.date === "string" && body.date.trim()
               ? body.date.trim()
@@ -594,6 +602,17 @@ export async function PATCH(request) {
           status = "partially_paid";
         }
 
+        let deliveryStatus = curr.deliveryStatus || "pending";
+        let deliveredAt = curr.deliveredAt || null;
+        if (body.deliveryStatus !== undefined) {
+          deliveryStatus = body.deliveryStatus === "received" ? "received" : "pending";
+          if (deliveryStatus === "received" && !deliveredAt) {
+            deliveredAt = new Date().toISOString();
+          } else if (deliveryStatus !== "received") {
+            deliveredAt = null;
+          }
+        }
+
         purchases[index] = {
           ...curr,
           title,
@@ -601,6 +620,8 @@ export async function PATCH(request) {
           paidAmount,
           remainingAmount,
           status,
+          deliveryStatus,
+          deliveredAt,
           date:
             typeof body.date === "string" && body.date.trim()
               ? body.date.trim()
@@ -611,6 +632,31 @@ export async function PATCH(request) {
                 ? body.notes.trim()
                 : ""
               : (curr.notes || ""),
+          updatedAt: new Date(),
+        };
+      } else if (body.purchaseAction === "toggle_delivery") {
+        const purchaseId = body.purchaseId;
+        const index = purchases.findIndex((p) => p.id === purchaseId);
+        if (index === -1) {
+          return NextResponse.json(
+            { error: "السلعة غير موجودة" },
+            { status: 404 },
+          );
+        }
+        const curr = purchases[index];
+        const nextDeliveryStatus =
+          body.deliveryStatus !== undefined
+            ? (body.deliveryStatus === "received" ? "received" : "pending")
+            : (curr.deliveryStatus === "received" ? "pending" : "received");
+        const deliveredAt =
+          nextDeliveryStatus === "received"
+            ? (curr.deliveredAt || new Date().toISOString())
+            : null;
+
+        purchases[index] = {
+          ...curr,
+          deliveryStatus: nextDeliveryStatus,
+          deliveredAt,
           updatedAt: new Date(),
         };
       } else if (body.purchaseAction === "delete") {

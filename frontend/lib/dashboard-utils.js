@@ -190,6 +190,10 @@ export function getPurchasesSummary(player) {
   const unpaidCount = purchases.filter(
     (p) => (Number(p.remainingAmount) || 0) > 0
   ).length;
+  const deliveredCount = purchases.filter(
+    (p) => p.deliveryStatus === "received"
+  ).length;
+  const undeliveredCount = purchases.length - deliveredCount;
 
   return {
     purchases,
@@ -198,6 +202,8 @@ export function getPurchasesSummary(player) {
     remainingAmount,
     hasDebt: remainingAmount > 0,
     unpaidCount,
+    deliveredCount,
+    undeliveredCount,
     count: purchases.length,
   };
 }

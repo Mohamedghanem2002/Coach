@@ -593,8 +593,14 @@ export default function Home() {
       }
       if (data.purchaseAction === "add") {
         setNotice(`تم تسجيل السلعة (${data.title || "السلعة"}) بنجاح.`);
+      } else if (data.purchaseAction === "toggle_delivery") {
+        setNotice(
+          data.deliveryStatus === "received"
+            ? "تم تسجيل استلام السلعة بنجاح ✓"
+            : "تم تغيير حالة السلعة إلى (لم يستلم بعد) ⏳"
+        );
       } else if (data.purchaseAction === "update") {
-        setNotice("تم تسجيل سداد السلعة بنجاح.");
+        setNotice("تم تحديث بيانات السلعة بنجاح.");
       } else if (data.purchaseAction === "delete") {
         setNotice("تم حذف السلعة من حساب اللاعب بنجاح.");
       }

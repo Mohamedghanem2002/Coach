@@ -11,6 +11,8 @@ import {
   Calendar,
   FileText,
   Sparkles,
+  Clock,
+  Package,
 } from "lucide-react";
 import { toEnglishDigits, localDate } from "../../lib/dashboard-utils";
 
@@ -44,6 +46,11 @@ export default function PurchaseModal({
   );
   const [addPayment, setAddPayment] = useState(
     mode === "pay" ? String(initialData?.remainingAmount || "") : ""
+  );
+  const [deliveryStatus, setDeliveryStatus] = useState(
+    mode === "edit" || mode === "pay"
+      ? initialData?.deliveryStatus || "pending"
+      : "pending"
   );
   const [date, setDate] = useState(
     mode === "edit" && initialData?.date ? initialData.date : localDate()
@@ -113,6 +120,7 @@ export default function PurchaseModal({
           title: title.trim(),
           totalAmount: numTotal,
           paidAmount: numPaid,
+          deliveryStatus,
           date,
           notes: notes.trim(),
         });
@@ -123,6 +131,7 @@ export default function PurchaseModal({
           title: title.trim(),
           totalAmount: numTotal,
           paidAmount: numPaid,
+          deliveryStatus,
           date,
           notes: notes.trim(),
         });
@@ -131,6 +140,7 @@ export default function PurchaseModal({
           purchaseAction: "update",
           purchaseId: initialData?.id,
           addAmount: numAddPayment,
+          deliveryStatus,
         });
       }
       onClose();
@@ -317,6 +327,51 @@ export default function PurchaseModal({
                   </span>
                 </div>
               </div>
+
+              {/* Delivery Status in Pay mode */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                    <Package className="h-4 w-4 text-red-600" />
+                    <span>حالة استلام وتسليم السلعة:</span>
+                  </label>
+                  <span
+                    className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
+                      deliveryStatus === "received"
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                        : "bg-amber-50 text-amber-900 border-amber-300"
+                    }`}
+                  >
+                    {deliveryStatus === "received" ? "✓ تم الاستلام" : "⏳ لم يستلم"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryStatus("pending")}
+                    className={`flex items-center justify-center gap-2 h-10 rounded-xl border text-xs font-black transition-all cursor-pointer touch-manipulation ${
+                      deliveryStatus !== "received"
+                        ? "border-amber-400 bg-amber-50 text-amber-900 ring-2 ring-amber-300/60 shadow-xs"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Clock className="h-4 w-4 text-amber-600" />
+                    <span>لم يستلم بعد ⏳</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryStatus("received")}
+                    className={`flex items-center justify-center gap-2 h-10 rounded-xl border text-xs font-black transition-all cursor-pointer touch-manipulation ${
+                      deliveryStatus === "received"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-300/60 shadow-xs"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Check className="h-4 w-4 text-emerald-600 stroke-[3]" />
+                    <span>استلم المنتج ✓</span>
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             /* Mode: ADD or EDIT */
@@ -453,6 +508,56 @@ export default function PurchaseModal({
                     )}
                   </span>
                 </div>
+              </div>
+
+              {/* Delivery Status Selector */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                    <Package className="h-4 w-4 text-red-600" />
+                    <span>حالة تسليم واستلام السلعة:</span>
+                  </label>
+                  <span
+                    className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
+                      deliveryStatus === "received"
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                        : "bg-amber-50 text-amber-900 border-amber-300"
+                    }`}
+                  >
+                    {deliveryStatus === "received" ? "✓ تم الاستلام" : "⏳ لم يستلم"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryStatus("pending")}
+                    className={`flex items-center justify-center gap-2 h-11 rounded-xl border text-xs font-black transition-all cursor-pointer touch-manipulation ${
+                      deliveryStatus !== "received"
+                        ? "border-amber-400 bg-amber-50 text-amber-900 ring-2 ring-amber-300/60 shadow-xs"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Clock className="h-4 w-4 text-amber-600" />
+                    <span>لم يستلم بعد ⏳</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryStatus("received")}
+                    className={`flex items-center justify-center gap-2 h-11 rounded-xl border text-xs font-black transition-all cursor-pointer touch-manipulation ${
+                      deliveryStatus === "received"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-300/60 shadow-xs"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Check className="h-4 w-4 text-emerald-600 stroke-[3]" />
+                    <span>استلم المنتج ✓</span>
+                  </button>
+                </div>
+                <p className="text-[10px] font-bold text-slate-400">
+                  {deliveryStatus === "received"
+                    ? "✓ تم تسجيل أن اللاعب استلم السلعة / البدلة بالفعل."
+                    : "⏳ سيظهر بوضوح أن اللاعب (لم يستلم) حتى يتم تسليمه السلعة."}
+                </p>
               </div>
 
               {/* Date & Notes */}

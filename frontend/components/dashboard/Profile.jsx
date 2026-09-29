@@ -45,6 +45,7 @@ import {
   Tag,
   Plus,
   Package,
+  Clock,
   PartyPopper,
   Eye,
   Cake,
@@ -489,9 +490,13 @@ export default function Profile({
             const tot = Number(p.totalAmount) || 0;
             const pd = Number(p.paidAmount) || 0;
             const rm = Math.max(0, tot - pd);
-            if (pd >= tot && tot > 0) return `• ${p.title}: مدفوع بالكامل (${pd} ج.م) ✓`;
-            if (pd > 0) return `• ${p.title}: سدد ${pd} من أصل ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
-            return `• ${p.title}: لم يسدد أي مبلغ من ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
+            const deliveryTxt =
+              p.deliveryStatus === "received"
+                ? " [تم الاستلام ✓]"
+                : " [لم يستلم بعد ⏳]";
+            if (pd >= tot && tot > 0) return `• ${p.title}${deliveryTxt}: مدفوع بالكامل (${pd} ج.م) ✓`;
+            if (pd > 0) return `• ${p.title}${deliveryTxt}: سدد ${pd} من أصل ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
+            return `• ${p.title}${deliveryTxt}: لم يسدد أي مبلغ من ${tot} ج.م (فاضل عليه ${rm} ج.م) ⚠️`;
           })
           .join("\n") +
         (purchasesSummary.remainingAmount > 0
@@ -551,6 +556,12 @@ export default function Profile({
       if (updated) {
         if (payload.purchaseAction === "add") {
           setProfileNotice(`✓ تم إضافة السلعة (${payload.title}) بنجاح`);
+        } else if (payload.purchaseAction === "toggle_delivery") {
+          setProfileNotice(
+            payload.deliveryStatus === "received"
+              ? "✓ تم تأكيد استلام اللاعب للسلعة"
+              : "⏳ تم تحويل حالة السلعة إلى: لم يستلم بعد"
+          );
         } else if (payload.addAmount !== undefined) {
           setProfileNotice(`✓ تم تسجيل سداد مبلغ (${payload.addAmount} ج.م) بنجاح`);
         } else {
@@ -563,6 +574,16 @@ export default function Profile({
       console.error(err);
       setProfileNotice("تعذر حفظ بيانات السلعة. حاول مرة أخرى.");
     }
+  }
+
+  async function handleToggleDelivery(item) {
+    const isCurrentlyReceived = item.deliveryStatus === "received";
+    const nextStatus = isCurrentlyReceived ? "pending" : "received";
+    await handleSavePurchase({
+      purchaseAction: "toggle_delivery",
+      purchaseId: item.id,
+      deliveryStatus: nextStatus,
+    });
   }
 
   async function handleDeletePurchase() {
@@ -998,8 +1019,10 @@ export default function Profile({
         context.lineWidth = 1.8;
         context.stroke();
 
-        // Right side: Item name & price
-        const titleStr = `🥋 ${p.title}  •  سعرها: ${pTot} ج.م`;
+        // Right side: Item name & price & delivery status
+        const isDelivered = p.deliveryStatus === "received";
+        const delTag = isDelivered ? "استلم ✓" : "لم يستلم ⏳";
+        const titleStr = `🥋 ${p.title} (${delTag})  •  سعرها: ${pTot} ج.م`;
         drawRight(titleStr, 1008 - 20, y + 33, "800 23px Cairo, sans-serif", pIsPaid ? "#065f46" : "#78350f");
 
         // Left side: Paid & Remaining details
@@ -2556,7 +2579,7 @@ export default function Profile({
 
                   {/* شريط الإحصائيات عند وجود مشتريات */}
                   {purchasesSummary.count > 0 && (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-2 text-center shadow-2xs">
                         <span className="block text-[10px] font-bold text-slate-500">إجمالي المشتريات</span>
                         <strong className="font-cairo text-xs sm:text-sm font-black text-slate-800">
@@ -2583,6 +2606,24 @@ export default function Profile({
                           purchasesSummary.remainingAmount > 0 ? "text-rose-700" : "text-slate-800"
                         }`}>
                           {purchasesSummary.remainingAmount} <span className="text-[9px] font-normal text-slate-400">ج.م</span>
+                        </strong>
+                      </div>
+                      <div className={`rounded-xl border p-2 text-center shadow-2xs ${
+                        purchasesSummary.undeliveredCount > 0
+                          ? "border-amber-300 bg-amber-50/80"
+                          : "border-emerald-200/80 bg-emerald-50/50"
+                      }`}>
+                        <span className={`block text-[10px] font-bold ${
+                          purchasesSummary.undeliveredCount > 0 ? "text-amber-800" : "text-emerald-700"
+                        }`}>
+                          حالة الاستلام
+                        </span>
+                        <strong className={`font-cairo text-xs sm:text-sm font-black ${
+                          purchasesSummary.undeliveredCount > 0 ? "text-amber-900" : "text-emerald-700"
+                        }`}>
+                          {purchasesSummary.undeliveredCount > 0
+                            ? `باقي ${purchasesSummary.undeliveredCount} لم يستلم ⏳`
+                            : "استلم الكل ✓"}
                         </strong>
                       </div>
                     </div>
@@ -2644,21 +2685,52 @@ export default function Profile({
                                 </div>
                               </div>
 
-                              <span
-                                className={`px-2 py-0.5 rounded-lg text-[10px] font-black shrink-0 self-start sm:self-auto ${
-                                  isPaid
-                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                              <div className="flex flex-wrap items-center gap-1.5 shrink-0 self-start sm:self-auto">
+                                {/* زر وتأكيد استلام السلعة */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleDelivery(item)}
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border ${
+                                    item.deliveryStatus === "received"
+                                      ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shadow-2xs"
+                                      : "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 shadow-2xs"
+                                  }`}
+                                  title={
+                                    item.deliveryStatus === "received"
+                                      ? "استلم اللاعب السلعة ✓ (انقر للتغيير إلى: لم يستلم)"
+                                      : "اللاعب لم يستلم السلعة بعد ⏳ (انقر لتسجيل أنه استلم)"
+                                  }
+                                >
+                                  {item.deliveryStatus === "received" ? (
+                                    <>
+                                      <Check className="h-3 w-3 text-emerald-600 stroke-[3]" />
+                                      <span>استلم ✓</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Clock className="h-3 w-3 text-amber-600" />
+                                      <span>لم يستلم ⏳</span>
+                                    </>
+                                  )}
+                                </button>
+
+                                {/* شارة حالة السداد */}
+                                <span
+                                  className={`px-2 py-1 rounded-lg text-[10px] font-black shrink-0 ${
+                                    isPaid
+                                      ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                      : isPartial
+                                      ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                      : "bg-rose-100 text-rose-800 border border-rose-200"
+                                  }`}
+                                >
+                                  {isPaid
+                                    ? "✓ مدفوع بالكامل"
                                     : isPartial
-                                    ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                    : "bg-rose-100 text-rose-800 border border-rose-200"
-                                }`}
-                              >
-                                {isPaid
-                                  ? "✓ مدفوع بالكامل"
-                                  : isPartial
-                                  ? `دفع ${pd} • باقي ${rem} ج.م`
-                                  : `غير مدفوع (باقي ${rem} ج.م)`}
-                              </span>
+                                    ? `دفع ${pd} • باقي ${rem} ج.م`
+                                    : `غير مدفوع (باقي ${rem} ج.م)`}
+                                </span>
+                              </div>
                             </div>
 
                             {/* Details & notes */}

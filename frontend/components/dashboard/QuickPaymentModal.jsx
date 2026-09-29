@@ -12,6 +12,8 @@ import {
   ChevronDown,
   DollarSign,
   Tag,
+  Clock,
+  Package,
 } from "lucide-react";
 import { toEnglishDigits, localDate, getPurchasesSummary } from "../../lib/dashboard-utils";
 
@@ -123,11 +125,26 @@ export default function QuickPaymentModal({
   const [newTitle, setNewTitle] = useState("");
   const [newTotal, setNewTotal] = useState("");
   const [newPaid, setNewPaid] = useState("");
+  const [newDeliveryStatus, setNewDeliveryStatus] = useState("pending");
   const [newDate, setNewDate] = useState(localDate());
   const [isAddingPurchase, setIsAddingPurchase] = useState(false);
   const [addPurchaseError, setAddPurchaseError] = useState("");
 
   const savePurchaseFn = onSavePurchase || onSave;
+
+  async function handleToggleDelivery(purchase) {
+    const isCurrentlyReceived = purchase.deliveryStatus === "received";
+    const nextStatus = isCurrentlyReceived ? "pending" : "received";
+    try {
+      await savePurchaseFn({
+        purchaseAction: "toggle_delivery",
+        purchaseId: purchase.id,
+        deliveryStatus: nextStatus,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   async function handlePayItem(purchase) {
     const addAmt = Number(toEnglishDigits(payAmountInput)) || 0;
@@ -200,12 +217,14 @@ export default function QuickPaymentModal({
         title: cleanTitle,
         totalAmount: tot,
         paidAmount: pd,
+        deliveryStatus: newDeliveryStatus,
         date: newDate || localDate(),
         notes: "",
       });
       setNewTitle("");
       setNewTotal("");
       setNewPaid("");
+      setNewDeliveryStatus("pending");
       setShowAddPurchaseForm(false);
     } catch (err) {
       setAddPurchaseError("تعذر تسجيل السلعة الجديدة.");
@@ -588,6 +607,37 @@ export default function QuickPaymentModal({
                     </div>
                   </div>
 
+                  {/* Delivery Status selection */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700">حالة استلام السلعة:</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewDeliveryStatus("pending")}
+                        className={`h-8 rounded-xl text-[11px] font-bold border transition cursor-pointer flex items-center justify-center gap-1 ${
+                          newDeliveryStatus !== "received"
+                            ? "bg-amber-50 text-amber-900 border-amber-400 ring-1 ring-amber-300 font-black"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <Clock className="h-3.5 w-3.5 text-amber-600" />
+                        <span>لم يستلم بعد ⏳</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewDeliveryStatus("received")}
+                        className={`h-8 rounded-xl text-[11px] font-bold border transition cursor-pointer flex items-center justify-center gap-1 ${
+                          newDeliveryStatus === "received"
+                            ? "bg-emerald-50 text-emerald-900 border-emerald-400 ring-1 ring-emerald-300 font-black"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <Check className="h-3.5 w-3.5 text-emerald-600 stroke-[3]" />
+                        <span>استلم المنتج ✓</span>
+                      </button>
+                    </div>
+                  </div>
+
                   {addPurchaseError && (
                     <p className="text-[11px] font-bold text-rose-600">{addPurchaseError}</p>
                   )}
@@ -658,17 +708,47 @@ export default function QuickPaymentModal({
                             </span>
                           </div>
 
-                          <span
-                            className={`px-2 py-0.5 rounded-lg text-[10px] font-black shrink-0 ${
-                              isPaid
-                                ? "bg-emerald-100 text-emerald-800"
-                                : isPartial
-                                ? "bg-amber-100 text-amber-900"
-                                : "bg-rose-100 text-rose-800"
-                            }`}
-                          >
-                            {isPaid ? "خالص ✓" : isPartial ? `باقي ${rem}` : `غير مسدد (${rem})`}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {/* زر وتأكيد استلام السلعة */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleDelivery(item)}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border ${
+                                item.deliveryStatus === "received"
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shadow-2xs"
+                                  : "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 shadow-2xs"
+                              }`}
+                              title={
+                                item.deliveryStatus === "received"
+                                  ? "استلم اللاعب السلعة ✓ (انقر لتغييرها إلى: لم يستلم)"
+                                  : "اللاعب لم يستلم السلعة بعد ⏳ (انقر لتسجيل أنه استلم)"
+                              }
+                            >
+                              {item.deliveryStatus === "received" ? (
+                                <>
+                                  <Check className="h-3 w-3 text-emerald-600 stroke-[3]" />
+                                  <span>استلم ✓</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="h-3 w-3 text-amber-600" />
+                                  <span>لم يستلم ⏳</span>
+                                </>
+                              )}
+                            </button>
+
+                            <span
+                              className={`px-2 py-0.5 rounded-lg text-[10px] font-black shrink-0 ${
+                                isPaid
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : isPartial
+                                  ? "bg-amber-100 text-amber-900"
+                                  : "bg-rose-100 text-rose-800"
+                              }`}
+                            >
+                              {isPaid ? "خالص ✓" : isPartial ? `باقي ${rem}` : `غير مسدد (${rem})`}
+                            </span>
+                          </div>
                         </div>
 
                         {/* تفاصيل السعر */}
