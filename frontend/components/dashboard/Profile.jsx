@@ -110,6 +110,7 @@ export default function Profile({
     editDobYear && editDobMonth && editDobDay
       ? `${editDobYear}-${editDobMonth.padStart(2, "0")}-${editDobDay.padStart(2, "0")}`
       : "";
+  const [editFileNumber, setEditFileNumber] = useState(player.fileNumber || "");
   const [editGuardianPhone, setEditGuardianPhone] = useState(guardianPhone);
   const [editBranch, setEditBranch] = useState(player.branch);
   const [editBelt, setEditBelt] = useState(player.belt || "أبيض");
@@ -126,6 +127,7 @@ export default function Profile({
 
   function startEditing(phoneOverride = null) {
     setEditName(player.name || "");
+    setEditFileNumber(player.fileNumber || "");
     const _d = (player.dateOfBirth || "").split("-");
     setEditDobYear(_d[0] || "");
     setEditDobMonth(_d[1] || "");
@@ -508,7 +510,7 @@ export default function Profile({
       `🥋 تقرير متابعة البطل - شهر ${activeMonthLabel}`,
       `📨 إشراف وتدريب الكابتن: ${captainName}`,
       "",
-      `👤 اسم البطل: ${player.name}`,
+      `👤 اسم البطل: ${player.name}${player.fileNumber ? ` (ملف: #${player.fileNumber})` : ""}`,
       `🥋 الحزام: ${player.belt || "أبيض"} (مستوى ${player.level || "A"})`,
       `🏢 الصالة: ${player.branch}`,
       ...(guardianPhone ? [`📞 هاتف ولي الأمر: ${guardianPhone}`] : []),
@@ -836,7 +838,10 @@ export default function Profile({
     }
 
     // Athlete Details (Evenly spaced in the right area)
-    drawRight(player.name, 965, 310, "900 44px Cairo, sans-serif", "#0f172a");
+    const displayNameWithFile = player.fileNumber
+      ? `${player.name}  (#${player.fileNumber})`
+      : player.name;
+    drawRight(displayNameWithFile, 965, 310, "900 44px Cairo, sans-serif", "#0f172a");
     drawRight(`🥋 الحزام: ${player.belt || "أبيض"}  •  المستوى: ${player.level || "A"}`, 965, 360, "800 27px Cairo, sans-serif", "#b91c1c");
     drawRight(`🏢 الصالة: ${player.branch}`, 965, 410, "700 25px Cairo, sans-serif", "#334155");
     drawRight(`🎂 السن: ${currentAge} سنة`, 965, 458, "700 25px Cairo, sans-serif", "#334155");
@@ -1185,6 +1190,7 @@ export default function Profile({
     const updatedPlayer = await onUpdate(player._id, {
       updateInfo: "true",
       name: editName.trim(),
+      fileNumber: toEnglishDigits(editFileNumber).trim(),
       dateOfBirth: editDateOfBirth,
       guardianPhone: toEnglishDigits(editGuardianPhone).trim(),
       age: String(calculatedEditAge ?? player.age ?? 0),
@@ -1376,15 +1382,32 @@ export default function Profile({
                 <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">قم بتحديث معلومات اللاعب ثم اضغط حفظ التعديلات</p>
               </div>
 
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1">اسم اللاعب</label>
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  required
-                  placeholder="مثال: أحمد محمد"
-                />
+              {/* اسم اللاعب ورقم الملف */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1">اسم اللاعب</label>
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    required
+                    placeholder="مثال: أحمد محمد"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>رقم الملف</span>
+                    <span className="text-[10px] font-normal text-slate-400">اختياري</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                    value={editFileNumber}
+                    onChange={(e) => setEditFileNumber(toEnglishDigits(e.target.value))}
+                    placeholder="مثال: 104"
+                  />
+                </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -1637,6 +1660,12 @@ export default function Profile({
                       <h2 className="truncate font-cairo text-base sm:text-xl font-black text-slate-900 leading-tight">
                         {player.name}
                       </h2>
+                      {player.fileNumber && (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-900 border border-slate-800 px-2.5 py-0.5 text-[11px] font-black text-white shadow-2xs">
+                          <span className="text-amber-400 font-bold">ملف:</span>
+                          <span>#{player.fileNumber}</span>
+                        </span>
+                      )}
                       {isNew && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-2.5 py-0.5 text-[11px] font-black text-white shadow-2xs">
                           <Sparkles className="h-3 w-3 text-amber-200" />
@@ -2133,6 +2162,14 @@ export default function Profile({
                       </div>
 
                       <div className="space-y-2 text-xs">
+                        {player.fileNumber && (
+                          <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                            <span className="font-bold text-slate-500 text-[11px]">رقم ملف اللاعب</span>
+                            <span className="font-cairo font-black text-slate-900 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
+                              #{player.fileNumber}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
                           <span className="font-bold text-slate-500 text-[11px]">هاتف ولي الأمر</span>
                           {guardianPhone ? (

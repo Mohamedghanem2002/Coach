@@ -282,6 +282,12 @@ function PlayerRow({
                   <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 font-black text-red-700">
                     مستوى {player.level || "A"}
                   </span>
+                  {player.fileNumber && (
+                    <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 border border-slate-200/90 px-1.5 py-0.5 font-bold text-slate-700">
+                      <span className="text-slate-400">ملف:</span>
+                      <span>#{player.fileNumber}</span>
+                    </span>
+                  )}
                 </div>
               </div>
             </button>
@@ -449,6 +455,12 @@ function PlayerRow({
                 <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/70 px-1.5 py-0.5 font-black text-red-700 shrink-0">
                   مستوى {player.level || "A"}
                 </span>
+                {player.fileNumber && (
+                  <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 border border-slate-200/90 px-1.5 py-0.5 font-bold text-slate-700 shrink-0" title={`رقم الملف: ${player.fileNumber}`}>
+                    <span className="text-slate-400">ملف:</span>
+                    <span>#{player.fileNumber}</span>
+                  </span>
+                )}
                 {totalSessions > 0 && (
                   <span className={`font-bold shrink-0 ${attendanceRate >= 75 ? "text-emerald-600" : attendanceRate >= 50 ? "text-amber-600" : "text-rose-600"}`}>
                     • التزام {attendanceRate}%

@@ -282,9 +282,16 @@ export async function POST(request) {
     }
     const belt = typeof body.belt === "string" && body.belt.trim() ? body.belt.trim() : "أبيض";
     const level = typeof body.level === "string" && body.level.trim() ? body.level.trim().toUpperCase() : "A";
+    const fileNumber =
+      typeof body.fileNumber === "string"
+        ? toEnglishDigits(body.fileNumber).trim()
+        : body.fileNumber !== undefined && body.fileNumber !== null
+        ? String(body.fileNumber).trim()
+        : "";
     const player = {
       ownerId,
       name,
+      fileNumber,
       age,
       dateOfBirth,
       guardianPhone:
@@ -384,6 +391,14 @@ export async function PATCH(request) {
       }
       if (typeof body.level === "string" && body.level.trim()) {
         updateData.level = body.level.trim().toUpperCase();
+      }
+      if (body.fileNumber !== undefined) {
+        updateData.fileNumber =
+          typeof body.fileNumber === "string"
+            ? toEnglishDigits(body.fileNumber).trim()
+            : body.fileNumber !== null
+            ? String(body.fileNumber).trim()
+            : "";
       }
       if (body.defaultTotalAmount !== undefined) {
         const val = Number(body.defaultTotalAmount);

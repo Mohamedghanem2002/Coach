@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from "react";
 import { toEnglishDigits, BELTS, LEVELS, getBeltStyle } from "../../lib/dashboard-utils";
-import { BookUser } from "lucide-react";
+import { BookUser, Hash } from "lucide-react";
 
 export default function AddPlayerModal({
   branches,
@@ -10,6 +10,7 @@ export default function AddPlayerModal({
   onManageBranches,
 }) {
   const [name, setName] = useState("");
+  const [fileNumber, setFileNumber] = useState("");
   const [dobDay, setDobDay] = useState("");
   const [dobMonth, setDobMonth] = useState("");
   const [dobYear, setDobYear] = useState("");
@@ -211,6 +212,7 @@ export default function AddPlayerModal({
     try {
       await onAdd({
         name: trimmedName,
+        fileNumber: toEnglishDigits(fileNumber).trim(),
         dateOfBirth,
         guardianPhone: toEnglishDigits(guardianPhone).trim(),
         branch,
@@ -331,18 +333,38 @@ export default function AddPlayerModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 space-y-4 touch-scroll">
-              {/* اسم اللاعب */}
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
-                  اسم اللاعب الرباعي <span className="text-red-500">*</span>
-                </label>
-                <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 sm:py-2.5 text-base sm:text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  placeholder="مثال: يوسف أحمد محمد علي"
-                />
+              {/* اسم اللاعب ورقم الملف */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                    اسم اللاعب الرباعي <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 sm:py-2.5 text-base sm:text-sm font-semibold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    placeholder="مثال: يوسف أحمد محمد علي"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-700 mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Hash className="h-3 w-3 text-red-600" />
+                      <span>رقم الملف</span>
+                    </span>
+                    <span className="text-[10px] font-normal text-slate-400">اختياري</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 sm:py-2.5 text-base sm:text-sm font-bold text-slate-900 outline-none transition focus:border-red-500 focus:bg-white focus:ring-3 focus:ring-red-100"
+                    value={fileNumber}
+                    onChange={(e) => setFileNumber(toEnglishDigits(e.target.value))}
+                    placeholder="مثال: 104"
+                  />
+                </div>
               </div>
 
               {/* تاريخ الميلاد والفرع */}

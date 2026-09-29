@@ -263,11 +263,13 @@ export default function Home() {
               getBirthdayInfo(player)?.isToday ||
               getBirthdayInfo(player)?.daysLeft === 1
             ));
-        return (
-          matchesBranch &&
-          matchesStatus &&
-          player.name.includes(deferredSearch.trim())
-        );
+        const q = deferredSearch.trim();
+        const matchesSearch =
+          !q ||
+          player.name.includes(q) ||
+          (player.fileNumber && String(player.fileNumber).includes(q)) ||
+          (player.guardianPhone && String(player.guardianPhone).includes(q));
+        return matchesBranch && matchesStatus && matchesSearch;
       });
     },
     [
@@ -1239,7 +1241,7 @@ export default function Home() {
                     className="min-w-0 flex-1 bg-transparent py-2.5 text-base sm:text-sm text-slate-900 outline-none placeholder:text-slate-400 font-bold"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="ابحث باسم البطل..."
+                    placeholder="بحث باسم البطل، رقم الملف، أو الهاتف..."
                   />
                   {search && (
                     <button
@@ -1927,7 +1929,7 @@ export default function Home() {
                     className="min-w-0 flex-1 bg-transparent px-1 py-2 text-xs font-bold text-slate-900 outline-none placeholder:text-slate-400"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="ابحث باسم اللاعب..."
+                    placeholder="بحث باسم اللاعب، رقم الملف، أو الهاتف..."
                   />
                   {search && (
                     <button

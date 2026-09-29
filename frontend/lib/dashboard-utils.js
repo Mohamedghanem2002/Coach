@@ -164,6 +164,7 @@ export function normalizePlayer(player) {
     : null;
 
   return Object.assign(Object.assign({}, player), {
+    fileNumber: player.fileNumber ? String(player.fileNumber).trim() : "",
     age: dynamicAge !== null ? dynamicAge : (player.age ?? 0),
     attendance: Array.isArray(player.attendance) ? player.attendance : [],
     paymentHistory: Array.isArray(player.paymentHistory)
