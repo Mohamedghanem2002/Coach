@@ -19,7 +19,12 @@ import {
   PieChart,
   FileText,
 } from "lucide-react";
-import { localDate, getPaymentDetailsFor } from "../../lib/dashboard-utils";
+import {
+  localDate,
+  getPaymentDetailsFor,
+  isPlayerPresentOnDate,
+  isPlayerAbsentOnDate,
+} from "../../lib/dashboard-utils";
 
 /* ── Animated counter hook ─────────────────────────────────────────────── */
 function useCountUp(target, duration = 600) {
@@ -176,11 +181,13 @@ function StatsGrid({
 
   // Today Attendance
   const presentToday = dashboardPlayers.filter((p) =>
-    (p.attendance ?? []).some((a) => a.date === sessionDate && a.status === "present")
+    isPlayerPresentOnDate(p, sessionDate)
   ).length;
 
-  const absentToday = Math.max(0, dashboardPlayers.length - presentToday);
-  const attendanceTotal = dashboardPlayers.length;
+  const absentToday = dashboardPlayers.filter((p) =>
+    isPlayerAbsentOnDate(p, branches, sessionDate)
+  ).length;
+  const attendanceTotal = presentToday + absentToday;
   const attendanceRate = attendanceTotal ? Math.round((presentToday / attendanceTotal) * 100) : 0;
 
   // 7-day Attendance Trend
@@ -191,10 +198,10 @@ function StatsGrid({
       date.setDate(date.getDate() - (6 - index));
       const day = localDate(date);
       const present = dashboardPlayers.filter((player) =>
-        (player.attendance || []).some((item) => item.date === day && item.status === "present")
+        isPlayerPresentOnDate(player, day)
       ).length;
       const absent = dashboardPlayers.filter((player) =>
-        (player.attendance || []).some((item) => item.date === day && item.status === "absent")
+        isPlayerAbsentOnDate(player, branches, day)
       ).length;
       return {
         date: day,
@@ -204,7 +211,7 @@ function StatsGrid({
         absent,
       };
     });
-  }, [sessionDate, dashboardPlayers]);
+  }, [sessionDate, dashboardPlayers, branches]);
 
   const maxBarVal = Math.max(...attendanceDays.map((d) => Math.max(d.present, d.absent)), 1);
 
@@ -668,14 +675,24 @@ function StatsGrid({
 
               {/* Present / Absent pills */}
               <div className="mt-3 flex items-center justify-center gap-2 w-full">
-                <div className="flex-1 rounded-xl bg-emerald-50 border border-emerald-200/80 p-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => onFilterStatus?.("present")}
+                  className="flex-1 rounded-xl bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-200/80 p-2 text-center transition cursor-pointer active-press"
+                  title="تصفية الحاضرين"
+                >
                   <span className="block text-[10px] font-bold text-emerald-800">حاضرون</span>
                   <strong className="text-sm font-black text-emerald-700">{presentToday}</strong>
-                </div>
-                <div className="flex-1 rounded-xl bg-rose-50 border border-rose-200/80 p-2 text-center">
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onFilterStatus?.("absent")}
+                  className="flex-1 rounded-xl bg-rose-50 hover:bg-rose-100/90 border border-rose-200/80 p-2 text-center transition cursor-pointer active-press"
+                  title="تصفية الغائبين"
+                >
                   <span className="block text-[10px] font-bold text-rose-800">غائبون</span>
                   <strong className="text-sm font-black text-rose-700">{absentToday}</strong>
-                </div>
+                </button>
               </div>
             </div>
 

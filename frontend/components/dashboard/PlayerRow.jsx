@@ -15,6 +15,7 @@ import {
   isNewPlayer,
   isBranchWorkingDate,
   formatBranchDays,
+  getPlayerMonthAttendance,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 
@@ -189,11 +190,13 @@ function PlayerRow({
     return `باقي أدوات: ${purchasesSummary.remainingAmount} ج.م`;
   }, [purchasesSummary, unpaidPurchases]);
 
-  const totalSessions = Array.isArray(player.attendance) ? player.attendance.length : 0;
-  const attendedSessions = Array.isArray(player.attendance)
-    ? player.attendance.filter((item) => item.status === "present").length
-    : 0;
-  const attendanceRate = totalSessions ? Math.round((attendedSessions / totalSessions) * 100) : 0;
+  const monthAttendance = useMemo(
+    () => getPlayerMonthAttendance(player, playerBranch, paymentMonth),
+    [player, playerBranch, paymentMonth]
+  );
+  const totalSessions = monthAttendance.total;
+  const attendedSessions = monthAttendance.attended;
+  const attendanceRate = monthAttendance.rate;
 
   async function updateAttendance(status) {
     if (attendanceBusy || !isWorkingDay) return;

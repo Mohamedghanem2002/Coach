@@ -13,6 +13,8 @@ import {
   getPurchasesSummary,
   isBranchWorkingDate,
   formatBranchDays,
+  isPlayerPresentOnDate,
+  isPlayerAbsentOnDate,
 } from "../lib/dashboard-utils";
 import {
   Plus,
@@ -240,19 +242,14 @@ export default function Home() {
       return players.filter((player) => {
         const matchesBranch =
           branch === "كل الصالات" || player.branch === branch;
-        const record = (player.attendance || []).find(
-          (item) => item.date === sessionDate,
-        );
+        const isPresent = isPlayerPresentOnDate(player, sessionDate);
+        const isAbsent = isPlayerAbsentOnDate(player, branches, sessionDate);
         const paymentDetails = getPaymentDetailsFor(player, paymentMonth);
         const purchasesSum = getPurchasesSummary(player);
         const matchesStatus =
           statusFilter === "all" ||
-          (statusFilter === "present" &&
-            (record === null || record === void 0 ? void 0 : record.status) ===
-              "present") ||
-          (statusFilter === "absent" &&
-            (record === null || record === void 0 ? void 0 : record.status) ===
-              "absent") ||
+          (statusFilter === "present" && isPresent) ||
+          (statusFilter === "absent" && isAbsent) ||
           (statusFilter === "paid" &&
             paymentDetails.status === "paid") ||
           (statusFilter === "partially_paid" &&
@@ -276,6 +273,7 @@ export default function Home() {
     [
       players,
       branch,
+      branches,
       deferredSearch,
       statusFilter,
       sessionDate,
@@ -524,13 +522,15 @@ export default function Home() {
     return s.remainingAmount > 0;
   }).length;
   const presentToday = dashboardPlayers.filter((player) =>
-    (player.attendance || []).some(
-      (item) => item.date === sessionDate && item.status === "present",
-    ),
+    isPlayerPresentOnDate(player, sessionDate),
   ).length;
-  const absentToday = Math.max(0, dashboardPlayers.length - presentToday);
+  const absentToday = dashboardPlayers.filter((player) =>
+    isPlayerAbsentOnDate(player, branches, sessionDate),
+  ).length;
   const attendanceRateToday =
-    dashboardPlayers.length > 0
+    (presentToday + absentToday) > 0
+      ? Math.round((presentToday / (presentToday + absentToday)) * 100)
+      : dashboardPlayers.length > 0
       ? Math.round((presentToday / dashboardPlayers.length) * 100)
       : 0;
 

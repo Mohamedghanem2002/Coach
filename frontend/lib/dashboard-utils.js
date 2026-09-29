@@ -723,3 +723,150 @@ export function formatArabicMonth(monthStr) {
   }
 }
 
+export function getArabicDayName(dateStr) {
+  if (!dateStr || typeof dateStr !== "string") return "";
+  const parts = dateStr.slice(0, 10).split("-");
+  if (parts.length < 3) return "";
+  const [y, m, d] = parts.map(Number);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return "";
+  const dateObj = new Date(y, m - 1, d);
+  const dayIndex = dateObj.getDay();
+  const found = WEEK_DAYS.find((w) => w.dayIndex === dayIndex);
+  return found ? found.label : "";
+}
+
+export function isPlayerPresentOnDate(player, dateStr) {
+  if (!player || !dateStr) return false;
+  return (player.attendance || []).some(
+    (item) => item.date === dateStr && item.status === "present"
+  );
+}
+
+export function isPlayerAbsentOnDate(player, branches, dateStr) {
+  if (!player || !dateStr) return false;
+  const record = (player.attendance || []).find((item) => item.date === dateStr);
+  if (record?.status === "present") return false;
+  if (record?.status === "absent") return true;
+
+  // If no explicit record, check whether dateStr is a working day for the player's branch
+  const playerBranch = (branches || []).find((b) => b.name === player.branch);
+  const isWorking = isBranchWorkingDate(playerBranch, dateStr);
+  return Boolean(isWorking);
+}
+
+export function getPlayerMonthAttendance(player, playerBranch, targetMonth) {
+  const activeMonth =
+    typeof targetMonth === "string" && targetMonth.length >= 7
+      ? targetMonth.slice(0, 7)
+      : localDate().slice(0, 7);
+
+  const [y, m] = activeMonth.split("-").map(Number);
+  if (isNaN(y) || isNaN(m)) {
+    return { sessions: [], attended: 0, absent: 0, total: 0, rate: 0 };
+  }
+
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const today = localDate();
+  const todayMonth = today.slice(0, 7);
+  const isPastMonth = activeMonth < todayMonth;
+  const isCurrentMonth = activeMonth === todayMonth;
+
+  let maxDay = 0;
+  if (isPastMonth) {
+    maxDay = daysInMonth;
+  } else if (isCurrentMonth) {
+    maxDay = Math.min(daysInMonth, Number(today.slice(8, 10)));
+  } else {
+    maxDay = 0;
+  }
+
+  const branchDays = Array.isArray(playerBranch?.days) ? playerBranch.days : [];
+  const hasConfiguredDays = branchDays.length > 0;
+
+  const rawRecords = Array.isArray(player?.attendance) ? player.attendance : [];
+  const monthRecords = rawRecords.filter(
+    (item) => item.date && item.date.startsWith(activeMonth)
+  );
+
+  const recordMap = new Map();
+  monthRecords.forEach((item) => {
+    recordMap.set(item.date, item.status);
+  });
+
+  const sessionsMap = new Map();
+
+  if (hasConfiguredDays) {
+    // Iterate over elapsed days in the month up to maxDay
+    for (let d = 1; d <= maxDay; d++) {
+      const dateStr = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const isWorking = isBranchWorkingDate(playerBranch, dateStr);
+
+      if (isWorking) {
+        if (recordMap.has(dateStr)) {
+          const status = recordMap.get(dateStr);
+          sessionsMap.set(dateStr, {
+            date: dateStr,
+            status,
+            dayName: getArabicDayName(dateStr),
+            isAutoAbsent: false,
+          });
+        } else {
+          sessionsMap.set(dateStr, {
+            date: dateStr,
+            status: "absent",
+            dayName: getArabicDayName(dateStr),
+            isAutoAbsent: true,
+          });
+        }
+      } else if (recordMap.has(dateStr)) {
+        const status = recordMap.get(dateStr);
+        sessionsMap.set(dateStr, {
+          date: dateStr,
+          status,
+          dayName: getArabicDayName(dateStr),
+          isAutoAbsent: false,
+        });
+      }
+    }
+
+    // Include any explicit records recorded outside 1..maxDay
+    monthRecords.forEach((rec) => {
+      if (!sessionsMap.has(rec.date)) {
+        sessionsMap.set(rec.date, {
+          date: rec.date,
+          status: rec.status,
+          dayName: getArabicDayName(rec.date),
+          isAutoAbsent: false,
+        });
+      }
+    });
+  } else {
+    // If branch has no configured days, rely on recorded attendance
+    monthRecords.forEach((rec) => {
+      sessionsMap.set(rec.date, {
+        date: rec.date,
+        status: rec.status,
+        dayName: getArabicDayName(rec.date),
+        isAutoAbsent: false,
+      });
+    });
+  }
+
+  const sessions = Array.from(sessionsMap.values()).sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+
+  const attended = sessions.filter((s) => s.status === "present").length;
+  const absent = sessions.filter((s) => s.status === "absent").length;
+  const total = sessions.length;
+  const rate = total > 0 ? Math.round((attended / total) * 100) : 0;
+
+  return {
+    sessions,
+    attended,
+    absent,
+    total,
+    rate,
+  };
+}
+

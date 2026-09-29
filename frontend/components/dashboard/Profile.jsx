@@ -20,6 +20,8 @@ import {
   isNewPlayer,
   isWelcomeCardVisible,
   formatArabicMonth,
+  getPlayerMonthAttendance,
+  getArabicDayName,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 import ProfileCardModal from "./ProfileCardModal";
@@ -363,13 +365,18 @@ export default function Profile({
     return age >= 0 && age <= 120 ? age : null;
   }, [editDobYear, editDobMonth, editDobDay]);
 
-  const attended = (
-    Array.isArray(player.attendance) ? player.attendance : []
-  ).filter((item) => item.status === "present").length;
-  const totalAttendanceCount = (player.attendance || []).length;
-  const attendanceRate = totalAttendanceCount
-    ? Math.round((attended / totalAttendanceCount) * 100)
-    : 0;
+  const playerBranch = useMemo(
+    () => (branches || []).find((b) => b.name === player.branch),
+    [branches, player.branch]
+  );
+
+  const activeMonthAttendance = useMemo(
+    () => getPlayerMonthAttendance(player, playerBranch, reportMonth),
+    [player, playerBranch, reportMonth]
+  );
+  const attended = activeMonthAttendance.attended;
+  const totalAttendanceCount = activeMonthAttendance.total;
+  const attendanceRate = activeMonthAttendance.rate;
   const paymentDetails = getPaymentDetailsFor(player, paymentMonth);
   const monthlyStatus = paymentDetails.status;
   const { totalAmount, paidAmount, remainingAmount } = paymentDetails;
@@ -428,21 +435,21 @@ export default function Profile({
     const activeMonthLabel = formatArabicMonth(activeMonth);
     const cleanPhone = formatWhatsAppPhone(guardianPhone);
 
-    // Filter attendance strictly for activeMonth:
-    const monthAttendance = (Array.isArray(player.attendance) ? player.attendance : [])
-      .filter((item) => item.date && item.date.startsWith(activeMonth))
-      .reverse();
+    // Attendance strictly for activeMonth aligned with branch training days:
+    const monthAttData = getPlayerMonthAttendance(player, playerBranch, activeMonth);
+    const monthAttended = monthAttData.attended;
+    const monthTotal = monthAttData.total;
+    const monthRate = monthAttData.rate;
 
-    const monthAttended = monthAttendance.filter((i) => i.status === "present").length;
-    const monthTotal = monthAttendance.length;
-    const monthRate = monthTotal ? Math.round((monthAttended / monthTotal) * 100) : 0;
-
-    const attendanceText = monthAttendance.length
-      ? monthAttendance
-          .map(
-            (item) =>
-              `• ${item.date}: ${item.status === "present" ? "حاضر التدريب ✓" : "غائب ×"}`
-          )
+    const attendanceText = monthAttData.sessions.length
+      ? monthAttData.sessions
+          .slice()
+          .reverse()
+          .map((item) => {
+            const dayName = item.dayName || getArabicDayName(item.date);
+            const prefix = dayName ? `${dayName} ` : "";
+            return `• ${prefix}(${item.date}): ${item.status === "present" ? "حاضر التدريب ✓" : "غائب ×"}`;
+          })
           .join("\n")
       : `لا توجد حصص تدريبية مسجلة خلال شهر ${activeMonthLabel}`;
 
@@ -569,13 +576,13 @@ export default function Profile({
     const activeMonth = customMonth || reportMonth || paymentMonth || localDate().slice(0, 7);
     const monthLabel = formatArabicMonth(activeMonth);
 
-    // Attendance filtered strictly for activeMonth:
-    const monthAttendance = (Array.isArray(player.attendance) ? player.attendance : [])
-      .filter((item) => item.date && item.date.startsWith(activeMonth));
-    const attendanceHistory = [...monthAttendance].reverse().slice(0, 5);
-    const totalSessions = monthAttendance.length;
-    const attendedSessions = monthAttendance.filter((item) => item.status === "present").length;
-    const attRate = totalSessions ? Math.round((attendedSessions / totalSessions) * 100) : 0;
+    // Attendance strictly for activeMonth aligned with branch training days:
+    const targetPlayerBranch = (branches || []).find((b) => b.name === player.branch);
+    const monthAttData = getPlayerMonthAttendance(player, targetPlayerBranch, activeMonth);
+    const attendanceHistory = [...monthAttData.sessions].reverse().slice(0, 5);
+    const totalSessions = monthAttData.total;
+    const attendedSessions = monthAttData.attended;
+    const attRate = monthAttData.rate;
 
     const purchasesList = Array.isArray(player.purchases)
       ? [...player.purchases].reverse().slice(0, 4)
@@ -894,7 +901,9 @@ export default function Profile({
         context.lineWidth = 1.5;
         context.stroke();
 
-        drawRight(`📅 تاريخ: ${item.date}`, 1008 - 20, y + 29, "700 22px Cairo, sans-serif", isPres ? "#166534" : "#991b1b");
+        const dayName = item.dayName || getArabicDayName(item.date);
+        const dayLabel = dayName ? `${dayName} (${item.date})` : item.date;
+        drawRight(`📅 ${dayLabel}`, 1008 - 20, y + 29, "700 22px Cairo, sans-serif", isPres ? "#166534" : "#991b1b");
         drawLeft(isPres ? "حاضر التدريب اليوم ✓" : "غائب عن الحصة ×", 72 + 20, y + 29, "800 22px Cairo, sans-serif", isPres ? "#15803d" : "#b91c1c");
         y += 50;
       }
@@ -2185,30 +2194,42 @@ export default function Profile({
                           </h3>
                         </div>
                         <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                          {(player.attendance || []).length} حصة مسجلة
+                          {activeMonthAttendance.sessions.length} حصة ({formatArabicMonth(reportMonth)})
                         </span>
                       </div>
 
-                      {!player.attendance || player.attendance.length === 0 ? (
+                      {!activeMonthAttendance.sessions || activeMonthAttendance.sessions.length === 0 ? (
                         <div className="py-12 text-center text-slate-400">
                           <Calendar className="h-10 w-10 mx-auto mb-2 text-slate-300" />
-                          <p className="text-xs font-bold">لا توجد حصص حضور مسجلة بعد.</p>
+                          <p className="text-xs font-bold">لا توجد حصص تدريبية مسجلة خلال هذا الشهر.</p>
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-60 sm:max-h-80 lg:max-h-[380px] overflow-y-auto pr-1">
-                          {[...player.attendance].reverse().map((item) => (
+                          {[...activeMonthAttendance.sessions].reverse().map((item) => (
                             <div
-                              className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5 text-xs"
+                              className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5 text-xs gap-2"
                               key={item.date}
                             >
-                              <span className="font-bold text-slate-800">{item.date}</span>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-extrabold text-slate-900 truncate">
+                                  {item.dayName || getArabicDayName(item.date)}
+                                </span>
+                                <span className="text-slate-500 text-[11px] font-medium font-mono shrink-0">
+                                  ({item.date})
+                                </span>
+                                {item.isAutoAbsent && (
+                                  <span className="text-[9.5px] font-bold text-rose-600 bg-rose-50 border border-rose-200/60 px-1.5 py-0.2 rounded-md shrink-0">
+                                    غياب تلقائي
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
                                 <button
                                   disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
                                   className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer touch-manipulation ${
                                     item.status === "present"
-                                      ? "bg-emerald-600 text-white"
-                                      : "bg-rose-600 text-white"
+                                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                                      : "bg-rose-600 text-white hover:bg-rose-700"
                                   }`}
                                   onClick={() => handleTogglePastAttendance(item.date, item.status)}
                                   title="انقر للتبديل"
@@ -2221,18 +2242,20 @@ export default function Profile({
                                     <><X className="h-3 w-3" strokeWidth={2.5} /> غائب</>
                                   )}
                                 </button>
-                                <button
-                                  disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
-                                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition cursor-pointer touch-manipulation"
-                                  onClick={() => handleDeletePastAttendance(item.date)}
-                                  title="حذف من السجل"
-                                >
-                                  {deletingAttendanceDate === item.date ? (
-                                    <span className="h-3 w-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin" />
-                                  ) : (
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  )}
-                                </button>
+                                {!item.isAutoAbsent && (
+                                  <button
+                                    disabled={Boolean(updatingAttendanceDate || deletingAttendanceDate)}
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition cursor-pointer touch-manipulation"
+                                    onClick={() => handleDeletePastAttendance(item.date)}
+                                    title="حذف من السجل"
+                                  >
+                                    {deletingAttendanceDate === item.date ? (
+                                      <span className="h-3 w-3 rounded-full border-2 border-rose-600 border-t-transparent animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    )}
+                                  </button>
+                                )}
                               </div>
                             </div>
                           ))}

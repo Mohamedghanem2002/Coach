@@ -1,5 +1,9 @@
 import { Building2, ChevronLeft, MapPin, Users, FileText } from "lucide-react";
-import { paymentStatusFor } from "../../lib/dashboard-utils";
+import {
+  paymentStatusFor,
+  isPlayerPresentOnDate,
+  isPlayerAbsentOnDate,
+} from "../../lib/dashboard-utils";
 
 const BRANCH_GRADIENTS = [
   "from-red-600 to-rose-700",
@@ -53,14 +57,10 @@ export default function BranchOverview({
           const accentColor = BRANCH_ICON_COLORS[idx % BRANCH_ICON_COLORS.length];
           const branchPlayers = players.filter((p) => p.branch === branch.name);
           const present = branchPlayers.filter((p) =>
-            (p.attendance || []).some(
-              (a) => a.date === sessionDate && a.status === "present"
-            )
+            isPlayerPresentOnDate(p, sessionDate)
           ).length;
           const absent = branchPlayers.filter((p) =>
-            (p.attendance || []).some(
-              (a) => a.date === sessionDate && a.status === "absent"
-            )
+            isPlayerAbsentOnDate(p, branches, sessionDate)
           ).length;
           const paid = branchPlayers.filter(
             (p) => paymentStatusFor(p, paymentMonth) === "paid",
