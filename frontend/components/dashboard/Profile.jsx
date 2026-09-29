@@ -53,6 +53,8 @@ import {
   FileText,
 } from "lucide-react";
 
+// Fast in-memory cache for player photo elements to prevent re-fetching and decoding delay
+const playerPhotoCache = new Map();
 
 export default function Profile({
   player,
@@ -395,7 +397,21 @@ export default function Profile({
 
   useEffect(() => {
     let isCancelled = false;
-    generateProfileCanvas().then((canvas) => {
+    if (!player) return undefined;
+
+    // Fast preload player photo into memory cache
+    if (player.photo && !playerPhotoCache.has(player.photo)) {
+      const img = new Image();
+      if (player.photo.startsWith("http://") || player.photo.startsWith("https://")) {
+        img.crossOrigin = "anonymous";
+      }
+      img.onload = () => playerPhotoCache.set(player.photo, img);
+      img.onerror = () => {};
+      img.src = player.photo;
+    }
+
+    const targetMonth = reportMonth || paymentMonth;
+    generateProfileCanvas(targetMonth).then((canvas) => {
       if (!canvas || isCancelled) return;
       canvas.toBlob((blob) => {
         if (!isCancelled && blob) {
@@ -406,8 +422,7 @@ export default function Profile({
     return () => {
       isCancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [player, attended, monthlyStatus, paymentMonth]);
+  }, [player, attended, monthlyStatus, paymentMonth, reportMonth]);
 
 
 
@@ -694,14 +709,22 @@ export default function Profile({
 
     let photoDrawn = false;
     if (player.photo) {
-      const photo = await new Promise((resolve) => {
-        const image = new Image();
-        image.crossOrigin = "anonymous";
-        image.onload = () => resolve(image);
-        image.onerror = () => resolve(null);
-        setTimeout(() => resolve(null), 3000);
-        image.src = player.photo;
-      });
+      let photo = playerPhotoCache.get(player.photo);
+      if (!photo || !(photo.naturalWidth || photo.width)) {
+        photo = await new Promise((resolve) => {
+          const image = new Image();
+          if (player.photo.startsWith("http://") || player.photo.startsWith("https://")) {
+            image.crossOrigin = "anonymous";
+          }
+          image.onload = () => {
+            playerPhotoCache.set(player.photo, image);
+            resolve(image);
+          };
+          image.onerror = () => resolve(null);
+          setTimeout(() => resolve(null), 1000);
+          image.src = player.photo;
+        });
+      }
       if (photo && (photo.naturalWidth || photo.width) && (photo.naturalHeight || photo.height)) {
         const pw = photo.naturalWidth || photo.width;
         const ph = photo.naturalHeight || photo.height;

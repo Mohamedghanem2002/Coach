@@ -9,6 +9,9 @@ import {
 } from "../../lib/dashboard-utils";
 import { copyBlobToClipboard } from "../../lib/birthday-card-utils";
 
+// In-memory cache for generated card blobs to enable instant zero-delay reopening and sharing
+const cardBlobCache = new Map();
+
 export default function ProfileCardModal({
   player,
   captainName = "كابتن الأكاديمية",
@@ -22,8 +25,25 @@ export default function ProfileCardModal({
   const [selectedMonth, setSelectedMonth] = useState(
     paymentMonth || localDate().slice(0, 7)
   );
-  const [dataUrl, setDataUrl] = useState("");
-  const [blob, setBlob] = useState(null);
+
+  const initialKey = `${player?._id || player?.name || "card"}_${selectedMonth}`;
+  const initialCached = cardBlobCache.get(initialKey);
+  const initialBlob =
+    initialCached?.blob ||
+    (selectedMonth === (paymentMonth || localDate().slice(0, 7)) ? cachedBlob : null);
+
+  const [dataUrl, setDataUrl] = useState(() => {
+    if (initialCached?.url) return initialCached.url;
+    if (initialBlob) {
+      try {
+        const u = URL.createObjectURL(initialBlob);
+        cardBlobCache.set(initialKey, { blob: initialBlob, url: u });
+        return u;
+      } catch (_) {}
+    }
+    return "";
+  });
+  const [blob, setBlob] = useState(initialBlob);
   const [loadError, setLoadError] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -49,6 +69,17 @@ export default function ProfileCardModal({
       const d = new Date(y, m - 1 + delta, 1);
       const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       setSelectedMonth(newMonth);
+
+      const nextKey = `${player?._id || player?.name || "card"}_${newMonth}`;
+      if (cardBlobCache.has(nextKey)) {
+        const cached = cardBlobCache.get(nextKey);
+        setBlob(cached.blob);
+        setDataUrl(cached.url);
+        setLoadError(false);
+      } else {
+        setDataUrl("");
+        setBlob(null);
+      }
     } catch (_) {}
   }
 
@@ -56,7 +87,39 @@ export default function ProfileCardModal({
     if (!isOpen || !player) return undefined;
 
     let isMounted = true;
+    const cacheKey = `${player._id || player.name || "card"}_${selectedMonth}`;
 
+    // 1. If already in session cache, use immediately
+    if (cardBlobCache.has(cacheKey)) {
+      const cached = cardBlobCache.get(cacheKey);
+      Promise.resolve().then(() => {
+        if (!isMounted) return;
+        setBlob(cached.blob);
+        setDataUrl(cached.url);
+        setLoadError(false);
+      });
+      return undefined;
+    }
+
+    // 2. If parent passed cachedBlob for this month, use immediately
+    if (cachedBlob && selectedMonth === (paymentMonth || localDate().slice(0, 7))) {
+      try {
+        const url = URL.createObjectURL(cachedBlob);
+        cardBlobCache.set(cacheKey, { blob: cachedBlob, url });
+        Promise.resolve().then(() => {
+          if (!isMounted) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+          setBlob(cachedBlob);
+          setDataUrl(url);
+          setLoadError(false);
+        });
+        return undefined;
+      } catch (_) {}
+    }
+
+    // 3. Otherwise generate on demand directly to blob
     if (typeof canvasGenerator === "function") {
       canvasGenerator(selectedMonth)
         .then((canvas) => {
@@ -66,13 +129,16 @@ export default function ProfileCardModal({
             return;
           }
 
-          const url = canvas.toDataURL("image/png");
-          setDataUrl(url);
-
           canvas.toBlob((b) => {
-            if (isMounted && b) {
-              setBlob(b);
+            if (!isMounted || !b) {
+              if (isMounted) setLoadError(true);
+              return;
             }
+            const url = URL.createObjectURL(b);
+            cardBlobCache.set(cacheKey, { blob: b, url });
+            setBlob(b);
+            setDataUrl(url);
+            setLoadError(false);
           }, "image/png");
         })
         .catch(() => {
@@ -82,13 +148,8 @@ export default function ProfileCardModal({
 
     return () => {
       isMounted = false;
-      setDataUrl("");
-      setBlob(null);
-      setLoadError(false);
-      setNotice("");
-      setWhatsAppUrl("");
     };
-  }, [isOpen, player, selectedMonth, canvasGenerator]);
+  }, [isOpen, player, selectedMonth, canvasGenerator, cachedBlob, paymentMonth]);
 
   if (!isOpen || !player) return null;
 
