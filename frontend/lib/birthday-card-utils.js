@@ -933,6 +933,33 @@ export async function downloadBirthdayCard(
     }
 
     const fileName = `كارت_عيد_ميلاد_${(player?.name || "اللاعب").replace(/\s+/g, "_")}.png`;
+
+    // On iOS Safari, standard <a download> does not directly save to the Photos camera roll.
+    // If Web Share API with files is available, offer native share/save sheet:
+    const isIOS =
+      typeof navigator !== "undefined" &&
+      /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+
+    if (
+      isIOS &&
+      typeof navigator !== "undefined" &&
+      navigator.canShare &&
+      navigator.canShare({ files: [new File([blob], fileName, { type: "image/png" })] })
+    ) {
+      try {
+        const file = new File([blob], fileName, { type: "image/png" });
+        await navigator.share({
+          files: [file],
+          title: `كارت عيد ميلاد ${player?.name || "اللاعب"}`,
+        });
+        if (onNotice) onNotice("✓ تم فتح نافذة الحفظ والمشاركة بنجاح!");
+        return;
+      } catch (shareErr) {
+        if (shareErr.name === "AbortError") return;
+        // Fall back to link download below
+      }
+    }
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
