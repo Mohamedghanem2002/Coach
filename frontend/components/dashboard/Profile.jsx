@@ -39,6 +39,7 @@ import {
   Check,
   X,
   BookUser,
+  Clipboard,
   Compass,
   Share2,
   ShoppingBag,
@@ -116,7 +117,9 @@ export default function Profile({
   const [editBelt, setEditBelt] = useState(player.belt || "أبيض");
   const [editLevel, setEditLevel] = useState(player.level || "A");
   const [editContactNotice, setEditContactNotice] = useState("");
+  const [showEditIOSContactGuide, setShowEditIOSContactGuide] = useState(false);
   const [editPhoto, setEditPhoto] = useState(player.photo || "");
+  const editPhoneInputRef = useRef(null);
   const [editDefaultTotalAmount, setEditDefaultTotalAmount] = useState(
     player.defaultTotalAmount !== undefined && player.defaultTotalAmount !== null && player.defaultTotalAmount !== ""
       ? String(player.defaultTotalAmount)
@@ -147,7 +150,35 @@ export default function Profile({
     setIsEditing(true);
   }
 
+  // Instant clipboard paste for phone number in profile edit
+  async function handleEditPastePhone() {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.readText) {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && typeof text === "string") {
+          const digits = toEnglishDigits(text).replace(/[^0-9]/g, "");
+          if (digits && digits.length >= 8 && digits.length <= 15) {
+            setEditGuardianPhone(digits);
+            setEditContactNotice("✓ تم لصق الرقم بنجاح من الحافظة 📋");
+            setTimeout(() => setEditContactNotice(""), 3500);
+            return;
+          } else if (text.trim()) {
+            setEditGuardianPhone(toEnglishDigits(text).trim());
+            setEditContactNotice("✓ تم لصق الرقم من الحافظة 📋");
+            setTimeout(() => setEditContactNotice(""), 3500);
+            return;
+          }
+        }
+      } catch (_) {}
+    }
+    editPhoneInputRef.current?.focus();
+    setEditContactNotice("💡 يمكنك لصق الرقم مباشرة داخل الحقل أو كتابته.");
+    setTimeout(() => setEditContactNotice(""), 3500);
+  }
+
+  // Enhanced contact picker for Profile edit mode
   async function handleEditPickContact() {
+    // 1. Native Contact Picker API (Works on Android Chrome, and iOS when Feature Flag is enabled)
     if (typeof window !== "undefined" && "contacts" in navigator && "ContactsManager" in window) {
       try {
         const props = ["tel"];
@@ -155,15 +186,44 @@ export default function Profile({
         if (contacts && contacts.length > 0 && contacts[0]?.tel && contacts[0].tel.length > 0) {
           const raw = contacts[0].tel[0];
           setEditGuardianPhone(toEnglishDigits(raw).replace(/[^0-9]/g, ""));
-          setEditContactNotice("✓ تم اختيار الرقم بنجاح من جهات الاتصال");
+          setEditContactNotice("✓ تم اختيار الرقم بنجاح من سجل الهاتف");
           setTimeout(() => setEditContactNotice(""), 3500);
+          return;
         }
       } catch (err) {
-        console.log("Contact picker cancelled:", err);
+        if (err.name === "AbortError") return;
+        console.log("Contact picker cancelled or unsupported:", err);
       }
+    }
+
+    // 2. iOS Fallback: Check clipboard
+    if (typeof navigator !== "undefined" && navigator.clipboard?.readText) {
+      try {
+        const clipText = await navigator.clipboard.readText();
+        if (clipText) {
+          const digits = toEnglishDigits(clipText).replace(/[^0-9]/g, "");
+          if (digits && digits.length >= 8 && digits.length <= 15) {
+            setEditGuardianPhone(digits);
+            setEditContactNotice("✓ تم لصق الرقم فوراً من الحافظة 📋");
+            setTimeout(() => setEditContactNotice(""), 3500);
+            return;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 3. Focus input with autoComplete="tel" so iOS QuickType keyboard displays Contacts button
+    editPhoneInputRef.current?.focus();
+
+    // 4. Show iOS guide
+    const isIOS =
+      typeof navigator !== "undefined" &&
+      /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+    if (isIOS) {
+      setShowEditIOSContactGuide((prev) => !prev);
     } else {
-      setEditContactNotice("💡 خاصية استيراد جهات الاتصال تعمل مباشرة من المتصفح على الهواتف الذكية (مثل Chrome على Android). يمكنك كتابة الرقم يدوياً الآن.");
-      setTimeout(() => setEditContactNotice(""), 5000);
+      setEditContactNotice("💡 يمكنك كتابة الرقم يدوياً أو لصقه من الحافظة.");
+      setTimeout(() => setEditContactNotice(""), 4000);
     }
   }
 
@@ -1521,21 +1581,39 @@ export default function Profile({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-extrabold text-slate-700">
-                    رقم ولي الأمر
+                <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1.5">
+                  <label htmlFor="edit-guardian-phone-input" className="text-xs font-extrabold text-slate-700">
+                    رقم ولي الأمر <span className="text-slate-400 font-normal text-[11px]">(للواتساب)</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={handleEditPickContact}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 hover:bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-700 border border-red-200/60 transition active:scale-95 cursor-pointer"
-                    title="اختيار رقم ولي الأمر مباشرة من سجل الأسماء بالهاتف"
-                  >
-                    <BookUser className="h-3.5 w-3.5 text-red-600" />
-                    <span>جهات الاتصال 📱</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {/* زر لصق سريع */}
+                    <button
+                      type="button"
+                      onClick={handleEditPastePhone}
+                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700 border border-slate-200 transition active:scale-95 cursor-pointer"
+                      title="لصق الرقم المنسوخ من الحافظة بنقرة واحدة"
+                    >
+                      <Clipboard className="h-3 w-3 text-slate-500" />
+                      <span>لصق 📋</span>
+                    </button>
+
+                    {/* زر سجل الهاتف */}
+                    <button
+                      type="button"
+                      onClick={handleEditPickContact}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 hover:bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-700 border border-red-200/60 transition active:scale-95 cursor-pointer"
+                      title="اختيار رقم ولي الأمر مباشرة من سجل الأسماء بالهاتف"
+                    >
+                      <BookUser className="h-3.5 w-3.5 text-red-600" />
+                      <span>جهات الاتصال 📱</span>
+                    </button>
+                  </div>
                 </div>
                 <input
+                  ref={editPhoneInputRef}
+                  id="edit-guardian-phone-input"
+                  name="tel"
+                  autoComplete="tel"
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs sm:text-sm font-bold outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
                   type="tel"
                   inputMode="tel"
@@ -1547,6 +1625,38 @@ export default function Profile({
                   <p className="mt-1.5 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1 animate-slide-up">
                     {editContactNotice}
                   </p>
+                )}
+
+                {/* دليل مستخدمي الآيفون لاستيراد جهات الاتصال */}
+                {showEditIOSContactGuide && (
+                  <div className="mt-2 p-3 rounded-2xl bg-amber-50/95 border border-amber-200/90 text-xs text-amber-950 space-y-2 animate-slide-up shadow-2xs">
+                    <div className="flex items-center justify-between border-b border-amber-200/60 pb-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
+                        <span>🍎</span>
+                        <span>طرق استيراد الرقم على الآيفون:</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowEditIOSContactGuide(false)}
+                        className="text-amber-600 hover:text-amber-900 font-black text-xs p-1 cursor-pointer"
+                        aria-label="إغلاق التنبيه"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="space-y-1.5 text-[11px] font-semibold text-amber-900/90 leading-relaxed">
+                      <p>
+                        <strong>1. التعبئة التلقائية:</strong> اضغط على حقل الرقم وسيظهر لك زر <strong>&quot;تعبئة جهة اتصال&quot;</strong> أعلى لوحة المفاتيح لاختيار الرقم فوراً من سجل هاتفك.
+                      </p>
+                      <p>
+                        <strong>2. اللصق الفوري:</strong> انسخ رقم ولي الأمر من واتساب واضغط زر <strong>&quot;لصق 📋&quot;</strong> لإضافته بنقرة واحدة.
+                      </p>
+                      <p className="text-[10px] text-amber-800/80 pt-1 border-t border-amber-200/50">
+                        💡 لتفعيل نافذة جهات الاتصال المباشرة كما في أندرويد: افتح <strong>إعدادات الآيفون &gt; Safari &gt; خيارات متقدمة &gt; Feature Flags</strong> وفعّل <strong>Contact Picker API</strong>.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
 
