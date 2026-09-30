@@ -400,6 +400,19 @@ export default function AdminCaptainsTab({
                             : `متبقي ${c.daysRemaining} يوم`}
                         </span>
                       )}
+                      {c.subscriptionTotalAmount > 0 && !c.isAdmin && (
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                            (c.subscriptionRemainingAmount || 0) > 0
+                              ? "bg-rose-50 text-rose-800 border-rose-200"
+                              : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          }`}
+                        >
+                          {(c.subscriptionRemainingAmount || 0) > 0
+                            ? `متبقي: ${c.subscriptionRemainingAmount} ج.م`
+                            : `مسدد بالكامل ✓`}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -645,6 +658,20 @@ export default function AdminCaptainsTab({
                                   : `متبقي ${c.daysRemaining} يوم`}
                               </span>
                             )}
+                            {/* Financial status badge */}
+                            {c.subscriptionTotalAmount > 0 && !c.isAdmin && (
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                  (c.subscriptionRemainingAmount || 0) > 0
+                                    ? "bg-rose-50 text-rose-800 border-rose-200"
+                                    : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                }`}
+                              >
+                                {(c.subscriptionRemainingAmount || 0) > 0
+                                  ? `متبقي: ${c.subscriptionRemainingAmount} ج.م ⚠️`
+                                  : `مسدد بالكامل ✓`}
+                              </span>
+                            )}
                           </div>
                         </td>
 
@@ -806,8 +833,20 @@ export default function AdminCaptainsTab({
                     <CreditCard className="w-4 h-4 text-emerald-600" />
                     <span>تعديل حالة السداد</span>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${selectedActionCaptain.subscriptionPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
-                    {selectedActionCaptain.subscriptionPaid ? "مسدد ✓" : "غير مسدد"}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                    selectedActionCaptain.subscriptionTotalAmount > 0
+                      ? (selectedActionCaptain.subscriptionRemainingAmount > 0
+                          ? "bg-amber-100 text-amber-900 border border-amber-300"
+                          : "bg-emerald-100 text-emerald-800 border border-emerald-200")
+                      : (selectedActionCaptain.subscriptionPaid
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-amber-100 text-amber-800")
+                  }`}>
+                    {selectedActionCaptain.subscriptionTotalAmount > 0
+                      ? (selectedActionCaptain.subscriptionRemainingAmount > 0
+                          ? `دفع جزئي (متبقي ${selectedActionCaptain.subscriptionRemainingAmount} ج.م)`
+                          : `مسدد بالكامل (${selectedActionCaptain.subscriptionTotalAmount} ج.م) ✓`)
+                      : (selectedActionCaptain.subscriptionPaid ? "مسدد ✓" : "غير مسدد")}
                   </span>
                 </button>
               )}

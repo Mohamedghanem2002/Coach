@@ -54,6 +54,22 @@ export async function GET() {
       }
     }
 
+    const subTotal = Number(user.subscriptionTotalAmount || 0);
+    const subPaid = Number(user.subscriptionPaidAmount || 0);
+    const subRemaining = Math.max(0, subTotal - subPaid);
+    let subPaymentStatus = "unpaid";
+    if (subTotal > 0) {
+      if (subPaid >= subTotal) {
+        subPaymentStatus = "paid";
+      } else if (subPaid > 0) {
+        subPaymentStatus = "partial";
+      } else {
+        subPaymentStatus = "unpaid";
+      }
+    } else if (user.subscriptionPaid !== false) {
+      subPaymentStatus = "paid";
+    }
+
     return NextResponse.json({
       success: true,
       user: {
@@ -69,6 +85,10 @@ export async function GET() {
         subscriptionExpiresAt: user.subscriptionExpiresAt,
         subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
         subscriptionPaid: user.subscriptionPaid !== false,
+        subscriptionTotalAmount: subTotal,
+        subscriptionPaidAmount: subPaid,
+        subscriptionRemainingAmount: subRemaining,
+        subscriptionPaymentStatus: subPaymentStatus,
         daysRemaining,
         isExpired,
         suspensionReason: user.suspensionReason || null,

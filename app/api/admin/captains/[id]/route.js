@@ -147,6 +147,22 @@ export async function GET(request, context) {
     const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
     const isUserAdmin = user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail);
 
+    const subTotal = Number(user.subscriptionTotalAmount || 0);
+    const subPaid = Number(user.subscriptionPaidAmount || 0);
+    const subRemaining = Math.max(0, subTotal - subPaid);
+    let subPaymentStatus = "unpaid";
+    if (subTotal > 0) {
+      if (subPaid >= subTotal) {
+        subPaymentStatus = "paid";
+      } else if (subPaid > 0) {
+        subPaymentStatus = "partial";
+      } else {
+        subPaymentStatus = "unpaid";
+      }
+    } else if (user.subscriptionPaid !== false) {
+      subPaymentStatus = "paid";
+    }
+
     return NextResponse.json({
       success: true,
       captain: {
@@ -164,6 +180,10 @@ export async function GET(request, context) {
         subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
         subscriptionExpiresAt: user.subscriptionExpiresAt || null,
         subscriptionPaid: user.subscriptionPaid !== false,
+        subscriptionTotalAmount: subTotal,
+        subscriptionPaidAmount: subPaid,
+        subscriptionRemainingAmount: subRemaining,
+        subscriptionPaymentStatus: subPaymentStatus,
         suspensionReason: user.suspensionReason || null,
         daysRemaining,
         createdAt: user.createdAt,
@@ -183,6 +203,10 @@ export async function GET(request, context) {
         subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
         subscriptionExpiresAt: user.subscriptionExpiresAt || null,
         subscriptionPaid: user.subscriptionPaid !== false,
+        subscriptionTotalAmount: subTotal,
+        subscriptionPaidAmount: subPaid,
+        subscriptionRemainingAmount: subRemaining,
+        subscriptionPaymentStatus: subPaymentStatus,
         suspensionReason: user.suspensionReason || null,
         daysRemaining,
         createdAt: user.createdAt,
@@ -399,6 +423,12 @@ export async function PATCH(request, context) {
       }
       updateFields.subscriptionPaid = newPaid;
 
+      // Sync subscriptionPaidAmount with subscriptionTotalAmount
+      const subTotal = Number(user.subscriptionTotalAmount || 0);
+      if (subTotal > 0) {
+        updateFields.subscriptionPaidAmount = newPaid ? subTotal : 0;
+      }
+
       if (newPaid) {
         // Automatically reactivate and resume service
         updateFields.status = "active";
@@ -420,6 +450,37 @@ export async function PATCH(request, context) {
 
       auditAction = newPaid ? "mark_subscription_paid" : "mark_subscription_unpaid";
       auditDetails = { paid: newPaid, autoReactivated: newPaid };
+    }
+
+    // 4b. Update Subscription Financials (المبلغ المطلوب، المبلغ المدفوع، وحساب المتبقي تلقائياً)
+    else if (action === "update_subscription_payment" || action === "set_subscription_financials") {
+      const rawTotal = body.totalAmount !== undefined ? body.totalAmount : body.subscriptionTotalAmount;
+      const rawPaid = body.paidAmount !== undefined ? body.paidAmount : body.subscriptionPaidAmount;
+
+      const totalAmount = Math.max(0, Number(rawTotal) || 0);
+      const paidAmount = Math.max(0, Number(rawPaid) || 0);
+      const remainingAmount = Math.max(0, totalAmount - paidAmount);
+      const isFullyPaid = totalAmount > 0 ? paidAmount >= totalAmount : user.subscriptionPaid !== false;
+
+      updateFields.subscriptionTotalAmount = totalAmount;
+      updateFields.subscriptionPaidAmount = paidAmount;
+      updateFields.subscriptionPaid = isFullyPaid;
+
+      auditAction = "update_subscription_payment";
+      auditDetails = {
+        totalAmount,
+        paidAmount,
+        remainingAmount,
+        isFullyPaid,
+      };
+
+      if (remainingAmount > 0) {
+        successMessage = `تم تحديث الرسوم المالية لاشتراك الكابتن "${user.name}": المطلوب (${totalAmount} ج.م) - المدفوع (${paidAmount} ج.م) - المتبقي عليه (${remainingAmount} ج.م).`;
+      } else if (totalAmount > 0) {
+        successMessage = `تم تأكيد سداد كامل رسوم اشتراك الكابتن "${user.name}" بنجاح (${totalAmount} ج.م) ✓.`;
+      } else {
+        successMessage = `تم حفظ بيانات رسوم اشتراك الكابتن "${user.name}" بنجاح.`;
+      }
     }
 
     // 5. Update Subscription Plan

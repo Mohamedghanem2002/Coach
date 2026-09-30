@@ -20,6 +20,8 @@ import {
   KeyRound,
   BadgeCheck,
   Sparkles,
+  CreditCard,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function AccountSettingsModal({
@@ -44,6 +46,11 @@ export default function AccountSettingsModal({
     daysRemaining: null,
     isExpired: false,
     status: "active",
+    totalAmount: 0,
+    paidAmount: 0,
+    remainingAmount: 0,
+    paymentStatus: "unpaid",
+    subscriptionPaid: true,
   });
 
   // Native tab: "profile" | "security"
@@ -93,6 +100,11 @@ export default function AccountSettingsModal({
               daysRemaining: data.user.daysRemaining,
               isExpired: data.user.isExpired,
               status: data.user.subscriptionStatus || data.user.status || "active",
+              totalAmount: Number(data.user.subscriptionTotalAmount || 0),
+              paidAmount: Number(data.user.subscriptionPaidAmount || 0),
+              remainingAmount: Number(data.user.subscriptionRemainingAmount || 0),
+              paymentStatus: data.user.subscriptionPaymentStatus || (data.user.subscriptionPaid ? "paid" : "unpaid"),
+              subscriptionPaid: data.user.subscriptionPaid !== false,
             });
           }
         }
@@ -442,6 +454,99 @@ export default function AccountSettingsModal({
                     : "غير محدد"}
                 </strong>
               </div>
+            </div>
+
+            {/* ━━━ الحالة المالية للاشتراك (المطلوب / المدفوع / المتبقي) ━━━ */}
+            <div className="mt-3 pt-3 border-t border-indigo-100/90 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-black text-slate-800">
+                  <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>الرسوم المالية وحالة السداد:</span>
+                </div>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    subscriptionInfo.totalAmount > 0
+                      ? subscriptionInfo.remainingAmount > 0
+                        ? "bg-amber-100 text-amber-900 border-amber-300"
+                        : "bg-emerald-100 text-emerald-800 border-emerald-200"
+                      : subscriptionInfo.subscriptionPaid
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                      : "bg-amber-100 text-amber-900 border-amber-300"
+                  }`}
+                >
+                  {subscriptionInfo.totalAmount > 0
+                    ? subscriptionInfo.remainingAmount > 0
+                      ? `دفع جزئي (متبقي ${subscriptionInfo.remainingAmount} ج.م) ⚠️`
+                      : "مسدد بالكامل ✓"
+                    : subscriptionInfo.subscriptionPaid
+                    ? "الاشتراك مسدد ✓"
+                    : "غير مسدد ✗"}
+                </span>
+              </div>
+
+              {subscriptionInfo.totalAmount > 0 ? (
+                <>
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    {/* المطلوب */}
+                    <div className="bg-white/95 rounded-xl p-2 border border-slate-200/80 shadow-2xs">
+                      <span className="block text-[10px] font-bold text-slate-400 mb-0.5">
+                        المبلغ المطلوب
+                      </span>
+                      <strong className="text-xs sm:text-sm font-black text-slate-900 font-mono">
+                        {subscriptionInfo.totalAmount} ج.م
+                      </strong>
+                    </div>
+
+                    {/* المدفوع */}
+                    <div className="bg-white/95 rounded-xl p-2 border border-slate-200/80 shadow-2xs">
+                      <span className="block text-[10px] font-bold text-slate-400 mb-0.5">
+                        المدفوع
+                      </span>
+                      <strong className="text-xs sm:text-sm font-black text-emerald-700 font-mono">
+                        {subscriptionInfo.paidAmount} ج.م
+                      </strong>
+                    </div>
+
+                    {/* المتبقي */}
+                    <div
+                      className={`rounded-xl p-2 border shadow-2xs ${
+                        subscriptionInfo.remainingAmount > 0
+                          ? "bg-rose-50 border-rose-200 text-rose-900"
+                          : "bg-emerald-50 border-emerald-200 text-emerald-900"
+                      }`}
+                    >
+                      <span className="block text-[10px] font-bold text-slate-400 mb-0.5">
+                        المتبقي عليك
+                      </span>
+                      <strong className="text-xs sm:text-sm font-black font-mono">
+                        {subscriptionInfo.remainingAmount > 0
+                          ? `${subscriptionInfo.remainingAmount} ج.م`
+                          : "0 ج.م ✓"}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {subscriptionInfo.remainingAmount > 0 ? (
+                    <div className="p-2.5 rounded-xl bg-amber-50/90 border border-amber-200 text-[11px] font-bold text-amber-900 flex items-start gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                      <span>
+                        إشعار مالي: متبقي عليك مبلغ <strong>({subscriptionInfo.remainingAmount} ج.م)</strong> من إجمالي رسوم الاشتراك <strong>({subscriptionInfo.totalAmount} ج.م)</strong>. يرجى استكمال السداد لإدارة المنصة.
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="p-2 rounded-xl bg-emerald-50/90 border border-emerald-200 text-[11px] font-bold text-emerald-800 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>تم سداد كامل رسوم الاشتراك المقررة بنجاح ({subscriptionInfo.totalAmount} ج.م).</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] font-semibold text-slate-500 text-center">
+                  {subscriptionInfo.subscriptionPaid
+                    ? "اشتراك الحساب ساري ومسدد مع إدارة المنظومة."
+                    : "يرجى التواصل مع إدارة المنصة لتأكيد سداد الاشتراك."}
+                </div>
+              )}
             </div>
           </div>
 

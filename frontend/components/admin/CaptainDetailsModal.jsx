@@ -60,6 +60,11 @@ export default function CaptainDetailsModal({
   const [playerFilter, setPlayerFilter] = useState("all"); // "all" | "paid" | "unpaid"
   const [activeTab, setActiveTab] = useState("overview"); // "overview" | "players" | "halls" | "events" | "audit"
   const [copiedKey, setCopiedKey] = useState(null);
+  const [isEditingPayment, setIsEditingPayment] = useState(false);
+  const [totalAmountInput, setTotalAmountInput] = useState("");
+  const [paidAmountInput, setPaidAmountInput] = useState("");
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState(null);
 
   useEffect(() => {
     if (!isOpen || !captainId) return;
@@ -112,6 +117,62 @@ export default function CaptainDetailsModal({
       navigator.clipboard.writeText(text);
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(null), 2000);
+    }
+  };
+
+  const handleSavePaymentAmounts = async () => {
+    if (!captain) return;
+    setSavingPayment(true);
+    setPaymentNotice(null);
+    try {
+      const numTotal = Math.max(0, Number(totalAmountInput) || 0);
+      const numPaid = Math.max(0, Number(paidAmountInput) || 0);
+
+      const res = await fetch(`/api/admin/captains/${captain.id || captain._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_subscription_payment",
+          totalAmount: numTotal,
+          paidAmount: numPaid,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "فشل حفظ المبالغ");
+
+      // Update local state directly
+      setData((prev) => {
+        if (!prev) return prev;
+        const remaining = Math.max(0, numTotal - numPaid);
+        const isPaid = numTotal > 0 ? numPaid >= numTotal : prev.captain?.subscriptionPaid;
+        const updatedCaptain = {
+          ...prev.captain,
+          subscriptionTotalAmount: numTotal,
+          subscriptionPaidAmount: numPaid,
+          subscriptionRemainingAmount: remaining,
+          subscriptionPaid: isPaid,
+          subscriptionPaymentStatus: numTotal > 0 ? (numPaid >= numTotal ? "paid" : (numPaid > 0 ? "partial" : "unpaid")) : (isPaid ? "paid" : "unpaid"),
+        };
+        return {
+          ...prev,
+          captain: updatedCaptain,
+          academy: updatedCaptain,
+        };
+      });
+
+      setPaymentNotice({
+        type: "success",
+        message: result.message || "تم تحديث رسوم الاشتراك والمدفوعات بنجاح! ✨",
+      });
+      setIsEditingPayment(false);
+      setTimeout(() => setPaymentNotice(null), 4000);
+    } catch (err) {
+      setPaymentNotice({
+        type: "error",
+        message: err.message || "تعذر حفظ المبالغ",
+      });
+    } finally {
+      setSavingPayment(false);
     }
   };
 
@@ -556,6 +617,212 @@ export default function CaptainDetailsModal({
                         : "الخدمة سارية ونشطة"}
                     </span>
                   </div>
+                </div>
+
+                {/* ━━━ Subscription Financial Details (المطلوب / المدفوع / المتبقي) ━━━ */}
+                <div className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3.5 sm:p-4 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                        <CreditCard className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
+                          الرسوم المالية للاشتراك
+                        </h4>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          المطلوب من الكابتن، ما تم دفعه، والمتبقي عليه
+                        </span>
+                      </div>
+                    </div>
+
+                    {!captain.isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isEditingPayment) {
+                            setTotalAmountInput(captain.subscriptionTotalAmount !== undefined && captain.subscriptionTotalAmount !== null ? String(captain.subscriptionTotalAmount) : "");
+                            setPaidAmountInput(captain.subscriptionPaidAmount !== undefined && captain.subscriptionPaidAmount !== null ? String(captain.subscriptionPaidAmount) : "");
+                          }
+                          setIsEditingPayment((prev) => !prev);
+                          setPaymentNotice(null);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shadow-2xs cursor-pointer active:scale-95"
+                      >
+                        {isEditingPayment ? "إلغاء التعديل ✕" : "تعديل المبالغ ✏️"}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Financial 3-Card Summary */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
+                    {/* 1. المطلوب */}
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                      <span className="block text-[10px] font-bold text-slate-400 mb-0.5">
+                        المبلغ المطلوب
+                      </span>
+                      <strong className="text-sm sm:text-base font-black text-slate-900 font-mono">
+                        {captain.subscriptionTotalAmount !== undefined && captain.subscriptionTotalAmount !== null
+                          ? `${captain.subscriptionTotalAmount} ج.م`
+                          : "0 ج.م"}
+                      </strong>
+                    </div>
+
+                    {/* 2. المدفوع */}
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                      <span className="block text-[10px] font-bold text-slate-400 mb-0.5">
+                        المدفوع الفعلي
+                      </span>
+                      <strong className="text-sm sm:text-base font-black text-emerald-700 font-mono">
+                        {captain.subscriptionPaidAmount !== undefined && captain.subscriptionPaidAmount !== null
+                          ? `${captain.subscriptionPaidAmount} ج.م`
+                          : "0 ج.م"}
+                      </strong>
+                    </div>
+
+                    {/* 3. المتبقي */}
+                    <div
+                      className={`p-2.5 rounded-xl border shadow-2xs ${
+                        (captain.subscriptionRemainingAmount || 0) > 0
+                          ? "bg-rose-50/90 border-rose-200 text-rose-900"
+                          : "bg-emerald-50/90 border-emerald-200 text-emerald-900"
+                      }`}
+                    >
+                      <span className="block text-[10px] font-bold text-slate-400 mb-0.5">
+                        المتبقي عليه
+                      </span>
+                      <strong className="text-sm sm:text-base font-black font-mono">
+                        {(captain.subscriptionRemainingAmount || 0) > 0
+                          ? `${captain.subscriptionRemainingAmount} ج.م ⚠️`
+                          : "0 ج.م (خالص ✓)"}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Inline Edit Form */}
+                  {isEditingPayment && (
+                    <div className="mt-2 p-3 sm:p-3.5 rounded-xl bg-white border-2 border-red-500/30 space-y-3 animate-slide-up shadow-sm">
+                      <div className="text-xs font-black text-slate-800 flex items-center justify-between pb-1.5 border-b border-slate-100">
+                        <span>تعديل رسوم الاشتراك للـكابتن {captain.name}:</span>
+                        <span className="text-[11px] text-slate-400 font-bold">
+                          يُحسب المتبقي تلقائياً
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-extrabold text-slate-700 mb-1">
+                            المبلغ المطلوب (ج.م) <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={totalAmountInput}
+                            onChange={(e) => setTotalAmountInput(e.target.value)}
+                            placeholder="مثال: 500"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs sm:text-sm font-bold font-mono outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-extrabold text-slate-700 mb-1">
+                            المبلغ المدفوع (ج.م) <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={paidAmountInput}
+                            onChange={(e) => setPaidAmountInput(e.target.value)}
+                            placeholder="مثال: 300"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs sm:text-sm font-bold font-mono outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-100"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Live Calculation Preview & Shortcuts */}
+                      <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-500 font-bold">المتبقي المحسوب:</span>
+                          <span
+                            className={`font-mono font-black px-2 py-0.5 rounded-lg ${
+                              Math.max(0, (Number(totalAmountInput) || 0) - (Number(paidAmountInput) || 0)) > 0
+                                ? "bg-rose-100 text-rose-700"
+                                : "bg-emerald-100 text-emerald-700"
+                            }`}
+                          >
+                            {Math.max(0, (Number(totalAmountInput) || 0) - (Number(paidAmountInput) || 0))} ج.م
+                          </span>
+                        </div>
+
+                        {/* Quick Action Shortcuts */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setPaidAmountInput(totalAmountInput || "0")}
+                            className="text-[10px] font-bold px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 cursor-pointer"
+                          >
+                            سداد كامل ✓
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPaidAmountInput("0")}
+                            className="text-[10px] font-bold px-2 py-1 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 cursor-pointer"
+                          >
+                            تصفير 0
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Save & Cancel Buttons */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={handleSavePaymentAmounts}
+                          disabled={savingPayment}
+                          className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black transition cursor-pointer shadow-xs disabled:opacity-60 flex items-center justify-center gap-1.5"
+                        >
+                          {savingPayment ? (
+                            <>
+                              <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                              <span>جاري الحفظ...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>حفظ المبالغ</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingPayment(false)}
+                          className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                        >
+                          إلغاء
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Feedback Notice */}
+                  {paymentNotice && (
+                    <div
+                      className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 animate-slide-up ${
+                        paymentNotice.type === "success"
+                          ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                          : "bg-rose-50 border border-rose-200 text-rose-800"
+                      }`}
+                    >
+                      {paymentNotice.type === "success" ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                      )}
+                      <span>{paymentNotice.message}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Primary Action Buttons */}

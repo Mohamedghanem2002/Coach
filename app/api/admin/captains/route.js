@@ -101,6 +101,22 @@ export async function GET(request) {
 
       const daysRemaining = calculateDaysRemaining(u.subscriptionExpiresAt, now);
 
+      const subTotal = Number(u.subscriptionTotalAmount || 0);
+      const subPaid = Number(u.subscriptionPaidAmount || 0);
+      const subRemaining = Math.max(0, subTotal - subPaid);
+      let subPaymentStatus = "unpaid";
+      if (subTotal > 0) {
+        if (subPaid >= subTotal) {
+          subPaymentStatus = "paid";
+        } else if (subPaid > 0) {
+          subPaymentStatus = "partial";
+        } else {
+          subPaymentStatus = "unpaid";
+        }
+      } else if (u.subscriptionPaid !== false) {
+        subPaymentStatus = "paid";
+      }
+
       return {
         id: uId,
         _id: uId,
@@ -116,6 +132,10 @@ export async function GET(request) {
         subscriptionStartedAt: u.subscriptionStartedAt || u.createdAt,
         subscriptionExpiresAt: u.subscriptionExpiresAt || null,
         subscriptionPaid: u.subscriptionPaid !== false,
+        subscriptionTotalAmount: subTotal,
+        subscriptionPaidAmount: subPaid,
+        subscriptionRemainingAmount: subRemaining,
+        subscriptionPaymentStatus: subPaymentStatus,
         suspensionReason: u.suspensionReason || null,
         daysRemaining,
         // Exact real relationship counters
