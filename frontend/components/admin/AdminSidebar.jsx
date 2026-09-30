@@ -14,6 +14,7 @@ import {
   UserCheck,
   LayoutGrid,
   X,
+  Sparkles,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -70,6 +71,12 @@ export default function AdminSidebar({
       icon: History,
       badge: null,
     },
+    {
+      id: "promo",
+      label: "الكارت الترويجي",
+      icon: Sparkles,
+      badge: "NEW",
+    },
   ];
 
   const mobilePrimaryTabs = [
@@ -94,7 +101,7 @@ export default function AdminSidebar({
     },
   ];
 
-  const isMoreActive = ["halls", "events", "audit"].includes(activeTab);
+  const isMoreActive = ["halls", "events", "audit", "promo"].includes(activeTab);
 
   return (
     <>
@@ -343,12 +350,26 @@ export default function AdminSidebar({
                     setShowMoreMobile(false);
                     onSelectTab("audit");
                   }}
-                  className={`col-span-2 flex items-center gap-2.5 p-3 rounded-xl border text-right transition cursor-pointer ${
+                  className={`flex items-center gap-2.5 p-3 rounded-xl border text-right transition cursor-pointer ${
                     activeTab === "audit" ? "bg-red-50 border-red-200 text-red-700" : "bg-slate-50 border-slate-200 text-slate-800"
                   }`}
                 >
                   <History className="w-4 h-4 text-slate-600" />
-                  <span>سجل عمليات المنصة (Audit Logs)</span>
+                  <span>سجل العمليات</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreMobile(false);
+                    onSelectTab("promo");
+                  }}
+                  className={`flex items-center gap-2.5 p-3 rounded-xl border text-right transition cursor-pointer ${
+                    activeTab === "promo" ? "bg-red-50 border-red-200 text-red-700" : "bg-gradient-to-l from-red-50 to-orange-50 border-red-200 text-red-800"
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 text-red-500" />
+                  <span className="font-black">الكارت الترويجي ✨</span>
                 </button>
               </div>
             </div>

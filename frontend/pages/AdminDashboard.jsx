@@ -9,6 +9,7 @@ import AdminPlayersTab from "../components/admin/AdminPlayersTab";
 import AdminHallsTab from "../components/admin/AdminHallsTab";
 import AdminEventsTab from "../components/admin/AdminEventsTab";
 import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
+import AdminPromoTab from "../components/admin/AdminPromoTab";
 import CaptainDetailsModal from "../components/admin/CaptainDetailsModal";
 import {
   SuspendModal,
@@ -419,6 +420,10 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "audit" && <AdminAuditLogsTab />}
+
+          {activeTab === "promo" && (
+            <AdminPromoTab captains={captainsData.captains || []} />
+          )}
         </div>
       </main>
 
