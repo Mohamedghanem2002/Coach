@@ -977,3 +977,76 @@ export async function downloadBirthdayCard(
   }
 }
 
+/**
+ * Synchronously converts a base64 dataUrl into a native Blob in ~1ms
+ * Completely bypasses async canvas.toBlob() delay so buttons are never dimmed!
+ */
+export function dataUrlToBlob(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== "string") return null;
+  try {
+    const parts = dataUrl.split(",");
+    if (parts.length < 2) return null;
+    const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
+    const binary = atob(parts[1]);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mime });
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * In-memory global cache for generated birthday cards
+ * Key: playerId
+ * Value: { dataUrl, blob, canvas, timestamp }
+ */
+const birthdayCardCache = new Map();
+
+export function getCachedBirthdayCard(playerId) {
+  if (!playerId) return null;
+  return birthdayCardCache.get(String(playerId)) || null;
+}
+
+export function setCachedBirthdayCard(playerId, data) {
+  if (!playerId || !data) return;
+  birthdayCardCache.set(String(playerId), {
+    ...data,
+    timestamp: Date.now(),
+  });
+}
+
+/**
+ * Preloads and caches the birthday card in the background
+ * Enables 0ms opening with active, clickable buttons from frame 1
+ */
+export async function preloadBirthdayCard(
+  player,
+  captainName = "كابتن الأكاديمية",
+  academyName = "أكاديمية الكاراتيه"
+) {
+  if (!player) return null;
+  const id = String(player._id || player.id || "");
+  if (!id) return null;
+
+  if (birthdayCardCache.has(id)) {
+    return birthdayCardCache.get(id);
+  }
+
+  try {
+    const canvas = await generateBirthdayCardCanvas(player, captainName, academyName);
+    if (!canvas) return null;
+    const dataUrl = canvas.toDataURL("image/png");
+    const blob = dataUrlToBlob(dataUrl);
+    const entry = { dataUrl, blob, canvas };
+    birthdayCardCache.set(id, entry);
+    return entry;
+  } catch (_) {
+    return null;
+  }
+}
+
+

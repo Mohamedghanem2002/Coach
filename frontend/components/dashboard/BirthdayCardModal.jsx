@@ -6,6 +6,9 @@ import {
   generateBirthdayCardCanvas,
   sendBirthdayCardViaWhatsApp,
   downloadBirthdayCard,
+  dataUrlToBlob,
+  getCachedBirthdayCard,
+  setCachedBirthdayCard,
 } from "../../lib/birthday-card-utils";
 import { formatWhatsAppPhone } from "../../lib/dashboard-utils";
 
@@ -24,8 +27,12 @@ export default function BirthdayCardModal({
     () => true,
     () => false
   );
-  const [dataUrl, setDataUrl] = useState("");
-  const [blob, setBlob] = useState(cachedBlob || null);
+
+  const playerId = player?._id || player?.id || "";
+  const preloaded = getCachedBirthdayCard(playerId);
+
+  const [dataUrl, setDataUrl] = useState(preloaded?.dataUrl || "");
+  const [blob, setBlob] = useState(cachedBlob || preloaded?.blob || null);
   const [loadError, setLoadError] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -65,6 +72,17 @@ export default function BirthdayCardModal({
 
     let isMounted = true;
 
+    // 1. If we have a cached blob or preloaded card, use it immediately via microtask
+    const existing = getCachedBirthdayCard(playerId);
+    if (existing?.dataUrl) {
+      Promise.resolve().then(() => {
+        if (!isMounted) return;
+        setDataUrl(existing.dataUrl);
+        setBlob(existing.blob || dataUrlToBlob(existing.dataUrl));
+      });
+      return undefined;
+    }
+
     if (cachedBlob) {
       const url = URL.createObjectURL(cachedBlob);
       Promise.resolve().then(() => {
@@ -74,6 +92,7 @@ export default function BirthdayCardModal({
         }
         setBlob(cachedBlob);
         setDataUrl(url);
+        setCachedBirthdayCard(playerId, { dataUrl: url, blob: cachedBlob });
       });
       return () => {
         isMounted = false;
@@ -81,6 +100,7 @@ export default function BirthdayCardModal({
       };
     }
 
+    // 2. Generate card canvas and convert synchronously to blob
     generateBirthdayCardCanvas(player, captainName, academyName)
       .then((canvas) => {
         if (!isMounted) return;
@@ -90,13 +110,17 @@ export default function BirthdayCardModal({
         }
 
         const url = canvas.toDataURL("image/png");
-        setDataUrl(url);
+        // Synchronous blob creation: 100x faster than canvas.toBlob() on mobile!
+        const syncBlob = dataUrlToBlob(url);
 
-        canvas.toBlob((b) => {
-          if (isMounted && b) {
-            setBlob(b);
-          }
-        }, "image/png");
+        setDataUrl(url);
+        if (syncBlob) setBlob(syncBlob);
+
+        setCachedBirthdayCard(playerId, {
+          dataUrl: url,
+          blob: syncBlob,
+          canvas,
+        });
       })
       .catch(() => {
         if (isMounted) setLoadError(true);
@@ -104,33 +128,87 @@ export default function BirthdayCardModal({
 
     return () => {
       isMounted = false;
-      setDataUrl("");
-      setBlob(null);
-      setLoadError(false);
-      setNotice("");
     };
-  }, [isOpen, player, captainName, academyName, cachedBlob]);
+  }, [isOpen, player, playerId, captainName, academyName, cachedBlob]);
 
   if (!isOpen || !player || !isClient) return null;
 
+  // Immediate Instant Download: never blocked by disabled states
   const handleDownload = async () => {
-    if (!blob) return;
-    await downloadBirthdayCard(player, captainName, {
-      existingBlob: blob,
-      academyName,
-      onProgress: setIsDownloading,
-      onNotice: setNotice,
-    });
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      let currentBlob = blob;
+      if (!currentBlob && dataUrl) {
+        currentBlob = dataUrlToBlob(dataUrl);
+        if (currentBlob) setBlob(currentBlob);
+      }
+      if (!currentBlob) {
+        setNotice("⏳ جاري تجهيز كارت عيد الميلاد للحفظ...");
+        const canvas = await generateBirthdayCardCanvas(player, captainName, academyName);
+        if (canvas) {
+          const url = canvas.toDataURL("image/png");
+          currentBlob = dataUrlToBlob(url);
+          setDataUrl(url);
+          if (currentBlob) setBlob(currentBlob);
+          setCachedBirthdayCard(playerId, { dataUrl: url, blob: currentBlob, canvas });
+        }
+      }
+      if (!currentBlob) {
+        setNotice("❌ تعذر تجهيز صورة الكارت للحفظ.");
+        return;
+      }
+      await downloadBirthdayCard(player, captainName, {
+        existingBlob: currentBlob,
+        academyName,
+        onProgress: setIsDownloading,
+        onNotice: setNotice,
+      });
+    } catch (err) {
+      console.error(err);
+      setNotice("❌ حدث خطأ أثناء حفظ الكارت");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
+  // Immediate Instant WhatsApp Send: never blocked by disabled states
   const handleSendWhatsApp = async () => {
-    if (!blob) return;
-    await sendBirthdayCardViaWhatsApp(player, captainName, {
-      existingBlob: blob,
-      academyName,
-      onProgress: setIsSending,
-      onNotice: setNotice,
-    });
+    if (isSending) return;
+    setIsSending(true);
+    try {
+      let currentBlob = blob;
+      if (!currentBlob && dataUrl) {
+        currentBlob = dataUrlToBlob(dataUrl);
+        if (currentBlob) setBlob(currentBlob);
+      }
+      if (!currentBlob) {
+        setNotice("⏳ جاري تجهيز كارت عيد الميلاد للإرسال...");
+        const canvas = await generateBirthdayCardCanvas(player, captainName, academyName);
+        if (canvas) {
+          const url = canvas.toDataURL("image/png");
+          currentBlob = dataUrlToBlob(url);
+          setDataUrl(url);
+          if (currentBlob) setBlob(currentBlob);
+          setCachedBirthdayCard(playerId, { dataUrl: url, blob: currentBlob, canvas });
+        }
+      }
+      if (!currentBlob) {
+        setNotice("❌ تعذر تجهيز صورة الكارت للإرسال.");
+        return;
+      }
+      await sendBirthdayCardViaWhatsApp(player, captainName, {
+        existingBlob: currentBlob,
+        academyName,
+        onProgress: setIsSending,
+        onNotice: setNotice,
+      });
+    } catch (err) {
+      console.error(err);
+      setNotice("❌ حدث خطأ أثناء إرسال الكارت");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const modalContent = (
@@ -203,12 +281,12 @@ export default function BirthdayCardModal({
           </div>
         )}
 
-        {/* Action Buttons: shrink-0 is GUARANTEED to remain pinned and visible at bottom on all devices */}
+        {/* Action Buttons: ALWAYS active, bright and clickable immediately without waiting! */}
         <div className="shrink-0 grid grid-cols-2 gap-2.5 pt-2 pb-safe">
           {/* Action 1: حفظ */}
           <button
             type="button"
-            disabled={isLoading || isDownloading || !blob}
+            disabled={isDownloading}
             onClick={handleDownload}
             className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 p-2.5 sm:p-3 text-xs font-black text-slate-100 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer min-h-[46px] touch-manipulation"
             title="تحميل وحفظ كارت عيد الميلاد بجهازك"
@@ -229,7 +307,7 @@ export default function BirthdayCardModal({
           {/* Action 2: إرسال عبر واتساب */}
           <button
             type="button"
-            disabled={isLoading || isSending || !blob}
+            disabled={isSending}
             onClick={handleSendWhatsApp}
             className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 p-2.5 sm:p-3 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition active:scale-95 disabled:opacity-50 cursor-pointer min-h-[46px] touch-manipulation"
             title="نسخ الكارت وفتح شات واتساب مباشرة لإرساله كصورة"

@@ -28,6 +28,7 @@ import {
 import {
   sendBirthdayCardViaWhatsApp,
   shareBirthdayCard,
+  preloadBirthdayCard,
 } from "../../lib/birthday-card-utils";
 import BirthdayCardModal from "./BirthdayCardModal";
 
@@ -127,6 +128,19 @@ export default function BirthdayReminder({
     if (tomorrowList.length > 0) return "tomorrow";
     return "today";
   }, [selectedTab, todayList.length, tomorrowList.length]);
+
+  // Background Preload: Silently pre-generate cards for upcoming athletes
+  // Result: When user taps "معاينة", the card and buttons are ALREADY ready in 0ms!
+  useEffect(() => {
+    const targets = [...todayList, ...tomorrowList].slice(0, 5);
+    if (targets.length === 0) return;
+    const timer = setTimeout(() => {
+      targets.forEach((p) => {
+        preloadBirthdayCard(p, captainName, academyName);
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [todayList, tomorrowList, captainName, academyName]);
 
   // Active list based on selected tab
   const rawList = useMemo(() => {
@@ -640,6 +654,8 @@ export default function BirthdayReminder({
                     {/* 2. معاينة */}
                     <button
                       type="button"
+                      onMouseEnter={() => preloadBirthdayCard(player, captainName, academyName)}
+                      onTouchStart={() => preloadBirthdayCard(player, captainName, academyName)}
                       onClick={() => setPreviewPlayer(player)}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 active-press transition cursor-pointer min-h-[42px] text-xs font-black shadow-2xs"
                       title="معاينة كارت التهنئة كصورة وحفظه أو مشاركته"

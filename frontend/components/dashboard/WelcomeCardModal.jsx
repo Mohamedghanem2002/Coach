@@ -9,6 +9,7 @@ import {
   openWhatsAppDirect,
   markWelcomeCardHandled,
 } from "../../lib/welcome-card-utils";
+import { dataUrlToBlob } from "../../lib/birthday-card-utils";
 
 const emptySubscribe = () => () => {};
 
@@ -75,13 +76,9 @@ export default function WelcomeCardModal({
         }
 
         const url = canvas.toDataURL("image/png");
+        const syncBlob = dataUrlToBlob(url);
         setDataUrl(url);
-
-        canvas.toBlob((b) => {
-          if (isMounted && b) {
-            setBlob(b);
-          }
-        }, "image/png");
+        if (syncBlob) setBlob(syncBlob);
       })
       .catch((err) => {
         console.error("Welcome card error:", err);
@@ -101,7 +98,12 @@ export default function WelcomeCardModal({
   if (!isOpen || !player || !isClient) return null;
 
   const handleDownload = async () => {
-    if (!blob) return;
+    let currentBlob = blob;
+    if (!currentBlob && dataUrl) {
+      currentBlob = dataUrlToBlob(dataUrl);
+      if (currentBlob) setBlob(currentBlob);
+    }
+    if (!currentBlob) return;
     setIsDownloading(true);
     try {
       const fileName = `كارت_ترحيب_${(player.name || "اللاعب").replace(/\s+/g, "_")}.png`;
@@ -115,10 +117,10 @@ export default function WelcomeCardModal({
         isIOS &&
         typeof navigator !== "undefined" &&
         navigator.canShare &&
-        navigator.canShare({ files: [new File([blob], fileName, { type: "image/png" })] })
+        navigator.canShare({ files: [new File([currentBlob], fileName, { type: "image/png" })] })
       ) {
         try {
-          const file = new File([blob], fileName, { type: "image/png" });
+          const file = new File([currentBlob], fileName, { type: "image/png" });
           await navigator.share({
             files: [file],
             title: `كارت ترحيب ${player.name}`,
@@ -131,7 +133,7 @@ export default function WelcomeCardModal({
         }
       }
 
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(currentBlob);
       const link = document.createElement("a");
       link.href = url;
       link.download = fileName;
@@ -150,7 +152,12 @@ export default function WelcomeCardModal({
   };
 
   const handleSendToWhatsApp = async () => {
-    if (!blob) return;
+    let currentBlob = blob;
+    if (!currentBlob && dataUrl) {
+      currentBlob = dataUrlToBlob(dataUrl);
+      if (currentBlob) setBlob(currentBlob);
+    }
+    if (!currentBlob) return;
     setIsSending(true);
     setWhatsAppUrl("");
 
@@ -305,7 +312,7 @@ export default function WelcomeCardModal({
           {/* Action 1: حفظ */}
           <button
             type="button"
-            disabled={isLoading || isDownloading || !blob}
+            disabled={isDownloading}
             onClick={handleDownload}
             className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 p-2.5 sm:p-3 text-xs font-black text-slate-100 shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer min-h-[46px] touch-manipulation"
             title="تحميل وحفظ صورة كارت الترحيب بجهازك"
@@ -326,7 +333,7 @@ export default function WelcomeCardModal({
           {/* Action 2: إرسال عبر واتساب */}
           <button
             type="button"
-            disabled={isLoading || isSending || !blob}
+            disabled={isSending}
             onClick={handleSendToWhatsApp}
             className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 p-2.5 sm:p-3 text-xs font-bold text-white shadow-sm shadow-emerald-600/20 transition active:scale-95 disabled:opacity-50 cursor-pointer min-h-[46px] touch-manipulation"
             title="نسخ كارت الترحيب وفتح واتساب مباشرة لإرسالها لرقم ولي الأمر"
