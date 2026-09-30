@@ -362,6 +362,7 @@ export default function AdminPromoTab({ captains = [] }) {
                   <p className="text-[11px] text-slate-500">جودة HD 1080×1350 🎨</p>
                 </div>
               ) : dataUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={dataUrl}
                   alt="كارت CoachMaster الترويجي"

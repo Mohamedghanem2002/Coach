@@ -52,19 +52,27 @@ export default function PromoCardModal({
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
-    setGenerating(true);
-    setDataUrl("");
 
-    generatePromoCardCanvas({ captainName, academyName, theme })
-      .then((canvas) => {
-        if (cancelled || !canvas) return;
-        canvasRef.current = canvas;
-        setDataUrl(canvas.toDataURL("image/png", 1.0));
-      })
-      .catch(console.error)
-      .finally(() => { if (!cancelled) setGenerating(false); });
+    // Defer state updates to avoid calling setState synchronously in effect body
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      setGenerating(true);
+      setDataUrl("");
 
-    return () => { cancelled = true; };
+      generatePromoCardCanvas({ captainName, academyName, theme })
+        .then((canvas) => {
+          if (cancelled || !canvas) return;
+          canvasRef.current = canvas;
+          setDataUrl(canvas.toDataURL("image/png", 1.0));
+        })
+        .catch(console.error)
+        .finally(() => { if (!cancelled) setGenerating(false); });
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [isOpen, captainName, academyName, theme]);
 
   const handleDownload = () => {
@@ -204,6 +212,7 @@ export default function PromoCardModal({
                 <span className="text-[11px] text-slate-500">يتم رسم الكارت بجودة عالية HD 🎨</span>
               </div>
             ) : dataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={dataUrl}
                 alt="CoachMaster Promo Card"
