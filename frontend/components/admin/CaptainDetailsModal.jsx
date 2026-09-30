@@ -1005,434 +1005,99 @@ export default function CaptainDetailsModal({
             </div>
           ) : activeTab === "players" ? (
             /* ═════════════════════════════════════════════════════════════
-                TAB 2: PLAYERS & CHAMPIONS LIST
+                TAB 2: PLAYERS SUMMARY (counts only)
             ═════════════════════════════════════════════════════════════ */
-            <div className="space-y-3">
-              {/* Search + Quick Filters */}
-              <div className="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2">
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={playerSearch}
-                    onChange={(e) => setPlayerSearch(e.target.value)}
-                    placeholder="ابحث باسم البطل، الفرع، الحزام أو هاتف ولي الأمر..."
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 pr-10 pl-9 py-2.5 text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-red-500 focus:ring-2 focus:ring-red-100 transition"
-                  />
-                  {playerSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setPlayerSearch("")}
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs hover:bg-slate-300 transition cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  )}
+            <div className="space-y-4">
+              {/* Big Count Card */}
+              <div className="rounded-2xl border border-violet-100 bg-white p-6 shadow-2xs flex flex-col items-center justify-center text-center gap-2">
+                <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center mb-1">
+                  <Users className="w-7 h-7 text-violet-500" />
                 </div>
-
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-xs">
-                  <span className="text-[11px] font-bold text-slate-400 ml-1">تصفية:</span>
-                  {[
-                    { id: "all", label: `الكل (${players.length})` },
-                    {
-                      id: "paid",
-                      label: `مسددين (${
-                        players.filter((p) => p.paymentStatus === "paid").length
-                      })`,
-                    },
-                    {
-                      id: "unpaid",
-                      label: `غير مسددين (${
-                        players.filter((p) => p.paymentStatus !== "paid").length
-                      })`,
-                    },
-                  ].map((chip) => (
-                    <button
-                      key={chip.id}
-                      type="button"
-                      onClick={() => setPlayerFilter(chip.id)}
-                      className={`px-3 py-1 rounded-full text-[11px] font-bold shrink-0 transition cursor-pointer ${
-                        playerFilter === chip.id
-                          ? "bg-slate-900 text-white shadow-2xs"
-                          : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-                      }`}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
+                <strong className="text-5xl font-black text-violet-900">
+                  {stats.playersCount ?? 0}
+                </strong>
+                <span className="text-sm font-black text-slate-500">بطل ولاعب مسجل</span>
               </div>
 
-              {filteredPlayers.length === 0 ? (
-                <div className="text-center py-14 bg-white rounded-2xl border border-slate-200 p-6 text-slate-400 text-xs font-bold space-y-1">
-                  <Users className="w-10 h-10 mx-auto text-slate-300" />
-                  <p className="text-slate-600 font-black">
-                    {players.length === 0
-                      ? "لا يوجد لاعبين مسجلين لدى هذا الكابتن حتى الآن"
-                      : "لا يوجد لاعبين يطابقون خيارات البحث أو التصفية"}
-                  </p>
-                  {playerSearch && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPlayerSearch("");
-                        setPlayerFilter("all");
-                      }}
-                      className="text-red-600 hover:underline text-[11px] font-bold pt-1 inline-block cursor-pointer"
-                    >
-                      إعادة ضبط الفلتر
-                    </button>
-                  )}
+              {/* Info Notice */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <ShieldAlert className="w-4 h-4 text-violet-600" />
                 </div>
-              ) : (
-                <>
-                  {/* Mobile Players Cards */}
-                  <div className="sm:hidden space-y-2">
-                    {filteredPlayers.map((player) => {
-                      const beltStyle = getBeltStyle(player.belt);
-                      const pPhone = (player.phone || "").replace(/\D/g, "");
-                      const pWa = pPhone.startsWith("0") ? `2${pPhone}` : pPhone;
-
-                      return (
-                        <div
-                          key={player.id || player._id}
-                          className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-700 text-xs shrink-0">
-                                {(player.name || "ب").charAt(0)}
-                              </div>
-                              <div>
-                                <strong className="text-xs font-black text-slate-900 block">
-                                  {player.name}
-                                </strong>
-                                <span className="text-[10px] text-slate-400 font-bold">
-                                  فرع: {player.branch || "الرئيسية"}
-                                </span>
-                              </div>
-                            </div>
-
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${beltStyle.dot}`}
-                              />
-                              <span>{player.belt || "حزام أبيض"}</span>
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
-                            <span className="text-slate-500 font-bold">
-                              العمر:{" "}
-                              <strong className="text-slate-800">
-                                {player.age ? `${player.age} سنة` : "-"}
-                              </strong>
-                            </span>
-
-                            <span
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
-                                player.paymentStatus === "paid"
-                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                  : "bg-amber-50 text-amber-800 border border-amber-200"
-                              }`}
-                            >
-                              {player.paymentStatus === "paid"
-                                ? "مسدد ✓"
-                                : "مستحق ⚠️"}
-                            </span>
-                          </div>
-
-                          {player.phone && (
-                            <div
-                              className="text-[11px] text-slate-600 font-mono flex items-center justify-between pt-1 bg-slate-50 p-2 rounded-xl"
-                              dir="ltr"
-                            >
-                              <span className="font-bold">{player.phone}</span>
-                              <div className="flex items-center gap-2">
-                                <a
-                                  href={`tel:${pPhone}`}
-                                  className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-red-600 hover:bg-red-50"
-                                  title="اتصال"
-                                >
-                                  <Phone className="w-3 h-3" />
-                                </a>
-                                <a
-                                  href={`https://wa.me/${pWa}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-600 hover:bg-emerald-50"
-                                  title="واتساب"
-                                >
-                                  <WhatsAppIcon className="w-3 h-3" />
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Desktop Players Table */}
-                  <div className="hidden sm:block rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-                    <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 text-slate-500 font-black border-b border-slate-200">
-                        <tr>
-                          <th className="p-3.5">اسم البطل</th>
-                          <th className="p-3.5">الحزام</th>
-                          <th className="p-3.5">الصالة / المقر</th>
-                          <th className="p-3.5">السن</th>
-                          <th className="p-3.5">حالة السداد</th>
-                          <th className="p-3.5">ولي الأمر</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 font-bold text-slate-800">
-                        {filteredPlayers.map((player) => {
-                          const beltStyle = getBeltStyle(player.belt);
-                          const pPhone = (player.phone || "").replace(/\D/g, "");
-                          const pWa = pPhone.startsWith("0") ? `2${pPhone}` : pPhone;
-
-                          return (
-                            <tr
-                              key={player.id || player._id}
-                              className="hover:bg-slate-50/70 transition-colors"
-                            >
-                              <td className="p-3.5 text-slate-900 font-black">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-black text-slate-700">
-                                    {(player.name || "ب").charAt(0)}
-                                  </div>
-                                  <span>{player.name}</span>
-                                </div>
-                              </td>
-
-                              <td className="p-3.5">
-                                <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}
-                                >
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full ${beltStyle.dot}`}
-                                  />
-                                  <span>{player.belt || "أبيض"}</span>
-                                </span>
-                              </td>
-
-                              <td className="p-3.5 text-slate-600">
-                                {player.branch || "الرئيسية"}
-                              </td>
-
-                              <td className="p-3.5 text-slate-600">
-                                {player.age ? `${player.age} سنة` : "-"}
-                              </td>
-
-                              <td className="p-3.5">
-                                <span
-                                  className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
-                                    player.paymentStatus === "paid"
-                                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                      : "bg-amber-50 text-amber-800 border border-amber-200"
-                                  }`}
-                                >
-                                  {player.paymentStatus === "paid"
-                                    ? "مسدد ✓"
-                                    : "مستحق ⚠️"}
-                                </span>
-                              </td>
-
-                              <td className="p-3.5">
-                                {player.phone ? (
-                                  <div className="flex items-center gap-2" dir="ltr">
-                                    <span className="font-mono text-xs text-slate-700">
-                                      {player.phone}
-                                    </span>
-                                    <a
-                                      href={`tel:${pPhone}`}
-                                      className="text-slate-400 hover:text-red-600"
-                                      title="اتصال"
-                                    >
-                                      <Phone className="w-3 h-3" />
-                                    </a>
-                                    <a
-                                      href={`https://wa.me/${pWa}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-slate-400 hover:text-emerald-600"
-                                      title="واتساب"
-                                    >
-                                      <WhatsAppIcon className="w-3 h-3" />
-                                    </a>
-                                  </div>
-                                ) : (
-                                  <span className="text-slate-400 text-[11px]">-</span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
+                <div>
+                  <p className="text-xs font-black text-slate-800 mb-0.5">
+                    تفاصيل اللاعبين متاحة في لوحة الكابتن
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                    يمكن للكابتن الاطلاع على قائمة لاعبيه الكاملة وإدارتهم من خلال لوحة التحكم الخاصة به.
+                    تعرض هنا الإدارة إجمالي الأعداد فقط.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : activeTab === "halls" ? (
             /* ═════════════════════════════════════════════════════════════
-                TAB 3: TRAINING HALLS (صالات التدريب)
+                TAB 3: HALLS SUMMARY (counts only)
             ═════════════════════════════════════════════════════════════ */
-            <div className="space-y-3">
-              {halls.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 text-slate-400 text-xs font-bold space-y-1">
-                  <Building2 className="w-10 h-10 mx-auto text-slate-300" />
-                  <p className="text-slate-700 font-black">
-                    لم يقم الكابتن بإضافة صالات تدريب منفصلة حتى الآن
+            <div className="space-y-4">
+              {/* Big Count Card */}
+              <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-2xs flex flex-col items-center justify-center text-center gap-2">
+                <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-1">
+                  <Building2 className="w-7 h-7 text-blue-500" />
+                </div>
+                <strong className="text-5xl font-black text-blue-900">
+                  {stats.branchesCount ?? stats.hallsCount ?? 0}
+                </strong>
+                <span className="text-sm font-black text-slate-500">صالة وفرع تدريب مسجل</span>
+              </div>
+
+              {/* Info Notice */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <ShieldAlert className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-slate-800 mb-0.5">
+                    تفاصيل الصالات متاحة في لوحة الكابتن
                   </p>
-                  <p className="text-slate-400 text-[11px]">
-                    يتم تسجيل اللاعبين بالفرع الافتراضي تلقائياً.
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                    يمكن للكابتن إدارة صالات وفروع تدريبه من لوحة التحكم الخاصة به.
+                    تعرض هنا الإدارة إجمالي عدد الصالات فقط.
                   </p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {halls.map((hall, index) => {
-                    const hallPlayers = players.filter(
-                      (p) => (p.branch || "الرئيسية") === hall.name
-                    );
-                    const count = hall.playersCount ?? hallPlayers.length;
-
-                    return (
-                      <div
-                        key={hall._id || hall.id || index}
-                        className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black">
-                              <Building2 className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <strong className="text-sm font-black text-slate-900 block">
-                                {hall.name}
-                              </strong>
-                              <span className="text-[11px] text-slate-400 font-bold">
-                                مقر تدريب مسجل
-                              </span>
-                            </div>
-                          </div>
-                          <span className="px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-black">
-                            {count} لاعب
-                          </span>
-                        </div>
-
-                        {hall.days && hall.days.length > 0 && (
-                          <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl flex items-center gap-2">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="font-bold text-slate-500">أيام التدريب:</span>
-                            <strong className="text-slate-800">
-                              {Array.isArray(hall.days)
-                                ? hall.days.join("، ")
-                                : hall.days}
-                            </strong>
-                          </div>
-                        )}
-
-                        {/* Hall Players Chips */}
-                        <div>
-                          <span className="block text-[11px] font-black text-slate-500 mb-1.5">
-                            أبطال الصالة ({hallPlayers.length}):
-                          </span>
-                          {hallPlayers.length === 0 ? (
-                            <span className="text-[11px] text-slate-400 italic">
-                              لا يوجد لاعبين مسجلين في هذا المقر حتى الآن
-                            </span>
-                          ) : (
-                            <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
-                              {hallPlayers.map((hp) => {
-                                const beltStyle = getBeltStyle(hp.belt);
-                                return (
-                                  <span
-                                    key={hp.id || hp._id}
-                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}
-                                  >
-                                    <span
-                                      className={`w-1 h-1 rounded-full ${beltStyle.dot}`}
-                                    />
-                                    <span>{hp.name}</span>
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              </div>
             </div>
           ) : activeTab === "events" ? (
             /* ═════════════════════════════════════════════════════════════
-                TAB 4: EVENTS & TOURNAMENTS (الفعاليات والبطولات)
+                TAB 4: EVENTS SUMMARY (counts only)
             ═════════════════════════════════════════════════════════════ */
-            <div className="space-y-3">
-              {events.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 text-slate-400 text-xs font-bold space-y-1">
-                  <Trophy className="w-10 h-10 mx-auto text-slate-300" />
-                  <p className="text-slate-700 font-black">
-                    لم يقم الكابتن بتنظيم فعاليات أو بطولات حتى الآن
-                  </p>
-                  <p className="text-slate-400 text-[11px]">
-                    ستظهر هنا كافة البطولات، الاختبارات والرحلات عند إنشائها.
-                  </p>
+            <div className="space-y-4">
+              {/* Big Count Card */}
+              <div className="rounded-2xl border border-amber-100 bg-white p-6 shadow-2xs flex flex-col items-center justify-center text-center gap-2">
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mb-1">
+                  <Trophy className="w-7 h-7 text-amber-500" />
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {events.map((evt, idx) => (
-                    <div
-                      key={evt.id || evt._id || idx}
-                      className="p-4 sm:p-5 rounded-2xl border border-slate-200/90 bg-white shadow-2xs space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
-                            <Trophy className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <strong className="text-sm font-black text-slate-900 block">
-                              {evt.title}
-                            </strong>
-                            <span className="text-[11px] text-slate-400 font-bold">
-                              نشاط تدريبي / بطولة
-                            </span>
-                          </div>
-                        </div>
-                        <span className="px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-black">
-                          {evt.participantsCount ?? 0} مشارك
-                        </span>
-                      </div>
+                <strong className="text-5xl font-black text-amber-900">
+                  {stats.eventsCount ?? 0}
+                </strong>
+                <span className="text-sm font-black text-slate-500">فعالية وبطولة منظمة</span>
+              </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                          <span className="block text-[10px] text-slate-400 font-bold">
-                            رسوم الاشتراك
-                          </span>
-                          <strong className="text-slate-900 font-black text-xs">
-                            {evt.fee ?? 0} جنيه
-                          </strong>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                          <span className="block text-[10px] text-slate-400 font-bold">
-                            تاريخ النشاط
-                          </span>
-                          <strong className="text-slate-900 font-bold text-xs">
-                            {evt.date || "غير محدد"}
-                          </strong>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              {/* Info Notice */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <ShieldAlert className="w-4 h-4 text-amber-600" />
                 </div>
-              )}
+                <div>
+                  <p className="text-xs font-black text-slate-800 mb-0.5">
+                    تفاصيل الفعاليات متاحة في لوحة الكابتن
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                    يمكن للكابتن الاطلاع على الفعاليات والبطولات التي نظمها من لوحة التحكم الخاصة به.
+                    تعرض هنا الإدارة إجمالي عدد الفعاليات فقط.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : (
             /* ═════════════════════════════════════════════════════════════

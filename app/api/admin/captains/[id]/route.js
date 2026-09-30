@@ -123,27 +123,6 @@ export async function GET(request, context) {
       (e) => e.ownerId && (e.ownerId.toString() === uStrId || String(e.ownerId) === String(uOId))
     );
 
-    // Build halls with player breakdowns
-    const hallsWithDetails = branches.map((b) => {
-      const bName = (b.name || "").trim().toLowerCase();
-      const hallPlayers = players.filter(
-        (p) => (p.branch || "").trim().toLowerCase() === bName
-      );
-      return {
-        id: b._id.toString(),
-        _id: b._id.toString(),
-        name: b.name,
-        days: b.days || [],
-        playersCount: hallPlayers.length,
-        players: hallPlayers.map((hp) => ({
-          id: hp._id.toString(),
-          name: hp.name,
-          belt: hp.belt || "",
-        })),
-        createdAt: b.createdAt,
-      };
-    });
-
     const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
     const isUserAdmin = user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail);
 
@@ -217,29 +196,6 @@ export async function GET(request, context) {
         hallsCount: branches.length,
         eventsCount: events.length,
       },
-      players: players.map((p) => ({
-        id: p._id.toString(),
-        _id: p._id.toString(),
-        name: p.name,
-        branch: p.branch || "",
-        belt: p.belt || "",
-        age: p.age || null,
-        dateOfBirth: p.dateOfBirth || null,
-        phone: p.guardianPhone || p.phone || "",
-        paymentStatus: p.paymentStatus || "unpaid",
-        createdAt: p.createdAt,
-      })),
-      branches: hallsWithDetails,
-      halls: hallsWithDetails,
-      events: events.map((e) => ({
-        id: e._id.toString(),
-        _id: e._id.toString(),
-        title: e.title || e.name || "فعالية تدريبية",
-        date: e.date || null,
-        fee: Number(e.fee ?? 100),
-        participantsCount: Array.isArray(e.participants) ? e.participants.length : 0,
-        createdAt: e.createdAt,
-      })),
       auditLogs: auditLogs.map((log) => ({
         ...log,
         _id: log._id?.toString(),
