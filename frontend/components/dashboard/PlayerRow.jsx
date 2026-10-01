@@ -1,4 +1,4 @@
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useEffect } from "react";
 import {
   Check, X, CreditCard, Clock, ChevronRight, ChevronLeft,
   UserRound, Cake, Phone, MessageCircle, MoreHorizontal,
@@ -141,9 +141,17 @@ function PlayerRow({
       ),
     [branches, player.branch]
   );
+  // Re-evaluate working day/time every 30 seconds so the lock lifts automatically
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
+
   const isWorkingDay = useMemo(
-    () => isBranchWorkingDate(playerBranch, sessionDate),
-    [playerBranch, sessionDate]
+    () => isBranchWorkingDate(playerBranch, sessionDate, new Date(nowTick)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [playerBranch, sessionDate, nowTick]
   );
 
   // Check if today is the right day but the start time hasn't arrived yet
@@ -160,10 +168,11 @@ function PlayerRow({
     if (!sessionDate || sessionDate.slice(0, 10) !== today) return false; // past/future date
     const [fh, fm] = branchDaySchedule.from.split(":").map(Number);
     if (isNaN(fh) || isNaN(fm)) return false;
-    const now = new Date();
+    const now = new Date(nowTick);
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     return nowMinutes < fh * 60 + fm;
-  }, [isWorkingDay, branchDaySchedule, sessionDate]);
+  }, [isWorkingDay, branchDaySchedule, sessionDate, nowTick]);
+
   const formattedBranchDays = useMemo(
     () => formatBranchDays(playerBranch),
     [playerBranch]

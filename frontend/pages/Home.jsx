@@ -543,9 +543,16 @@ export default function Home() {
     () => (branches || []).find((b) => b.name === branch),
     [branches, branch]
   );
+  // Re-evaluate every 30 seconds so the attendance lock lifts when training time arrives
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
   const isBranchWorkingToday = useMemo(
-    () => isBranchWorkingDate(activeBranchData, sessionDate),
-    [activeBranchData, sessionDate]
+    () => isBranchWorkingDate(activeBranchData, sessionDate, new Date(nowTick)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeBranchData, sessionDate, nowTick]
   );
   const todayBirthdaysCount = dashboardPlayers.filter((player) => {
     const bday = getBirthdayInfo(player);
