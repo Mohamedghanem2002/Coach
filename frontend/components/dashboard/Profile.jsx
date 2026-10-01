@@ -341,6 +341,8 @@ export default function Profile({
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [purchaseToDelete, setPurchaseToDelete] = useState(null);
   const [isDeletingPurchase, setIsDeletingPurchase] = useState(false);
+  // purchaseId -> "received" | "pending"  (optimistic UI before API returns)
+  const [optimisticDeliveryMap, setOptimisticDeliveryMap] = useState({});
 
   // Status & loading indicators
   const [profileNotice, setProfileNotice] = useState("");
@@ -639,12 +641,25 @@ export default function Profile({
   }
 
   async function handleToggleDelivery(item) {
-    const isCurrentlyReceived = item.deliveryStatus === "received";
+    const isCurrentlyReceived =
+      (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received";
     const nextStatus = isCurrentlyReceived ? "pending" : "received";
+
+    // 1. Immediate optimistic flip so the button reacts instantly
+    setOptimisticDeliveryMap((prev) => ({ ...prev, [item.id]: nextStatus }));
+
+    // 2. Persist to server
     await handleSavePurchase({
       purchaseAction: "toggle_delivery",
       purchaseId: item.id,
       deliveryStatus: nextStatus,
+    });
+
+    // 3. Clear optimistic override – real data from server is now in `player.purchases`
+    setOptimisticDeliveryMap((prev) => {
+      const next = { ...prev };
+      delete next[item.id];
+      return next;
     });
   }
 
@@ -2838,17 +2853,17 @@ export default function Profile({
                                   type="button"
                                   onClick={() => handleToggleDelivery(item)}
                                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border ${
-                                    item.deliveryStatus === "received"
+                                    (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received"
                                       ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shadow-2xs"
                                       : "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 shadow-2xs"
                                   }`}
                                   title={
-                                    item.deliveryStatus === "received"
+                                    (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received"
                                       ? "استلم اللاعب السلعة ✓ (انقر للتغيير إلى: لم يستلم)"
                                       : "اللاعب لم يستلم السلعة بعد ⏳ (انقر لتسجيل أنه استلم)"
                                   }
                                 >
-                                  {item.deliveryStatus === "received" ? (
+                                  {(optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received" ? (
                                     <>
                                       <Check className="h-3 w-3 text-emerald-600 stroke-[3]" />
                                       <span>استلم ✓</span>

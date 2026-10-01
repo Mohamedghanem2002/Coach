@@ -678,6 +678,19 @@ export const WEEK_DAYS = [
   { id: "fri", dayIndex: 5, label: "الجمعة" },
 ];
 
+/**
+ * Normalise a single entry in branch.days.
+ * Supports legacy strings ("sat") and new objects ({ day: "sat", from: "09:00", to: "11:00" }).
+ */
+export function normalizeDayEntry(entry) {
+  if (!entry) return null;
+  if (typeof entry === "string") return { day: entry, from: "", to: "" };
+  if (typeof entry === "object" && typeof entry.day === "string") {
+    return { day: entry.day, from: entry.from || "", to: entry.to || "" };
+  }
+  return null;
+}
+
 export function getDayKeyFromDate(dateStr) {
   if (!dateStr || typeof dateStr !== "string") return "";
   const parts = dateStr.slice(0, 10).split("-");
@@ -696,7 +709,11 @@ export function isBranchWorkingDate(branch, dateStr) {
     return true;
   }
   const dayKey = getDayKeyFromDate(dateStr);
-  return branch.days.includes(dayKey);
+  // Support both legacy strings and new {day, from, to} objects
+  return branch.days.some((entry) => {
+    const norm = normalizeDayEntry(entry);
+    return norm && norm.day === dayKey;
+  });
 }
 
 export function formatBranchDays(branch) {
@@ -704,12 +721,18 @@ export function formatBranchDays(branch) {
     return "طوال أيام الأسبوع";
   }
   const orderedKeys = WEEK_DAYS.map((w) => w.id);
-  const sortedDays = branch.days
-    .slice()
-    .sort((a, b) => orderedKeys.indexOf(a) - orderedKeys.indexOf(b));
-  const labels = sortedDays
-    .map((k) => WEEK_DAYS.find((w) => w.id === k)?.label || k)
+  const normalized = branch.days
+    .map(normalizeDayEntry)
     .filter(Boolean);
+  const sorted = normalized
+    .slice()
+    .sort((a, b) => orderedKeys.indexOf(a.day) - orderedKeys.indexOf(b.day));
+  const labels = sorted.map((entry) => {
+    const dayLabel = WEEK_DAYS.find((w) => w.id === entry.day)?.label || entry.day;
+    if (entry.from && entry.to) return `${dayLabel} (${entry.from} - ${entry.to})`;
+    if (entry.from) return `${dayLabel} (من ${entry.from})`;
+    return dayLabel;
+  }).filter(Boolean);
   return labels.length ? labels.join("، ") : "طوال أيام الأسبوع";
 }
 
@@ -789,6 +812,7 @@ export function getPlayerMonthAttendance(player, playerBranch, targetMonth) {
 
   const branchDays = Array.isArray(playerBranch?.days) ? playerBranch.days : [];
   const hasConfiguredDays = branchDays.length > 0;
+  // Note: branchDays may contain {day, from, to} objects (new) or plain strings (legacy).
 
   const rawRecords = Array.isArray(player?.attendance) ? player.attendance : [];
   const monthRecords = rawRecords.filter(

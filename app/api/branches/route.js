@@ -3,6 +3,22 @@ import clientPromise from "../../../backend/mongodb";
 import { requireActiveTenant } from "../../../backend/tenant";
 export const dynamic = "force-dynamic";
 
+// Normalise a single days entry: accepts a legacy string or a {day, from, to} object.
+function normalizeDayEntry(entry) {
+  if (!entry) return null;
+  if (typeof entry === "string" && entry.length > 0) {
+    return { day: entry, from: "", to: "" };
+  }
+  if (typeof entry === "object" && typeof entry.day === "string" && entry.day.length > 0) {
+    return {
+      day: entry.day,
+      from: typeof entry.from === "string" ? entry.from : "",
+      to: typeof entry.to === "string" ? entry.to : "",
+    };
+  }
+  return null;
+}
+
 export async function GET() {
   try {
     const tenant = await requireActiveTenant();
@@ -53,7 +69,7 @@ export async function POST(request) {
       );
     }
     const days = Array.isArray(body.days)
-      ? body.days.filter((d) => typeof d === "string")
+      ? body.days.map(normalizeDayEntry).filter(Boolean)
       : [];
     const client = await clientPromise;
     const collection = client.db(process.env.MONGODB_DB).collection("branches");
@@ -119,7 +135,7 @@ export async function PATCH(request) {
     const newName = typeof body.newName === "string" ? body.newName.trim() : "";
     const hasDays = Array.isArray(body.days);
     const days = hasDays
-      ? body.days.filter((d) => typeof d === "string")
+      ? body.days.map(normalizeDayEntry).filter(Boolean)
       : undefined;
 
     if (!oldName) {

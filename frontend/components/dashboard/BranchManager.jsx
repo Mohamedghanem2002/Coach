@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Building2, Pencil, Trash2, Check, X, CalendarDays, Loader2, Sparkles } from "lucide-react";
+import { Building2, Pencil, Trash2, Check, X, CalendarDays, Loader2, Sparkles, Clock } from "lucide-react";
 import ConfirmDialog from "./ConfirmDialog";
-import { WEEK_DAYS, formatBranchDays } from "../../lib/dashboard-utils";
+import { WEEK_DAYS, formatBranchDays, normalizeDayEntry } from "../../lib/dashboard-utils";
 
 export default function BranchManager({
   branches = [],
@@ -16,7 +16,7 @@ export default function BranchManager({
   onClose,
 }) {
   const [name, setName] = useState("");
-  const [selectedDays, setSelectedDays] = useState([]); // Empty by default
+  const [selectedDays, setSelectedDays] = useState([]); // [{day, from, to}]
   const [editingBranchName, setEditingBranchName] = useState(null);
   const [editingNameValue, setEditingNameValue] = useState("");
   const [branchDaysEdits, setBranchDaysEdits] = useState({});
@@ -27,24 +27,44 @@ export default function BranchManager({
   const [isRenaming, setIsRenaming] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
+  // ---- helpers for {day, from, to} arrays ----
+  function normalizeDays(rawDays) {
+    if (!Array.isArray(rawDays)) return [];
+    return rawDays.map(normalizeDayEntry).filter(Boolean);
+  }
+
+  function getDayEntry(daysArr, dayId) {
+    return normalizeDays(daysArr).find((e) => e.day === dayId) || null;
+  }
+
+  // Toggle a day in the "new branch" form
   function toggleNewBranchDay(dayId) {
+    setSelectedDays((prev) => {
+      const exists = prev.find((e) => e.day === dayId);
+      if (exists) return prev.filter((e) => e.day !== dayId);
+      return [...prev, { day: dayId, from: "", to: "" }];
+    });
+  }
+
+  function updateNewBranchDayTime(dayId, field, value) {
     setSelectedDays((prev) =>
-      prev.includes(dayId) ? prev.filter((d) => d !== dayId) : [...prev, dayId]
+      prev.map((e) => (e.day === dayId ? { ...e, [field]: value } : e))
     );
   }
 
   function getEffectiveBranchDays(branch) {
     if (branchDaysEdits[branch.name] !== undefined) {
-      return branchDaysEdits[branch.name];
+      return normalizeDays(branchDaysEdits[branch.name]);
     }
-    return Array.isArray(branch.days) && branch.days.length > 0 ? branch.days : [];
+    return normalizeDays(Array.isArray(branch.days) ? branch.days : []);
   }
 
   async function toggleBranchDay(branch, dayId) {
     const currentDays = getEffectiveBranchDays(branch);
-    const nextDays = currentDays.includes(dayId)
-      ? currentDays.filter((d) => d !== dayId)
-      : [...currentDays, dayId];
+    const exists = currentDays.find((e) => e.day === dayId);
+    const nextDays = exists
+      ? currentDays.filter((e) => e.day !== dayId)
+      : [...currentDays, { day: dayId, from: "", to: "" }];
 
     // 1. Immediate optimistic UI update
     setBranchDaysEdits((prev) => ({
@@ -73,12 +93,25 @@ export default function BranchManager({
     }
   }
 
+  async function updateBranchDayTime(branch, dayId, field, value) {
+    const currentDays = getEffectiveBranchDays(branch);
+    const nextDays = currentDays.map((e) =>
+      e.day === dayId ? { ...e, [field]: value } : e
+    );
+    setBranchDaysEdits((prev) => ({ ...prev, [branch.name]: nextDays }));
+  }
+
   function hasDaysChanged(branch) {
     if (branchDaysEdits[branch.name] === undefined) return false;
-    const current = branchDaysEdits[branch.name].slice().sort();
-    const original = (Array.isArray(branch.days) ? branch.days : []).slice().sort();
+    const current = normalizeDays(branchDaysEdits[branch.name]);
+    const original = normalizeDays(Array.isArray(branch.days) ? branch.days : []);
     if (current.length !== original.length) return true;
-    return current.some((d, idx) => d !== original[idx]);
+    const sortFn = (a, b) => a.day.localeCompare(b.day);
+    const sortedC = [...current].sort(sortFn);
+    const sortedO = [...original].sort(sortFn);
+    return sortedC.some(
+      (c, i) => c.day !== sortedO[i]?.day || c.from !== sortedO[i]?.from || c.to !== sortedO[i]?.to
+    );
   }
 
   async function handleSaveBranchDays(branch) {
@@ -253,9 +286,9 @@ export default function BranchManager({
                   {selectedDays.length ? `${selectedDays.length} أيام مختارة` : "فاضية (اضغط لاختيار الأيام)"}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 mb-2">
                 {WEEK_DAYS.map((day) => {
-                  const active = selectedDays.includes(day.id);
+                  const active = selectedDays.find((e) => e.day === day.id);
                   return (
                     <button
                       key={day.id}
@@ -272,6 +305,34 @@ export default function BranchManager({
                   );
                 })}
               </div>
+              {/* حقول الوقت للأيام المختارة */}
+              {selectedDays.length > 0 && (
+                <div className="flex flex-col gap-1.5 mt-1">
+                  {selectedDays.map((entry) => {
+                    const dayLabel = WEEK_DAYS.find((w) => w.id === entry.day)?.label || entry.day;
+                    return (
+                      <div key={entry.day} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5">
+                        <Clock className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                        <span className="text-[11px] font-black text-slate-700 w-16 shrink-0">{dayLabel}</span>
+                        <span className="text-[10px] text-slate-400 font-bold">من</span>
+                        <input
+                          type="time"
+                          value={entry.from}
+                          onChange={(e) => updateNewBranchDayTime(entry.day, "from", e.target.value)}
+                          className="h-7 rounded-lg border border-slate-200 px-2 text-xs font-bold text-slate-800 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 cursor-pointer"
+                        />
+                        <span className="text-[10px] text-slate-400 font-bold">إلى</span>
+                        <input
+                          type="time"
+                          value={entry.to}
+                          onChange={(e) => updateNewBranchDayTime(entry.day, "to", e.target.value)}
+                          className="h-7 rounded-lg border border-slate-200 px-2 text-xs font-bold text-slate-800 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 cursor-pointer"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </form>
 
@@ -430,7 +491,7 @@ export default function BranchManager({
                       {/* أزرار أيام الأسبوع السبعة */}
                       <div className="flex flex-wrap gap-1.5">
                         {WEEK_DAYS.map((day) => {
-                          const active = currentDays.includes(day.id);
+                          const active = currentDays.find((e) => e.day === day.id);
                           return (
                             <button
                               key={day.id}
@@ -449,6 +510,42 @@ export default function BranchManager({
                           );
                         })}
                       </div>
+
+                      {/* حقول الوقت للأيام المفعلة */}
+                      {currentDays.length > 0 && (
+                        <div className="flex flex-col gap-1.5 mt-2">
+                          {[...currentDays]
+                            .sort((a, b) => {
+                              const order = WEEK_DAYS.map((w) => w.id);
+                              return order.indexOf(a.day) - order.indexOf(b.day);
+                            })
+                            .map((entry) => {
+                              const dayLabel = WEEK_DAYS.find((w) => w.id === entry.day)?.label || entry.day;
+                              return (
+                                <div key={entry.day} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5">
+                                  <Clock className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                                  <span className="text-[11px] font-black text-slate-700 w-16 shrink-0">{dayLabel}</span>
+                                  <span className="text-[10px] text-slate-400 font-bold">من</span>
+                                  <input
+                                    type="time"
+                                    value={entry.from || ""}
+                                    onChange={(e) => updateBranchDayTime(branch, entry.day, "from", e.target.value)}
+                                    disabled={isSavingThis}
+                                    className="h-7 rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold text-slate-800 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 cursor-pointer disabled:opacity-50"
+                                  />
+                                  <span className="text-[10px] text-slate-400 font-bold">إلى</span>
+                                  <input
+                                    type="time"
+                                    value={entry.to || ""}
+                                    onChange={(e) => updateBranchDayTime(branch, entry.day, "to", e.target.value)}
+                                    disabled={isSavingThis}
+                                    className="h-7 rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold text-slate-800 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 cursor-pointer disabled:opacity-50"
+                                  />
+                                </div>
+                              );
+                            })}
+                        </div>
+                      )}
 
                       {/* ملخص أيام العمل الحالية */}
                       <div className="mt-1.5 text-[10px] font-bold text-slate-500">
