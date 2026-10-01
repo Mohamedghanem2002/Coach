@@ -90,15 +90,18 @@ function serializePlayer(player) {
       : (defaultTotalAmount ?? 0);
 
   const hasConfiguredAmount = totalAmount > 0;
+  // If there is no paymentHistory entry for the current month, the player
+  // has NOT paid yet this month — default to 0 / unpaid regardless of any
+  // stale player-level paymentStatus / paidAmount left over from previous months.
   const paidAmount = Number(
-    monthlyPayment?.paidAmount ?? (
-      monthlyPayment?.status === "paid" && hasConfiguredAmount
-        ? totalAmount
-        : (player.paidAmount ?? 0)
-    ),
+    monthlyPayment !== undefined
+      ? (monthlyPayment.paidAmount ?? (
+          monthlyPayment.status === "paid" && hasConfiguredAmount ? totalAmount : 0
+        ))
+      : 0
   );
   const remainingAmount = hasConfiguredAmount ? Math.max(0, totalAmount - paidAmount) : 0;
-  let status = monthlyPayment?.status || player.paymentStatus || "unpaid";
+  let status = monthlyPayment?.status || "unpaid";
   if (paidAmount >= totalAmount && hasConfiguredAmount) {
     status = "paid";
   } else if (paidAmount > 0) {
