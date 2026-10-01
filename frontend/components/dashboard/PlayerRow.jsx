@@ -16,6 +16,9 @@ import {
   isBranchWorkingDate,
   formatBranchDays,
   getPlayerMonthAttendance,
+  getBranchDayEntry,
+  getDayKeyFromDate,
+  localDate,
 } from "../../lib/dashboard-utils";
 import QuickPaymentModal from "./QuickPaymentModal";
 
@@ -142,6 +145,25 @@ function PlayerRow({
     () => isBranchWorkingDate(playerBranch, sessionDate),
     [playerBranch, sessionDate]
   );
+
+  // Check if today is the right day but the start time hasn't arrived yet
+  const branchDaySchedule = useMemo(() => {
+    if (!playerBranch || !sessionDate) return null;
+    const dayKey = getDayKeyFromDate(sessionDate);
+    return getBranchDayEntry(playerBranch, dayKey);
+  }, [playerBranch, sessionDate]);
+
+  const isTooEarly = useMemo(() => {
+    if (isWorkingDay) return false; // already open
+    if (!branchDaySchedule?.from) return false; // no time set, not today's issue
+    const today = localDate();
+    if (!sessionDate || sessionDate.slice(0, 10) !== today) return false; // past/future date
+    const [fh, fm] = branchDaySchedule.from.split(":").map(Number);
+    if (isNaN(fh) || isNaN(fm)) return false;
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return nowMinutes < fh * 60 + fm;
+  }, [isWorkingDay, branchDaySchedule, sessionDate]);
   const formattedBranchDays = useMemo(
     () => formatBranchDays(playerBranch),
     [playerBranch]
@@ -387,7 +409,10 @@ function PlayerRow({
           {!isWorkingDay && (
             <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[10.5px] font-bold text-slate-400 select-none">
               <Lock className="h-3 w-3 text-slate-400 shrink-0" />
-              <span>غير متاح اليوم (أيام عمل الصالة: {formattedBranchDays})</span>
+              {isTooEarly
+                ? <span>التسجيل يبدأ الساعة <strong className="text-red-500">{branchDaySchedule.from}</strong> (لسه مجاش الوقت)</span>
+                : <span>غير متاح اليوم (أيام عمل الصالة: {formattedBranchDays})</span>
+              }
             </div>
           )}
         </div>

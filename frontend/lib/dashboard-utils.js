@@ -703,17 +703,40 @@ export function getDayKeyFromDate(dateStr) {
   return found ? found.id : "";
 }
 
-export function isBranchWorkingDate(branch, dateStr) {
+export function isBranchWorkingDate(branch, dateStr, nowOverride) {
   if (!branch || !Array.isArray(branch.days) || branch.days.length === 0) {
     // If no training days explicitly configured, all days are permitted
     return true;
   }
   const dayKey = getDayKeyFromDate(dateStr);
   // Support both legacy strings and new {day, from, to} objects
-  return branch.days.some((entry) => {
-    const norm = normalizeDayEntry(entry);
-    return norm && norm.day === dayKey;
-  });
+  const entry = branch.days
+    .map(normalizeDayEntry)
+    .find((n) => n && n.day === dayKey);
+
+  if (!entry) return false; // This day is not in the schedule
+
+  // If a start time is configured AND this is today, check current time >= from
+  if (entry.from) {
+    const today = localDate();
+    if (dateStr && dateStr.slice(0, 10) === today) {
+      const now = nowOverride || new Date();
+      const [fh, fm] = entry.from.split(":").map(Number);
+      if (!isNaN(fh) && !isNaN(fm)) {
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        const fromMinutes = fh * 60 + fm;
+        if (nowMinutes < fromMinutes) return false; // Too early
+      }
+    }
+  }
+
+  return true;
+}
+
+/** Returns the {day, from, to} entry for a specific day key, or null */
+export function getBranchDayEntry(branch, dayKey) {
+  if (!branch || !Array.isArray(branch.days)) return null;
+  return branch.days.map(normalizeDayEntry).find((n) => n && n.day === dayKey) || null;
 }
 
 export function formatBranchDays(branch) {

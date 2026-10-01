@@ -343,6 +343,8 @@ export default function Profile({
   const [isDeletingPurchase, setIsDeletingPurchase] = useState(false);
   // purchaseId -> "received" | "pending"  (optimistic UI before API returns)
   const [optimisticDeliveryMap, setOptimisticDeliveryMap] = useState({});
+  // Set of purchaseIds currently being toggled (for spinner)
+  const [deliveryLoadingSet, setDeliveryLoadingSet] = useState(new Set());
 
   // Status & loading indicators
   const [profileNotice, setProfileNotice] = useState("");
@@ -641,12 +643,14 @@ export default function Profile({
   }
 
   async function handleToggleDelivery(item) {
+    if (deliveryLoadingSet.has(item.id)) return; // prevent double-tap
     const isCurrentlyReceived =
       (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received";
     const nextStatus = isCurrentlyReceived ? "pending" : "received";
 
-    // 1. Immediate optimistic flip so the button reacts instantly
+    // 1. Immediate optimistic flip + spinner
     setOptimisticDeliveryMap((prev) => ({ ...prev, [item.id]: nextStatus }));
+    setDeliveryLoadingSet((prev) => new Set([...prev, item.id]));
 
     // 2. Persist to server
     await handleSavePurchase({
@@ -655,7 +659,8 @@ export default function Profile({
       deliveryStatus: nextStatus,
     });
 
-    // 3. Clear optimistic override – real data from server is now in `player.purchases`
+    // 3. Clear spinner + optimistic override
+    setDeliveryLoadingSet((prev) => { const s = new Set(prev); s.delete(item.id); return s; });
     setOptimisticDeliveryMap((prev) => {
       const next = { ...prev };
       delete next[item.id];
@@ -2852,7 +2857,8 @@ export default function Profile({
                                 <button
                                   type="button"
                                   onClick={() => handleToggleDelivery(item)}
-                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border ${
+                                  disabled={deliveryLoadingSet.has(item.id)}
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border disabled:opacity-70 disabled:cursor-default ${
                                     (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received"
                                       ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shadow-2xs"
                                       : "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 shadow-2xs"
@@ -2863,7 +2869,9 @@ export default function Profile({
                                       : "اللاعب لم يستلم السلعة بعد ⏳ (انقر لتسجيل أنه استلم)"
                                   }
                                 >
-                                  {(optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received" ? (
+                                  {deliveryLoadingSet.has(item.id) ? (
+                                    <span className="h-3 w-3 rounded-full border-2 border-current/30 border-t-current animate-spin" />
+                                  ) : (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received" ? (
                                     <>
                                       <Check className="h-3 w-3 text-emerald-600 stroke-[3]" />
                                       <span>استلم ✓</span>
