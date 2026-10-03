@@ -123,7 +123,8 @@ export default function Home() {
     try {
       const guideRead = localStorage.getItem("coachmaster_features_guide_read_v1");
       if (!guideRead) {
-        setHasUnreadGuide(true);
+        const timer = setTimeout(() => setHasUnreadGuide(true), 0);
+        return () => clearTimeout(timer);
       }
     } catch (_) {}
   }, []);
@@ -136,7 +137,8 @@ export default function Home() {
       const lastSeenFingerprint = localStorage.getItem("coachmaster_last_seen_sub_fingerprint");
       if (lastSeenFingerprint) {
         if (lastSeenFingerprint !== currentSubFingerprint) {
-          setHasUnreadPlanUpdate(true);
+          const timer = setTimeout(() => setHasUnreadPlanUpdate(true), 0);
+          return () => clearTimeout(timer);
         }
       } else {
         localStorage.setItem("coachmaster_last_seen_sub_fingerprint", currentSubFingerprint);
