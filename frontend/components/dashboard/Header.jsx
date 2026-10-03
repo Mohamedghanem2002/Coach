@@ -8,9 +8,14 @@ import {
   Compass,
   LogOut,
   Settings,
-  Zap,
   Sparkles,
   FileSpreadsheet,
+  Users,
+  Cloud,
+  ChevronDown,
+  ExternalLink,
+  ShieldCheck,
+  Check,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -39,20 +44,18 @@ export default function Header({
 }) {
   const { data: session } = useSession();
   const router = useRouter();
-  const [showBirthdayMenu, setShowBirthdayMenu] = useState(false);
-  const menuRef = useRef(null);
 
-  const todayFormatted = new Intl.DateTimeFormat("ar-EG", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date());
+  const [showBirthdayMenu, setShowBirthdayMenu] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+
+  const birthdayMenuRef = useRef(null);
+  const accountMenuRef = useRef(null);
 
   const fullName = session?.user?.name || "حساب الأكاديمية";
   const academyName = session?.user?.academyName || "CoachMaster";
   const firstName = fullName.split(" ")[0] || "كابتن";
   const initials = firstName.charAt(0);
+
   const [congratulateTick, setCongratulateTick] = useState(0);
 
   useEffect(() => {
@@ -73,20 +76,29 @@ export default function Header({
   }, [players, congratulateTick]);
 
   const totalBirthdayCount = todayBirthdays.length + upcomingBirthdays.length;
+  const hasMenuNotification = hasUnreadPlanUpdate || hasUnreadGuide;
 
+  // Close menus on outside click
   useEffect(() => {
     function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (
+        birthdayMenuRef.current &&
+        !birthdayMenuRef.current.contains(event.target)
+      ) {
         setShowBirthdayMenu(false);
       }
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target)
+      ) {
+        setShowAccountMenu(false);
+      }
     }
-    if (showBirthdayMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showBirthdayMenu]);
+  }, []);
 
   const handleSignOut = async () => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -100,162 +112,107 @@ export default function Header({
 
   return (
     <header
-      className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-2xs transition-all select-none"
+      className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md transition-all select-none"
       dir="rtl"
     >
-      <div className="mx-auto flex min-h-[56px] sm:min-h-[64px] w-full max-w-7xl items-center justify-between gap-1.5 sm:gap-4 px-2.5 sm:px-6 lg:px-8 py-2">
+      <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 lg:px-8">
         
-        {/* ━━━━━━━━━━ 1. Brand Identity & Academy Context (Right Side) ━━━━━━━━━━ */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink">
-          {/* Logo Badge */}
-          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-tr from-red-600 to-rose-700 text-white shadow-sm shadow-red-600/20 ring-2 ring-red-100">
-            <Zap className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-white stroke-white" />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-500 ring-1.5 ring-white" />
+        {/* ═══════════════════════════════════════════════════════════════
+            1. Brand & Academy Identity (Right in RTL)
+            ═══════════════════════════════════════════════════════════════ */}
+        <div className="flex items-center gap-2.5 min-w-0 shrink-0">
+          {/* Crisp Monochromatic Logo Mark with subtle red accent */}
+          <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-slate-900 text-white shadow-2xs">
+            <span className="font-cairo text-sm font-black tracking-tight text-white">
+              C<span className="text-red-500">M</span>
             </span>
           </div>
 
-          {/* Identity Text */}
-          <div className="min-w-0">
-            <div className="flex items-center gap-1 sm:gap-1.5 flex-nowrap">
-              <strong className="font-cairo text-xs sm:text-base lg:text-lg font-black tracking-tight text-slate-900 truncate max-w-[105px] sm:max-w-[200px] lg:max-w-[280px]">
-                {academyName}
-              </strong>
-              <span className="rounded-md bg-red-50 border border-red-200/90 px-1 py-0.2 text-[8.5px] sm:text-[9.5px] font-black text-red-600 shrink-0">
-                PRO
-              </span>
-            </div>
-            {/* Desktop Platform Tagline */}
-            <p className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-slate-500 leading-tight">
-              <span>إدارة أكاديمية الكاراتيه</span>
-              <span className="text-slate-300">•</span>
-              <span className="font-black text-red-600">منصة CoachMaster</span>
-            </p>
-            {/* Mobile Coach Name */}
-            <p className="md:hidden text-[10px] font-bold text-slate-500 leading-tight truncate">
-              كابتن <span className="font-black text-slate-800">{firstName}</span> 🥋
-            </p>
+          {/* Academy Name & Plan Badge */}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-cairo text-sm font-extrabold tracking-tight text-slate-900 truncate max-w-[130px] sm:max-w-[200px] lg:max-w-[240px]">
+              {academyName}
+            </span>
+            <span className="hidden sm:inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200/60">
+              PRO
+            </span>
           </div>
         </div>
 
-        {/* ━━━━━━━━━━ 2. Center Live Date & Greeting (Desktop Only) ━━━━━━━━━━ */}
-        <div className="hidden lg:flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50/90 px-4 py-1 text-xs font-bold text-slate-700 shadow-2xs shrink-0">
-          <CalendarDays className="h-3.5 w-3.5 text-slate-500" />
-          <span>{todayFormatted}</span>
-          <span className="text-slate-300">|</span>
-          <span>
-            أهلاً بك يا كابتن <span className="font-black text-slate-900">{firstName}</span> 🥋
-          </span>
-        </div>
-
-        {/* ━━━━━━━━━━ 3. Action Hub Suite (Left Side - Responsive) ━━━━━━━━━━ */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-
-          {/* 📊 1. Excel Export Button */}
-          {onOpenExportExcel && (
-            <>
-              {/* Desktop Pill */}
-              <button
-                type="button"
-                id="desktop-header-excel-btn"
-                onClick={() => onOpenExportExcel("players")}
-                className="hidden sm:flex h-9.5 lg:h-10 items-center gap-1.5 rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-teal-50 hover:bg-emerald-100 text-emerald-900 px-3 text-xs font-black transition-all cursor-pointer shadow-2xs active-press shrink-0"
-                title="تصدير بيانات الأكاديمية والفعاليات إلى Excel (.xlsx)"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span className="font-cairo">تصدير إكسيل</span>
-              </button>
-
-              {/* Mobile Icon Button */}
-              <button
-                type="button"
-                id="mobile-header-excel-btn"
-                onClick={() => onOpenExportExcel("players")}
-                className="flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 shadow-2xs hover:bg-emerald-100 active-press transition cursor-pointer touch-manipulation shrink-0"
-                title="تصدير إكسيل (.xlsx)"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-              </button>
-            </>
-          )}
-
-          {/* ✨ 2. Platform Guide Button */}
-          {onOpenFeatures && (
-            <>
-              {/* Desktop Pill */}
-              <button
-                type="button"
-                id="desktop-header-guide-btn"
-                onClick={onOpenFeatures}
-                className="relative hidden sm:flex h-9.5 lg:h-10 items-center gap-1.5 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 px-3 text-xs font-black transition-all cursor-pointer shadow-2xs active-press shrink-0"
-                title="دليل ومميزات المنصة للكابتن"
-              >
-                <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-                <span className="font-cairo">دليل المنصة</span>
-                {hasUnreadGuide && (
-                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce">
-                    1
-                  </span>
-                )}
-              </button>
-
-              {/* Mobile Icon Button */}
-              <button
-                type="button"
-                id="mobile-header-guide-btn"
-                onClick={onOpenFeatures}
-                className="relative flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 text-amber-900 shadow-2xs hover:bg-amber-100 active-press transition cursor-pointer touch-manipulation shrink-0"
-                title="دليل ومميزات المنصة"
-              >
-                <Sparkles className="h-4 w-4 text-amber-600" />
-                {hasUnreadGuide && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce ring-1.5 ring-white">
-                    1
-                  </span>
-                )}
-              </button>
-            </>
-          )}
-
-          {/* 🧭 3. Events Navigation Button (Desktop >= sm) */}
-          <button
-            type="button"
-            onClick={onToggleEventsView}
-            className={`hidden sm:flex h-9.5 lg:h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer shrink-0 ${
-              currentView === "events"
-                ? "border-red-500 bg-red-600 text-white shadow-sm shadow-red-500/20"
-                : "border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white shadow-xs"
-            }`}
-            title="إدارة الفعاليات والبطولات والرحلات"
-          >
-            <Compass className="h-4 w-4" />
-            <span className="font-cairo">الفعاليات</span>
-            {eventsCount > 0 && (
-              <span
-                className={`flex h-4.5 min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-black ${
-                  currentView === "events"
-                    ? "bg-white text-red-600"
-                    : "bg-amber-100 text-amber-800"
-                }`}
-              >
-                {eventsCount}
-              </span>
-            )}
-          </button>
-
-          {/* 🎂 4. Birthdays Button & Panel */}
-          <div className="relative shrink-0" ref={menuRef}>
+        {/* ═══════════════════════════════════════════════════════════════
+            2. Primary Desktop View Switcher (Center Segmented Control)
+            ═══════════════════════════════════════════════════════════════ */}
+        {onToggleEventsView && (
+          <nav className="flex items-center rounded-lg bg-slate-100/90 p-0.5 border border-slate-200/60 shadow-2xs">
+            {/* Tab 1: Players */}
             <button
               type="button"
-              id="birthday-menu-btn"
-              className={`relative flex h-8.5 w-8.5 sm:w-auto sm:h-9.5 lg:h-10 items-center justify-center sm:justify-start gap-1.5 rounded-xl border px-2 sm:px-3 text-xs font-black transition-all duration-200 cursor-pointer touch-manipulation active:scale-95 ${
-                showBirthdayMenu || currentView === "birthdays"
-                  ? "border-rose-500 bg-rose-600 text-white shadow-sm shadow-rose-500/20"
-                  : todayBirthdays.length > 0
-                  ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 animate-pulse-glow"
-                  : "border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white shadow-xs"
+              onClick={() => {
+                if (currentView !== "players") onToggleEventsView();
+              }}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                currentView === "players"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span className="font-cairo">اللاعبين</span>
+            </button>
+
+            {/* Tab 2: Events */}
+            <button
+              type="button"
+              onClick={() => {
+                if (currentView !== "events") onToggleEventsView();
+              }}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 sm:px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                currentView === "events"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Compass className="h-3.5 w-3.5" />
+              <span className="font-cairo">الفعاليات</span>
+              {eventsCount > 0 && (
+                <span
+                  className={`flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-black ${
+                    currentView === "events"
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-200 text-slate-700"
+                  }`}
+                >
+                  {eventsCount}
+                </span>
+              )}
+            </button>
+          </nav>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            3. Executive Action Suite & Menu (Left in RTL)
+            ═══════════════════════════════════════════════════════════════ */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+
+          {/* 📊 Primary Quick Action: Excel Export (Desktop) */}
+          {onOpenExportExcel && (
+            <button
+              type="button"
+              id="header-excel-action"
+              onClick={() => onOpenExportExcel("players")}
+              className="hidden md:flex h-8.5 items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 px-3 text-xs font-bold transition-colors shadow-2xs cursor-pointer active:scale-98"
+              title="تصدير بيانات الأكاديمية إلى إكسيل (.xlsx)"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+              <span className="font-cairo">تصدير إكسيل</span>
+            </button>
+          )}
+
+          {/* 🎂 Birthdays Indicator & Popover */}
+          <div className="relative" ref={birthdayMenuRef}>
+            <button
+              type="button"
+              id="header-birthday-trigger"
               onClick={() => {
                 if (
                   typeof window !== "undefined" &&
@@ -265,207 +222,121 @@ export default function Header({
                   onNavigateToBirthdays();
                 } else {
                   setShowBirthdayMenu((prev) => !prev);
+                  setShowAccountMenu(false);
                 }
               }}
-              title="تذكار أعياد ميلاد اللاعبين وإرسال بطاقات التهنئة"
+              className={`relative flex h-8.5 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-bold transition-all cursor-pointer active:scale-98 ${
+                showBirthdayMenu || currentView === "birthdays"
+                  ? "border-rose-300 bg-rose-50 text-rose-800 shadow-2xs"
+                  : todayBirthdays.length > 0
+                  ? "border-rose-200 bg-rose-50/70 text-rose-700 hover:bg-rose-100/70"
+                  : "border-slate-200/90 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-2xs"
+              }`}
+              title="أعياد ميلاد اللاعبين"
             >
-              <Cake className="h-4 w-4" />
-              <span className="hidden md:inline font-cairo">أعياد الميلاد</span>
-
-              {todayBirthdays.length > 0 ? (
+              <Cake className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+              {totalBirthdayCount > 0 && (
                 <span
-                  className={`flex h-4 min-w-[16px] sm:h-4.5 sm:min-w-[18px] items-center justify-center rounded-full px-1 text-[9px] sm:text-[10px] font-black shadow-xs ${
-                    showBirthdayMenu || currentView === "birthdays"
-                      ? "bg-white text-rose-600"
-                      : "bg-rose-600 text-white"
+                  className={`flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-black ${
+                    todayBirthdays.length > 0
+                      ? "bg-rose-600 text-white"
+                      : "bg-slate-100 text-slate-700 border border-slate-200"
                   }`}
                 >
-                  {todayBirthdays.length}
+                  {totalBirthdayCount}
                 </span>
-              ) : upcomingBirthdays.length > 0 ? (
-                <span
-                  className={`flex h-4 min-w-[16px] sm:h-4.5 sm:min-w-[18px] items-center justify-center rounded-full px-1 text-[9px] sm:text-[10px] font-black shadow-xs ${
-                    showBirthdayMenu || currentView === "birthdays"
-                      ? "bg-white text-amber-800"
-                      : "bg-amber-500 text-white"
-                  }`}
-                >
-                  {upcomingBirthdays.length}
-                </span>
-              ) : null}
-
-              {todayBirthdays.length > 0 &&
-                !showBirthdayMenu &&
-                currentView !== "birthdays" && (
-                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
-                  </span>
-                )}
+              )}
             </button>
 
-            {/* Birthday Dropdown Panel */}
+            {/* Birthday Popover Flyout */}
             {showBirthdayMenu && (
               <>
                 <div
-                  className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-2xs sm:hidden animate-backdrop"
+                  className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-2xs sm:hidden"
                   onClick={() => setShowBirthdayMenu(false)}
                 />
                 <div
-                  className="fixed sm:absolute bottom-0 sm:bottom-auto left-0 sm:left-0 right-0 sm:right-auto sm:top-full sm:mt-2.5 w-full sm:w-96 rounded-t-3xl sm:rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xl z-50 animate-bottom-sheet sm:animate-slide-up pb-safe"
+                  className="fixed sm:absolute bottom-0 sm:bottom-auto left-0 sm:left-0 right-0 sm:right-auto sm:top-full sm:mt-1.5 w-full sm:w-80 rounded-t-2xl sm:rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-xl z-50 animate-slide-up pb-safe"
                   dir="rtl"
                 >
-                  <div className="sheet-drag-handle sm:hidden" />
-                  <div className="hidden sm:block absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-red-600" />
-
-                  <div className="mt-1 flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-2.5">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 border border-red-200/80">
-                        <Cake className="h-4 w-4" />
-                      </div>
-                      <strong className="font-cairo text-sm font-black text-slate-800">
+                      <Cake className="h-4 w-4 text-rose-600" />
+                      <strong className="font-cairo text-xs font-bold text-slate-800">
                         أعياد ميلاد الأبطال
                       </strong>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-black text-amber-800">
-                        {totalBirthdayCount} مناسبة
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowBirthdayMenu(false)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 text-xs font-bold cursor-pointer transition-colors"
-                        title="إغلاق"
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                      {totalBirthdayCount} مناسبة
+                    </span>
                   </div>
 
-                  <div className="mt-3 max-h-80 overflow-y-auto space-y-2 pr-0.5">
-                    {todayBirthdays.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-rose-600 mb-2">
-                          <span className="flex h-2 w-2 rounded-full bg-rose-600 animate-pulse" />
-                          <span>أعياد ميلاد اليوم ({todayBirthdays.length}):</span>
-                        </div>
-                        <div className="space-y-1.5">
-                          {todayBirthdays.map((player) => (
-                            <div
-                              key={player._id}
-                              className="flex items-center justify-between gap-2 rounded-xl border border-rose-200/80 bg-gradient-to-r from-rose-50/80 to-amber-50/60 p-2.5"
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-amber-500 font-cairo text-xs font-black text-white">
-                                  {player.name.charAt(0)}
-                                </div>
-                                <div className="min-w-0">
-                                  <strong className="block truncate font-cairo text-xs font-black text-slate-900">
-                                    {player.name}
-                                  </strong>
-                                  <span className="block text-[10px] font-bold text-rose-700">
-                                    اليوم 🎉 · {player.birthdayInfo?.turningAge} سنة
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setShowBirthdayMenu(false);
-                                    sendBirthdayCardViaWhatsApp(player, firstName);
-                                  }}
-                                  className="flex items-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer active-press"
-                                  title="تهنئة واتساب"
-                                >
-                                  <span>🎂 تهنئة</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
-                                  onClick={() => {
-                                    setShowBirthdayMenu(false);
-                                    onOpenPlayer?.(player);
-                                  }}
-                                >
-                                  الملف
-                                </button>
-                              </div>
+                  <div className="max-h-64 overflow-y-auto space-y-2 pr-0.5">
+                    {todayBirthdays.length > 0 ? (
+                      <div className="space-y-1.5">
+                        <span className="block text-[10.5px] font-bold text-rose-600">
+                          أعياد ميلاد اليوم ({todayBirthdays.length}):
+                        </span>
+                        {todayBirthdays.map((player) => (
+                          <div
+                            key={player._id}
+                            className="flex items-center justify-between gap-2 rounded-lg border border-rose-100 bg-rose-50/50 p-2 text-xs"
+                          >
+                            <div className="min-w-0">
+                              <span className="block truncate font-bold text-slate-900">
+                                {player.name}
+                              </span>
+                              <span className="block text-[10px] text-rose-600">
+                                اليوم · {player.birthdayInfo?.turningAge} سنة
+                              </span>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {upcomingBirthdays.length > 0 && (
-                      <div
-                        className={
-                          todayBirthdays.length > 0
-                            ? "border-t border-slate-100 pt-2.5 mt-1"
-                            : ""
-                        }
-                      >
-                        <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-700 mb-2">
-                          <CalendarDays className="h-3 w-3" />
-                          <span>قادمة غداً ({upcomingBirthdays.length}):</span>
-                        </div>
-                        <div className="space-y-1.5">
-                          {upcomingBirthdays.map((player) => (
-                            <div
-                              key={player._id}
-                              className="flex items-center justify-between gap-2 rounded-xl border border-amber-100/80 bg-amber-50/40 p-2"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowBirthdayMenu(false);
+                                sendBirthdayCardViaWhatsApp(player, firstName);
+                              }}
+                              className="rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 text-[10px] font-bold transition-colors cursor-pointer"
                             >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 font-cairo text-xs font-black text-amber-800">
-                                  {player.name.charAt(0)}
-                                </div>
-                                <div className="min-w-0">
-                                  <strong className="block truncate font-cairo text-xs font-black text-slate-900">
-                                    {player.name}
-                                  </strong>
-                                  <span className="block text-[10px] font-medium text-slate-500">
-                                    غداً · {player.birthdayInfo?.turningAge} سنة
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setShowBirthdayMenu(false);
-                                    sendBirthdayCardViaWhatsApp(player, firstName);
-                                  }}
-                                  className="flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-1 text-[10px] font-black hover:bg-emerald-100 transition-colors cursor-pointer"
-                                  title="إرسال كارت التهنئة الرسمي عبر واتساب"
-                                >
-                                  <span className="text-xs">🎂</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors"
-                                  onClick={() => {
-                                    setShowBirthdayMenu(false);
-                                    onOpenPlayer?.(player);
-                                  }}
-                                >
-                                  الملف
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                              🎂 تهنئة
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    )}
-
-                    {totalBirthdayCount === 0 && (
-                      <div className="py-8 text-center text-slate-400">
-                        <Cake className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-xs font-bold text-slate-600">
-                          لا توجد أعياد ميلاد قريبة
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          تأكد من تسجيل تواريخ ميلاد اللاعبين.
-                        </p>
+                    ) : upcomingBirthdays.length > 0 ? (
+                      <div className="space-y-1.5">
+                        <span className="block text-[10.5px] font-bold text-slate-500">
+                          قادمة غداً ({upcomingBirthdays.length}):
+                        </span>
+                        {upcomingBirthdays.map((player) => (
+                          <div
+                            key={player._id}
+                            className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 text-xs"
+                          >
+                            <div className="min-w-0">
+                              <span className="block truncate font-bold text-slate-900">
+                                {player.name}
+                              </span>
+                              <span className="block text-[10px] text-slate-500">
+                                غداً · {player.birthdayInfo?.turningAge} سنة
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowBirthdayMenu(false);
+                                sendBirthdayCardViaWhatsApp(player, firstName);
+                              }}
+                              className="rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-2 py-1 text-[10px] font-bold transition-colors cursor-pointer"
+                            >
+                              تهنئة
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-6 text-center text-slate-400 text-xs">
+                        لا توجد أعياد ميلاد قريبة
                       </div>
                     )}
 
@@ -476,9 +347,9 @@ export default function Header({
                           setShowBirthdayMenu(false);
                           onNavigateToBirthdays();
                         }}
-                        className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 text-white text-xs font-black shadow-xs active-press transition cursor-pointer"
+                        className="mt-2 w-full text-center py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                       >
-                        <span>عرض مركز احتفالات أعياد الميلاد الكامل 🎂</span>
+                        عرض مركز أعياد الميلاد بالكامل ←
                       </button>
                     )}
                   </div>
@@ -487,61 +358,166 @@ export default function Header({
             )}
           </div>
 
-          {/* ⚙️ 5. User Account Profile & Settings Button */}
-          {/* Desktop User Card (>= md) */}
-          <button
-            type="button"
-            onClick={onOpenAccountSettings}
-            className="relative group hidden md:flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 hover:border-slate-300 px-2.5 py-1.5 shadow-xs transition-all cursor-pointer shrink-0"
-            dir="ltr"
-            title="إعدادات الحساب وتفاصيل خطة الاشتراك"
-          >
-            <div className="flex h-7.5 w-7.5 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-xs font-black text-white shadow-xs ring-2 ring-slate-100 group-hover:scale-105 transition-transform">
-              {initials}
-            </div>
-            <div className="min-w-0 text-left">
-              <span className="block truncate text-xs font-bold text-slate-800 max-w-[90px] lg:max-w-[120px]">
-                {fullName}
+          {/* ═══════════════════════════════════════════════════════════════
+              4. Executive Dropdown Menu (Captain Profile, Tools & Settings)
+              ═══════════════════════════════════════════════════════════════ */}
+          <div className="relative" ref={accountMenuRef}>
+            <button
+              type="button"
+              id="header-account-menu-trigger"
+              onClick={() => {
+                setShowAccountMenu((prev) => !prev);
+                setShowBirthdayMenu(false);
+              }}
+              className="relative flex h-8.5 items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 px-2 sm:px-2.5 text-xs font-bold text-slate-700 shadow-2xs transition-colors cursor-pointer active:scale-98"
+              title="قائمة الحساب والعمليات"
+            >
+              {/* Initials Avatar */}
+              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-slate-900 text-[10.5px] font-bold text-white">
+                {initials}
+              </div>
+              <span className="hidden sm:inline font-cairo text-slate-800 font-bold">
+                كابتن {firstName}
               </span>
-              <span className="block truncate text-[10px] text-slate-400 max-w-[90px] lg:max-w-[120px]">
-                {academyName}
-              </span>
-            </div>
-            <Settings className="h-3.5 w-3.5 text-slate-400 group-hover:text-red-600 transition-colors ml-0.5" />
-            {hasUnreadPlanUpdate && (
-              <span className="absolute -top-1 -left-1 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce ring-2 ring-white">
-                1
-              </span>
-            )}
-          </button>
+              <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
 
-          {/* Mobile Settings Icon Button (< md) */}
-          <button
-            type="button"
-            id="mobile-settings-btn"
-            onClick={onOpenAccountSettings}
-            className="relative flex md:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 active-press transition cursor-pointer touch-manipulation shrink-0"
-            title="إعدادات الحساب والأكاديمية"
-          >
-            <Settings className="h-4 w-4 text-slate-700" />
-            {hasUnreadPlanUpdate && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce ring-1.5 ring-white">
-                1
-              </span>
-            )}
-          </button>
+              {/* Notification Dot */}
+              {hasMenuNotification && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                </span>
+              )}
+            </button>
 
-          {/* 🚪 6. Sign Out Button */}
-          <button
-            type="button"
-            id="header-signout-btn"
-            onClick={handleSignOut}
-            className="flex items-center justify-center rounded-xl border border-red-200 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white h-8.5 w-8.5 sm:w-auto sm:px-3 sm:h-9.5 lg:h-10 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-md hover:shadow-red-500/20 active-press cursor-pointer touch-manipulation shrink-0"
-            title="تسجيل الخروج من النظام"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline mr-1 font-cairo font-bold">خروج</span>
-          </button>
+            {/* Executive Menu Dropdown */}
+            {showAccountMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-2xs sm:hidden"
+                  onClick={() => setShowAccountMenu(false)}
+                />
+                <div
+                  className="fixed sm:absolute bottom-0 sm:bottom-auto left-0 sm:left-0 right-0 sm:right-auto sm:top-full sm:mt-1.5 w-full sm:w-72 rounded-t-2xl sm:rounded-xl border border-slate-200/90 bg-white p-1.5 shadow-xl z-50 animate-slide-up pb-safe text-right"
+                  dir="rtl"
+                >
+                  {/* Menu User Header */}
+                  <div className="px-3 py-2.5 border-b border-slate-100 mb-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <strong className="block truncate font-cairo text-xs font-bold text-slate-900">
+                        {fullName}
+                      </strong>
+                      <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 text-[9.5px] font-bold">
+                        نشط PRO
+                      </span>
+                    </div>
+                    <span className="block truncate text-[11px] text-slate-400 mt-0.5">
+                      {academyName}
+                    </span>
+                  </div>
+
+                  {/* Menu Items */}
+                  <div className="space-y-0.5">
+                    {/* 1. Platform Guide */}
+                    {onOpenFeatures && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAccountMenu(false);
+                          onOpenFeatures();
+                        }}
+                        className="w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-amber-500 shrink-0" />
+                          <span>دليل ومميزات المنصة</span>
+                        </div>
+                        {hasUnreadGuide && (
+                          <span className="rounded-full bg-red-500 text-white px-1.5 py-0.2 text-[9px] font-black">
+                            تحديثات جديدة
+                          </span>
+                        )}
+                      </button>
+                    )}
+
+                    {/* 2. Account & Plan Settings */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAccountMenu(false);
+                        onOpenAccountSettings?.();
+                      }}
+                      className="w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Settings className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span>إعدادات الحساب والخطة</span>
+                      </div>
+                      {hasUnreadPlanUpdate && (
+                        <span className="rounded-full bg-red-500 text-white px-1.5 py-0.2 text-[9px] font-black">
+                          تعديل الخطة
+                        </span>
+                      )}
+                    </button>
+
+                    {/* 3. Excel Export (For mobile access or quick menu) */}
+                    {onOpenExportExcel && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAccountMenu(false);
+                          onOpenExportExcel("players");
+                        }}
+                        className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
+                      >
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span>تصدير بيانات الأكاديمية (.xlsx)</span>
+                      </button>
+                    )}
+
+                    {/* 4. Instant Cloud Backup */}
+                    {onInstantCloudBackup && (
+                      <button
+                        type="button"
+                        disabled={isCloudBackingUp}
+                        onClick={() => {
+                          setShowAccountMenu(false);
+                          onInstantCloudBackup();
+                        }}
+                        className="w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Cloud className="h-4 w-4 text-blue-500 shrink-0" />
+                          <span>نسخ احتياطي سحابي فوري</span>
+                        </div>
+                        {isCloudBackingUp && (
+                          <span className="text-[10px] text-blue-600 animate-pulse">
+                            جاري الحفظ...
+                          </span>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Divider */}
+                    <div className="my-1 border-t border-slate-100" />
+
+                    {/* 5. Sign Out */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAccountMenu(false);
+                        handleSignOut();
+                      }}
+                      className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="h-4 w-4 text-red-500 shrink-0" />
+                      <span>تسجيل الخروج من النظام</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
         </div>
 
