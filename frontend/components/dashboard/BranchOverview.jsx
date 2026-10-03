@@ -47,14 +47,14 @@ export default function BranchOverview({
   onOpenAttendanceReport,
   busyBranch,
 }) {
-  if (!branches.length) return null;
-
   // Re-evaluate every 30 seconds so time-based locks update dynamically
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNowTick(Date.now()), 30000);
     return () => clearInterval(id);
   }, []);
+
+  if (!branches || !branches.length) return null;
 
   return (
     <section className="mt-7 w-full max-w-full overflow-hidden">

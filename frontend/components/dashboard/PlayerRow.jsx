@@ -150,7 +150,6 @@ function PlayerRow({
 
   const isWorkingDay = useMemo(
     () => isBranchWorkingDate(playerBranch, sessionDate, new Date(nowTick)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [playerBranch, sessionDate, nowTick]
   );
 

@@ -551,7 +551,6 @@ export default function Home() {
   }, []);
   const isBranchWorkingToday = useMemo(
     () => isBranchWorkingDate(activeBranchData, sessionDate, new Date(nowTick)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [activeBranchData, sessionDate, nowTick]
   );
   const todayBirthdaysCount = dashboardPlayers.filter((player) => {
