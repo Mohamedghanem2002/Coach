@@ -77,9 +77,11 @@ const currentMonth = today.slice(0, 7);
 
 export default function Home() {
   const router = useRouter();
-  const { data: session, status: sessionStatus } = useSession();
-  const captainName = session?.user?.name || "كابتن";
-  const academyName = session?.user?.academyName || "CoachMaster";
+  const { data: session, status: sessionStatus, update: updateSession } = useSession();
+  const [localCoachName, setLocalCoachName] = useState(null);
+  const [localAcademyName, setLocalAcademyName] = useState(null);
+  const captainName = localCoachName || session?.user?.name || "كابتن";
+  const academyName = localAcademyName || session?.user?.academyName || "CoachMaster";
   const [players, setPlayers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [branch, setBranch] = useState("كل الصالات");
@@ -2550,8 +2552,14 @@ export default function Home() {
           isOpen={showAccountSettings}
           onClose={() => setShowAccountSettings(false)}
           showToast={showToast}
-          onUserUpdated={() => {
-            // Re-render or trigger updates
+          onUserUpdated={(updatedUser) => {
+            if (updatedUser) {
+              if (updatedUser.name) setLocalCoachName(updatedUser.name);
+              if (updatedUser.academyName) setLocalAcademyName(updatedUser.academyName);
+              if (typeof updateSession === "function") {
+                updateSession(updatedUser);
+              }
+            }
           }}
         />
       )}

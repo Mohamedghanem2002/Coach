@@ -159,9 +159,12 @@ export default function AdminAcademiesTab({
                 <tbody className="divide-y divide-slate-100 font-bold text-slate-800">
                   {academies.map((ac) => {
                     const isSuspended = ac.subscriptionStatus === "suspended" || ac.status === "suspended";
-                    const isExpired = ac.subscriptionStatus === "expired";
+                    const isLifetime = ac.subscriptionPlan === "lifetime" || ac.isLifetime || (ac.subscriptionExpiresAt && new Date(ac.subscriptionExpiresAt).getFullYear() > 2050);
+                    const isExpired = !isLifetime && ac.subscriptionStatus === "expired";
 
-                    const formattedExpires = ac.subscriptionExpiresAt
+                    const formattedExpires = isLifetime
+                      ? "مفتوح دائم (مدى الحياة ♾️)"
+                      : ac.subscriptionExpiresAt
                       ? new Intl.DateTimeFormat("ar-EG", {
                           year: "numeric",
                           month: "short",
@@ -231,6 +234,10 @@ export default function AdminAcademiesTab({
                               <ShieldAlert className="w-3 h-3" />
                               <span>موقوفة</span>
                             </span>
+                          ) : isLifetime ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-100 text-purple-800 text-[11px] font-black border border-purple-200">
+                              <span>مدى الحياة ♾️</span>
+                            </span>
                           ) : isExpired ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-100 text-amber-800 text-[11px] font-black border border-amber-200">
                               <Clock className="w-3 h-3" />
@@ -246,10 +253,12 @@ export default function AdminAcademiesTab({
 
                         {/* Expiration Date & Days remaining */}
                         <td className="p-4">
-                          <span className="block text-xs font-black text-slate-900">{formattedExpires}</span>
+                          <span className={`block text-xs font-black ${isLifetime ? "text-purple-700" : "text-slate-900"}`}>{formattedExpires}</span>
                           <span
                             className={`block text-[10px] font-bold ${
-                              ac.daysRemaining === null
+                              isLifetime
+                                ? "text-purple-600"
+                                : ac.daysRemaining === null
                                 ? "text-slate-400"
                                 : ac.daysRemaining <= 0
                                 ? "text-red-600"
@@ -258,7 +267,9 @@ export default function AdminAcademiesTab({
                                 : "text-slate-400"
                             }`}
                           >
-                            {ac.daysRemaining !== null
+                            {isLifetime
+                              ? "دائم ♾️"
+                              : ac.daysRemaining !== null
                               ? ac.daysRemaining <= 0
                                 ? "منتهي"
                                 : `متبقي ${ac.daysRemaining} يوم`
@@ -351,7 +362,8 @@ export default function AdminAcademiesTab({
           <div className="grid grid-cols-1 gap-3 md:hidden">
             {academies.map((ac) => {
               const isSuspended = ac.subscriptionStatus === "suspended" || ac.status === "suspended";
-              const isExpired = ac.subscriptionStatus === "expired";
+              const isLifetime = ac.subscriptionPlan === "lifetime" || ac.isLifetime || (ac.subscriptionExpiresAt && new Date(ac.subscriptionExpiresAt).getFullYear() > 2050);
+              const isExpired = !isLifetime && ac.subscriptionStatus === "expired";
 
               return (
                 <div
@@ -377,6 +389,10 @@ export default function AdminAcademiesTab({
                       <span className="px-2 py-0.5 rounded-lg bg-red-100 text-red-700 text-[10px] font-black shrink-0">
                         موقوفة
                       </span>
+                    ) : isLifetime ? (
+                      <span className="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-800 text-[10px] font-black shrink-0">
+                        مدى الحياة ♾️
+                      </span>
                     ) : isExpired ? (
                       <span className="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800 text-[10px] font-black shrink-0">
                         منتهية
@@ -400,8 +416,8 @@ export default function AdminAcademiesTab({
                     </div>
                     <div>
                       <span className="block text-[10px] font-bold text-slate-400">المتبقي</span>
-                      <strong className="font-black text-slate-800">
-                        {ac.daysRemaining !== null ? `${ac.daysRemaining} يوم` : "-"}
+                      <strong className={`font-black ${isLifetime ? "text-purple-700 text-[10px]" : "text-slate-800"}`}>
+                        {isLifetime ? "دائم ♾️" : ac.daysRemaining !== null ? `${ac.daysRemaining} يوم` : "-"}
                       </strong>
                     </div>
                     <div>

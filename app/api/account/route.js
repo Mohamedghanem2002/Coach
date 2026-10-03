@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import { auth } from "../../../backend/auth";
 import clientPromise from "../../../backend/mongodb";
+import { calculateDaysRemaining, isSubscriptionExpired } from "../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -43,16 +44,14 @@ export async function GET() {
     }
 
     const now = new Date();
-    let daysRemaining = null;
-    let isExpired = false;
-    if (user.subscriptionExpiresAt) {
-      const exp = new Date(user.subscriptionExpiresAt);
-      if (!isNaN(exp.getTime())) {
-        const diff = exp.getTime() - now.getTime();
-        daysRemaining = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-        isExpired = diff < 0;
-      }
-    }
+    const isLifetime =
+      user.subscriptionPlan === "lifetime" ||
+      user.isLifetime === true ||
+      (user.subscriptionExpiresAt &&
+        new Date(user.subscriptionExpiresAt).getFullYear() > 2050);
+
+    const daysRemaining = calculateDaysRemaining(user.subscriptionExpiresAt, now, user);
+    const isExpired = isSubscriptionExpired(user, now);
 
     const subTotal = Number(user.subscriptionTotalAmount || 0);
     const subPaid = Number(user.subscriptionPaidAmount || 0);
@@ -81,7 +80,8 @@ export async function GET() {
         role: user.role || "user",
         status: user.status || "active",
         subscriptionStatus: user.subscriptionStatus || "active",
-        subscriptionPlan: user.subscriptionPlan || "trial",
+        subscriptionPlan: isLifetime ? "lifetime" : (user.subscriptionPlan || "trial"),
+        isLifetime: Boolean(isLifetime),
         subscriptionExpiresAt: user.subscriptionExpiresAt,
         subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
         subscriptionPaid: user.subscriptionPaid !== false,

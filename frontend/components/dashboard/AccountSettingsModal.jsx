@@ -46,6 +46,8 @@ export default function AccountSettingsModal({
     daysRemaining: null,
     isExpired: false,
     status: "active",
+    plan: "trial",
+    isLifetime: false,
     totalAmount: 0,
     paidAmount: 0,
     remainingAmount: 0,
@@ -90,6 +92,12 @@ export default function AccountSettingsModal({
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data.user) {
+            const isLt =
+              data.user.subscriptionPlan === "lifetime" ||
+              data.user.isLifetime === true ||
+              (data.user.subscriptionExpiresAt &&
+                new Date(data.user.subscriptionExpiresAt).getFullYear() > 2050);
+
             setName(data.user.name || "");
             setAcademyName(data.user.academyName || "CoachMaster");
             setEmail(data.user.email || "");
@@ -97,9 +105,11 @@ export default function AccountSettingsModal({
             setSubscriptionInfo({
               startedAt: data.user.subscriptionStartedAt || data.user.createdAt,
               expiresAt: data.user.subscriptionExpiresAt,
-              daysRemaining: data.user.daysRemaining,
-              isExpired: data.user.isExpired,
+              daysRemaining: isLt ? null : data.user.daysRemaining,
+              isExpired: isLt ? false : data.user.isExpired,
               status: data.user.subscriptionStatus || data.user.status || "active",
+              plan: isLt ? "lifetime" : (data.user.subscriptionPlan || "trial"),
+              isLifetime: isLt,
               totalAmount: Number(data.user.subscriptionTotalAmount || 0),
               paidAmount: Number(data.user.subscriptionPaidAmount || 0),
               remainingAmount: Number(data.user.subscriptionRemainingAmount || 0),
@@ -266,6 +276,11 @@ export default function AccountSettingsModal({
 
   const coachInitial = name ? name.trim().charAt(0) : "ك";
 
+  const isLifetime =
+    subscriptionInfo.isLifetime ||
+    subscriptionInfo.plan === "lifetime" ||
+    (subscriptionInfo.expiresAt && new Date(subscriptionInfo.expiresAt).getFullYear() > 2050);
+
   // Formatted subscription dates
   const formattedStartedAt = subscriptionInfo.startedAt
     ? new Intl.DateTimeFormat("ar-EG", {
@@ -275,7 +290,9 @@ export default function AccountSettingsModal({
       }).format(new Date(subscriptionInfo.startedAt))
     : "غير محدد";
 
-  const formattedExpiresAt = subscriptionInfo.expiresAt
+  const formattedExpiresAt = isLifetime
+    ? "مفتوح (مدى الحياة ♾️)"
+    : subscriptionInfo.expiresAt
     ? new Intl.DateTimeFormat("ar-EG", {
         year: "numeric",
         month: "long",
@@ -284,9 +301,9 @@ export default function AccountSettingsModal({
     : "غير محدد (مفتوح)";
 
   // Dynamically resolve remaining days with fallback
-  let resolvedDaysRemaining = subscriptionInfo.daysRemaining;
-  let resolvedIsExpired = subscriptionInfo.isExpired;
-  if (resolvedDaysRemaining === null && subscriptionInfo.expiresAt) {
+  let resolvedDaysRemaining = isLifetime ? null : subscriptionInfo.daysRemaining;
+  let resolvedIsExpired = isLifetime ? false : subscriptionInfo.isExpired;
+  if (!isLifetime && resolvedDaysRemaining === null && subscriptionInfo.expiresAt) {
     const exp = new Date(subscriptionInfo.expiresAt);
     if (!isNaN(exp.getTime())) {
       const diff = exp.getTime() - new Date().getTime();
@@ -404,12 +421,24 @@ export default function AccountSettingsModal({
               {/* Status Pill with live pulse */}
               <div>
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black ${
-                  !resolvedIsExpired && resolvedDaysRemaining > 0
+                  isLifetime
+                    ? "bg-purple-100 text-purple-800 border border-purple-200"
+                    : !resolvedIsExpired && (resolvedDaysRemaining === null || resolvedDaysRemaining > 0)
                     ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                     : "bg-red-100 text-red-800 border border-red-200"
                 }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${!resolvedIsExpired && resolvedDaysRemaining > 0 ? "bg-emerald-500" : "bg-red-500 animate-pulse"}`} />
-                  {!resolvedIsExpired && resolvedDaysRemaining > 0 ? "الاشتراك نشط ✓" : "منتهي الصلاحية ⛔"}
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    isLifetime
+                      ? "bg-purple-500"
+                      : !resolvedIsExpired && (resolvedDaysRemaining === null || resolvedDaysRemaining > 0)
+                      ? "bg-emerald-500"
+                      : "bg-red-500 animate-pulse"
+                  }`} />
+                  {isLifetime
+                    ? "اشتراك مدى الحياة نشط ♾️"
+                    : !resolvedIsExpired && (resolvedDaysRemaining === null || resolvedDaysRemaining > 0)
+                    ? "الاشتراك نشط ✓"
+                    : "منتهي الصلاحية ⛔"}
                 </span>
               </div>
             </div>
@@ -430,26 +459,30 @@ export default function AccountSettingsModal({
               {/* 2. تاريخ الانتهاء */}
               <div className="bg-white/95 rounded-xl p-2.5 border border-indigo-100 shadow-2xs">
                 <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-400 mb-1">
-                  <CalendarDays className="w-3 h-3 text-purple-500" />
+                  <CalendarDays className={`w-3 h-3 ${isLifetime ? "text-purple-600" : "text-purple-500"}`} />
                   <span>تاريخ الانتهاء</span>
                 </div>
-                <strong className="text-xs font-black text-slate-800 block truncate">
+                <strong className={`text-xs font-black block truncate ${isLifetime ? "text-purple-700" : "text-slate-800"}`}>
                   {formattedExpiresAt}
                 </strong>
               </div>
 
               {/* 3. المدة المتبقية */}
               <div className={`rounded-xl p-2.5 border shadow-2xs ${
-                !resolvedIsExpired && resolvedDaysRemaining > 0
+                isLifetime
+                  ? "bg-purple-50/80 border-purple-200 text-purple-900"
+                  : !resolvedIsExpired && (resolvedDaysRemaining === null || resolvedDaysRemaining > 0)
                   ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
                   : "bg-red-50/80 border-red-200 text-red-900"
               }`}>
                 <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-400 mb-1">
-                  <Clock className="w-3 h-3 text-emerald-600" />
+                  <Clock className={`w-3 h-3 ${isLifetime ? "text-purple-600" : "text-emerald-600"}`} />
                   <span>المدة المتبقية</span>
                 </div>
-                <strong className="text-xs font-black block truncate">
-                  {resolvedDaysRemaining !== null
+                <strong className={`text-xs font-black block truncate ${isLifetime ? "text-purple-800" : ""}`}>
+                  {isLifetime
+                    ? "مدى الحياة ♾️"
+                    : resolvedDaysRemaining !== null
                     ? (!resolvedIsExpired && resolvedDaysRemaining > 0 ? `${resolvedDaysRemaining} يوماً` : "انتهت المدة")
                     : "غير محدد"}
                 </strong>
