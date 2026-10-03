@@ -70,6 +70,9 @@ export async function GET(request, context) {
     }
 
     const now = new Date();
+    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+    const isUserAdmin = user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail);
+
     const isExpired = isSubscriptionExpired(user, now);
     const isSuspended = user.status === "suspended" || user.subscriptionStatus === "suspended" || isExpired;
 
@@ -122,9 +125,6 @@ export async function GET(request, context) {
     const events = allE.filter(
       (e) => e.ownerId && (e.ownerId.toString() === uStrId || String(e.ownerId) === String(uOId))
     );
-
-    const adminEmail = (process.env.ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
-    const isUserAdmin = user.role === "admin" || (user.email && user.email.toLowerCase().trim() === adminEmail);
 
     const subTotal = Number(user.subscriptionTotalAmount || 0);
     const subPaid = Number(user.subscriptionPaidAmount || 0);

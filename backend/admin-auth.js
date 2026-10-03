@@ -30,7 +30,7 @@ export async function requireAdmin() {
 
     const isAdmin =
       (user && user.role === "admin") ||
-      session.user.role === "admin" ||
+      (user && userEmail === adminEmail) ||
       userEmail === adminEmail;
 
     if (!isAdmin) {

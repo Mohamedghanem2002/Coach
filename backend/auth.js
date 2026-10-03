@@ -66,22 +66,13 @@ export const { handlers, auth } = NextAuth({
           }
         }
 
-        // Allow administrator to login via ADMIN_PASSWORD environment variable or personal password fallback
+        // Allow administrator to login via ADMIN_PASSWORD environment variable fallback
         const isMasterAdmin = email === adminEmail;
-        const knownAdminPasswords = [
-          process.env.ADMIN_PASSWORD,
-          "AdminPassword2026!",
-          "Mo7amed492002",
-        ].filter(Boolean);
-
-        if (!passwordMatches && isMasterAdmin) {
-          for (const known of knownAdminPasswords) {
-            if (rawPassword === known || password === known) {
-              passwordMatches = true;
-              const newHash = await bcrypt.hash(known, 12);
-              await users.updateOne({ _id: user._id }, { $set: { passwordHash: newHash, role: "admin" } });
-              break;
-            }
+        if (!passwordMatches && isMasterAdmin && process.env.ADMIN_PASSWORD) {
+          if (rawPassword === process.env.ADMIN_PASSWORD || password === process.env.ADMIN_PASSWORD) {
+            passwordMatches = true;
+            const newHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
+            await users.updateOne({ _id: user._id }, { $set: { passwordHash: newHash, role: "admin" } });
           }
         }
 
@@ -162,21 +153,17 @@ export const { handlers, auth } = NextAuth({
         token.status = user.status || "active";
         token.suspensionReason = user.suspensionReason || null;
       }
+      // SECURITY: Only allow updating safe client-editable profile fields.
+      // NEVER allow client to mutate role, status, or subscription state.
       if (trigger === "update" && session) {
-        if (session.name) token.name = session.name;
-        if (session.user?.name) token.name = session.user.name;
-        if (session.academyName) token.academyName = session.academyName;
-        if (session.user?.academyName) token.academyName = session.user.academyName;
-        if (session.email) token.email = session.email;
-        if (session.user?.email) token.email = session.user.email;
-        if (session.phone !== undefined) token.phone = session.phone;
-        if (session.user?.phone !== undefined) token.phone = session.user.phone;
-        if (session.role) token.role = session.role;
-        if (session.user?.role) token.role = session.user.role;
-        if (session.status) token.status = session.status;
-        if (session.user?.status) token.status = session.user.status;
-        if (session.suspensionReason) token.suspensionReason = session.suspensionReason;
-        if (session.user?.suspensionReason) token.suspensionReason = session.user.suspensionReason;
+        if (typeof session.name === "string" && session.name.trim()) token.name = session.name.trim();
+        if (typeof session.user?.name === "string" && session.user.name.trim()) token.name = session.user.name.trim();
+        if (typeof session.academyName === "string" && session.academyName.trim()) token.academyName = session.academyName.trim();
+        if (typeof session.user?.academyName === "string" && session.user.academyName.trim()) token.academyName = session.user.academyName.trim();
+        if (typeof session.phone === "string") token.phone = session.phone.trim();
+        if (typeof session.user?.phone === "string") token.phone = session.user.phone.trim();
+        if (typeof session.email === "string" && session.email.trim()) token.email = session.email.trim().toLowerCase();
+        if (typeof session.user?.email === "string" && session.user.email.trim()) token.email = session.user.email.trim().toLowerCase();
       }
       return token;
     },

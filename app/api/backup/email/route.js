@@ -16,11 +16,10 @@ export async function GET() {
     if (!tenant.allowed) return tenant.response;
     const ownerId = tenant.ownerId;
 
-    const settings = getEmailBackupSettings();
-    const lastStatus = getLastEmailBackupStatus();
+    const settings = await getEmailBackupSettings(ownerId);
+    const lastStatus = await getLastEmailBackupStatus(ownerId);
 
     // Trigger daily auto-backup check silently if configured
-    let autoRunResult = null;
     if (settings.isConfigured && settings.autoDailyBackup) {
       // Run non-blocking
       checkAndRunDailyEmailBackup(ownerId).catch((err) => {
@@ -56,12 +55,15 @@ export async function POST(request) {
     const action = body?.action || "send_now";
 
     if (action === "save_settings") {
-      const updated = saveEmailBackupSettings({
-        gmailUser: body.gmailUser,
-        gmailAppPassword: body.gmailAppPassword,
-        recipientEmail: body.recipientEmail,
-        autoDailyBackup: body.autoDailyBackup,
-      });
+      const updated = await saveEmailBackupSettings(
+        {
+          gmailUser: body.gmailUser,
+          gmailAppPassword: body.gmailAppPassword,
+          recipientEmail: body.recipientEmail,
+          autoDailyBackup: body.autoDailyBackup,
+        },
+        ownerId
+      );
 
       return NextResponse.json({
         success: true,

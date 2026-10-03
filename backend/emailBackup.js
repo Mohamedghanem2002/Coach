@@ -21,7 +21,27 @@ function ensureDataDir() {
   }
 }
 
-export function getEmailBackupSettings() {
+export async function getEmailBackupSettings(ownerId = null) {
+  let dbSettings = null;
+  if (ownerId) {
+    try {
+      const client = await clientPromise;
+      const { ObjectId } = await import("mongodb");
+      let query = {};
+      try {
+        query = { _id: new ObjectId(ownerId) };
+      } catch {
+        query = { _id: ownerId };
+      }
+      const user = await client.db(process.env.MONGODB_DB).collection("users").findOne(query);
+      if (user?.emailBackupSettings) {
+        dbSettings = user.emailBackupSettings;
+      }
+    } catch (e) {
+      console.warn("Could not load emailBackupSettings from DB:", e?.message);
+    }
+  }
+
   ensureDataDir();
   let fileSettings = {};
   if (fs.existsSync(SETTINGS_FILE)) {
@@ -30,10 +50,11 @@ export function getEmailBackupSettings() {
     } catch {}
   }
 
-  const gmailUser = fileSettings.gmailUser || process.env.GMAIL_USER || "";
-  const gmailAppPassword = fileSettings.gmailAppPassword || process.env.GMAIL_APP_PASSWORD || "";
-  const recipientEmail = fileSettings.recipientEmail || process.env.BACKUP_RECIPIENT_EMAIL || gmailUser || "";
-  const autoDailyBackup = fileSettings.autoDailyBackup !== undefined ? Boolean(fileSettings.autoDailyBackup) : true;
+  const effective = dbSettings || fileSettings;
+  const gmailUser = effective.gmailUser || process.env.GMAIL_USER || "";
+  const gmailAppPassword = effective.gmailAppPassword || process.env.GMAIL_APP_PASSWORD || "";
+  const recipientEmail = effective.recipientEmail || process.env.BACKUP_RECIPIENT_EMAIL || gmailUser || "";
+  const autoDailyBackup = effective.autoDailyBackup !== undefined ? Boolean(effective.autoDailyBackup) : true;
 
   return {
     gmailUser,
@@ -44,9 +65,9 @@ export function getEmailBackupSettings() {
   };
 }
 
-export function saveEmailBackupSettings(newSettings = {}) {
+export async function saveEmailBackupSettings(newSettings = {}, ownerId = null) {
   ensureDataDir();
-  const current = getEmailBackupSettings();
+  const current = await getEmailBackupSettings(ownerId);
   const updated = {
     gmailUser: (newSettings.gmailUser !== undefined ? newSettings.gmailUser : current.gmailUser).trim(),
     gmailAppPassword: (newSettings.gmailAppPassword !== undefined ? newSettings.gmailAppPassword : current.gmailAppPassword).replace(/\s+/g, ""),
@@ -54,13 +75,33 @@ export function saveEmailBackupSettings(newSettings = {}) {
     autoDailyBackup: newSettings.autoDailyBackup !== undefined ? Boolean(newSettings.autoDailyBackup) : current.autoDailyBackup,
   };
 
-  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(updated, null, 2), "utf-8");
+  if (ownerId) {
+    try {
+      const client = await clientPromise;
+      const { ObjectId } = await import("mongodb");
+      let query = {};
+      try {
+        query = { _id: new ObjectId(ownerId) };
+      } catch {
+        query = { _id: ownerId };
+      }
+      await client.db(process.env.MONGODB_DB).collection("users").updateOne(query, {
+        $set: { emailBackupSettings: updated },
+      });
+    } catch (e) {
+      console.warn("Could not save emailBackupSettings to DB:", e?.message);
+    }
+  }
+
+  try {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(updated, null, 2), "utf-8");
+  } catch {}
 
   // Reset auth failure marker so new settings can be tested
   try {
-    const currentStatus = getLastEmailBackupStatus();
+    const currentStatus = await getLastEmailBackupStatus(ownerId);
     delete currentStatus.lastAuthFailedDate;
-    fs.writeFileSync(STATUS_FILE, JSON.stringify(currentStatus, null, 2), "utf-8");
+    await recordLastEmailBackup(currentStatus, ownerId);
   } catch {}
 
   return {
@@ -69,7 +110,26 @@ export function saveEmailBackupSettings(newSettings = {}) {
   };
 }
 
-export function getLastEmailBackupStatus() {
+export async function getLastEmailBackupStatus(ownerId = null) {
+  if (ownerId) {
+    try {
+      const client = await clientPromise;
+      const { ObjectId } = await import("mongodb");
+      let query = {};
+      try {
+        query = { _id: new ObjectId(ownerId) };
+      } catch {
+        query = { _id: ownerId };
+      }
+      const user = await client.db(process.env.MONGODB_DB).collection("users").findOne(query);
+      if (user?.lastEmailBackupStatus) {
+        return user.lastEmailBackupStatus;
+      }
+    } catch (e) {
+      console.warn("Could not load lastEmailBackupStatus from DB:", e?.message);
+    }
+  }
+
   ensureDataDir();
   if (fs.existsSync(STATUS_FILE)) {
     try {
@@ -79,10 +139,29 @@ export function getLastEmailBackupStatus() {
   return { lastSentDate: null, lastSentTime: null };
 }
 
-function recordLastEmailBackup(details) {
+export async function recordLastEmailBackup(details, ownerId = null) {
+  if (ownerId) {
+    try {
+      const client = await clientPromise;
+      const { ObjectId } = await import("mongodb");
+      let query = {};
+      try {
+        query = { _id: new ObjectId(ownerId) };
+      } catch {
+        query = { _id: ownerId };
+      }
+      const prev = await getLastEmailBackupStatus(ownerId);
+      await client.db(process.env.MONGODB_DB).collection("users").updateOne(query, {
+        $set: { lastEmailBackupStatus: { ...prev, ...details } },
+      });
+    } catch (e) {
+      console.warn("Could not save lastEmailBackupStatus to DB:", e?.message);
+    }
+  }
+
   ensureDataDir();
   try {
-    const prev = getLastEmailBackupStatus();
+    const prev = await getLastEmailBackupStatus();
     fs.writeFileSync(STATUS_FILE, JSON.stringify({ ...prev, ...details }, null, 2), "utf-8");
   } catch {}
 }
@@ -117,7 +196,7 @@ export async function generateBackupPayload(ownerId) {
 }
 
 export async function sendBackupToEmail({ ownerId, recipientEmailOverride = null, isAutomatic = false }) {
-  const settings = getEmailBackupSettings();
+  const settings = await getEmailBackupSettings(ownerId);
 
   if (!settings.isConfigured) {
     throw new Error(
@@ -258,18 +337,18 @@ export async function sendBackupToEmail({ ownerId, recipientEmailOverride = null
     isAutomatic,
   };
 
-  recordLastEmailBackup(record);
+  await recordLastEmailBackup(record, ownerId);
   return record;
 }
 
 export async function checkAndRunDailyEmailBackup(ownerId) {
   try {
-    const settings = getEmailBackupSettings();
+    const settings = await getEmailBackupSettings(ownerId);
     if (!settings.isConfigured || !settings.autoDailyBackup) {
       return { skipped: true, reason: "not_configured_or_disabled" };
     }
 
-    const status = getLastEmailBackupStatus();
+    const status = await getLastEmailBackupStatus(ownerId);
     const todayStr = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Africa/Cairo",
     }).format(new Date());
@@ -291,7 +370,7 @@ export async function checkAndRunDailyEmailBackup(ownerId) {
     console.error("[AutoBackup] Daily Gmail backup error:", errMsg);
     if (error?.code === "EAUTH" || errMsg.includes("535") || errMsg.includes("BadCredentials")) {
       const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo" }).format(new Date());
-      recordLastEmailBackup({ lastAuthFailedDate: todayStr });
+      await recordLastEmailBackup({ lastAuthFailedDate: todayStr }, ownerId);
     }
     return { success: false, error: errMsg };
   }

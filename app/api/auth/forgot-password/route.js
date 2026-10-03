@@ -74,26 +74,20 @@ export async function POST(request) {
 
     if (!mailRes.success) {
       console.warn("[Password Reset] Email delivery failed:", mailRes.error);
-      return NextResponse.json({
-        success: true,
-        emailSent: false,
-        code,
-        token,
-        resetUrl,
-        isAuthError: mailRes.isAuthError,
-        message: mailRes.isAuthError
-          ? "تعذر إرسال الإيميل لأن حساب Google يتطلب (كلمة مرور تطبيقات App Password) مكونة من 16 حرفاً لحساب Gmail بدلاً من كلمة السر العادية. يمكنك استخدام رمز التحقق أو الرابط المعروض أدناه لإتمام العملية فوراً."
-          : "تعذر إرسال الإيميل إلى بريدك حالياً. يمكنك استخدام رمز التحقق أو الرابط المعروض أدناه لإتمام العملية.",
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "تعذر إرسال رسالة استعادة كلمة المرور إلى بريدك الإلكتروني حالياً. يرجى التأكد من صحة البريد أو المحاولة لاحقاً.",
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       success: true,
       emailSent: true,
       message: genericSuccessMessage,
-      code: mailRes?.simulated ? code : undefined,
-      token: mailRes?.simulated ? token : undefined,
-      resetUrl: mailRes?.simulated ? resetUrl : undefined,
     });
   } catch (error) {
     console.error("POST /api/auth/forgot-password error:", error);
