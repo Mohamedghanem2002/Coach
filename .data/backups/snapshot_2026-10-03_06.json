@@ -15,12 +15,7 @@
       "subscriptionPaid": true,
       "updatedAt": "2026-09-27T17:32:56.564Z",
       "resetCode": null,
-      "resetExpiresAt": null,
-      "lastEmailBackupStatus": {
-        "lastSentDate": null,
-        "lastSentTime": null,
-        "lastAuthFailedDate": "2026-10-03"
-      }
+      "resetExpiresAt": null
     },
     {
       "name": "كابتن أحمد سامي",

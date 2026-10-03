@@ -15,7 +15,12 @@
       "subscriptionPaid": true,
       "updatedAt": "2026-09-27T17:32:56.564Z",
       "resetCode": null,
-      "resetExpiresAt": null
+      "resetExpiresAt": null,
+      "lastEmailBackupStatus": {
+        "lastSentDate": null,
+        "lastSentTime": null,
+        "lastAuthFailedDate": "2026-10-03"
+      }
     },
     {
       "name": "كابتن أحمد سامي",
@@ -204,6 +209,18 @@
       "ownerId": "6ab959f9a0992fdb8db3cc42",
       "name": "دوجو الكوميتيه للأبطال",
       "createdAt": "2026-09-27T18:01:29.068Z"
+    },
+    {
+      "_id": "6ac0a0a38d7039a71234f266",
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "صالة الكاتا الرئيسية",
+      "createdAt": "2026-10-03T06:28:51.132Z"
+    },
+    {
+      "_id": "6ac0a0a38d7039a71234f267",
+      "ownerId": "6aa1d2acc20ba8a6e482c3a3",
+      "name": "دوجو الكوميتيه للأبطال",
+      "createdAt": "2026-10-03T06:28:51.132Z"
     }
   ],
   "players": [

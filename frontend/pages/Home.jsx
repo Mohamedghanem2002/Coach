@@ -1815,8 +1815,8 @@ export default function Home() {
         </div>
 
         {/* ━━━ Executive Workspace Navigation Bar (على الديسكتوب فقط) ━━━ */}
-        <div className="hidden md:flex items-center justify-between gap-4 border-b border-slate-200/80 pb-4 mb-6">
-          <div className="workspace-tabs-container">
+        <div className="hidden md:flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3.5 mb-5">
+          <div className="workspace-tabs-container shadow-2xs">
             <button
               type="button"
               onClick={() => {
@@ -1825,9 +1825,9 @@ export default function Home() {
               }}
               className={`workspace-tab-btn cursor-pointer ${activeView === "players" ? "active" : ""}`}
             >
-              <Users className="h-4 w-4" />
-              <span>الأبطال والتحضير</span>
-              <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[11px] font-black text-slate-700">
+              <Users className="h-4 w-4 text-red-600" />
+              <span>قائمة الأبطال والتحضير</span>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-black ${activeView === "players" ? "bg-red-100 text-red-800" : "bg-slate-200/80 text-slate-700"}`}>
                 {players.length}
               </span>
             </button>
@@ -1839,7 +1839,7 @@ export default function Home() {
               }}
               className={`workspace-tab-btn cursor-pointer ${activeView === "finances" ? "active" : ""}`}
             >
-              <CreditCard className="h-4 w-4" />
+              <CreditCard className="h-4 w-4 text-sky-600" />
               <span>المركز المالي والتقارير</span>
               {totalPendingPaymentCount > 0 && (
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-black text-amber-800">
@@ -1855,7 +1855,7 @@ export default function Home() {
               }}
               className={`workspace-tab-btn cursor-pointer ${activeView === "branches" ? "active" : ""}`}
             >
-              <Building2 className="h-4 w-4" />
+              <Building2 className="h-4 w-4 text-emerald-600" />
               <span>الصالات ومراكز التدريب</span>
               <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-black text-slate-700">
                 {branches.length}
@@ -1869,7 +1869,7 @@ export default function Home() {
               }}
               className={`workspace-tab-btn cursor-pointer ${activeView === "events" ? "active" : ""}`}
             >
-              <Compass className="h-4 w-4" />
+              <Compass className="h-4 w-4 text-purple-600" />
               <span>الفعاليات والبطولات</span>
               {events.length > 0 && (
                 <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-black text-sky-700">
@@ -1885,7 +1885,7 @@ export default function Home() {
               }}
               className={`workspace-tab-btn cursor-pointer ${activeView === "birthdays" ? "active" : ""}`}
             >
-              <Cake className="h-4 w-4" />
+              <Cake className="h-4 w-4 text-rose-600" />
               <span>تذكار أعياد الميلاد</span>
               {todayBirthdaysCount > 0 && (
                 <span className="rounded-full bg-red-600 text-white px-2 py-0.5 text-[11px] font-black animate-pulse">
@@ -1898,38 +1898,8 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleInstantCloudBackup}
-              disabled={isCloudBackingUp || isBackingUp || isRestoring}
-              title="حفظ نسخة سحابية فورية بضغطة واحدة لحسابك (دون الحاجة لكلمات مرور)"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-black text-emerald-900 shadow-xs cursor-pointer active-press transition"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-              <span>{isCloudBackingUp ? "جار الحفظ السحابي..." : "نسخ سحابي (Gmail)"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowRestoreModal(true)}
-              disabled={isRestoring || isBackingUp || isCloudBackingUp}
-              title="استعادة اللاعبين والبيانات سحابياً بضغطة واحدة أو من ملف"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-xs font-bold text-amber-900 shadow-xs cursor-pointer active-press transition"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-amber-600" />
-              <span>{isRestoring ? "جار الاستعادة..." : "استعادة نسخة"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleDownloadBackup}
-              disabled={isBackingUp || isRestoring}
-              title="تنزيل نسخة احتياطية محلية إلى ملف على جهازك (JSON)"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs cursor-pointer active-press transition"
-            >
-              <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
-              <span>{isBackingUp ? "جار النسخ..." : "نسخ محلي"}</span>
-            </button>
-            <button
-              type="button"
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm shadow-red-600/20 cursor-pointer active-press transition"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-xs font-black text-white shadow-xs shadow-red-600/20 cursor-pointer active-press transition"
             >
               <Plus className="h-4 w-4 stroke-[3]" />
               <span>تسجيل لاعب جديد</span>
@@ -2387,14 +2357,14 @@ export default function Home() {
               </button>
             )}
           </div>
-          <div className="mt-4 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/60 md:bg-white md:shadow-md">
-            <div className="hidden grid-cols-[minmax(240px,2.2fr)_75px_110px_160px_minmax(240px,2.2fr)_48px] xl:grid-cols-[minmax(280px,2.5fr)_85px_130px_180px_minmax(280px,2.5fr)_52px] gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3.5 font-cairo text-xs font-extrabold text-slate-400 md:grid">
-              <span>اللاعب</span>
+          <div className="mt-3 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/80 md:bg-white md:shadow-xs">
+            <div className="hidden grid-cols-[minmax(280px,2.4fr)_85px_130px_180px_minmax(270px,2.4fr)_48px] items-center gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3 font-cairo text-xs font-black text-slate-500 md:grid">
+              <span>اللاعب والبيانات</span>
               <span>العمر</span>
-              <span>الفرع</span>
-              <span>تسجيل الحضور</span>
+              <span>الصالة</span>
+              <span className="text-center">تسجيل الحضور اليوم</span>
               <span>الاشتراك والمشتريات</span>
-              <span></span>
+              <span className="text-center">خيارات</span>
             </div>
 
             {loading ? (

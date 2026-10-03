@@ -490,7 +490,7 @@ function PlayerRow({
       </div>
 
       {/* ════════════════════ DESKTOP TABLE ROW (>= md) ════════════════════ */}
-      <div className={`group relative hidden min-w-0 md:grid md:grid-cols-[minmax(240px,2.2fr)_75px_110px_160px_minmax(240px,2.2fr)_48px] xl:grid-cols-[minmax(280px,2.5fr)_85px_130px_180px_minmax(280px,2.5fr)_52px] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3.5 md:hover:bg-slate-50/60 transition-all duration-200 ${isSelected ? "md:bg-red-50/30"
+      <div className={`group relative hidden min-w-0 md:grid md:grid-cols-[minmax(280px,2.4fr)_85px_130px_180px_minmax(270px,2.4fr)_48px] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3 md:hover:bg-slate-50/70 transition-all duration-200 ${isSelected ? "md:bg-red-50/30"
           : birthdayInfo?.isToday ? "bg-rose-50/20"
             : birthdayInfo?.daysLeft === 1 ? "bg-amber-50/15"
               : isNew ? "bg-emerald-50/10"
