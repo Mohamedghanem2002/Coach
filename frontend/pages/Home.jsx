@@ -74,21 +74,51 @@ import DashboardHero from "../components/dashboard/DashboardHero";
 import SystemFeaturesModal from "../components/dashboard/SystemFeaturesModal";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
+const DASHBOARD_CACHE_KEY = "coachmaster_dashboard_cache_v2";
+
+function getInitialCachedDashboard() {
+  if (typeof window === "undefined") return { players: [], branches: [], events: [], hasCache: false };
+  try {
+    const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        const cachedPlayers = Array.isArray(parsed.players)
+          ? parsed.players.map((p) => normalizePlayer(p))
+          : [];
+        const cachedBranches = Array.isArray(parsed.branches) ? parsed.branches : [];
+        const cachedEvents = Array.isArray(parsed.events) ? parsed.events : [];
+        if (cachedPlayers.length > 0 || cachedBranches.length > 0) {
+          return {
+            players: cachedPlayers,
+            branches: cachedBranches,
+            events: cachedEvents,
+            hasCache: true,
+          };
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Failed reading cached dashboard:", err);
+  }
+  return { players: [], branches: [], events: [], hasCache: false };
+}
 
 export default function Home() {
   const router = useRouter();
   const { data: session, status: sessionStatus, update: updateSession } = useSession();
+  const [cachedInitial] = useState(() => getInitialCachedDashboard());
   const [localCoachName, setLocalCoachName] = useState(null);
   const [localAcademyName, setLocalAcademyName] = useState(null);
   const captainName = localCoachName || session?.user?.name || "كابتن";
   const academyName = localAcademyName || session?.user?.academyName || "CoachMaster";
-  const [players, setPlayers] = useState([]);
-  const [branches, setBranches] = useState([]);
+  const [players, setPlayers] = useState(cachedInitial.players);
+  const [branches, setBranches] = useState(cachedInitial.branches);
   const [branch, setBranch] = useState("كل الصالات");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedInitial.hasCache);
   const [toast, setToast] = useState(null);
   const [showBranches, setShowBranches] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -115,13 +145,31 @@ export default function Home() {
   const [subscriptionInactive, setSubscriptionInactive] = useState(null);
 
   // Events management state
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState(cachedInitial.events);
   const [activeView, setActiveView] = useState("players"); // "players" | "events"
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [addParticipantsEvent, setAddParticipantsEvent] = useState(null);
   const [paymentParticipantData, setPaymentParticipantData] = useState(null);
   const [eventActionBusy, setEventActionBusy] = useState(false);
+
+  // 2. Persist to local cache whenever data updates
+  useEffect(() => {
+    if (players.length === 0 && branches.length === 0 && events.length === 0) return;
+    try {
+      localStorage.setItem(
+        DASHBOARD_CACHE_KEY,
+        JSON.stringify({
+          players,
+          branches,
+          events,
+          savedAt: Date.now(),
+        })
+      );
+    } catch (err) {
+      console.warn("Failed persisting dashboard cache:", err);
+    }
+  }, [players, branches, events]);
 
   useEffect(() => {
     const handleCongratulated = () => setCongratulatedTick((t) => t + 1);
@@ -136,27 +184,65 @@ export default function Home() {
     month: "long",
     year: "numeric",
   }).format(new Date(`${paymentMonth}-01T00:00:00`));
+
+  // 3. Fast Unified Bootstrap Network Fetching
   useEffect(() => {
-    if (sessionStatus === "loading") return;
     if (sessionStatus === "unauthenticated") {
       router.push("/auth/signin");
       return;
     }
     let cancelled = false;
 
-    // Trigger daily background backup check silently
-    fetch("/api/backup/email").catch(() => {});
+    // Defer non-critical background backup check
+    const backupTimer = setTimeout(() => {
+      fetch("/api/backup/email").catch(() => {});
+    }, 10000);
 
-    Promise.all([
-      fetch("/api/players", { cache: "no-store" }),
-      fetch("/api/branches", { cache: "no-store" }),
-      fetch("/api/events", { cache: "no-store" }),
-    ])
-      .then(async ([playersResponse, branchesResponse, eventsResponse]) => {
+    async function loadData() {
+      try {
+        const bootstrapRes = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
+        if (bootstrapRes.status === 401) {
+          router.push("/auth/signin");
+          return;
+        }
+        if (bootstrapRes.status === 403) {
+          const errData = await bootstrapRes.json().catch(() => ({}));
+          if (
+            (errData.code === "SUBSCRIPTION_INACTIVE" ||
+              errData.code === "ACCOUNT_SUSPENDED" ||
+              errData.error === "SUBSCRIPTION_INACTIVE" ||
+              errData.error === "ACCOUNT_SUSPENDED") &&
+            !cancelled
+          ) {
+            setSubscriptionInactive(errData);
+            setLoading(false);
+            return;
+          }
+        }
+
+        if (bootstrapRes.ok) {
+          const data = await bootstrapRes.json();
+          if (!cancelled && data?.success) {
+            setPlayers(Array.isArray(data.players) ? data.players.map((p) => normalizePlayer(p)) : []);
+            setBranches(Array.isArray(data.branches) ? data.branches : []);
+            setEvents(Array.isArray(data.events) ? data.events : []);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Fallback to individual endpoints if bootstrap endpoint is unavailable
+        const [playersResponse, branchesResponse, eventsResponse] = await Promise.all([
+          fetch("/api/players", { cache: "no-store" }),
+          fetch("/api/branches", { cache: "no-store" }),
+          fetch("/api/events", { cache: "no-store" }),
+        ]);
+
         if (playersResponse.status === 401 || branchesResponse.status === 401) {
           router.push("/auth/signin");
           return;
         }
+
         if (playersResponse.status === 403 || branchesResponse.status === 403 || eventsResponse.status === 403) {
           const pErr = await playersResponse.json().catch(() => ({}));
           const bErr = await branchesResponse.json().catch(() => ({}));
@@ -175,37 +261,37 @@ export default function Home() {
             return;
           }
         }
-        if (!playersResponse.ok || !branchesResponse.ok) {
-          console.error("Initial fetch failed:", {
-            playersStatus: playersResponse.status,
-            branchesStatus: branchesResponse.status,
-            eventsStatus: eventsResponse.status,
-          });
-          throw new Error("Failed to fetch initial data");
+
+        if (playersResponse.ok && branchesResponse.ok) {
+          const [playersData, branchesData, eventsData] = await Promise.all([
+            playersResponse.json(),
+            branchesResponse.json(),
+            eventsResponse.ok ? eventsResponse.json() : [],
+          ]);
+          if (!cancelled) {
+            setPlayers(Array.isArray(playersData) ? playersData.map((p) => normalizePlayer(p)) : []);
+            setBranches(Array.isArray(branchesData) ? branchesData : []);
+            setEvents(Array.isArray(eventsData) ? eventsData : []);
+          }
         }
-        const [playersData, branchesData, eventsData] = await Promise.all([
-          playersResponse.json(),
-          branchesResponse.json(),
-          eventsResponse.ok ? eventsResponse.json() : [],
-        ]);
-        if (!cancelled) {
-          setPlayers(Array.isArray(playersData) ? playersData.map((p) => normalizePlayer(p)) : []);
-          setBranches(Array.isArray(branchesData) ? branchesData : []);
-          setEvents(Array.isArray(eventsData) ? eventsData : []);
-        }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Data loading error:", err);
-        if (!cancelled)
+        if (!cancelled && players.length === 0) {
           setNotice("تعذر تحميل البيانات. تأكد من اتصال MongoDB.");
-      })
-      .finally(() => {
+        }
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    }
+
+    loadData();
+
     return () => {
       cancelled = true;
+      clearTimeout(backupTimer);
     };
   }, [router, sessionStatus]);
+
   function showToast(message, type = "success") {
     if (!message) {
       setToast(null);
@@ -399,6 +485,16 @@ export default function Home() {
 
   async function reloadAllData() {
     try {
+      const res = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.success) {
+          setPlayers(Array.isArray(data.players) ? data.players.map((p) => normalizePlayer(p)) : []);
+          setBranches(Array.isArray(data.branches) ? data.branches : []);
+          setEvents(Array.isArray(data.events) ? data.events : []);
+          return;
+        }
+      }
       const [pRes, bRes, eRes] = await Promise.all([
         fetch("/api/players", { cache: "no-store" }),
         fetch("/api/branches", { cache: "no-store" }),
@@ -1058,8 +1154,8 @@ export default function Home() {
     );
   }
 
-  // Zero-flicker server auth protection
-  if (sessionStatus === "loading") {
+  // Zero-flicker server auth protection (only shown on initial cold start without cache)
+  if (sessionStatus === "loading" && loading && players.length === 0) {
     return (
       <div
         className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-white"
@@ -1076,7 +1172,7 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2 mt-2.5">
               <span className="h-4 w-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
               <p className="text-xs font-semibold text-slate-400">
-                جاري التحقق من الحساب والاتصال بالمنظومة...
+                جاري تحميل لوحة التحكم...
               </p>
             </div>
           </div>

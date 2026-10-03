@@ -3,6 +3,18 @@ import { ObjectId } from "mongodb";
 import { auth } from "./auth";
 import clientPromise from "./mongodb";
 
+// In-memory cache for fast tenant resolution (reduces MongoDB lookups to 0ms for rapid API calls)
+const tenantCache = new Map();
+const TENANT_CACHE_TTL = 3000; // 3 seconds
+
+export function clearTenantCache(userIdOrEmail) {
+  if (!userIdOrEmail) {
+    tenantCache.clear();
+    return;
+  }
+  tenantCache.delete(String(userIdOrEmail).toLowerCase());
+}
+
 export async function currentUserId() {
   const session = await auth();
   if (!session?.user) return null;
@@ -43,6 +55,12 @@ export async function requireActiveTenant() {
     };
   }
 
+  const cacheKey = (session.user.id || session.user.email || "").toLowerCase().trim();
+  const cached = tenantCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < TENANT_CACHE_TTL) {
+    return cached.result;
+  }
+
   const client = await clientPromise;
   const users = client.db(process.env.MONGODB_DB).collection("users");
 
@@ -78,12 +96,14 @@ export async function requireActiveTenant() {
 
   // Admin users are exempt from academy subscription restrictions
   if (user.role === "admin" || email === adminEmail) {
-    return {
+    const adminResult = {
       allowed: true,
       ownerId,
       user,
       isAdmin: true,
     };
+    tenantCache.set(cacheKey, { timestamp: Date.now(), result: adminResult });
+    return adminResult;
   }
 
   // 1. Check if captain account is suspended or disabled by administrator
@@ -162,10 +182,12 @@ export async function requireActiveTenant() {
     }
   }
 
-  return {
+  const tenantResult = {
     allowed: true,
     ownerId,
     user,
     isAdmin: false,
   };
+  tenantCache.set(cacheKey, { timestamp: Date.now(), result: tenantResult });
+  return tenantResult;
 }
