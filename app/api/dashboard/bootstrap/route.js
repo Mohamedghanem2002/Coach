@@ -209,6 +209,21 @@ export async function GET() {
       players,
       branches,
       events,
+      user: {
+        id: ownerId,
+        name: tenant.user?.name,
+        academyName: tenant.user?.academyName,
+        subscriptionPlan: tenant.user?.subscriptionPlan || "trial",
+        subscriptionExpiresAt: tenant.user?.subscriptionExpiresAt || null,
+        subscriptionStartedAt: tenant.user?.subscriptionStartedAt || tenant.user?.createdAt || null,
+        subscriptionStatus: tenant.user?.subscriptionStatus || tenant.user?.status || "active",
+        subscriptionPaid: tenant.user?.subscriptionPaid !== false,
+        subscriptionPaidAmount: Number(tenant.user?.subscriptionPaidAmount || 0),
+        subscriptionRemainingAmount: Number(tenant.user?.subscriptionRemainingAmount || 0),
+        subscriptionTotalAmount: Number(tenant.user?.subscriptionTotalAmount || 0),
+        subscriptionPaymentStatus: tenant.user?.subscriptionPaymentStatus || (tenant.user?.subscriptionPaid ? "paid" : "unpaid"),
+        updatedAt: tenant.user?.updatedAt || tenant.user?.subscriptionUpdatedAt || null,
+      },
     });
   } catch (error) {
     console.error("GET /api/dashboard/bootstrap failed:", error);

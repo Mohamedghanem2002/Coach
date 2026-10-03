@@ -36,6 +36,8 @@ export default function Header({
   isCloudBackingUp = false,
   isRestoring = false,
   isBackingUp = false,
+  hasUnreadPlanUpdate = false,
+  hasUnreadGuide = false,
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -99,23 +101,23 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 glass-nav border-b border-slate-200/80" dir="rtl">
-      <div className="mx-auto flex min-h-[56px] sm:min-h-[64px] w-full max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-2">
+      <div className="mx-auto flex min-h-[54px] sm:min-h-[64px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 py-1.5 sm:py-2">
 
         {/* Brand */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink min-w-0">
-          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm ring-2 ring-red-100">
+        <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
+          <div className="relative flex h-8.5 w-8.5 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white shadow-xs ring-2 ring-red-100">
             <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-white stroke-white" />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2 sm:h-3 sm:w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+              <span className="relative inline-flex h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
             </span>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <strong className="font-cairo text-base sm:text-lg font-black tracking-tight text-slate-900 truncate max-w-[150px] sm:max-w-[240px]">
+              <strong className="font-cairo text-sm sm:text-lg font-black tracking-tight text-slate-900 truncate max-w-[130px] sm:max-w-[240px]">
                 {academyName}
               </strong>
-              <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 text-[9px] font-black text-red-600 shrink-0">
+              <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.2 text-[9px] font-black text-red-600 shrink-0">
                 PRO
               </span>
             </div>
@@ -125,9 +127,8 @@ export default function Header({
               <span className="text-slate-300">•</span>
               <span className="font-black text-red-600">منصة CoachMaster</span>
             </p>
-            <p className="sm:hidden text-[11px] font-bold text-slate-600 leading-tight truncate">
-              أهلاً يا كابتن{" "}
-              <span className="font-extrabold text-red-600">{firstName}</span>
+            <p className="sm:hidden text-[10.5px] font-bold text-slate-500 leading-tight truncate">
+              كابتن <span className="font-extrabold text-slate-800">{firstName}</span>
             </p>
           </div>
         </div>
@@ -144,23 +145,53 @@ export default function Header({
           </p>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Actions Bar (Uncluttered on Mobile & Desktop) */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
-          {/* System features guide for Captain */}
+          {/* 1. System features guide for Captain */}
           {onOpenFeatures && (
-            <button
-              type="button"
-              onClick={onOpenFeatures}
-              className="flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 px-2.5 sm:px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
-              title="دليل ومميزات المنصة للكابتن"
-            >
-              <Sparkles className="h-4 w-4 text-amber-600" />
-              <span className="hidden md:inline font-cairo">دليل المنصة</span>
-            </button>
+            <>
+              {/* Desktop Features Button */}
+              <button
+                type="button"
+                onClick={onOpenFeatures}
+                className="relative hidden sm:flex h-10 items-center gap-1.5 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
+                title="دليل ومميزات المنصة للكابتن"
+              >
+                <Sparkles className="h-4 w-4 text-amber-600" />
+                <span className="font-cairo">دليل المنصة</span>
+                {hasUnreadGuide && (
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce">
+                    1
+                  </span>
+                )}
+                {hasUnreadGuide && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                  </span>
+                )}
+              </button>
+
+              {/* Mobile Features Icon Button */}
+              <button
+                type="button"
+                id="mobile-guide-btn"
+                onClick={onOpenFeatures}
+                className="relative flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-amber-200/90 bg-gradient-to-b from-amber-50 to-orange-50 text-amber-900 shadow-2xs hover:bg-amber-100 active-press transition cursor-pointer touch-manipulation"
+                title="دليل ومميزات المنصة"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                {hasUnreadGuide && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce ring-1.5 ring-white">
+                    1
+                  </span>
+                )}
+              </button>
+            </>
           )}
 
-          {/* Events navigation button on desktop */}
+          {/* 2. Events navigation button on desktop */}
           <button
             type="button"
             onClick={onToggleEventsView}
@@ -180,12 +211,12 @@ export default function Header({
             )}
           </button>
 
-          {/* Birthday button */}
+          {/* 3. Birthday button */}
           <div className="relative" ref={menuRef}>
             <button
               type="button"
               id="birthday-menu-btn"
-              className={`relative flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border px-2.5 sm:px-3 text-xs font-black transition-all duration-200 cursor-pointer touch-manipulation active:scale-95 ${showBirthdayMenu || currentView === "birthdays"
+              className={`relative flex h-8.5 sm:h-10 items-center justify-center sm:justify-start gap-1.5 rounded-xl border px-2 sm:px-3 text-xs font-black transition-all duration-200 cursor-pointer touch-manipulation active:scale-95 ${showBirthdayMenu || currentView === "birthdays"
                   ? "border-rose-500 bg-rose-600 text-white shadow-sm shadow-rose-500/20"
                   : todayBirthdays.length > 0
                     ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 hover:shadow-md animate-pulse-glow"
@@ -200,16 +231,16 @@ export default function Header({
               }}
               title="تذكار أعياد ميلاد اللاعبين"
             >
-              <Cake className="h-4 w-4" />
+              <Cake className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden md:inline font-cairo">أعياد الميلاد</span>
 
               {todayBirthdays.length > 0 ? (
-                <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-black shadow-xs ${showBirthdayMenu || currentView === "birthdays" ? "bg-white text-rose-600" : "bg-rose-600 text-white"
+                <span className={`flex h-4 min-w-[16px] sm:h-5 sm:min-w-[20px] items-center justify-center rounded-full px-1 text-[9px] sm:text-[10px] font-black shadow-xs ${showBirthdayMenu || currentView === "birthdays" ? "bg-white text-rose-600" : "bg-rose-600 text-white"
                   }`}>
                   {todayBirthdays.length}
                 </span>
               ) : upcomingBirthdays.length > 0 ? (
-                <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-black shadow-xs ${showBirthdayMenu || currentView === "birthdays" ? "bg-white text-amber-800" : "bg-amber-500 text-white"
+                <span className={`flex h-4 min-w-[16px] sm:h-5 sm:min-w-[20px] items-center justify-center rounded-full px-1 text-[9px] sm:text-[10px] font-black shadow-xs ${showBirthdayMenu || currentView === "birthdays" ? "bg-white text-amber-800" : "bg-amber-500 text-white"
                   }`}>
                   {upcomingBirthdays.length}
                 </span>
@@ -405,15 +436,13 @@ export default function Header({
             )}
           </div>
 
-
-
-          {/* User avatar & settings button (Desktop) */}
+          {/* 4. User avatar & settings button (Desktop) */}
           <button
             type="button"
             onClick={onOpenAccountSettings}
-            className="group hidden items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 hover:border-slate-300 px-2.5 py-1.5 shadow-xs md:flex transition-all cursor-pointer"
+            className="relative group hidden items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 hover:border-slate-300 px-2.5 py-1.5 shadow-xs md:flex transition-all cursor-pointer"
             dir="ltr"
-            title="إعدادات الحساب وتعديل اسم الأكاديمية والكابتن"
+            title="إعدادات الحساب وتفاصيل خطة الاشتراك"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-xs font-black text-white shadow-xs ring-2 ring-slate-100 group-hover:scale-105 transition-transform">
               {initials}
@@ -427,29 +456,39 @@ export default function Header({
               </span>
             </div>
             <Settings className="h-3.5 w-3.5 text-slate-400 group-hover:text-red-600 transition-colors ml-0.5" />
+            {hasUnreadPlanUpdate && (
+              <span className="absolute -top-1 -left-1 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce ring-2 ring-white">
+                1
+              </span>
+            )}
           </button>
 
-          {/* Settings Icon Button (Mobile Only) */}
+          {/* 4. Settings Icon Button (Mobile Only) */}
           <button
             type="button"
             id="mobile-settings-btn"
             onClick={onOpenAccountSettings}
-            className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 active-press transition cursor-pointer touch-manipulation"
+            className="relative flex md:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 active-press transition cursor-pointer touch-manipulation"
             title="إعدادات الحساب والأكاديمية"
           >
             <Settings className="h-4 w-4 text-slate-700" />
+            {hasUnreadPlanUpdate && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce ring-1.5 ring-white">
+                1
+              </span>
+            )}
           </button>
 
-          {/* Sign Out Button (Visible on Both Desktop & Mobile) */}
+          {/* 5. Sign Out Button (Visible on Both Desktop & Mobile) */}
           <button
             type="button"
             id="signout-btn"
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50/70 hover:bg-red-600 hover:border-red-600 text-red-600 hover:text-white px-2.5 sm:px-3 h-9 sm:h-10 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-md hover:shadow-red-500/20 active-press cursor-pointer touch-manipulation"
+            className="flex items-center justify-center rounded-xl border border-red-200 bg-red-50/70 hover:bg-red-600 hover:border-red-600 text-red-600 hover:text-white h-8.5 w-8.5 sm:w-auto sm:px-3 sm:h-10 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-md hover:shadow-red-500/20 active-press cursor-pointer touch-manipulation"
             onClick={handleSignOut}
             title="تسجيل الخروج من النظام"
           >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">خروج</span>
+            <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline mr-1">خروج</span>
           </button>
         </div>
       </div>

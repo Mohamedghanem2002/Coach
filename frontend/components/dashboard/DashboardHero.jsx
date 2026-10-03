@@ -51,6 +51,7 @@ export default function DashboardHero({
   onOpenFinances,
   onFilterStatus,
   onOpenFeatures,
+  hasUnreadGuide = false,
 }) {
   const today = localDate();
   const firstName = (captainName || "").split(" ")[0] || "كابتن";
@@ -184,11 +185,16 @@ export default function DashboardHero({
               <button
                 type="button"
                 onClick={onOpenFeatures}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-300/90 bg-amber-50/70 hover:bg-amber-100 text-amber-900 text-xs font-black shadow-2xs active-press transition cursor-pointer"
+                className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-300/90 bg-amber-50/70 hover:bg-amber-100 text-amber-900 text-xs font-black shadow-2xs active-press transition cursor-pointer"
                 title="دليل ومميزات المنصة للكابتن"
               >
                 <Sparkles className="h-3.5 w-3.5 text-amber-600" />
                 <span>دليل المنصة ✨</span>
+                {hasUnreadGuide && (
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce">
+                    1
+                  </span>
+                )}
               </button>
             )}
           </div>

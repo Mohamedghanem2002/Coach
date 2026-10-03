@@ -114,6 +114,54 @@ export default function Home() {
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [showFeaturesModal, setShowFeaturesModal] = useState(false);
   const [subscriptionInactive, setSubscriptionInactive] = useState(null);
+  const [accountUser, setAccountUser] = useState(null);
+  const [hasUnreadPlanUpdate, setHasUnreadPlanUpdate] = useState(false);
+  const [hasUnreadGuide, setHasUnreadGuide] = useState(false);
+
+  // Check if platform guide has been read
+  useEffect(() => {
+    try {
+      const guideRead = localStorage.getItem("coachmaster_features_guide_read_v1");
+      if (!guideRead) {
+        setHasUnreadGuide(true);
+      }
+    } catch (_) {}
+  }, []);
+
+  // Check if admin updated the captain's plan or subscription
+  useEffect(() => {
+    if (!accountUser) return;
+    try {
+      const currentSubFingerprint = `${accountUser.subscriptionPlan}_${accountUser.subscriptionExpiresAt}_${accountUser.subscriptionStatus}_${accountUser.subscriptionPaidAmount}_${accountUser.subscriptionRemainingAmount}_${accountUser.subscriptionTotalAmount}_${accountUser.subscriptionPaymentStatus}_${accountUser.updatedAt}`;
+      const lastSeenFingerprint = localStorage.getItem("coachmaster_last_seen_sub_fingerprint");
+      if (lastSeenFingerprint) {
+        if (lastSeenFingerprint !== currentSubFingerprint) {
+          setHasUnreadPlanUpdate(true);
+        }
+      } else {
+        localStorage.setItem("coachmaster_last_seen_sub_fingerprint", currentSubFingerprint);
+      }
+    } catch (_) {}
+  }, [accountUser]);
+
+  const handleOpenAccountSettings = () => {
+    setShowAccountSettings(true);
+    if (accountUser) {
+      try {
+        const currentSubFingerprint = `${accountUser.subscriptionPlan}_${accountUser.subscriptionExpiresAt}_${accountUser.subscriptionStatus}_${accountUser.subscriptionPaidAmount}_${accountUser.subscriptionRemainingAmount}_${accountUser.subscriptionTotalAmount}_${accountUser.subscriptionPaymentStatus}_${accountUser.updatedAt}`;
+        localStorage.setItem("coachmaster_last_seen_sub_fingerprint", currentSubFingerprint);
+      } catch (_) {}
+    }
+    setHasUnreadPlanUpdate(false);
+  };
+
+  const handleOpenFeatures = () => {
+    setShowFeaturesModal(true);
+    try {
+      localStorage.setItem("coachmaster_features_guide_read_v1", "true");
+    } catch (_) {}
+    setHasUnreadGuide(false);
+  };
 
   // Events management state
   const [events, setEvents] = useState([]);
@@ -221,6 +269,11 @@ export default function Home() {
             setPlayers(Array.isArray(data.players) ? data.players.map((p) => normalizePlayer(p)) : []);
             setBranches(Array.isArray(data.branches) ? data.branches : []);
             setEvents(Array.isArray(data.events) ? data.events : []);
+            if (data.user) {
+              if (data.user.name) setLocalCoachName(data.user.name);
+              if (data.user.academyName) setLocalAcademyName(data.user.academyName);
+              setAccountUser(data.user);
+            }
             setLoading(false);
             return;
           }
@@ -1197,14 +1250,16 @@ export default function Home() {
           setMobileTab("birthdays");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
-        onOpenAccountSettings={() => setShowAccountSettings(true)}
-        onOpenFeatures={() => setShowFeaturesModal(true)}
+        onOpenAccountSettings={handleOpenAccountSettings}
+        onOpenFeatures={handleOpenFeatures}
         onInstantCloudBackup={handleInstantCloudBackup}
         onRestore={() => setShowRestoreModal(true)}
         onDownloadBackup={handleDownloadBackup}
         isCloudBackingUp={isCloudBackingUp}
         isRestoring={isRestoring}
         isBackingUp={isBackingUp}
+        hasUnreadPlanUpdate={hasUnreadPlanUpdate}
+        hasUnreadGuide={hasUnreadGuide}
       />
 
       <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-3.5 pb-28 sm:py-6 overflow-x-hidden">
@@ -1264,7 +1319,8 @@ export default function Home() {
                 setMobileTab("stats");
               }}
               onFilterStatus={(status) => setStatusFilter(status)}
-              onOpenFeatures={() => setShowFeaturesModal(true)}
+              onOpenFeatures={handleOpenFeatures}
+              hasUnreadGuide={hasUnreadGuide}
             />
           </div>
         )}
@@ -2617,6 +2673,7 @@ export default function Home() {
             if (updatedUser) {
               if (updatedUser.name) setLocalCoachName(updatedUser.name);
               if (updatedUser.academyName) setLocalAcademyName(updatedUser.academyName);
+              setAccountUser(updatedUser);
               if (typeof updateSession === "function") {
                 updateSession(updatedUser);
               }
