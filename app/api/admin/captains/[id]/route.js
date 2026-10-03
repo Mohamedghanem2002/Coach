@@ -482,6 +482,30 @@ export async function PATCH(request, context) {
       successMessage = `تم تحديث خطة الاشتراك إلى: ${plan}.`;
     }
 
+    // 6. Reset Captain Password by Administrator
+    else if (action === "reset_password" || action === "change_password") {
+      const newPassword = typeof body.password === "string" ? body.password.trim() : "";
+      if (!newPassword || newPassword.length < 8) {
+        return NextResponse.json(
+          { error: "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل" },
+          { status: 400 }
+        );
+      }
+      const bcrypt = (await import("bcryptjs")).default;
+      updateFields.passwordHash = await bcrypt.hash(newPassword, 12);
+      updateFields.resetCode = null;
+      updateFields.resetToken = null;
+      updateFields.resetExpiresAt = null;
+
+      auditAction = "admin_reset_captain_password";
+      auditDetails = {
+        captainName: user.name,
+        captainEmail: user.email,
+        resetByAdmin: adminCheck.admin.email,
+      };
+      successMessage = `تم تعيين كلمة المرور الجديدة للكابتن "${user.name}" بنجاح.`;
+    }
+
     else {
       return NextResponse.json(
         { error: `الإجراء المطلوب (${action}) غير معروف` },

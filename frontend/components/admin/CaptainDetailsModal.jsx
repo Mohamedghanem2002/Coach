@@ -26,6 +26,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Award,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Lock,
 } from "lucide-react";
 
 function WhatsAppIcon({ className = "w-4 h-4" }) {
@@ -62,6 +66,13 @@ export default function CaptainDetailsModal({
   const [paidAmountInput, setPaidAmountInput] = useState("");
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState(null);
+
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [passwordNotice, setPasswordNotice] = useState(null);
 
   useEffect(() => {
     if (!isOpen || !captainId) return;
@@ -170,6 +181,62 @@ export default function CaptainDetailsModal({
       });
     } finally {
       setSavingPayment(false);
+    }
+  };
+
+  const handleGenerateRandomPassword = () => {
+    const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$";
+    let generated = "";
+    for (let i = 0; i < 10; i++) {
+      generated += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPasswordInput(generated);
+    setConfirmPasswordInput(generated);
+    setShowPasswordInput(true);
+    setPasswordNotice(null);
+  };
+
+  const handleAdminResetPassword = async () => {
+    if (!captain) return;
+    if (!newPasswordInput || newPasswordInput.length < 8) {
+      setPasswordNotice({
+        type: "error",
+        message: "كلمة المرور يجب أن تتكون من 8 أحرف/أرقام على الأقل",
+      });
+      return;
+    }
+    if (newPasswordInput !== confirmPasswordInput) {
+      setPasswordNotice({
+        type: "error",
+        message: "كلمتا المرور غير متطابقتين",
+      });
+      return;
+    }
+    setResettingPassword(true);
+    setPasswordNotice(null);
+    try {
+      const res = await fetch(`/api/admin/captains/${captain.id || captain._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "reset_password",
+          password: newPasswordInput,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "فشل تعيين كلمة المرور");
+
+      setPasswordNotice({
+        type: "success",
+        message: result.message || "تم تعيين كلمة مرور جديدة للكابتن بنجاح! يمكنه الدخول بها فوراً.",
+      });
+    } catch (err) {
+      setPasswordNotice({
+        type: "error",
+        message: err.message || "تعذر إعادة تعيين كلمة المرور",
+      });
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -957,6 +1024,184 @@ export default function CaptainDetailsModal({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Security & Password Management Card */}
+              <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                      <KeyRound className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900">
+                        أمان الحساب وكلمة المرور
+                      </h3>
+                      <span className="text-[11px] text-slate-400 font-bold">
+                        تعيين كلمة مرور جديدة للكابتن في حال نسيانها
+                      </span>
+                    </div>
+                  </div>
+
+                  {!captain.isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsResettingPassword((prev) => !prev);
+                        setPasswordNotice(null);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 hover:bg-slate-200/80 text-slate-700 cursor-pointer shadow-2xs active:scale-95"
+                    >
+                      <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{isResettingPassword ? "إلغاء ✕" : "تغيير كلمة المرور 🔑"}</span>
+                    </button>
+                  )}
+                </div>
+
+                {isResettingPassword ? (
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 animate-slide-up">
+                    <div className="flex items-center justify-between flex-wrap gap-2 text-xs font-black text-slate-800 pb-1.5 border-b border-slate-200/60">
+                      <span>تعيين كلمة مرور جديدة للكابتن {captain.name}:</span>
+                      <button
+                        type="button"
+                        onClick={handleGenerateRandomPassword}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700 bg-white px-2.5 py-1 rounded-lg border border-red-200 shadow-2xs cursor-pointer"
+                      >
+                        <Sparkles className="w-3 h-3 text-red-500" />
+                        <span>توليد كلمة سر عشوائية قوية</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-extrabold text-slate-700 mb-1">
+                          كلمة المرور الجديدة <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswordInput ? "text" : "password"}
+                            minLength={8}
+                            value={newPasswordInput}
+                            onChange={(e) => setNewPasswordInput(e.target.value)}
+                            placeholder="8 أحرف أو أرقام على الأقل"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs sm:text-sm font-bold font-mono outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                            dir="ltr"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordInput((p) => !p)}
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                          >
+                            {showPasswordInput ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-extrabold text-slate-700 mb-1">
+                          تأكيد كلمة المرور <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPasswordInput ? "text" : "password"}
+                            minLength={8}
+                            value={confirmPasswordInput}
+                            onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                            placeholder="إعادة إدخال نفس الكلمة"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs sm:text-sm font-bold font-mono outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                            dir="ltr"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordInput((p) => !p)}
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                          >
+                            {showPasswordInput ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Password Feedback */}
+                    {passwordNotice && (
+                      <div
+                        className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 animate-slide-up ${
+                          passwordNotice.type === "success"
+                            ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                            : "bg-rose-50 border border-rose-200 text-rose-800"
+                        }`}
+                      >
+                        {passwordNotice.type === "success" ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                        )}
+                        <span>{passwordNotice.message}</span>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleAdminResetPassword}
+                        disabled={resettingPassword || !newPasswordInput}
+                        className="flex-1 min-w-[140px] py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black transition cursor-pointer shadow-xs disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        {resettingPassword ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            <span>جاري الحفظ والتشفير...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-3.5 h-3.5 text-amber-400" />
+                            <span>تأكيد وحفظ كلمة المرور الجديدة</span>
+                          </>
+                        )}
+                      </button>
+
+                      {newPasswordInput && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(newPasswordInput, "newPassword")}
+                          className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                        >
+                          {copiedKey === "newPassword" ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>تم النسخ ✓</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5 text-slate-400" />
+                              <span>نسخ كلمة السر</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {newPasswordInput && captain.phone && (
+                        <a
+                          href={`https://wa.me/${waPhone}?text=${encodeURIComponent(
+                            `مرحباً كابتن ${captain.name}،\nتم تعيين كلمة مرور جديدة لحسابك في منصة CoachMaster:\nالبريد: ${captain.email}\nكلمة المرور الجديدة: ${newPasswordInput}\n\nيمكنك تسجيل الدخول الآن وتغييرها من حسابك.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                        >
+                          <WhatsAppIcon className="w-3.5 h-3.5" />
+                          <span>إرسال للكابتن واتساب</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-bold">حالة كلمة المرور:</span>
+                    <span className="text-slate-700 font-semibold font-mono">•••••••••••• (مشفرة بأمان)</span>
+                  </div>
+                )}
               </div>
 
               {/* Danger Zone: Delete Permanently */}
