@@ -47,6 +47,7 @@ import {
   Sparkles,
   FileText,
   Zap,
+  FileSpreadsheet,
 } from "lucide-react";
 
 import BranchManager from "../components/dashboard/BranchManager";
@@ -1375,6 +1376,38 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* شريط الإجراءات والخدمات السريعة للموبايل (Mobile Primary Actions & Cloud Hub) */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* 1. زر تصدير إكسيل بارز للموبايل */}
+                <button
+                  type="button"
+                  id="mobile-main-excel-btn"
+                  onClick={() => handleOpenExportExcel("players")}
+                  className="flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black shadow-xs shadow-emerald-600/20 active-press transition cursor-pointer touch-manipulation"
+                  title="تصدير كشف اللاعبين والفعاليات إلى Excel"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-white shrink-0" />
+                  <span className="truncate">تصدير إكسيل 📊</span>
+                </button>
+
+                {/* 2. زر دليل المنصة للموبايل */}
+                <button
+                  type="button"
+                  id="mobile-main-guide-btn"
+                  onClick={handleOpenFeatures}
+                  className="relative flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 border border-amber-300 text-amber-950 text-xs font-black shadow-2xs active-press transition cursor-pointer touch-manipulation"
+                  title="دليل ومميزات المنصة للكابتن"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span className="truncate">دليل المنصة ✨</span>
+                  {hasUnreadGuide && (
+                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce">
+                      1
+                    </span>
+                  )}
+                </button>
+              </div>
+
               {/* شريط أدوات النسخ الاحتياطي السحابي والاستعادة للموبايل (Mobile Cloud Backup & Restore Toolbar) */}
               <div className="grid grid-cols-3 gap-1.5">
                 <button
@@ -1382,10 +1415,10 @@ export default function Home() {
                   id="mobile-cloud-backup-btn"
                   onClick={handleInstantCloudBackup}
                   disabled={isCloudBackingUp || isBackingUp || isRestoring}
-                  className="flex items-center justify-center gap-1.5 h-10 px-2 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-300 text-emerald-900 text-xs font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 h-9 px-1.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-300 text-emerald-900 text-[11px] font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
                   title="حفظ نسخة سحابية فورية بحسابك (Gmail)"
                 >
-                  <Sparkles className={`h-3.5 w-3.5 text-emerald-600 shrink-0 ${isCloudBackingUp ? "animate-spin" : ""}`} />
+                  <Sparkles className={`h-3 w-3 text-emerald-600 shrink-0 ${isCloudBackingUp ? "animate-spin" : ""}`} />
                   <span className="truncate">{isCloudBackingUp ? "جارٍ..." : "نسخ سحابي ☁️"}</span>
                 </button>
 
@@ -1394,10 +1427,10 @@ export default function Home() {
                   id="mobile-restore-btn"
                   onClick={() => setShowRestoreModal(true)}
                   disabled={isRestoring || isBackingUp || isCloudBackingUp}
-                  className="flex items-center justify-center gap-1.5 h-10 px-2 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border border-amber-300 text-amber-950 text-xs font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 h-9 px-1.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border border-amber-300 text-amber-950 text-[11px] font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
                   title="استعادة البيانات من نسخة سحابية أو ملف"
                 >
-                  <RotateCcw className={`h-3.5 w-3.5 text-amber-600 shrink-0 ${isRestoring ? "animate-spin" : ""}`} />
+                  <RotateCcw className={`h-3 w-3 text-amber-600 shrink-0 ${isRestoring ? "animate-spin" : ""}`} />
                   <span className="truncate">{isRestoring ? "جارٍ..." : "استعادة نسخة 🔄"}</span>
                 </button>
 
@@ -1406,10 +1439,10 @@ export default function Home() {
                   id="mobile-local-backup-btn"
                   onClick={handleDownloadBackup}
                   disabled={isBackingUp || isRestoring}
-                  className="flex items-center justify-center gap-1.5 h-10 px-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 text-xs font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 h-9 px-1.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 text-[11px] font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
                   title="تنزيل نسخة احتياطية محلية بصيغة JSON على جهازك"
                 >
-                  <ShieldCheck className={`h-3.5 w-3.5 text-blue-600 shrink-0 ${isBackingUp ? "animate-spin" : ""}`} />
+                  <ShieldCheck className={`h-3 w-3 text-blue-600 shrink-0 ${isBackingUp ? "animate-spin" : ""}`} />
                   <span className="truncate">{isBackingUp ? "جارٍ..." : "نسخ محلي 💾"}</span>
                 </button>
               </div>
