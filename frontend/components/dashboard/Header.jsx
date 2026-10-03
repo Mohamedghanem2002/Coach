@@ -119,9 +119,11 @@ export default function Header({
                 PRO
               </span>
             </div>
-            {/* Subtitle / Captain greeting */}
-            <p className="hidden sm:block text-[11px] font-semibold text-slate-500 leading-tight">
-              إدارة أكاديمية الكاراتيه
+            {/* Subtitle / Platform Name */}
+            <p className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 leading-tight">
+              <span>إدارة أكاديمية الكاراتيه</span>
+              <span className="text-slate-300">•</span>
+              <span className="font-black text-red-600">منصة CoachMaster</span>
             </p>
             <p className="sm:hidden text-[11px] font-bold text-slate-600 leading-tight truncate">
               أهلاً يا كابتن{" "}

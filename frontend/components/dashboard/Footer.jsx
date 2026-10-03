@@ -143,14 +143,20 @@ export default function Footer({ academyName = "CoachMaster" } = {}) {
           </div>
         </div>
 
-        {/* ━━━ السطر الثاني: هوية الأكاديمية والمطور ━━━ */}
+        {/* ━━━ السطر الثاني: هوية المنصة والمطور ━━━ */}
         <div className="pt-2 border-t border-slate-200/60 flex flex-wrap items-center justify-center sm:justify-between gap-2 text-xs text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <span className="font-cairo font-black text-slate-800">
-              {academyName || "CoachMaster"}
+          <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+            <span className="font-cairo font-black text-slate-900 bg-red-50 border border-red-200/80 text-red-700 px-2 py-0.5 rounded-lg text-xs">
+              منصة CoachMaster 🥋
             </span>
             <span className="text-slate-300">•</span>
-            <span>نظام إدارة أكاديمية الكاراتيه 🥋</span>
+            <span>نظام إدارة وتدريب أكاديميات الكاراتيه</span>
+            {academyName && academyName !== "CoachMaster" && (
+              <>
+                <span className="text-slate-300">•</span>
+                <span className="font-bold text-slate-700">{academyName}</span>
+              </>
+            )}
           </div>
 
           <div className="text-xs">
