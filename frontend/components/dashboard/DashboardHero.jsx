@@ -18,6 +18,7 @@ import {
   ArrowUpRight,
   TrendingUp,
   Zap,
+  FileSpreadsheet,
 } from "lucide-react";
 import { localDate, isBranchWorkingDate } from "../../lib/dashboard-utils";
 import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
@@ -51,6 +52,7 @@ export default function DashboardHero({
   onOpenFinances,
   onFilterStatus,
   onOpenFeatures,
+  onOpenExportExcel,
   hasUnreadGuide = false,
 }) {
   const today = localDate();
@@ -154,6 +156,18 @@ export default function DashboardHero({
               <FileText className="h-3.5 w-3.5 text-red-600" />
               <span>تقرير الحضور 📋</span>
             </button>
+
+            {onOpenExportExcel && (
+              <button
+                type="button"
+                onClick={() => onOpenExportExcel("players")}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200/90 bg-emerald-50/70 hover:bg-emerald-100 text-emerald-800 text-xs font-black active-press transition cursor-pointer"
+                title="تصدير بيانات اللاعبين والفعاليات إلى Excel"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                <span>تصدير إكسيل 📊</span>
+              </button>
+            )}
 
             <button
               type="button"

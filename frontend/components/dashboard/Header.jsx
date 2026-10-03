@@ -14,6 +14,7 @@ import {
   User,
   Zap,
   Sparkles,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -33,6 +34,7 @@ export default function Header({
   onInstantCloudBackup,
   onRestore,
   onDownloadBackup,
+  onOpenExportExcel,
   isCloudBackingUp = false,
   isRestoring = false,
   isBackingUp = false,
@@ -191,7 +193,35 @@ export default function Header({
             </>
           )}
 
-          {/* 2. Events navigation button on desktop */}
+          {/* 2. Excel Export Button */}
+          {onOpenExportExcel && (
+            <>
+              {/* Desktop Excel Button */}
+              <button
+                type="button"
+                id="desktop-excel-btn"
+                onClick={() => onOpenExportExcel("players")}
+                className="hidden sm:flex h-10 items-center gap-1.5 rounded-xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50 to-teal-50 hover:bg-emerald-100 text-emerald-900 px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
+                title="تصدير بيانات الأكاديمية والفعاليات إلى Excel"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                <span className="font-cairo">تصدير إكسيل</span>
+              </button>
+
+              {/* Mobile Excel Button */}
+              <button
+                type="button"
+                id="mobile-excel-btn"
+                onClick={() => onOpenExportExcel("players")}
+                className="flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-emerald-200/90 bg-gradient-to-b from-emerald-50 to-teal-50 text-emerald-800 shadow-2xs hover:bg-emerald-100 active-press transition cursor-pointer touch-manipulation"
+                title="تصدير إكسيل"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+              </button>
+            </>
+          )}
+
+          {/* 3. Events navigation button on desktop */}
           <button
             type="button"
             onClick={onToggleEventsView}

@@ -72,6 +72,7 @@ import AccountSettingsModal from "../components/dashboard/AccountSettingsModal";
 import SubscriptionSuspended from "../components/SubscriptionSuspended";
 import DashboardHero from "../components/dashboard/DashboardHero";
 import SystemFeaturesModal from "../components/dashboard/SystemFeaturesModal";
+import ExportExcelModal from "../components/dashboard/ExportExcelModal";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 const DASHBOARD_CACHE_KEY = "coachmaster_dashboard_cache_v2";
@@ -117,6 +118,15 @@ export default function Home() {
   const [accountUser, setAccountUser] = useState(null);
   const [hasUnreadPlanUpdate, setHasUnreadPlanUpdate] = useState(false);
   const [hasUnreadGuide, setHasUnreadGuide] = useState(false);
+  const [showExportExcelModal, setShowExportExcelModal] = useState(false);
+  const [exportInitialTab, setExportInitialTab] = useState("players");
+  const [exportInitialEventId, setExportInitialEventId] = useState(null);
+
+  const handleOpenExportExcel = (tab = "players", eventId = null) => {
+    setExportInitialTab(tab);
+    setExportInitialEventId(eventId);
+    setShowExportExcelModal(true);
+  };
 
   // Check if platform guide has been read
   useEffect(() => {
@@ -1257,6 +1267,7 @@ export default function Home() {
         onInstantCloudBackup={handleInstantCloudBackup}
         onRestore={() => setShowRestoreModal(true)}
         onDownloadBackup={handleDownloadBackup}
+        onOpenExportExcel={handleOpenExportExcel}
         isCloudBackingUp={isCloudBackingUp}
         isRestoring={isRestoring}
         isBackingUp={isBackingUp}
@@ -1322,6 +1333,7 @@ export default function Home() {
               }}
               onFilterStatus={(status) => setStatusFilter(status)}
               onOpenFeatures={handleOpenFeatures}
+              onOpenExportExcel={handleOpenExportExcel}
               hasUnreadGuide={hasUnreadGuide}
             />
           </div>
@@ -1850,6 +1862,8 @@ export default function Home() {
                 events={events}
                 players={players}
                 branches={branches}
+                academyName={academyName}
+                captainName={captainName}
                 onOpenCreateEvent={() => {
                   setEditingEvent(null);
                   setShowAddEventModal(true);
@@ -1866,6 +1880,7 @@ export default function Home() {
                 onUpdateAttendance={handleUpdateParticipantAttendance}
                 onRemoveParticipant={handleRemoveParticipant}
                 onBulkPayment={handleBulkParticipantPayment}
+                onOpenExportExcel={handleOpenExportExcel}
                 showToast={showToast}
               />
             </div>
@@ -2019,6 +2034,8 @@ export default function Home() {
               events={events}
               players={players}
               branches={branches}
+              academyName={academyName}
+              captainName={captainName}
               onOpenCreateEvent={() => {
                 setEditingEvent(null);
                 setShowAddEventModal(true);
@@ -2035,6 +2052,7 @@ export default function Home() {
               onUpdateAttendance={handleUpdateParticipantAttendance}
               onRemoveParticipant={handleRemoveParticipant}
               onBulkPayment={handleBulkParticipantPayment}
+              onOpenExportExcel={handleOpenExportExcel}
               showToast={showToast}
             />
           </div>
@@ -2688,6 +2706,22 @@ export default function Home() {
         <SystemFeaturesModal
           isOpen={showFeaturesModal}
           onClose={() => setShowFeaturesModal(false)}
+        />
+      )}
+
+      {showExportExcelModal && (
+        <ExportExcelModal
+          isOpen={showExportExcelModal}
+          onClose={() => setShowExportExcelModal(false)}
+          players={players}
+          events={events}
+          branches={branches}
+          paymentMonth={paymentMonth}
+          academyName={academyName}
+          captainName={captainName}
+          initialTab={exportInitialTab}
+          initialEventId={exportInitialEventId}
+          showToast={showToast}
         />
       )}
       {/* ━━━ Global Fixed Toast Notification Overlay ━━━

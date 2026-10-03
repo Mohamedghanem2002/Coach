@@ -33,6 +33,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { BELT_HEX, formatWhatsAppPhone, openWhatsAppDirect } from "../../lib/dashboard-utils";
+import { exportEventToExcel } from "../../lib/excel-export-utils";
 
 const TYPE_CONFIG = {
   trip: {
@@ -99,6 +100,8 @@ export default function EventsView({
   events = [],
   players = [],
   branches = [],
+  academyName = "CoachMaster",
+  captainName = "كابتن",
   onOpenCreateEvent,
   onOpenEditEvent,
   onDeleteEvent,
@@ -107,6 +110,7 @@ export default function EventsView({
   onUpdateAttendance,
   onRemoveParticipant,
   onBulkPayment,
+  onOpenExportExcel,
   showToast = () => {},
 }) {
   // Selected event scope: "all" = all events combined, or specific event _id
@@ -235,61 +239,17 @@ export default function EventsView({
       showToast("لا يوجد مشتركون لتصديرهم في هذا الحدث", "error");
       return;
     }
-
-    const headers = [
-      "م",
-      "اسم اللاعب",
-      "الصالة",
-      "الحزام",
-      "رقم ولي الأمر",
-      "هاتف اللاعب",
-      "قيمة الاشتراك",
-      "المبلغ المدفوع",
-      "المبلغ المتبقي",
-      "حالة السداد",
-      "حضور الفعالية",
-      "ملاحظات",
-    ];
-
-    const rows = event.participants.map((p, idx) => {
-      const total = Number(p.totalAmount ?? event.fee ?? 100);
-      const paid = Number(p.paidAmount ?? 0);
-      const remaining = Math.max(0, total - paid);
-      const statusText =
-        p.paymentStatus === "paid"
-          ? "مدفوع بالكامل"
-          : p.paymentStatus === "partially_paid"
-          ? "دفع جزئي"
-          : "لم يدفع";
-
-      return [
-        idx + 1,
-        `"${p.name || ""}"`,
-        `"${p.branch || ""}"`,
-        `"${p.belt || ""}"`,
-        `"${p.parentPhone || ""}"`,
-        `"${p.phone || ""}"`,
-        total,
-        paid,
-        remaining,
-        `"${statusText}"`,
-        p.attended ? "حاضر" : "غائب",
-        `"${p.notes || ""}"`,
-      ];
-    });
-
-    const csvContent =
-      "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `كشف_مشتركي_${event.title.replace(/\s+/g, "_")}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast(`تم تصدير كشف مشتركي (${event.title}) بنجاح.`);
+    try {
+      exportEventToExcel({
+        event,
+        academyName,
+        captainName,
+      });
+      showToast(`تم تصدير كشف مشتركي (${event.title}) إلى ملف Excel (.xlsx) بنجاح.`);
+    } catch (err) {
+      console.error("Export error:", err);
+      showToast("حدث خطأ أثناء تصدير ملف Excel", "error");
+    }
   }
 
   function handleShareWhatsAppReport(event) {
@@ -403,20 +363,34 @@ ${remaining > 0 ? `⏳ المبلغ المتبقي: *${remaining} ج.م*` : "�
               </div>
             </div>
 
-            {selectedEvent && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedEventId("all");
-                  setSelectedParticipants([]);
-                  setParticipantSearch("");
-                }}
-                className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-black transition active-press cursor-pointer shadow-2xs"
-                title="التبديل إلى حسابات وعرض كافة الفعاليات"
-              >
-                <span>🌐 عرض إجمالي جميع الفعاليات</span>
-              </button>
-            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              {onOpenExportExcel && (
+                <button
+                  type="button"
+                  onClick={() => onOpenExportExcel("events", selectedEvent?._id || null)}
+                  className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-black transition active-press cursor-pointer shadow-2xs"
+                  title="تصدير بيانات الفعاليات والمشتركين إلى Excel"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>تصدير إكسيل</span>
+                </button>
+              )}
+
+              {selectedEvent && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedEventId("all");
+                    setSelectedParticipants([]);
+                    setParticipantSearch("");
+                  }}
+                  className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-black transition active-press cursor-pointer shadow-2xs"
+                  title="التبديل إلى حسابات وعرض كافة الفعاليات"
+                >
+                  <span>🌐 عرض إجمالي جميع الفعاليات</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Mobile-Friendly Accessible Event Selector */}
