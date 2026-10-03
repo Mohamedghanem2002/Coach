@@ -76,49 +76,20 @@ const today = localDate();
 const currentMonth = today.slice(0, 7);
 const DASHBOARD_CACHE_KEY = "coachmaster_dashboard_cache_v2";
 
-function getInitialCachedDashboard() {
-  if (typeof window === "undefined") return { players: [], branches: [], events: [], hasCache: false };
-  try {
-    const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") {
-        const cachedPlayers = Array.isArray(parsed.players)
-          ? parsed.players.map((p) => normalizePlayer(p))
-          : [];
-        const cachedBranches = Array.isArray(parsed.branches) ? parsed.branches : [];
-        const cachedEvents = Array.isArray(parsed.events) ? parsed.events : [];
-        if (cachedPlayers.length > 0 || cachedBranches.length > 0) {
-          return {
-            players: cachedPlayers,
-            branches: cachedBranches,
-            events: cachedEvents,
-            hasCache: true,
-          };
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("Failed reading cached dashboard:", err);
-  }
-  return { players: [], branches: [], events: [], hasCache: false };
-}
-
 export default function Home() {
   const router = useRouter();
   const { data: session, status: sessionStatus, update: updateSession } = useSession();
-  const [cachedInitial] = useState(() => getInitialCachedDashboard());
   const [localCoachName, setLocalCoachName] = useState(null);
   const [localAcademyName, setLocalAcademyName] = useState(null);
   const captainName = localCoachName || session?.user?.name || "كابتن";
   const academyName = localAcademyName || session?.user?.academyName || "CoachMaster";
-  const [players, setPlayers] = useState(cachedInitial.players);
-  const [branches, setBranches] = useState(cachedInitial.branches);
+  const [players, setPlayers] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [branch, setBranch] = useState("كل الصالات");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(!cachedInitial.hasCache);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [showBranches, setShowBranches] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -145,7 +116,7 @@ export default function Home() {
   const [subscriptionInactive, setSubscriptionInactive] = useState(null);
 
   // Events management state
-  const [events, setEvents] = useState(cachedInitial.events);
+  const [events, setEvents] = useState([]);
   const [activeView, setActiveView] = useState("players"); // "players" | "events"
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
@@ -199,6 +170,30 @@ export default function Home() {
     }, 10000);
 
     async function loadData() {
+      // 1. Instant 0ms local cache hydration (runs immediately on client after SSR mount)
+      try {
+        const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            const cachedP = Array.isArray(parsed.players)
+              ? parsed.players.map((p) => normalizePlayer(p))
+              : [];
+            const cachedB = Array.isArray(parsed.branches) ? parsed.branches : [];
+            const cachedE = Array.isArray(parsed.events) ? parsed.events : [];
+            if ((cachedP.length > 0 || cachedB.length > 0) && !cancelled) {
+              setPlayers(cachedP);
+              setBranches(cachedB);
+              setEvents(cachedE);
+              setLoading(false);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Cached dashboard read warning:", err);
+      }
+
+      // 2. Network bootstrap fetch
       try {
         const bootstrapRes = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
         if (bootstrapRes.status === 401) {
