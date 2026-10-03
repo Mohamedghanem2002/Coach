@@ -1275,13 +1275,20 @@ textarea:focus-visible {
   padding: 4px;
   border-radius: var(--radius-lg);
   border: 1px solid rgba(226, 232, 240, 0.8);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: 100%;
+}
+.workspace-tabs-container::-webkit-scrollbar {
+  display: none;
 }
 
 .workspace-tab-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 7px 12px;
   border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 700;
@@ -1289,6 +1296,13 @@ textarea:focus-visible {
   transition: var(--transition-base);
   white-space: nowrap;
   user-select: none;
+  flex-shrink: 0;
+}
+@media (min-width: 1280px) {
+  .workspace-tab-btn {
+    gap: 8px;
+    padding: 8px 16px;
+  }
 }
 .workspace-tab-btn:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.6); }
 .workspace-tab-btn.active {

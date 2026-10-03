@@ -589,7 +589,7 @@ export default function Header({
         {/* ═══════════════════════════════════════════════════════════════════
             الجزء السفلي (BOTTOM ROW): باقي العناصر (تمت إزالة اللاعبين والفعاليات)
             ═══════════════════════════════════════════════════════════════════ */}
-        <div className="flex min-h-[44px] py-1.5 items-center justify-between gap-2 overflow-x-auto scrollbar-none">
+        <div className="flex min-h-[44px] py-1.5 items-center justify-between gap-2 relative overflow-visible">
           
           {/* الجانب الأيمن: تصدير إكسيل وأعياد الميلاد */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
