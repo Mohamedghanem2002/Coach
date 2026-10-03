@@ -2,19 +2,18 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   Cake,
   CalendarDays,
-  ChevronRight,
   Compass,
   LogOut,
-  MessageCircle,
   Settings,
-  User,
   Zap,
   Sparkles,
   FileSpreadsheet,
+  Cloud,
+  RotateCcw,
+  ChevronDown,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -44,7 +43,9 @@ export default function Header({
   const { data: session } = useSession();
   const router = useRouter();
   const [showBirthdayMenu, setShowBirthdayMenu] = useState(false);
+  const [showToolsMenu, setShowToolsMenu] = useState(false);
   const menuRef = useRef(null);
+  const toolsMenuRef = useRef(null);
 
   const todayFormatted = new Intl.DateTimeFormat("ar-EG", {
     weekday: "long",
@@ -56,7 +57,6 @@ export default function Header({
   const fullName = session?.user?.name || "حساب الأكاديمية";
   const academyName = session?.user?.academyName || "CoachMaster";
   const firstName = fullName.split(" ")[0] || "كابتن";
-  const email = session?.user?.email || "";
   const initials = firstName.charAt(0);
   const [congratulateTick, setCongratulateTick] = useState(0);
 
@@ -71,10 +71,12 @@ export default function Header({
     void congratulateTick;
     return getTodayBirthdays(players);
   }, [players, congratulateTick]);
+
   const upcomingBirthdays = useMemo(() => {
     void congratulateTick;
     return getUpcomingBirthdays(players, 1);
   }, [players, congratulateTick]);
+
   const totalBirthdayCount = todayBirthdays.length + upcomingBirthdays.length;
 
   useEffect(() => {
@@ -82,14 +84,17 @@ export default function Header({
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setShowBirthdayMenu(false);
       }
+      if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target)) {
+        setShowToolsMenu(false);
+      }
     }
-    if (showBirthdayMenu) {
+    if (showBirthdayMenu || showToolsMenu) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showBirthdayMenu]);
+  }, [showBirthdayMenu, showToolsMenu]);
 
   const handleSignOut = async () => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -103,40 +108,42 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 glass-nav border-b border-slate-200/80" dir="rtl">
-      <div className="mx-auto flex min-h-[54px] sm:min-h-[64px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 py-1.5 sm:py-2">
+      <div className="mx-auto flex min-h-[56px] sm:min-h-[64px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 py-1.5 sm:py-2">
 
-        {/* Brand */}
+        {/* ━━━ Right Brand Section ━━━ */}
         <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
-          <div className="relative flex h-8.5 w-8.5 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white shadow-xs ring-2 ring-red-100">
+          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-xs ring-2 ring-red-100">
             <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-white stroke-white" />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2 sm:h-3 sm:w-3">
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+              <span className="relative inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
             </span>
           </div>
+
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <strong className="font-cairo text-sm sm:text-lg font-black tracking-tight text-slate-900 truncate max-w-[130px] sm:max-w-[240px]">
+              <strong className="font-cairo text-sm sm:text-base lg:text-lg font-black tracking-tight text-slate-900 truncate max-w-[125px] sm:max-w-[200px] lg:max-w-[260px]">
                 {academyName}
               </strong>
               <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.2 text-[9px] font-black text-red-600 shrink-0">
                 PRO
               </span>
             </div>
-            {/* Subtitle / Platform Name */}
-            <p className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 leading-tight">
+            {/* Desktop Brand Subtitle */}
+            <p className="hidden md:flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 leading-tight">
               <span>إدارة أكاديمية الكاراتيه</span>
               <span className="text-slate-300">•</span>
               <span className="font-black text-red-600">منصة CoachMaster</span>
             </p>
-            <p className="sm:hidden text-[10.5px] font-bold text-slate-500 leading-tight truncate">
+            {/* Mobile Captain Greeting */}
+            <p className="md:hidden text-[10.5px] font-bold text-slate-500 leading-tight truncate">
               كابتن <span className="font-extrabold text-slate-800">{firstName}</span>
             </p>
           </div>
         </div>
 
-        {/* Center Pill: Date & Captain Greeting on Desktop */}
-        <div className="hidden sm:flex flex-col items-center">
+        {/* ━━━ Center Greeting Pill (Visible only on Large Screens >= lg) ━━━ */}
+        <div className="hidden lg:flex flex-col items-center shrink-0">
           <div className="flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/90 px-3.5 py-1 text-[11px] font-bold text-slate-600 shadow-2xs">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
             {todayFormatted}
@@ -147,113 +154,85 @@ export default function Header({
           </p>
         </div>
 
-        {/* Actions Bar (Uncluttered on Mobile & Desktop) */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        {/* ━━━ Left Actions Bar (Clean, Grouped & Responsive) ━━━ */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
 
-          {/* 1. System features guide for Captain */}
+          {/* 1. Large Screens Direct Buttons (>= xl / 1280px) */}
+          {/* 1.1 Features Guide Button */}
           {onOpenFeatures && (
-            <>
-              {/* Desktop Features Button */}
-              <button
-                type="button"
-                onClick={onOpenFeatures}
-                className="relative hidden sm:flex h-10 items-center gap-1.5 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
-                title="دليل ومميزات المنصة للكابتن"
-              >
-                <Sparkles className="h-4 w-4 text-amber-600" />
-                <span className="font-cairo">دليل المنصة</span>
-                {hasUnreadGuide && (
-                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce">
-                    1
-                  </span>
-                )}
-                {hasUnreadGuide && (
-                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
-                  </span>
-                )}
-              </button>
-
-              {/* Mobile Features Icon Button */}
-              <button
-                type="button"
-                id="mobile-guide-btn"
-                onClick={onOpenFeatures}
-                className="relative flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-amber-200/90 bg-gradient-to-b from-amber-50 to-orange-50 text-amber-900 shadow-2xs hover:bg-amber-100 active-press transition cursor-pointer touch-manipulation"
-                title="دليل ومميزات المنصة"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                {hasUnreadGuide && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce ring-1.5 ring-white">
-                    1
-                  </span>
-                )}
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={onOpenFeatures}
+              className="relative hidden xl:flex h-10 items-center gap-1.5 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
+              title="دليل ومميزات المنصة للكابتن"
+            >
+              <Sparkles className="h-4 w-4 text-amber-600" />
+              <span className="font-cairo">دليل المنصة</span>
+              {hasUnreadGuide && (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce">
+                  1
+                </span>
+              )}
+            </button>
           )}
 
-          {/* 2. Excel Export Button */}
+          {/* 1.2 Excel Export Button */}
           {onOpenExportExcel && (
-            <>
-              {/* Desktop Excel Button */}
-              <button
-                type="button"
-                id="desktop-excel-btn"
-                onClick={() => onOpenExportExcel("players")}
-                className="hidden sm:flex h-10 items-center gap-1.5 rounded-xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50 to-teal-50 hover:bg-emerald-100 text-emerald-900 px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
-                title="تصدير بيانات الأكاديمية والفعاليات إلى Excel"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                <span className="font-cairo">تصدير إكسيل</span>
-              </button>
-
-              {/* Mobile Excel Button */}
-              <button
-                type="button"
-                id="mobile-excel-btn"
-                onClick={() => onOpenExportExcel("players")}
-                className="flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-emerald-200/90 bg-gradient-to-b from-emerald-50 to-teal-50 text-emerald-800 shadow-2xs hover:bg-emerald-100 active-press transition cursor-pointer touch-manipulation"
-                title="تصدير إكسيل"
-              >
-                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => onOpenExportExcel("players")}
+              className="hidden xl:flex h-10 items-center gap-1.5 rounded-xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50 to-teal-50 hover:bg-emerald-100 text-emerald-900 px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
+              title="تصدير بيانات الأكاديمية والفعاليات إلى Excel"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              <span className="font-cairo">تصدير إكسيل</span>
+            </button>
           )}
 
-          {/* 3. Events navigation button on desktop */}
+          {/* 2. Events Navigation Button (Desktop >= sm) */}
           <button
             type="button"
             onClick={onToggleEventsView}
-            className={`hidden sm:flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer ${currentView === "events"
+            className={`hidden sm:flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer ${
+              currentView === "events"
                 ? "border-red-500 bg-red-600 text-white shadow-sm shadow-red-500/20"
                 : "border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white shadow-xs"
-              }`}
+            }`}
             title="إدارة الفعاليات والرحلات"
           >
             <Compass className="h-4 w-4" />
-            <span className="font-cairo">الفعاليات والرحلات</span>
+            <span className="font-cairo">الفعاليات</span>
             {eventsCount > 0 && (
-              <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-black ${currentView === "events" ? "bg-white text-red-600" : "bg-amber-100 text-amber-800"
-                }`}>
+              <span
+                className={`flex h-4.5 min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-black ${
+                  currentView === "events"
+                    ? "bg-white text-red-600"
+                    : "bg-amber-100 text-amber-800"
+                }`}
+              >
                 {eventsCount}
               </span>
             )}
           </button>
 
-          {/* 3. Birthday button */}
+          {/* 3. Birthday Button & Dropdown */}
           <div className="relative" ref={menuRef}>
             <button
               type="button"
               id="birthday-menu-btn"
-              className={`relative flex h-8.5 sm:h-10 items-center justify-center sm:justify-start gap-1.5 rounded-xl border px-2 sm:px-3 text-xs font-black transition-all duration-200 cursor-pointer touch-manipulation active:scale-95 ${showBirthdayMenu || currentView === "birthdays"
+              className={`relative flex h-9 w-9 sm:w-auto sm:h-10 items-center justify-center sm:justify-start gap-1.5 rounded-xl border px-2 sm:px-3 text-xs font-black transition-all duration-200 cursor-pointer touch-manipulation active:scale-95 ${
+                showBirthdayMenu || currentView === "birthdays"
                   ? "border-rose-500 bg-rose-600 text-white shadow-sm shadow-rose-500/20"
                   : todayBirthdays.length > 0
-                    ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 hover:shadow-md animate-pulse-glow"
-                    : "border-slate-200/80 bg-white/80 text-slate-600 hover:border-slate-300 hover:bg-white shadow-xs"
-                }`}
+                  ? "border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-700 shadow-sm shadow-rose-500/15 hover:border-rose-400 hover:shadow-md animate-pulse-glow"
+                  : "border-slate-200/80 bg-white/80 text-slate-600 hover:border-slate-300 hover:bg-white shadow-xs"
+              }`}
               onClick={() => {
-                if (typeof window !== "undefined" && window.innerWidth < 768 && onNavigateToBirthdays) {
+                if (
+                  typeof window !== "undefined" &&
+                  window.innerWidth < 768 &&
+                  onNavigateToBirthdays
+                ) {
                   onNavigateToBirthdays();
                 } else {
                   setShowBirthdayMenu((prev) => !prev);
@@ -261,45 +240,53 @@ export default function Header({
               }}
               title="تذكار أعياد ميلاد اللاعبين"
             >
-              <Cake className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Cake className="h-4 w-4" />
               <span className="hidden md:inline font-cairo">أعياد الميلاد</span>
 
               {todayBirthdays.length > 0 ? (
-                <span className={`flex h-4 min-w-[16px] sm:h-5 sm:min-w-[20px] items-center justify-center rounded-full px-1 text-[9px] sm:text-[10px] font-black shadow-xs ${showBirthdayMenu || currentView === "birthdays" ? "bg-white text-rose-600" : "bg-rose-600 text-white"
-                  }`}>
+                <span
+                  className={`flex h-4 min-w-[16px] sm:h-4.5 sm:min-w-[18px] items-center justify-center rounded-full px-1 text-[9px] sm:text-[10px] font-black shadow-xs ${
+                    showBirthdayMenu || currentView === "birthdays"
+                      ? "bg-white text-rose-600"
+                      : "bg-rose-600 text-white"
+                  }`}
+                >
                   {todayBirthdays.length}
                 </span>
               ) : upcomingBirthdays.length > 0 ? (
-                <span className={`flex h-4 min-w-[16px] sm:h-5 sm:min-w-[20px] items-center justify-center rounded-full px-1 text-[9px] sm:text-[10px] font-black shadow-xs ${showBirthdayMenu || currentView === "birthdays" ? "bg-white text-amber-800" : "bg-amber-500 text-white"
-                  }`}>
+                <span
+                  className={`flex h-4 min-w-[16px] sm:h-4.5 sm:min-w-[18px] items-center justify-center rounded-full px-1 text-[9px] sm:text-[10px] font-black shadow-xs ${
+                    showBirthdayMenu || currentView === "birthdays"
+                      ? "bg-white text-amber-800"
+                      : "bg-amber-500 text-white"
+                  }`}
+                >
                   {upcomingBirthdays.length}
                 </span>
               ) : null}
 
-              {todayBirthdays.length > 0 && !showBirthdayMenu && currentView !== "birthdays" && (
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
-                </span>
-              )}
+              {todayBirthdays.length > 0 &&
+                !showBirthdayMenu &&
+                currentView !== "birthdays" && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
+                  </span>
+                )}
             </button>
 
-            {/* Birthday panel: Bottom sheet on mobile, anchored dropdown on desktop */}
+            {/* Birthday panel */}
             {showBirthdayMenu && (
               <>
-                {/* Mobile backdrop */}
                 <div
-                  className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-xs sm:hidden animate-backdrop"
+                  className="fixed inset-0 z-40 bg-slate-955/50 backdrop-blur-2xs sm:hidden animate-backdrop"
                   onClick={() => setShowBirthdayMenu(false)}
                 />
                 <div
                   className="fixed sm:absolute bottom-0 sm:bottom-auto left-0 sm:left-0 right-0 sm:right-auto sm:top-full sm:mt-2.5 w-full sm:w-96 rounded-t-3xl sm:rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xl z-50 animate-bottom-sheet sm:animate-slide-up pb-safe"
                   dir="rtl"
                 >
-                  {/* Mobile drag handle */}
                   <div className="sheet-drag-handle sm:hidden" />
-
-                  {/* Clean brand top bar on desktop */}
                   <div className="hidden sm:block absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-red-600" />
 
                   <div className="mt-1 flex items-center justify-between border-b border-slate-100 pb-3">
@@ -326,7 +313,6 @@ export default function Header({
                     </div>
                   </div>
 
-
                   <div className="mt-3 max-h-80 overflow-y-auto space-y-2 pr-0.5">
                     {todayBirthdays.length > 0 && (
                       <div>
@@ -348,9 +334,8 @@ export default function Header({
                                   <strong className="block truncate font-cairo text-xs font-black text-slate-900">
                                     {player.name}
                                   </strong>
-                                  <span className="flex items-center gap-1 text-[10px] font-bold text-rose-700">
-                                    <Cake className="h-2.5 w-2.5" />
-                                    {player.birthdayInfo?.turningAge} سنة · {player.branch}
+                                  <span className="block text-[10px] font-bold text-rose-700">
+                                    اليوم 🎉 · {player.birthdayInfo?.turningAge} سنة
                                   </span>
                                 </div>
                               </div>
@@ -361,15 +346,14 @@ export default function Header({
                                     setShowBirthdayMenu(false);
                                     sendBirthdayCardViaWhatsApp(player, firstName);
                                   }}
-                                  className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-[11px] font-black text-white shadow-xs hover:bg-emerald-700 transition-colors cursor-pointer"
-                                  title="إرسال كارت التهنئة الرسمي عبر واتساب"
+                                  className="flex items-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer active-press"
+                                  title="تهنئة واتساب"
                                 >
-                                  <span className="text-xs">🎂</span>
-                                  <span>كارت التهنئة</span>
+                                  <span>🎂 تهنئة</span>
                                 </button>
                                 <button
                                   type="button"
-                                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                                  className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
                                   onClick={() => {
                                     setShowBirthdayMenu(false);
                                     onOpenPlayer?.(player);
@@ -385,7 +369,13 @@ export default function Header({
                     )}
 
                     {upcomingBirthdays.length > 0 && (
-                      <div className={todayBirthdays.length > 0 ? "border-t border-slate-100 pt-2.5 mt-1" : ""}>
+                      <div
+                        className={
+                          todayBirthdays.length > 0
+                            ? "border-t border-slate-100 pt-2.5 mt-1"
+                            : ""
+                        }
+                      >
                         <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-700 mb-2">
                           <CalendarDays className="h-3 w-3" />
                           <span>قادمة غداً ({upcomingBirthdays.length}):</span>
@@ -441,7 +431,9 @@ export default function Header({
                     {totalBirthdayCount === 0 && (
                       <div className="py-8 text-center text-slate-400">
                         <Cake className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-xs font-bold text-slate-600">لا توجد أعياد ميلاد قريبة</p>
+                        <p className="text-xs font-bold text-slate-600">
+                          لا توجد أعياد ميلاد قريبة
+                        </p>
                         <p className="text-[10px] text-slate-400 mt-1">
                           تأكد من تسجيل تواريخ ميلاد اللاعبين.
                         </p>
@@ -466,22 +458,204 @@ export default function Header({
             )}
           </div>
 
-          {/* 4. User avatar & settings button (Desktop) */}
+          {/* 4. Smart Quick Tools Hub (Visible on screens < xl to eliminate clutter, & on Mobile) */}
+          <div className="relative" ref={toolsMenuRef}>
+            <button
+              type="button"
+              id="tools-menu-btn"
+              onClick={() => setShowToolsMenu((prev) => !prev)}
+              className={`relative flex xl:hidden h-9 w-9 sm:w-auto sm:h-10 items-center justify-center sm:justify-start gap-1.5 rounded-xl border px-2 sm:px-3 text-xs font-black transition-all cursor-pointer touch-manipulation active-press ${
+                showToolsMenu
+                  ? "border-slate-800 bg-slate-900 text-white shadow-xs"
+                  : hasUnreadGuide
+                  ? "border-amber-300 bg-amber-50/80 text-amber-900 hover:bg-amber-100"
+                  : "border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white shadow-xs"
+              }`}
+              title="أدوات ومميزات المنصة (إكسيل، الدليل، النسخ السحابي)"
+            >
+              <Sparkles className="h-4 w-4 text-amber-600" />
+              <span className="hidden sm:inline font-cairo">أدوات المنصة</span>
+              <ChevronDown
+                className={`hidden sm:inline h-3.5 w-3.5 text-slate-400 transition-transform ${
+                  showToolsMenu ? "rotate-180" : ""
+                }`}
+              />
+
+              {/* Unread Guide Ping on Tools Button */}
+              {hasUnreadGuide && (
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce ring-1.5 ring-white">
+                  1
+                </span>
+              )}
+            </button>
+
+            {/* Tools Dropdown Panel */}
+            {showToolsMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-2xs sm:hidden animate-backdrop"
+                  onClick={() => setShowToolsMenu(false)}
+                />
+                <div
+                  className="fixed sm:absolute bottom-0 sm:bottom-auto left-0 sm:left-0 right-0 sm:right-auto sm:top-full sm:mt-2.5 w-full sm:w-72 rounded-t-3xl sm:rounded-2xl border border-slate-200/90 bg-white p-3 sm:p-3.5 shadow-2xl z-50 animate-bottom-sheet sm:animate-slide-up pb-safe"
+                  dir="rtl"
+                >
+                  <div className="sheet-drag-handle sm:hidden" />
+
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                    <span className="text-xs font-black text-slate-800 font-cairo flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                      أدوات وعمليات الأكاديمية
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowToolsMenu(false)}
+                      className="sm:hidden flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 text-xs font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="space-y-1">
+                    {/* 1. Excel Export */}
+                    {onOpenExportExcel && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowToolsMenu(false);
+                          onOpenExportExcel("players");
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-emerald-50 text-right text-xs font-black text-slate-800 hover:text-emerald-900 transition-colors cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-lg bg-emerald-100/80 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <FileSpreadsheet className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <strong className="block text-xs font-bold text-slate-900">
+                              تصدير إكسيل (.xlsx)
+                            </strong>
+                            <span className="block text-[10px] text-slate-500 font-normal">
+                              بيانات اللاعبين والفعاليات
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                          Excel
+                        </span>
+                      </button>
+                    )}
+
+                    {/* 2. System Features Guide */}
+                    {onOpenFeatures && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowToolsMenu(false);
+                          onOpenFeatures();
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-amber-50 text-right text-xs font-black text-slate-800 hover:text-amber-900 transition-colors cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-lg bg-amber-100/80 text-amber-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <Sparkles className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <strong className="block text-xs font-bold text-slate-900">
+                              دليل ومميزات المنصة
+                            </strong>
+                            <span className="block text-[10px] text-slate-500 font-normal">
+                              شرح أدوات المنصة للكابتن
+                            </span>
+                          </div>
+                        </div>
+                        {hasUnreadGuide && (
+                          <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce">
+                            جديد
+                          </span>
+                        )}
+                      </button>
+                    )}
+
+                    {/* 3. Instant Cloud Backup */}
+                    {onInstantCloudBackup && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowToolsMenu(false);
+                          onInstantCloudBackup();
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 text-right text-xs font-black text-slate-800 hover:text-blue-900 transition-colors cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-lg bg-blue-100/80 text-blue-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <Cloud className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <strong className="block text-xs font-bold text-slate-900">
+                              نسخ احتياطي سحابي
+                            </strong>
+                            <span className="block text-[10px] text-slate-500 font-normal">
+                              حفظ فوري لقاعدة البيانات
+                            </span>
+                          </div>
+                        </div>
+                        {isCloudBackingUp && (
+                          <span className="text-[10px] font-bold text-blue-600 animate-pulse">
+                            جاري...
+                          </span>
+                        )}
+                      </button>
+                    )}
+
+                    {/* 4. Restore Data */}
+                    {onRestore && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowToolsMenu(false);
+                          onRestore();
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-purple-50 text-right text-xs font-black text-slate-800 hover:text-purple-900 transition-colors cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-lg bg-purple-100/80 text-purple-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <RotateCcw className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <strong className="block text-xs font-bold text-slate-900">
+                              استعادة البيانات
+                            </strong>
+                            <span className="block text-[10px] text-slate-500 font-normal">
+                              استرجاع من ملف احتياطي
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* 5. User Account & Settings */}
+          {/* Desktop User Card (>= md) */}
           <button
             type="button"
             onClick={onOpenAccountSettings}
-            className="relative group hidden items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 hover:border-slate-300 px-2.5 py-1.5 shadow-xs md:flex transition-all cursor-pointer"
+            className="relative group hidden md:flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 hover:border-slate-300 px-2.5 py-1.5 shadow-xs transition-all cursor-pointer"
             dir="ltr"
             title="إعدادات الحساب وتفاصيل خطة الاشتراك"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-xs font-black text-white shadow-xs ring-2 ring-slate-100 group-hover:scale-105 transition-transform">
+            <div className="flex h-7.5 w-7.5 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 text-xs font-black text-white shadow-xs ring-2 ring-slate-100 group-hover:scale-105 transition-transform">
               {initials}
             </div>
             <div className="min-w-0 text-left">
-              <span className="block truncate text-xs font-bold text-slate-800 max-w-[120px]">
+              <span className="block truncate text-xs font-bold text-slate-800 max-w-[90px] lg:max-w-[130px]">
                 {fullName}
               </span>
-              <span className="block truncate text-[10px] text-slate-400 max-w-[120px]">
+              <span className="block truncate text-[10px] text-slate-400 max-w-[90px] lg:max-w-[130px]">
                 {academyName}
               </span>
             </div>
@@ -493,12 +667,12 @@ export default function Header({
             )}
           </button>
 
-          {/* 4. Settings Icon Button (Mobile Only) */}
+          {/* Mobile Settings Icon (< md) */}
           <button
             type="button"
             id="mobile-settings-btn"
             onClick={onOpenAccountSettings}
-            className="relative flex md:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 active-press transition cursor-pointer touch-manipulation"
+            className="relative flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 active-press transition cursor-pointer touch-manipulation"
             title="إعدادات الحساب والأكاديمية"
           >
             <Settings className="h-4 w-4 text-slate-700" />
@@ -509,20 +683,20 @@ export default function Header({
             )}
           </button>
 
-          {/* 5. Sign Out Button (Visible on Both Desktop & Mobile) */}
+          {/* 6. Sign Out Button (All Screens) */}
           <button
             type="button"
             id="signout-btn"
-            className="flex items-center justify-center rounded-xl border border-red-200 bg-red-50/70 hover:bg-red-600 hover:border-red-600 text-red-600 hover:text-white h-8.5 w-8.5 sm:w-auto sm:px-3 sm:h-10 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-md hover:shadow-red-500/20 active-press cursor-pointer touch-manipulation"
+            className="flex items-center justify-center rounded-xl border border-red-200 bg-red-50/70 hover:bg-red-600 hover:border-red-600 text-red-600 hover:text-white h-9 w-9 sm:w-auto sm:px-3 sm:h-10 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-md hover:shadow-red-500/20 active-press cursor-pointer touch-manipulation"
             onClick={handleSignOut}
             title="تسجيل الخروج من النظام"
           >
-            <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline mr-1">خروج</span>
           </button>
+
         </div>
       </div>
-
     </header>
   );
 }
