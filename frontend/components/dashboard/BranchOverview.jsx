@@ -18,6 +18,7 @@ import {
   isBranchSessionEnded,
   getBranchDayEntry,
   formatBranchDays,
+  formatTime12h,
   getDayKeyFromDate,
 } from "../../lib/dashboard-utils";
 
@@ -137,12 +138,14 @@ export default function BranchOverview({
                         {isWorking ? (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            {dayEntry?.from && dayEntry?.to ? `${dayEntry.from} - ${dayEntry.to}` : "موعد تدريب نشط"}
+                            {dayEntry?.from && dayEntry?.to
+                              ? `${formatTime12h(dayEntry.from)} - ${formatTime12h(dayEntry.to)}`
+                              : "موعد تدريب نشط"}
                           </span>
                         ) : tooEarly ? (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80">
                             <Clock className="h-3 w-3 text-amber-500" />
-                            يبدأ {dayEntry?.from}
+                            يبدأ {formatTime12h(dayEntry?.from)}
                           </span>
                         ) : sessionEnded ? (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
@@ -255,7 +258,7 @@ export default function BranchOverview({
                           ? "جاري تسجيل الحضور..."
                           : !isWorking
                           ? tooEarly
-                            ? `يبدأ موعد التدريب الساعة ${dayEntry?.from}`
+                            ? `يبدأ موعد التدريب الساعة ${formatTime12h(dayEntry?.from)}`
                             : sessionEnded
                             ? "انتهت فترة التدريب المحددة لهذه الصالة اليوم"
                             : `اليوم خارج مواعيد عمل الصالة (${formattedDays})`
@@ -276,7 +279,7 @@ export default function BranchOverview({
                           {tooEarly ? (
                             <>
                               <Clock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                              <span>يبدأ {dayEntry?.from}</span>
+                              <span>يبدأ {formatTime12h(dayEntry?.from)}</span>
                             </>
                           ) : sessionEnded ? (
                             <>
@@ -310,7 +313,7 @@ export default function BranchOverview({
                       <Lock className="h-3 w-3 shrink-0 text-slate-400" />
                       <span>
                         {tooEarly
-                          ? `التسجيل يفتح الساعة ${dayEntry?.from}`
+                          ? `التسجيل يفتح الساعة ${formatTime12h(dayEntry?.from)}`
                           : sessionEnded
                           ? "انتهى موعد تدريب الصالة اليوم"
                           : `أيام عمل الصالة: ${formattedDays}`}

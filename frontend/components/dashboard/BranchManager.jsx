@@ -14,7 +14,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import ConfirmDialog from "./ConfirmDialog";
-import { WEEK_DAYS, formatBranchDays, normalizeDayEntry } from "../../lib/dashboard-utils";
+import { WEEK_DAYS, formatBranchDays, formatTime12h, normalizeDayEntry } from "../../lib/dashboard-utils";
 
 export default function BranchManager({
   branches = [],
@@ -399,6 +399,11 @@ export default function BranchManager({
                                   onChange={(e) => updateNewBranchDayTime(entry.day, "from", e.target.value)}
                                   className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
                                 />
+                                {entry.from && (
+                                  <span className="shrink-0 text-[11px] font-black text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                    {formatTime12h(entry.from)}
+                                  </span>
+                                )}
                               </div>
                               <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1">
                                 <span className="text-xs text-slate-500 font-bold">إلى:</span>
@@ -408,6 +413,11 @@ export default function BranchManager({
                                   onChange={(e) => updateNewBranchDayTime(entry.day, "to", e.target.value)}
                                   className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
                                 />
+                                {entry.to && (
+                                  <span className="shrink-0 text-[11px] font-black text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                    {formatTime12h(entry.to)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -640,6 +650,11 @@ export default function BranchManager({
                                             disabled={isSavingThis}
                                             className="w-full bg-transparent font-bold text-slate-800 outline-none"
                                           />
+                                          {entry.from && (
+                                            <span className="shrink-0 text-[11px] font-black text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                              {formatTime12h(entry.from)}
+                                            </span>
+                                          )}
                                         </div>
                                         <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1">
                                           <span className="text-slate-400 font-bold">إلى:</span>
@@ -650,6 +665,11 @@ export default function BranchManager({
                                             disabled={isSavingThis}
                                             className="w-full bg-transparent font-bold text-slate-800 outline-none"
                                           />
+                                          {entry.to && (
+                                            <span className="shrink-0 text-[11px] font-black text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                              {formatTime12h(entry.to)}
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                     </div>

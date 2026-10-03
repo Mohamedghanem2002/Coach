@@ -15,6 +15,7 @@ import {
   isNewPlayer,
   isBranchWorkingDate,
   formatBranchDays,
+  formatTime12h,
   getPlayerMonthAttendance,
   getBranchDayEntry,
   getDayKeyFromDate,
@@ -418,7 +419,7 @@ function PlayerRow({
             <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[10.5px] font-bold text-slate-400 select-none">
               <Lock className="h-3 w-3 text-slate-400 shrink-0" />
               {isTooEarly
-                ? <span>التسجيل يبدأ الساعة <strong className="text-red-500">{branchDaySchedule.from}</strong> (لسه مجاش الوقت)</span>
+                ? <span>التسجيل يبدأ الساعة <strong className="text-red-500">{formatTime12h(branchDaySchedule.from)}</strong> (لسه مجاش الوقت)</span>
                 : <span>غير متاح اليوم (أيام عمل الصالة: {formattedBranchDays})</span>
               }
             </div>

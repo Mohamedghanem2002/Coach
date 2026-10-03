@@ -783,6 +783,22 @@ export function getBranchDayEntry(branch, dayKey) {
   return branch.days.map(normalizeDayEntry).find((n) => n && n.day === dayKey) || null;
 }
 
+/** Converts 24h time ("16:00") into friendly Arabic 12h format ("4:00 م" / "9:00 ص") */
+export function formatTime12h(timeStr) {
+  if (!timeStr || typeof timeStr !== "string") return "";
+  const clean = timeStr.trim();
+  const match = /^(\d{1,2}):(\d{2})/.exec(clean);
+  if (!match) return clean;
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2];
+  if (isNaN(hours)) return clean;
+  const isPM = hours >= 12;
+  const period = isPM ? "م" : "ص";
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return `${hours}:${minutes} ${period}`;
+}
+
 export function formatBranchDays(branch) {
   if (!branch || !Array.isArray(branch.days) || branch.days.length === 0) {
     return "طوال أيام الأسبوع";
@@ -796,8 +812,8 @@ export function formatBranchDays(branch) {
     .sort((a, b) => orderedKeys.indexOf(a.day) - orderedKeys.indexOf(b.day));
   const labels = sorted.map((entry) => {
     const dayLabel = WEEK_DAYS.find((w) => w.id === entry.day)?.label || entry.day;
-    if (entry.from && entry.to) return `${dayLabel} (${entry.from} - ${entry.to})`;
-    if (entry.from) return `${dayLabel} (من ${entry.from})`;
+    if (entry.from && entry.to) return `${dayLabel} (${formatTime12h(entry.from)} - ${formatTime12h(entry.to)})`;
+    if (entry.from) return `${dayLabel} (من ${formatTime12h(entry.from)})`;
     return dayLabel;
   }).filter(Boolean);
   return labels.length ? labels.join("، ") : "طوال أيام الأسبوع";
