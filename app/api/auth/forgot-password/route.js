@@ -102,9 +102,9 @@ export async function POST(request) {
       message: genericSuccessMessage,
     });
   } catch (error) {
-    console.error("POST /api/auth/forgot-password error:", error);
+    console.error("POST /api/auth/forgot-password error:", error?.message || error);
     return NextResponse.json(
-      { error: "حدث خطأ أثناء معالجة طلب استعادة كلمة المرور" },
+      { error: error?.message || "حدث خطأ أثناء معالجة طلب استعادة كلمة المرور" },
       { status: 500 },
     );
   }

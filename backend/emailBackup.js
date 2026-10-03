@@ -16,9 +16,11 @@ const SETTINGS_FILE = path.join(DATA_DIR, "email_backup_settings.json");
 const STATUS_FILE = path.join(DATA_DIR, "last_email_backup.json");
 
 function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch {}
 }
 
 export async function getEmailBackupSettings(ownerId = null) {
