@@ -88,15 +88,13 @@ export default function AccountSettingsModal({
     async function loadAccount() {
       try {
         setFetching(true);
-        const res = await fetch("/api/account");
+        const res = await fetch("/api/account", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data.user) {
             const isLt =
-              data.user.subscriptionPlan === "lifetime" ||
               data.user.isLifetime === true ||
-              (data.user.subscriptionExpiresAt &&
-                new Date(data.user.subscriptionExpiresAt).getFullYear() > 2050);
+              data.user.subscriptionPlan === "lifetime";
 
             setName(data.user.name || "");
             setAcademyName(data.user.academyName || "CoachMaster");
@@ -277,9 +275,8 @@ export default function AccountSettingsModal({
   const coachInitial = name ? name.trim().charAt(0) : "ك";
 
   const isLifetime =
-    subscriptionInfo.isLifetime ||
-    subscriptionInfo.plan === "lifetime" ||
-    (subscriptionInfo.expiresAt && new Date(subscriptionInfo.expiresAt).getFullYear() > 2050);
+    subscriptionInfo.isLifetime === true ||
+    subscriptionInfo.plan === "lifetime";
 
   // Formatted subscription dates
   const formattedStartedAt = subscriptionInfo.startedAt

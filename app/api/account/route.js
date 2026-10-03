@@ -45,10 +45,7 @@ export async function GET() {
 
     const now = new Date();
     const isLifetime =
-      user.subscriptionPlan === "lifetime" ||
-      user.isLifetime === true ||
-      (user.subscriptionExpiresAt &&
-        new Date(user.subscriptionExpiresAt).getFullYear() > 2050);
+      user.subscriptionPlan === "lifetime" || user.isLifetime === true;
 
     const daysRemaining = calculateDaysRemaining(user.subscriptionExpiresAt, now, user);
     const isExpired = isSubscriptionExpired(user, now);

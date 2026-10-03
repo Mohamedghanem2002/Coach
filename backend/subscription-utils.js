@@ -96,9 +96,15 @@ export function computeSubscriptionExpiry({
 
   if (mode === "additive") {
     const curExp = currentExpiry ? new Date(currentExpiry) : null;
-    const base = curExp && !isNaN(curExp.getTime()) && curExp.getTime() > now.getTime()
-      ? curExp
-      : new Date(now);
+    const isCurLifetime =
+      curExp &&
+      !isNaN(curExp.getTime()) &&
+      curExp.getTime() - now.getTime() > 5 * 365 * 24 * 60 * 60 * 1000;
+
+    const base =
+      curExp && !isNaN(curExp.getTime()) && curExp.getTime() > now.getTime() && !isCurLifetime
+        ? curExp
+        : new Date(now);
 
     if (resolvedMonths) {
       if (resolvedMonths >= 1200) {

@@ -236,7 +236,7 @@ export async function PATCH(request, context) {
 
     // 3. Extend / Set Subscription Validity (Counts from Entry Date, Additive, or Lifetime)
     else if (action === "extend_subscription") {
-      const isLifetimeAction = body.isLifetime || body.plan === "lifetime" || body.mode === "lifetime" || body.calculationBase === "lifetime" || body.months >= 1200;
+      const isLifetimeAction = Boolean(body.isLifetime || body.plan === "lifetime" || body.mode === "lifetime" || body.calculationBase === "lifetime" || body.months >= 1200);
       const mode = isLifetimeAction ? "lifetime" : (body.calculationBase || body.mode || (body.customDate ? "custom_date" : "from_entry"));
       const entryDate = user.subscriptionStartedAt || user.createdAt || now;
 
@@ -257,10 +257,8 @@ export async function PATCH(request, context) {
         if (isNaN(newExpiresAt.getTime())) {
           return NextResponse.json({ error: "تاريخ الانتهاء المخصص غير صالح" }, { status: 400 });
         }
-        if (user.subscriptionPlan === "lifetime") {
-          updateFields.subscriptionPlan = "custom";
-          updateFields.isLifetime = false;
-        }
+        updateFields.subscriptionPlan = "custom";
+        updateFields.isLifetime = false;
       } else {
         const months = body.months ? parseInt(body.months, 10) : null;
         const days = body.days ? parseInt(body.days, 10) : null;
@@ -269,22 +267,28 @@ export async function PATCH(request, context) {
           return NextResponse.json({ error: "مدة الاشتراك المحددة غير صالحة" }, { status: 400 });
         }
 
+        const isUserCurrentlyLifetime =
+          user.isLifetime === true ||
+          user.subscriptionPlan === "lifetime" ||
+          (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getFullYear() > 2050);
+
+        const currentExpiryToUse = isUserCurrentlyLifetime ? null : user.subscriptionExpiresAt;
+
         newExpiresAt = computeSubscriptionExpiry({
           entryDate,
-          currentExpiry: user.subscriptionExpiresAt,
+          currentExpiry: currentExpiryToUse,
           mode,
           months,
           days,
           now,
         });
+
+        updateFields.isLifetime = false;
         if (months === 1) updateFields.subscriptionPlan = "standard";
         else if (months === 3) updateFields.subscriptionPlan = "quarterly";
         else if (months === 6) updateFields.subscriptionPlan = "semi-annual";
         else if (months === 12) updateFields.subscriptionPlan = "annual";
-        else if (user.subscriptionPlan === "lifetime") {
-          updateFields.subscriptionPlan = "standard";
-          updateFields.isLifetime = false;
-        }
+        else updateFields.subscriptionPlan = "standard";
       }
 
       if (!user.subscriptionStartedAt) {
@@ -306,8 +310,8 @@ export async function PATCH(request, context) {
       }
 
       const daysRemaining = calculateDaysRemaining(newExpiresAt, now, {
-        subscriptionPlan: updateFields.subscriptionPlan || user.subscriptionPlan,
-        isLifetime: isLifetimeAction || user.isLifetime,
+        subscriptionPlan: updateFields.subscriptionPlan,
+        isLifetime: isLifetimeAction,
       });
 
       auditAction = "extend_subscription";
