@@ -34,8 +34,7 @@ export default function AcademyDetailsModal({
 }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [playerSearch, setPlayerSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "branches" | "players" | "audit"
+  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "branches" | "audit"
 
   useEffect(() => {
     if (!isOpen || !academyId) {
@@ -69,22 +68,12 @@ export default function AcademyDetailsModal({
 
   const academy = data?.academy;
   const stats = data?.stats || { playersCount: 0, branchesCount: 0, eventsCount: 0 };
-  const players = data?.players || [];
   const branches = data?.branches || [];
   const auditLogs = data?.auditLogs || [];
-
-  const filteredPlayers = players.filter((p) => {
-    if (!playerSearch) return true;
-    const q = playerSearch.toLowerCase();
-    return (
-      (p.name || "").toLowerCase().includes(q) ||
-      (p.branch || "").toLowerCase().includes(q) ||
-      (p.belt || "").toLowerCase().includes(q)
-    );
-  });
+  const isLifetime = academy?.subscriptionPlan === "lifetime" || academy?.isLifetime;
 
   const isSuspended = academy?.subscriptionStatus === "suspended" || academy?.status === "suspended";
-  const isExpired = academy?.subscriptionStatus === "expired";
+  const isExpired = !isLifetime && academy?.subscriptionStatus === "expired";
 
   const formattedCreated = academy?.createdAt
     ? new Intl.DateTimeFormat("ar-EG", { year: "numeric", month: "long", day: "numeric" }).format(
@@ -92,7 +81,9 @@ export default function AcademyDetailsModal({
       )
     : "غير محدد";
 
-  const formattedExpires = academy?.subscriptionExpiresAt
+  const formattedExpires = isLifetime
+    ? "مفتوح دائم (مدى الحياة ♾️)"
+    : academy?.subscriptionExpiresAt
     ? new Intl.DateTimeFormat("ar-EG", { year: "numeric", month: "long", day: "numeric" }).format(
         new Date(academy.subscriptionExpiresAt)
       )
@@ -130,7 +121,6 @@ export default function AcademyDetailsModal({
           {[
             { id: "overview", label: "نظرة عامة والاشتراك", icon: Sparkles },
             { id: "branches", label: `الصالات والفروع (${branches.length})`, icon: Building2 },
-            { id: "players", label: `قائمة اللاعبين (${stats.playersCount})`, icon: Users },
             { id: "audit", label: `سجل العمليات (${auditLogs.length})`, icon: History },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -237,7 +227,9 @@ export default function AcademyDetailsModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold mb-5">
                   <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                     <span className="text-slate-500">خطة الاشتراك:</span>
-                    <span className="text-slate-900 font-black uppercase">{academy.subscriptionPlan || "Standard"}</span>
+                    <span className={`font-black uppercase ${isLifetime ? "text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md" : "text-slate-900"}`}>
+                      {isLifetime ? "اشتراك مدى الحياة ♾️" : academy.subscriptionPlan || "Standard"}
+                    </span>
                   </div>
                   <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                     <span className="text-slate-500">تاريخ انتهاء الاشتراك:</span>
@@ -483,91 +475,10 @@ export default function AcademyDetailsModal({
                             </div>
                           )}
 
-                          {/* Registered Players in this branch */}
-                          <div>
-                            <span className="block text-[11px] font-black text-slate-400 mb-2">
-                              أبطال هذه الصالة ({branchPlayers.length}):
-                            </span>
-                            {branchPlayers.length === 0 ? (
-                              <p className="text-[11px] text-slate-400 font-medium italic">
-                                لا يوجد لاعبين مسجلين في هذه الصالة حالياً.
-                              </p>
-                            ) : (
-                              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                                {branchPlayers.map((bp) => (
-                                  <span
-                                    key={bp.id || bp._id}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-black transition"
-                                  >
-                                    <span>🥋 {bp.name}</span>
-                                    {bp.belt && (
-                                      <span className="text-[9px] text-slate-500 font-bold">({bp.belt})</span>
-                                    )}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
                         </div>
                       </div>
                     );
                   })}
-                </div>
-              )}
-            </div>
-          ) : activeTab === "players" ? (
-            /* Players List Tab */
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={playerSearch}
-                    onChange={(e) => setPlayerSearch(e.target.value)}
-                    placeholder="ابحث في لاعبي هذه الأكاديمية..."
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 pr-10 pl-4 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-red-500 focus:bg-white"
-                  />
-                </div>
-                <span className="text-xs font-black text-slate-500 shrink-0">
-                  {filteredPlayers.length} لاعب
-                </span>
-              </div>
-
-              {filteredPlayers.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 text-xs font-bold">
-                  لا يوجد لاعبين مسجلين يطابقون البحث
-                </div>
-              ) : (
-                <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                  <table className="w-full text-right text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-black border-b border-slate-200">
-                      <tr>
-                        <th className="p-3">اسم البطل</th>
-                        <th className="p-3">الصالة</th>
-                        <th className="p-3">الحزام</th>
-                        <th className="p-3">العمر</th>
-                        <th className="p-3">الهاتف</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-bold text-slate-800">
-                      {filteredPlayers.map((player) => (
-                        <tr key={player.id} className="hover:bg-slate-50/80">
-                          <td className="p-3 font-black text-slate-900">{player.name}</td>
-                          <td className="p-3 text-slate-600">{player.branch || "الرئيسية"}</td>
-                          <td className="p-3">
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px]">
-                              {player.belt || "أبيض"}
-                            </span>
-                          </td>
-                          <td className="p-3 text-slate-600">{player.age ? `${player.age} سنة` : "-"}</td>
-                          <td className="p-3 font-mono text-slate-500" dir="ltr">
-                            {player.phone || "-"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               )}
             </div>

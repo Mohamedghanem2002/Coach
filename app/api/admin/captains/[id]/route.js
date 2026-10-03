@@ -302,17 +302,32 @@ export async function PATCH(request, context) {
       successMessage = `تمت إعادة تفعيل وتشغيل حساب الكابتن "${user.name}" واستئناف الخدمة بنجاح.`;
     }
 
-    // 3. Extend / Set Subscription Validity (Counts from Entry Date or Additive)
+    // 3. Extend / Set Subscription Validity (Counts from Entry Date, Additive, or Lifetime)
     else if (action === "extend_subscription") {
-      const mode = body.calculationBase || body.mode || (body.customDate ? "custom_date" : "from_entry");
+      const isLifetimeAction = body.isLifetime || body.plan === "lifetime" || body.mode === "lifetime" || body.calculationBase === "lifetime" || body.months >= 1200;
+      const mode = isLifetimeAction ? "lifetime" : (body.calculationBase || body.mode || (body.customDate ? "custom_date" : "from_entry"));
       const entryDate = user.subscriptionStartedAt || user.createdAt || now;
 
       let newExpiresAt = null;
 
-      if (mode === "custom_date" || body.customDate) {
+      if (isLifetimeAction) {
+        newExpiresAt = computeSubscriptionExpiry({
+          entryDate,
+          currentExpiry: user.subscriptionExpiresAt,
+          mode: "lifetime",
+          months: 1200,
+          now,
+        });
+        updateFields.subscriptionPlan = "lifetime";
+        updateFields.isLifetime = true;
+      } else if (mode === "custom_date" || body.customDate) {
         newExpiresAt = new Date(body.customDate);
         if (isNaN(newExpiresAt.getTime())) {
           return NextResponse.json({ error: "تاريخ الانتهاء المخصص غير صالح" }, { status: 400 });
+        }
+        if (user.subscriptionPlan === "lifetime") {
+          updateFields.subscriptionPlan = "custom";
+          updateFields.isLifetime = false;
         }
       } else {
         const months = body.months ? parseInt(body.months, 10) : null;
@@ -330,6 +345,14 @@ export async function PATCH(request, context) {
           days,
           now,
         });
+        if (months === 1) updateFields.subscriptionPlan = "standard";
+        else if (months === 3) updateFields.subscriptionPlan = "quarterly";
+        else if (months === 6) updateFields.subscriptionPlan = "semi-annual";
+        else if (months === 12) updateFields.subscriptionPlan = "annual";
+        else if (user.subscriptionPlan === "lifetime") {
+          updateFields.subscriptionPlan = "standard";
+          updateFields.isLifetime = false;
+        }
       }
 
       if (!user.subscriptionStartedAt) {
@@ -339,7 +362,7 @@ export async function PATCH(request, context) {
       updateFields.subscriptionExpiresAt = newExpiresAt;
 
       // Auto-update account status based on new expiration
-      const isPast = newExpiresAt.getTime() < now.getTime();
+      const isPast = !isLifetimeAction && newExpiresAt.getTime() < now.getTime();
       if (isPast) {
         updateFields.status = "suspended";
         updateFields.subscriptionStatus = "expired";
@@ -350,7 +373,10 @@ export async function PATCH(request, context) {
         updateFields.suspensionReason = null;
       }
 
-      const daysRemaining = calculateDaysRemaining(newExpiresAt, now);
+      const daysRemaining = calculateDaysRemaining(newExpiresAt, now, {
+        subscriptionPlan: updateFields.subscriptionPlan || user.subscriptionPlan,
+        isLifetime: isLifetimeAction || user.isLifetime,
+      });
 
       auditAction = "extend_subscription";
       auditDetails = {
@@ -360,10 +386,13 @@ export async function PATCH(request, context) {
         entryDate,
         newExpiresAt,
         daysRemaining,
+        plan: updateFields.subscriptionPlan || user.subscriptionPlan,
       };
 
       const formattedDate = newExpiresAt.toISOString().slice(0, 10);
-      successMessage = mode === "from_entry"
+      successMessage = isLifetimeAction
+        ? `تم تفعيل وتأكيد اشتراك مدى الحياة ♾️ للكابتن "${user.name}" بنجاح.`
+        : mode === "from_entry"
         ? `تم ضبط صلاحية اشتراك الكابتن "${user.name}" بنجاح حتى ${formattedDate} (محسوبة من تاريخ الدخول).`
         : `تم تمديد اشتراك الكابتن "${user.name}" بنجاح حتى ${formattedDate}.`;
     }

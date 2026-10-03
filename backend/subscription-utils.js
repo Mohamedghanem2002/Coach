@@ -56,6 +56,12 @@ export function computeSubscriptionExpiry({
   customDate,
   now = new Date(),
 }) {
+  if (mode === "lifetime" || months >= 1200) {
+    const base = entryDate ? new Date(entryDate) : new Date(now);
+    const validBase = isNaN(base.getTime()) ? new Date(now) : base;
+    return addCalendarPeriod(validBase, 100, "years");
+  }
+
   if (mode === "custom_date" || customDate) {
     const parsed = new Date(customDate);
     if (!isNaN(parsed.getTime())) return parsed;
@@ -74,6 +80,9 @@ export function computeSubscriptionExpiry({
     const validBase = isNaN(base.getTime()) ? new Date(now) : base;
 
     if (resolvedMonths) {
+      if (resolvedMonths >= 1200) {
+        return addCalendarPeriod(validBase, 100, "years");
+      }
       if (resolvedMonths === 12) {
         return addCalendarPeriod(validBase, 1, "years");
       }
@@ -92,6 +101,9 @@ export function computeSubscriptionExpiry({
       : new Date(now);
 
     if (resolvedMonths) {
+      if (resolvedMonths >= 1200) {
+        return addCalendarPeriod(base, 100, "years");
+      }
       if (resolvedMonths === 12) {
         return addCalendarPeriod(base, 1, "years");
       }
@@ -109,23 +121,32 @@ export function computeSubscriptionExpiry({
 /**
  * Calculates remaining days from now until expiration date.
  * Dynamically decreases by 1 every 24 hours.
+ * Returns null for lifetime subscriptions and admin accounts.
  *
  * @param {Date|string|number} expiresAt
  * @param {Date} now
+ * @param {Object} [user]
  * @returns {number|null}
  */
-export function calculateDaysRemaining(expiresAt, now = new Date()) {
+export function calculateDaysRemaining(expiresAt, now = new Date(), user = null) {
+  if (user && (user.subscriptionPlan === "lifetime" || user.isLifetime || user.role === "admin")) {
+    return null;
+  }
   if (!expiresAt) return null;
   const expDate = new Date(expiresAt);
   if (isNaN(expDate.getTime())) return null;
 
   const diffMs = expDate.getTime() - now.getTime();
+  // If expiry is more than 30 years in future, treat as lifetime
+  if (diffMs > 30 * 365 * 24 * 60 * 60 * 1000) {
+    return null;
+  }
   return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 /**
  * Checks if a user's subscription has expired.
- * Admin accounts are perpetual and never expire.
+ * Admin and Lifetime accounts are perpetual and never expire.
  *
  * @param {Object} user
  * @param {Date} now
@@ -133,10 +154,16 @@ export function calculateDaysRemaining(expiresAt, now = new Date()) {
  */
 export function isSubscriptionExpired(user, now = new Date()) {
   if (!user || user.role === "admin") return false;
+  if (user.subscriptionPlan === "lifetime" || user.isLifetime) return false;
   if (!user.subscriptionExpiresAt) return false;
 
   const expTime = new Date(user.subscriptionExpiresAt).getTime();
-  return !isNaN(expTime) && expTime < now.getTime();
+  if (isNaN(expTime)) return false;
+
+  // If expiry is > 30 years in future, never expired
+  if (expTime - now.getTime() > 30 * 365 * 24 * 60 * 60 * 1000) return false;
+
+  return expTime < now.getTime();
 }
 
 /**

@@ -167,7 +167,10 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
   }).format(entryDate);
 
   // Helper to compute projected date from entry date for standard cards
-  const computeCardDate = (months) => {
+  const computeCardDate = (months, isLifetime = false) => {
+    if (isLifetime || months >= 1200) {
+      return "اشتراك دائم (بدون انتهاء) ♾️";
+    }
     const d = new Date(entryDate);
     const targetDay = d.getDate();
     d.setMonth(d.getMonth() + months);
@@ -182,12 +185,15 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
   // Calculate projected new expiration date for selected state
   let projectedDate = new Date();
   const effectiveMonths = customMonths ? Math.max(1, parseInt(customMonths, 10) || 1) : selectedMonths;
+  const isSelectedLifetime = calcMode === "from_entry" && !customMonths && effectiveMonths >= 1200;
 
   if (calcMode === "custom_date") {
     if (customDate) {
       const parsed = new Date(customDate);
       if (!isNaN(parsed.getTime())) projectedDate = parsed;
     }
+  } else if (isSelectedLifetime) {
+    projectedDate = new Date(now.getFullYear() + 100, 11, 31);
   } else if (calcMode === "from_entry") {
     projectedDate = new Date(entryDate);
     const targetDay = projectedDate.getDate();
@@ -203,15 +209,17 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
     if (projectedDate.getDate() !== targetDay) projectedDate.setDate(0);
   }
 
-  const formattedProjected = new Intl.DateTimeFormat("ar-EG", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(projectedDate);
+  const formattedProjected = isSelectedLifetime
+    ? "اشتراك دائم (مفتوح مدى الحياة ♾️)"
+    : new Intl.DateTimeFormat("ar-EG", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(projectedDate);
 
   const diffMs = projectedDate.getTime() - now.getTime();
   const projectedDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-  const isProjectedPast = diffMs < 0;
+  const isProjectedPast = !isSelectedLifetime && diffMs < 0;
 
   const presetPlans = [
     {
@@ -220,6 +228,7 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
       tag: "أساسي",
       tagColor: "bg-slate-100 text-slate-600 border border-slate-200/60",
       durationBadge: "30 يوم",
+      planName: "standard",
     },
     {
       months: 3,
@@ -227,6 +236,7 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
       tag: "الأكثر طلباً ⭐",
       tagColor: "bg-indigo-50 text-indigo-700 border border-indigo-200/80",
       durationBadge: "90 يوم",
+      planName: "quarterly",
     },
     {
       months: 6,
@@ -234,6 +244,7 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
       tag: "نصف سنوي",
       tagColor: "bg-emerald-50 text-emerald-700 border border-emerald-200/80",
       durationBadge: "180 يوم",
+      planName: "semi-annual",
     },
     {
       months: 12,
@@ -241,6 +252,16 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
       tag: "أفضل قيمة 🏆",
       tagColor: "bg-amber-50 text-amber-800 border border-amber-200/80",
       durationBadge: "365 يوم",
+      planName: "annual",
+    },
+    {
+      months: 1200,
+      isLifetime: true,
+      title: "اشتراك مدى الحياة",
+      tag: "دائم ومفتوح ♾️",
+      tagColor: "bg-purple-100 text-purple-800 border border-purple-300 font-black",
+      durationBadge: "مدى الحياة ♾️",
+      planName: "lifetime",
     },
   ];
 
@@ -252,6 +273,14 @@ export function ExtendSubscriptionModal({ isOpen, onClose, onConfirm, academy, i
         mode: "custom_date",
         calculationBase: "custom_date",
         customDate,
+      });
+    } else if (isSelectedLifetime) {
+      onConfirm({
+        mode: "lifetime",
+        calculationBase: "lifetime",
+        months: 1200,
+        isLifetime: true,
+        plan: "lifetime",
       });
     } else {
       onConfirm({

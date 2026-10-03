@@ -27,7 +27,6 @@ import {
   AlertCircle,
   Award,
 } from "lucide-react";
-import { getBeltStyle } from "../../lib/dashboard-utils";
 
 function WhatsAppIcon({ className = "w-4 h-4" }) {
   return (
@@ -56,9 +55,7 @@ export default function CaptainDetailsModal({
   const [data, setData] = useState(null);
   const [loadedCaptainId, setLoadedCaptainId] = useState(null);
   const [fetchError, setFetchError] = useState(null);
-  const [playerSearch, setPlayerSearch] = useState("");
-  const [playerFilter, setPlayerFilter] = useState("all"); // "all" | "paid" | "unpaid"
-  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "players" | "halls" | "events" | "audit"
+  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "halls" | "events" | "audit"
   const [copiedKey, setCopiedKey] = useState(null);
   const [isEditingPayment, setIsEditingPayment] = useState(false);
   const [totalAmountInput, setTotalAmountInput] = useState("");
@@ -206,29 +203,10 @@ export default function CaptainDetailsModal({
       }).format(new Date(captain.subscriptionExpiresAt))
     : "غير محدد";
 
-  // Filtered Players
-  const filteredPlayers = players.filter((p) => {
-    if (playerFilter === "paid" && p.paymentStatus !== "paid") return false;
-    if (playerFilter === "unpaid" && p.paymentStatus === "paid") return false;
-
-    if (!playerSearch) return true;
-    const q = playerSearch.toLowerCase();
-    return (
-      (p.name || "").toLowerCase().includes(q) ||
-      (p.branch || "").toLowerCase().includes(q) ||
-      (p.belt || "").toLowerCase().includes(q) ||
-      (p.phone || "").toLowerCase().includes(q)
-    );
-  });
+  const isLifetime = captain?.subscriptionPlan === "lifetime" || captain?.isLifetime;
 
   const modalTabs = [
     { id: "overview", label: "نظرة عامة والاشتراك", icon: Sparkles },
-    {
-      id: "players",
-      label: "الأبطال واللاعبين",
-      count: stats.playersCount ?? players.length,
-      icon: Users,
-    },
     {
       id: "halls",
       label: "صالات التدريب",
@@ -518,8 +496,8 @@ export default function CaptainDetailsModal({
                       </h3>
                       <span className="text-[11px] text-slate-400 font-bold">
                         الخطة الحالية:{" "}
-                        <span className="text-slate-800 uppercase font-black">
-                          {captain.subscriptionPlan || "Standard"}
+                        <span className={`uppercase font-black ${isLifetime ? "text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md" : "text-slate-800"}`}>
+                          {isLifetime ? "اشتراك مدى الحياة ♾️" : captain.subscriptionPlan || "Standard"}
                         </span>
                       </span>
                     </div>
@@ -567,8 +545,8 @@ export default function CaptainDetailsModal({
 
                   <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between">
                     <span className="text-slate-500 font-bold">تاريخ الانتهاء:</span>
-                    <strong className="text-slate-900 font-black">
-                      {captain.isAdmin ? "غير محدد (دائم)" : formattedExpires}
+                    <strong className={`font-black ${isLifetime ? "text-purple-700 font-bold" : "text-slate-900"}`}>
+                      {captain.isAdmin ? "غير محدد (دائم)" : isLifetime ? "مفتوح دائم (مدى الحياة ♾️)" : formattedExpires}
                     </strong>
                   </div>
 
@@ -576,8 +554,8 @@ export default function CaptainDetailsModal({
                     <span className="text-slate-500 font-bold">الأيام المتبقية:</span>
                     <span
                       className={`font-mono font-black ${
-                        captain.isAdmin || captain.daysRemaining === null
-                          ? "text-slate-400"
+                        captain.isAdmin || isLifetime || captain.daysRemaining === null
+                          ? "text-purple-700"
                           : captain.daysRemaining <= 0
                           ? "text-rose-600"
                           : captain.daysRemaining <= 7
@@ -586,7 +564,9 @@ export default function CaptainDetailsModal({
                       }`}
                     >
                       {captain.isAdmin
-                        ? "دائم"
+                        ? "دائم ♾️"
+                        : isLifetime
+                        ? "مدى الحياة ♾️"
                         : captain.daysRemaining !== null
                         ? captain.daysRemaining <= 0
                           ? "انتهت الصلاحية"
@@ -599,7 +579,7 @@ export default function CaptainDetailsModal({
                     <span className="text-slate-500 font-bold">حالة الخدمة:</span>
                     <span
                       className={`font-black ${
-                        captain.isAdmin
+                        captain.isAdmin || isLifetime
                           ? "text-purple-600"
                           : isSuspended
                           ? "text-rose-600"
@@ -610,6 +590,8 @@ export default function CaptainDetailsModal({
                     >
                       {captain.isAdmin
                         ? "مدير المنصة"
+                        : isLifetime
+                        ? "اشتراك مدى الحياة نشط ♾️"
                         : isSuspended
                         ? "الخدمة معلقة مؤقتاً"
                         : isExpired
@@ -1003,38 +985,7 @@ export default function CaptainDetailsModal({
                 </div>
               )}
             </div>
-          ) : activeTab === "players" ? (
-            /* ═════════════════════════════════════════════════════════════
-                TAB 2: PLAYERS SUMMARY (counts only)
-            ═════════════════════════════════════════════════════════════ */
-            <div className="space-y-4">
-              {/* Big Count Card */}
-              <div className="rounded-2xl border border-violet-100 bg-white p-6 shadow-2xs flex flex-col items-center justify-center text-center gap-2">
-                <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center mb-1">
-                  <Users className="w-7 h-7 text-violet-500" />
-                </div>
-                <strong className="text-5xl font-black text-violet-900">
-                  {stats.playersCount ?? 0}
-                </strong>
-                <span className="text-sm font-black text-slate-500">بطل ولاعب مسجل</span>
-              </div>
 
-              {/* Info Notice */}
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <ShieldAlert className="w-4 h-4 text-violet-600" />
-                </div>
-                <div>
-                  <p className="text-xs font-black text-slate-800 mb-0.5">
-                    تفاصيل اللاعبين متاحة في لوحة الكابتن
-                  </p>
-                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                    يمكن للكابتن الاطلاع على قائمة لاعبيه الكاملة وإدارتهم من خلال لوحة التحكم الخاصة به.
-                    تعرض هنا الإدارة إجمالي الأعداد فقط.
-                  </p>
-                </div>
-              </div>
-            </div>
           ) : activeTab === "halls" ? (
             /* ═════════════════════════════════════════════════════════════
                 TAB 3: HALLS SUMMARY (counts only)

@@ -42,16 +42,10 @@ export default function AdminSidebar({
     },
     {
       id: "accounts",
-      label: "الحسابات",
+      label: "الحسابات والأكاديميات",
       icon: Users,
       badge: displayAccounts ? String(displayAccounts) : null,
       aliases: ["captains", "academies"],
-    },
-    {
-      id: "players",
-      label: "اللاعبين",
-      icon: UserCheck,
-      badge: playersCount ? String(playersCount) : null,
     },
     {
       id: "halls",
@@ -94,10 +88,10 @@ export default function AdminSidebar({
       badge: null,
     },
     {
-      id: "players",
-      label: "اللاعبين",
-      icon: UserCheck,
-      badge: playersCount ? String(playersCount) : null,
+      id: "promo",
+      label: "الكارت الترويجي",
+      icon: Sparkles,
+      badge: "NEW",
     },
   ];
 

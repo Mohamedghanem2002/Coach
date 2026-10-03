@@ -276,7 +276,6 @@ export default function AdminHallsTab({ onSelectCaptain }) {
                     <th className="p-4">الكابتن والأكاديمية</th>
                     <th className="p-4">أيام التدريب</th>
                     <th className="p-4 text-center">أعداد اللاعبين</th>
-                    <th className="p-4">أبطال الصالة</th>
                     <th className="p-4">تاريخ الإضافة</th>
                   </tr>
                 </thead>
@@ -354,30 +353,6 @@ export default function AdminHallsTab({ onSelectCaptain }) {
                           </span>
                         </td>
 
-                        {/* Player Chips */}
-                        <td className="p-4">
-                          {h.players && h.players.length > 0 ? (
-                            <div className="flex flex-wrap gap-1 max-w-xs">
-                              {h.players.slice(0, 3).map((hp) => (
-                                <span
-                                  key={hp.id || hp.name}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold"
-                                >
-                                  <span>🥋 {hp.name}</span>
-                                  {hp.belt && <span className="text-slate-400">({hp.belt})</span>}
-                                </span>
-                              ))}
-                              {h.players.length > 3 && (
-                                <span className="text-[10px] text-slate-400 font-bold self-center">
-                                  +{h.players.length - 3} آخرين
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 text-[11px]">لا يوجد لاعبين مسجلين</span>
-                          )}
-                        </td>
-
                         {/* Created Date */}
                         <td className="p-4">
                           <span className="text-xs text-slate-600">{formattedDate}</span>
@@ -441,21 +416,6 @@ export default function AdminHallsTab({ onSelectCaptain }) {
 
                     <span className="text-slate-400">{formattedDate}</span>
                   </div>
-
-                  {/* Players in hall */}
-                  {h.players && h.players.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {h.players.map((hp) => (
-                        <span
-                          key={hp.id || hp.name}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold"
-                        >
-                          <span>🥋 {hp.name}</span>
-                          {hp.belt && <span className="text-slate-400">({hp.belt})</span>}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               );
             })}

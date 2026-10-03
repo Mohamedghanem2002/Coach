@@ -310,7 +310,8 @@ export default function AdminCaptainsTab({
           <div className="md:hidden space-y-3">
             {captains.map((c) => {
               const isSuspended = c.subscriptionStatus === "suspended" || c.status === "suspended";
-              const isExpired = c.subscriptionStatus === "expired";
+              const isLifetime = c.subscriptionPlan === "lifetime" || c.isLifetime;
+              const isExpired = !isLifetime && c.subscriptionStatus === "expired";
 
               const formattedJoined = c.createdAt
                 ? new Intl.DateTimeFormat("ar-EG", {
@@ -365,6 +366,10 @@ export default function AdminCaptainsTab({
                           <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-black border border-rose-200">
                             {isExpired ? "منتهي الصلاحية ⛔" : "موقوف ⛔"}
                           </span>
+                        ) : isLifetime ? (
+                          <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-800 text-[10px] font-black border border-purple-200">
+                            مدى الحياة ♾️
+                          </span>
                         ) : isExpired ? (
                           <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-black border border-amber-200">
                             منتهي ⏳
@@ -385,7 +390,11 @@ export default function AdminCaptainsTab({
                           <MoreVertical className="w-4 h-4" />
                         </button>
                       </div>
-                      {c.daysRemaining !== null && !c.isAdmin && (
+                      {isLifetime && !c.isAdmin ? (
+                        <span className="text-[10px] font-bold text-purple-600">
+                          دائم ومفتوح ♾️
+                        </span>
+                      ) : c.daysRemaining !== null && !c.isAdmin && (
                         <span
                           className={`text-[10px] font-mono font-black ${
                             c.daysRemaining <= 0
@@ -504,7 +513,7 @@ export default function AdminCaptainsTab({
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs cursor-pointer active-press"
                   >
                     <Eye className="w-4 h-4" />
-                    <span>عرض التفاصيل واللاعبين</span>
+                    <span>عرض التفاصيل والحساب</span>
                   </button>
                 </div>
               );
@@ -531,7 +540,8 @@ export default function AdminCaptainsTab({
                 <tbody className="divide-y divide-slate-100 font-semibold text-slate-800">
                   {captains.map((c) => {
                     const isSuspended = c.subscriptionStatus === "suspended" || c.status === "suspended";
-                    const isExpired = c.subscriptionStatus === "expired";
+                    const isLifetime = c.subscriptionPlan === "lifetime" || c.isLifetime;
+                    const isExpired = !isLifetime && c.subscriptionStatus === "expired";
 
                     const formattedJoined = c.createdAt
                       ? new Intl.DateTimeFormat("ar-EG", {
@@ -634,6 +644,10 @@ export default function AdminCaptainsTab({
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200">
                                 {isExpired ? "منتهي الصلاحية ⛔" : "موقوف ⛔"}
                               </span>
+                            ) : isLifetime ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 text-purple-800 text-[11px] font-bold border border-purple-200">
+                                مدى الحياة ♾️
+                              </span>
                             ) : isExpired ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200">
                                 منتهي ⏳
@@ -643,7 +657,11 @@ export default function AdminCaptainsTab({
                                 نشط 🟢
                               </span>
                             )}
-                            {c.daysRemaining !== null && !c.isAdmin && (
+                            {isLifetime && !c.isAdmin ? (
+                              <span className="block text-[10px] font-bold text-purple-600">
+                                دائم ومفتوح ♾️
+                              </span>
+                            ) : c.daysRemaining !== null && !c.isAdmin && (
                               <span
                                 className={`block text-[10px] font-mono font-black ${
                                   c.daysRemaining <= 0

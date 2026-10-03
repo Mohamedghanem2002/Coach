@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminOverviewTab from "../components/admin/AdminOverviewTab";
 import AdminCaptainsTab from "../components/admin/AdminCaptainsTab";
-import AdminPlayersTab from "../components/admin/AdminPlayersTab";
 import AdminHallsTab from "../components/admin/AdminHallsTab";
 import AdminEventsTab from "../components/admin/AdminEventsTab";
 import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
@@ -407,9 +406,7 @@ export default function AdminDashboard() {
             />
           )}
 
-          {activeTab === "players" && (
-            <AdminPlayersTab onSelectCaptain={(id) => setInspectCaptainId(id)} />
-          )}
+
 
           {activeTab === "halls" && (
             <AdminHallsTab onSelectCaptain={(id) => setInspectCaptainId(id)} />
