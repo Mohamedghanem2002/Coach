@@ -604,7 +604,7 @@ export async function generatePromoCardCanvas({
   ctx.save();
   ctx.font = "700 20px 'Cairo', 'Arial', sans-serif";
   ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = pal.textMuted;
-  ctx.fillText("تصميم وتطوير: Fox Developer  •  CoachMaster © 2025", W / 2, footerY + 36);
+  ctx.fillText("تصميم وتطوير: Mohamed Ghanem  •  CoachMaster © 2025", W / 2, footerY + 36);
   ctx.restore();
 
   // Stars near footer
