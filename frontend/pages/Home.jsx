@@ -771,6 +771,11 @@ export default function Home() {
       setNotice("لا يوجد لاعبين مسجلين في هذه الصالة.");
       return;
     }
+    const targetBranch = (branches || []).find((b) => b.name === branchName);
+    if (targetBranch && !isBranchWorkingDate(targetBranch, sessionDate)) {
+      setNotice(`لا يمكن تسجيل الحضور لأن الوقت الحالي خارج مواعيد عمل صالة ${branchName}.`);
+      return;
+    }
     setBusyBranch(branchName);
     const results = await Promise.all(
       branchPlayers.map((player) =>

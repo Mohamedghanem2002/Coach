@@ -18,7 +18,7 @@ import {
   ArrowUpRight,
   TrendingUp,
 } from "lucide-react";
-import { localDate } from "../../lib/dashboard-utils";
+import { localDate, isBranchWorkingDate } from "../../lib/dashboard-utils";
 import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
 
 export default function DashboardHero({
@@ -52,6 +52,18 @@ export default function DashboardHero({
 }) {
   const today = localDate();
   const firstName = (captainName || "").split(" ")[0] || "كابتن";
+
+  const currentHeroBranch = useMemo(() => {
+    if (branch && branch !== "كل الصالات") {
+      return branches.find((b) => b.name === branch);
+    }
+    return branches[0] || null;
+  }, [branches, branch]);
+
+  const isHeroBranchWorking = useMemo(() => {
+    if (!currentHeroBranch) return false;
+    return isBranchWorkingDate(currentHeroBranch, sessionDate);
+  }, [currentHeroBranch, sessionDate]);
 
   // Find next upcoming event
   const upcomingEvent = useMemo(() => {
@@ -191,17 +203,27 @@ export default function DashboardHero({
 
           <button
             type="button"
+            disabled={!isHeroBranchWorking}
             onClick={() => {
+              if (!isHeroBranchWorking) return;
               if (branch && branch !== "كل الصالات" && onMarkBranchPresent) {
                 onMarkBranchPresent(branch);
               } else if (branches[0]?.name && onMarkBranchPresent) {
                 onMarkBranchPresent(branches[0].name);
               }
             }}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-emerald-200 bg-emerald-50/80 text-emerald-800 text-[10px] font-black active-press cursor-pointer"
-            title="تحضير جميع أبطال الصالة بضغطة واحدة"
+            className={`flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border text-[10px] font-black transition-all ${
+              isHeroBranchWorking
+                ? "border-emerald-200 bg-emerald-50/80 text-emerald-800 active-press cursor-pointer hover:bg-emerald-100/80"
+                : "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+            }`}
+            title={
+              isHeroBranchWorking
+                ? "تحضير جميع أبطال الصالة بضغطة واحدة"
+                : "الصالة خارج مواعيد العمل حالياً (التسجيل غير متاح)"
+            }
           >
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <CheckCircle2 className={`h-4 w-4 ${isHeroBranchWorking ? "text-emerald-600" : "text-slate-400"}`} />
             <span className="truncate">تحضير الصالة</span>
           </button>
 

@@ -1,8 +1,24 @@
-import { Building2, ChevronLeft, MapPin, Users, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  Building2,
+  ChevronLeft,
+  MapPin,
+  Users,
+  FileText,
+  Lock,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
 import {
   paymentStatusFor,
   isPlayerPresentOnDate,
   isPlayerAbsentOnDate,
+  isBranchWorkingDate,
+  isBranchTooEarly,
+  isBranchSessionEnded,
+  getBranchDayEntry,
+  formatBranchDays,
+  getDayKeyFromDate,
 } from "../../lib/dashboard-utils";
 
 const BRANCH_GRADIENTS = [
@@ -32,6 +48,13 @@ export default function BranchOverview({
   busyBranch,
 }) {
   if (!branches.length) return null;
+
+  // Re-evaluate every 30 seconds so time-based locks update dynamically
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <section className="mt-7 w-full max-w-full overflow-hidden">
@@ -71,6 +94,16 @@ export default function BranchOverview({
             ? Math.round((present / branchPlayers.length) * 100)
             : 0;
 
+          // Training working schedule validation
+          const isWorking = isBranchWorkingDate(branch, sessionDate, new Date(nowTick));
+          const tooEarly = isBranchTooEarly(branch, sessionDate, new Date(nowTick));
+          const sessionEnded = isBranchSessionEnded(branch, sessionDate, new Date(nowTick));
+          const dayKey = getDayKeyFromDate(sessionDate);
+          const dayEntry = getBranchDayEntry(branch, dayKey);
+          const formattedDays = formatBranchDays(branch);
+          const allAlreadyPresent = branchPlayers.length > 0 && present === branchPlayers.length;
+          const canMarkPresent = isWorking && branchPlayers.length > 0 && !allAlreadyPresent && !busy;
+
           return (
             <article
               key={branch._id}
@@ -95,10 +128,34 @@ export default function BranchOverview({
                       <strong className="block truncate font-cairo text-sm font-black text-slate-900 transition-colors group-hover:text-red-600">
                         {branch.name}
                       </strong>
-                      <span className="flex items-center gap-1 mt-0.5 text-[11px] font-semibold text-slate-400">
-                        <Users className="h-3 w-3" />
-                        {branchPlayers.length} لاعب مسجل
-                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                          <Users className="h-3 w-3" />
+                          {branchPlayers.length} لاعب
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        {isWorking ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            {dayEntry?.from && dayEntry?.to ? `${dayEntry.from} - ${dayEntry.to}` : "موعد تدريب نشط"}
+                          </span>
+                        ) : tooEarly ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80">
+                            <Clock className="h-3 w-3 text-amber-500" />
+                            يبدأ {dayEntry?.from}
+                          </span>
+                        ) : sessionEnded ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                            <Lock className="h-3 w-3 text-slate-400" />
+                            انتهت الحصة
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                            <Lock className="h-3 w-3 text-slate-400" />
+                            عطلة اليوم
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </button>
 
@@ -175,17 +232,68 @@ export default function BranchOverview({
                     >
                       عرض اللاعبين
                     </button>
+
                     <button
                       type="button"
-                      className="relative min-h-11 sm:min-h-9 flex-1 overflow-hidden rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 text-xs font-black text-white shadow-xs transition-all active-press cursor-pointer disabled:cursor-wait disabled:opacity-60"
-                      disabled={!branchPlayers.length || busy}
-                      onClick={() => onMarkPresent(branch.name)}
-                      title={`تسجيل حضور جميع لاعبي فرع ${branch.name} لحصة اليوم بضغطة واحدة`}
+                      disabled={!canMarkPresent}
+                      onClick={() => {
+                        if (canMarkPresent) onMarkPresent(branch.name);
+                      }}
+                      className={`relative min-h-11 sm:min-h-9 flex-1 overflow-hidden rounded-xl px-2.5 text-xs font-black transition-all select-none ${
+                        busy
+                          ? "bg-emerald-600 text-white cursor-wait opacity-80"
+                          : !isWorking
+                          ? "bg-slate-100 text-slate-400 border border-slate-200/90 cursor-not-allowed shadow-none"
+                          : allAlreadyPresent
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-300/80 cursor-default"
+                          : !branchPlayers.length
+                          ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none"
+                          : "bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xs hover:shadow-md cursor-pointer active-press"
+                      }`}
+                      title={
+                        busy
+                          ? "جاري تسجيل الحضور..."
+                          : !isWorking
+                          ? tooEarly
+                            ? `يبدأ موعد التدريب الساعة ${dayEntry?.from}`
+                            : sessionEnded
+                            ? "انتهت فترة التدريب المحددة لهذه الصالة اليوم"
+                            : `اليوم خارج مواعيد عمل الصالة (${formattedDays})`
+                          : allAlreadyPresent
+                          ? "تم تسجيل حضور جميع لاعبي الصالة بالفعل"
+                          : !branchPlayers.length
+                          ? "لا يوجد لاعبين مسجلين في هذه الصالة"
+                          : `تسجيل حضور جميع أبطال صالة ${branch.name} لحصة اليوم بضغطة واحدة`
+                      }
                     >
                       {busy ? (
                         <span className="flex items-center justify-center gap-1.5">
                           <span className="h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />
                           جاري...
+                        </span>
+                      ) : !isWorking ? (
+                        <span className="flex items-center justify-center gap-1 text-[11px]">
+                          {tooEarly ? (
+                            <>
+                              <Clock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                              <span>يبدأ {dayEntry?.from}</span>
+                            </>
+                          ) : sessionEnded ? (
+                            <>
+                              <Lock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span>انتهت الحصة</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span>عطلة اليوم</span>
+                            </>
+                          )}
+                        </span>
+                      ) : allAlreadyPresent ? (
+                        <span className="flex items-center justify-center gap-1 text-emerald-700">
+                          <CheckMarkIcon className="h-3.5 w-3.5 text-emerald-600" />
+                          تم تحضير الكل ✓
                         </span>
                       ) : (
                         <span className="flex items-center justify-center gap-1">
@@ -195,6 +303,20 @@ export default function BranchOverview({
                       )}
                     </button>
                   </div>
+
+                  {/* Clarification hint if outside working hours */}
+                  {!isWorking && (
+                    <p className="mt-1 text-center text-[10px] font-bold text-slate-400 flex items-center justify-center gap-1 select-none">
+                      <Lock className="h-3 w-3 shrink-0 text-slate-400" />
+                      <span>
+                        {tooEarly
+                          ? `التسجيل يفتح الساعة ${dayEntry?.from}`
+                          : sessionEnded
+                          ? "انتهى موعد تدريب الصالة اليوم"
+                          : `أيام عمل الصالة: ${formattedDays}`}
+                      </span>
+                    </p>
+                  )}
                 </div>
               </div>
             </article>

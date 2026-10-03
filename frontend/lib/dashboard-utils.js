@@ -704,6 +704,12 @@ export function getDayKeyFromDate(dateStr) {
 }
 
 export function isBranchWorkingDate(branch, dateStr, nowOverride) {
+  const today = localDate();
+  // Future dates cannot be actively working or attended
+  if (dateStr && dateStr.slice(0, 10) > today) {
+    return false;
+  }
+
   if (!branch || !Array.isArray(branch.days) || branch.days.length === 0) {
     // If no training days explicitly configured, all days are permitted
     return true;
@@ -716,21 +722,59 @@ export function isBranchWorkingDate(branch, dateStr, nowOverride) {
 
   if (!entry) return false; // This day is not in the schedule
 
-  // If a start time is configured AND this is today, check current time >= from
-  if (entry.from) {
-    const today = localDate();
-    if (dateStr && dateStr.slice(0, 10) === today) {
-      const now = nowOverride || new Date();
+  if (dateStr && dateStr.slice(0, 10) === today) {
+    const now = nowOverride || new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    // If a start time is configured: current time must be >= from
+    if (entry.from) {
       const [fh, fm] = entry.from.split(":").map(Number);
       if (!isNaN(fh) && !isNaN(fm)) {
-        const nowMinutes = now.getHours() * 60 + now.getMinutes();
         const fromMinutes = fh * 60 + fm;
         if (nowMinutes < fromMinutes) return false; // Too early
+      }
+    }
+
+    // If an end time is configured: current time must not exceed end time + 45 min grace period
+    if (entry.to) {
+      const [th, tm] = entry.to.split(":").map(Number);
+      if (!isNaN(th) && !isNaN(tm)) {
+        const toMinutes = th * 60 + tm;
+        if (nowMinutes > toMinutes + 45) return false; // Session ended
       }
     }
   }
 
   return true;
+}
+
+export function isBranchTooEarly(branch, dateStr, nowOverride) {
+  const today = localDate();
+  if (dateStr && dateStr.slice(0, 10) > today) return true;
+  if (!branch || !Array.isArray(branch.days) || branch.days.length === 0) return false;
+  const dayKey = getDayKeyFromDate(dateStr);
+  const entry = branch.days.map(normalizeDayEntry).find((n) => n && n.day === dayKey);
+  if (!entry?.from) return false;
+  if (!dateStr || dateStr.slice(0, 10) !== today) return false;
+  const [fh, fm] = entry.from.split(":").map(Number);
+  if (isNaN(fh) || isNaN(fm)) return false;
+  const now = nowOverride || new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  return nowMinutes < fh * 60 + fm;
+}
+
+export function isBranchSessionEnded(branch, dateStr, nowOverride) {
+  if (!branch || !Array.isArray(branch.days) || branch.days.length === 0) return false;
+  const dayKey = getDayKeyFromDate(dateStr);
+  const entry = branch.days.map(normalizeDayEntry).find((n) => n && n.day === dayKey);
+  if (!entry?.to) return false;
+  const today = localDate();
+  if (!dateStr || dateStr.slice(0, 10) !== today) return false;
+  const [th, tm] = entry.to.split(":").map(Number);
+  if (isNaN(th) || isNaN(tm)) return false;
+  const now = nowOverride || new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  return nowMinutes > th * 60 + tm + 45;
 }
 
 /** Returns the {day, from, to} entry for a specific day key, or null */
