@@ -11,6 +11,7 @@ import {
   Zap,
   Sparkles,
   FileSpreadsheet,
+  CheckCircle2,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -99,25 +100,30 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-40 glass-nav border-b border-slate-200/80" dir="rtl">
-      <div className="mx-auto flex min-h-[56px] sm:min-h-[64px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 py-1.5 sm:py-2">
+    <header
+      className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-2xs transition-all"
+      dir="rtl"
+    >
+      <div className="mx-auto flex min-h-[58px] sm:min-h-[66px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 py-2">
 
-        {/* ━━━ Right Brand Section ━━━ */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
-          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-xs ring-2 ring-red-100">
-            <Zap className="h-4 w-4 sm:h-5 sm:w-5 fill-white stroke-white" />
+        {/* ━━━━━━━━━━ Zone 1: Brand & Academy Context (Right Side) ━━━━━━━━━━ */}
+        <div className="flex items-center gap-2.5 sm:gap-3.5 shrink min-w-0">
+          {/* Logo Mark */}
+          <div className="relative flex h-9.5 w-9.5 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-red-600 to-rose-700 text-white shadow-sm shadow-red-600/20 ring-2 ring-red-100">
+            <Zap className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-white stroke-white" />
             <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
             </span>
           </div>
 
+          {/* Academy & Captain Labels */}
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <strong className="font-cairo text-sm sm:text-base lg:text-lg font-black tracking-tight text-slate-900 truncate max-w-[125px] sm:max-w-[200px] lg:max-w-[260px]">
+            <div className="flex items-center gap-1.5 flex-nowrap">
+              <strong className="font-cairo text-sm sm:text-base lg:text-lg font-black tracking-tight text-slate-900 truncate max-w-[120px] sm:max-w-[200px] lg:max-w-[260px]">
                 {academyName}
               </strong>
-              <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.2 text-[9px] font-black text-red-600 shrink-0">
+              <span className="rounded-md bg-red-50 border border-red-200/90 px-1.5 py-0.2 text-[9px] font-black text-red-600 shrink-0">
                 PRO
               </span>
             </div>
@@ -127,40 +133,68 @@ export default function Header({
               <span className="text-slate-300">•</span>
               <span className="font-black text-red-600">منصة CoachMaster</span>
             </p>
-            {/* Mobile Captain Greeting */}
+            {/* Mobile Coach Identity */}
             <p className="md:hidden text-[10.5px] font-bold text-slate-500 leading-tight truncate">
-              كابتن <span className="font-extrabold text-slate-800">{firstName}</span>
+              كابتن <span className="font-extrabold text-slate-800">{firstName}</span> 🥋
             </p>
           </div>
         </div>
 
-        {/* ━━━ Center Greeting Pill (Visible only on Large Screens >= lg) ━━━ */}
+        {/* ━━━━━━━━━━ Zone 2: Smart Center Context Pill (Visible on Desktop >= lg) ━━━━━━━━━━ */}
         <div className="hidden lg:flex flex-col items-center shrink-0">
-          <div className="flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/90 px-3.5 py-1 text-[11px] font-bold text-slate-600 shadow-2xs">
+          <div className="flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-50/90 px-3.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-            {todayFormatted}
+            <span>{todayFormatted}</span>
           </div>
           <p className="mt-1 text-xs font-bold text-slate-600">
-            أهلاً يا كابتن{" "}
-            <span className="font-extrabold text-slate-900">{firstName}</span> 🥋
+            أهلاً بك يا كابتن{" "}
+            <span className="font-black text-slate-900">{firstName}</span> 🥋
           </p>
         </div>
 
-        {/* ━━━ Left Actions Bar (Directly Visible on Mobile & Desktop) ━━━ */}
+        {/* ━━━━━━━━━━ Zone 3: Executive Action Hub (Left Side) ━━━━━━━━━━ */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
-          {/* 1. Features Guide Button (Visible on Mobile & Desktop) */}
-          {onOpenFeatures && (
+          {/* 1. 📊 Excel Export Button (Prominent & Clear Everywhere) */}
+          {onOpenExportExcel && (
             <>
-              {/* Desktop Button */}
+              {/* Desktop Pill */}
               <button
                 type="button"
-                id="desktop-guide-btn"
+                id="desktop-header-excel-btn"
+                onClick={() => onOpenExportExcel("players")}
+                className="hidden sm:flex h-9.5 sm:h-10 items-center gap-1.5 rounded-xl border border-emerald-300/90 bg-gradient-to-r from-emerald-50 to-teal-50 hover:bg-emerald-100 text-emerald-900 px-3 text-xs font-black transition-all cursor-pointer shadow-2xs active-press"
+                title="تصدير بيانات الأكاديمية والفعاليات إلى Excel (.xlsx)"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="font-cairo">تصدير إكسيل</span>
+              </button>
+
+              {/* Mobile Icon Button */}
+              <button
+                type="button"
+                id="mobile-header-excel-btn"
+                onClick={() => onOpenExportExcel("players")}
+                className="flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 shadow-2xs hover:bg-emerald-100 active-press transition cursor-pointer touch-manipulation"
+                title="تصدير إكسيل (.xlsx)"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              </button>
+            </>
+          )}
+
+          {/* 2. ✨ Platform Features Guide Button (With Unread Badge) */}
+          {onOpenFeatures && (
+            <>
+              {/* Desktop Pill */}
+              <button
+                type="button"
+                id="desktop-header-guide-btn"
                 onClick={onOpenFeatures}
-                className="relative hidden sm:flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
+                className="relative hidden sm:flex h-9.5 sm:h-10 items-center gap-1.5 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 px-3 text-xs font-black transition-all cursor-pointer shadow-2xs active-press"
                 title="دليل ومميزات المنصة للكابتن"
               >
-                <Sparkles className="h-4 w-4 text-amber-600" />
+                <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
                 <span className="font-cairo">دليل المنصة</span>
                 {hasUnreadGuide && (
                   <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce">
@@ -172,7 +206,7 @@ export default function Header({
               {/* Mobile Icon Button */}
               <button
                 type="button"
-                id="mobile-guide-btn"
+                id="mobile-header-guide-btn"
                 onClick={onOpenFeatures}
                 className="relative flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 text-amber-900 shadow-2xs hover:bg-amber-100 active-press transition cursor-pointer touch-manipulation"
                 title="دليل ومميزات المنصة"
@@ -187,39 +221,11 @@ export default function Header({
             </>
           )}
 
-          {/* 2. Excel Export Button (Visible on Mobile & Desktop) */}
-          {onOpenExportExcel && (
-            <>
-              {/* Desktop Button */}
-              <button
-                type="button"
-                id="desktop-excel-btn"
-                onClick={() => onOpenExportExcel("players")}
-                className="hidden sm:flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50 to-teal-50 hover:bg-emerald-100 text-emerald-900 px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
-                title="تصدير بيانات الأكاديمية والفعاليات إلى Excel"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                <span className="font-cairo">تصدير إكسيل</span>
-              </button>
-
-              {/* Mobile Icon Button */}
-              <button
-                type="button"
-                id="mobile-excel-btn"
-                onClick={() => onOpenExportExcel("players")}
-                className="flex sm:hidden h-8.5 w-8.5 items-center justify-center rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 shadow-2xs hover:bg-emerald-100 active-press transition cursor-pointer touch-manipulation"
-                title="تصدير بيانات الأكاديمية إلى Excel"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-              </button>
-            </>
-          )}
-
-          {/* 3. Events Navigation Button (Desktop >= sm) */}
+          {/* 3. 🧭 Events Navigation Button (Desktop >= sm) */}
           <button
             type="button"
             onClick={onToggleEventsView}
-            className={`hidden sm:flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer ${
+            className={`hidden sm:flex h-9.5 sm:h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-black transition-all duration-200 cursor-pointer ${
               currentView === "events"
                 ? "border-red-500 bg-red-600 text-white shadow-sm shadow-red-500/20"
                 : "border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white shadow-xs"
@@ -241,7 +247,7 @@ export default function Header({
             )}
           </button>
 
-          {/* 4. Birthday Button & Dropdown */}
+          {/* 4. 🎂 Birthday Button & Notification Panel */}
           <div className="relative" ref={menuRef}>
             <button
               type="button"
@@ -484,7 +490,7 @@ export default function Header({
             )}
           </div>
 
-          {/* 5. User Account & Settings */}
+          {/* 5. ⚙️ User Account Profile & Settings */}
           {/* Desktop User Card (>= md) */}
           <button
             type="button"
@@ -528,7 +534,7 @@ export default function Header({
             )}
           </button>
 
-          {/* 6. Sign Out Button (All Screens) */}
+          {/* 6. 🚪 Sign Out Button (Clean & Direct Everywhere) */}
           <button
             type="button"
             id="signout-btn"
