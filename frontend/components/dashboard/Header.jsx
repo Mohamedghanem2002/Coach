@@ -13,6 +13,7 @@ import {
   Settings,
   User,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -28,6 +29,7 @@ export default function Header({
   eventsCount = 0,
   onNavigateToBirthdays,
   onOpenAccountSettings,
+  onOpenFeatures,
   onInstantCloudBackup,
   onRestore,
   onDownloadBackup,
@@ -142,6 +144,19 @@ export default function Header({
 
         {/* Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+
+          {/* System features guide for Captain */}
+          {onOpenFeatures && (
+            <button
+              type="button"
+              onClick={onOpenFeatures}
+              className="flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 px-2.5 sm:px-3 text-xs font-black transition cursor-pointer shadow-2xs active-press"
+              title="دليل ومميزات المنصة للكابتن"
+            >
+              <Sparkles className="h-4 w-4 text-amber-600" />
+              <span className="hidden md:inline font-cairo">دليل المنصة</span>
+            </button>
+          )}
 
           {/* Events navigation button on desktop */}
           <button

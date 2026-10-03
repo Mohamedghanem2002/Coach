@@ -1,14 +1,16 @@
 /**
  * CoachMaster Promotional Card Generator
  * Generates a stunning 1080x1350 promotional card (4:5 portrait) for marketing.
- * Showcases the academy name, captain name, and CoachMaster platform features.
+ * Supports both:
+ * 1. Unified Card for ALL Subscribers/Academies on ONE Card with adaptive font sizing.
+ * 2. Dedicated Single Academy Card.
  */
 
 // Features list shown on the card
 export const SYSTEM_FEATURES = [
   { icon: "👥", text: "إدارة اللاعبين والأبطال" },
   { icon: "🏟️", text: "إدارة الصالات والفروع" },
-  { icon: "🏆", text: "الفعاليات والبطولات" },
+  { icon: "🏆", text: "الاختبارات والبطولات" },
   { icon: "💳", text: "متابعة الاشتراكات والمدفوعات" },
   { icon: "🎂", text: "كروت تهنئة أعياد الميلاد" },
   { icon: "📊", text: "تقارير ولوحة تحكم ذكية" },
@@ -40,6 +42,8 @@ export async function generatePromoCardCanvas({
   academyName = "أكاديمية الفنون القتالية",
   theme = "dark",
   features = null,
+  captains = null,
+  isAllSubscribers = false,
 }) {
   if (typeof document === "undefined") return null;
 
@@ -49,7 +53,7 @@ export async function generatePromoCardCanvas({
         document.fonts.ready,
         new Promise((r) => setTimeout(r, 300)),
       ]);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   const W = 1080;
@@ -61,22 +65,24 @@ export async function generatePromoCardCanvas({
   if (!ctx) return null;
 
   const featureList = (features || SYSTEM_FEATURES).slice(0, 8);
+  const isMultiCaptains = isAllSubscribers || (Array.isArray(captains) && captains.length > 0);
+  const captainsList = Array.isArray(captains) && captains.length > 0 ? captains : [];
 
   const themes = {
     dark: {
       bg1: "#0f0f1a", bg2: "#1a0a0a", bg3: "#0a0f1a",
       accent: "#ef4444", accent2: "#f97316", gold: "#f59e0b",
       cardBg: "rgba(255,255,255,0.05)", cardBorder: "rgba(255,255,255,0.12)",
-      textPrimary: "#ffffff", textSecondary: "rgba(255,255,255,0.80)",
-      textMuted: "rgba(255,255,255,0.45)",
+      textPrimary: "#ffffff", textSecondary: "rgba(255,255,255,0.85)",
+      textMuted: "rgba(255,255,255,0.50)",
       glowColor: "rgba(239,68,68,0.35)", glowColor2: "rgba(249,115,22,0.2)",
     },
     light: {
       bg1: "#f8fafc", bg2: "#fff1f2", bg3: "#eff6ff",
       accent: "#dc2626", accent2: "#ea580c", gold: "#d97706",
-      cardBg: "rgba(255,255,255,0.9)", cardBorder: "rgba(220,38,38,0.2)",
+      cardBg: "rgba(255,255,255,0.92)", cardBorder: "rgba(220,38,38,0.22)",
       textPrimary: "#0f172a", textSecondary: "#1e293b",
-      textMuted: "#94a3b8",
+      textMuted: "#64748b",
       glowColor: "rgba(220,38,38,0.18)", glowColor2: "rgba(234,88,12,0.12)",
     },
     red: {
@@ -151,47 +157,51 @@ export async function generatePromoCardCanvas({
   });
 
   // 5. Header — Logo + System Name
-  const headerY = 70;
+  const headerY = 55;
 
   // Logo circle
   ctx.save();
-  const logoGrad = ctx.createRadialGradient(W / 2, headerY + 58, 10, W / 2, headerY + 58, 58);
+  const logoGrad = ctx.createRadialGradient(W / 2, headerY + 50, 10, W / 2, headerY + 50, 50);
   logoGrad.addColorStop(0, pal.accent); logoGrad.addColorStop(1, pal.accent2);
-  ctx.fillStyle = logoGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 30;
-  ctx.beginPath(); ctx.arc(W / 2, headerY + 58, 58, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = logoGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 26;
+  ctx.beginPath(); ctx.arc(W / 2, headerY + 50, 50, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
   ctx.save();
   ctx.strokeStyle = pal.gold; ctx.lineWidth = 2.5; ctx.shadowColor = pal.gold; ctx.shadowBlur = 12;
-  ctx.beginPath(); ctx.arc(W / 2, headerY + 58, 66, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2, headerY + 50, 57, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
 
-  // Logo emoji (karate)
+  // Logo emoji
   ctx.save();
-  ctx.font = "54px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText("🥋", W / 2, headerY + 61);
+  ctx.font = "46px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("🥋", W / 2, headerY + 53);
   ctx.restore();
 
   // System name
   ctx.save();
-  ctx.font = "900 72px 'Cairo', 'Arial', sans-serif";
+  ctx.font = "900 64px 'Cairo', 'Arial', sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.direction = "ltr";
-  const cmGrad = ctx.createLinearGradient(W / 2 - 220, 0, W / 2 + 220, 0);
+  const cmGrad = ctx.createLinearGradient(W / 2 - 200, 0, W / 2 + 200, 0);
   cmGrad.addColorStop(0, pal.accent);
   cmGrad.addColorStop(0.5, pal.gold);
   cmGrad.addColorStop(1, pal.accent2);
-  ctx.fillStyle = cmGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 20; ctx.shadowOffsetY = 3;
-  ctx.fillText("CoachMaster", W / 2, headerY + 170);
+  ctx.fillStyle = cmGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 18; ctx.shadowOffsetY = 2;
+  ctx.fillText("CoachMaster", W / 2, headerY + 150);
   ctx.restore();
 
-  // Tagline
+  // Header Subtitle / Tagline
   ctx.save();
-  ctx.font = "600 30px 'Cairo', 'Arial', sans-serif";
+  ctx.font = "700 24px 'Cairo', 'Arial', sans-serif";
   ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = pal.textSecondary;
-  ctx.fillText("منصة إدارة الأكاديميات الرياضية", W / 2, headerY + 215);
+  if (isMultiCaptains) {
+    ctx.fillText("نخبة الأكاديميات والمدربين المشتركين بالمنصة ⭐", W / 2, headerY + 190);
+  } else {
+    ctx.fillText("منصة إدارة الأكاديميات الرياضية الذكية", W / 2, headerY + 190);
+  }
   ctx.restore();
 
-  // Divider
+  // Top glowing divider
   ctx.save();
   const divGrad = ctx.createLinearGradient(100, 0, W - 100, 0);
   divGrad.addColorStop(0, "rgba(0,0,0,0)");
@@ -199,141 +209,307 @@ export async function generatePromoCardCanvas({
   divGrad.addColorStop(0.7, pal.gold);
   divGrad.addColorStop(1, "rgba(0,0,0,0)");
   ctx.strokeStyle = divGrad; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(100, headerY + 240); ctx.lineTo(W - 100, headerY + 240); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(100, headerY + 215); ctx.lineTo(W - 100, headerY + 215); ctx.stroke();
   ctx.restore();
 
-  // 6. Academy & Captain Section
-  const acadSecY = headerY + 270;
+  if (isMultiCaptains && captainsList.length > 0) {
+    // ══════════════════════════════════════════════════════════════════════════
+    // 🌟 ALL SUBSCRIBERS IN ONE CARD LAYOUT
+    // ══════════════════════════════════════════════════════════════════════════
+    const count = captainsList.length;
+    // Adapt columns & font sizes based on count
+    const numCols = count <= 4 ? 1 : count <= 14 ? 2 : 3;
+    const numRows = Math.ceil(count / numCols);
 
-  ctx.save();
-  roundRect(ctx, 60, acadSecY, W - 120, 175, 24);
-  ctx.fillStyle = pal.cardBg; ctx.fill();
-  ctx.strokeStyle = pal.cardBorder; ctx.lineWidth = 1.5; ctx.stroke();
-  ctx.restore();
+    const startY = headerY + 235;
+    const maxAvailableH = 700; // available height for grid
+    const gapX = 14;
+    const gapY = count > 12 ? 8 : 10;
+    const itemH = Math.max(46, Math.min(count <= 3 ? 110 : count <= 6 ? 90 : count <= 10 ? 76 : count <= 16 ? 62 : 50, Math.floor((maxAvailableH - (numRows - 1) * gapY) / numRows)));
+    const gridW = W - 120;
+    const itemW = (gridW - (numCols - 1) * gapX) / numCols;
 
-  // Left accent stripe
-  ctx.save();
-  const stripeGrad = ctx.createLinearGradient(0, acadSecY, 0, acadSecY + 175);
-  stripeGrad.addColorStop(0, pal.accent); stripeGrad.addColorStop(1, pal.accent2);
-  roundRect(ctx, 60, acadSecY, 8, 175, 24);
-  ctx.fillStyle = stripeGrad; ctx.fill();
-  ctx.restore();
+    // Badges / Stats header for subscribers
+    ctx.save();
+    ctx.font = "800 20px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = pal.gold;
+    ctx.fillText(`🏆 الأكاديميات والمدربين المعتمدين (${count} مشترك)`, W / 2, startY + 12);
+    ctx.restore();
 
-  // Academy label
-  ctx.save();
-  ctx.font = "700 22px 'Cairo', 'Arial', sans-serif";
-  ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textMuted;
-  ctx.fillText("🏫  الأكاديمية", W - 90, acadSecY + 40);
-  ctx.restore();
+    const actualGridY = startY + 30;
 
-  // Academy name
-  ctx.save();
-  ctx.font = "900 46px 'Cairo', 'Arial', sans-serif";
-  ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
-  ctx.shadowColor = pal.accent; ctx.shadowBlur = 12;
-  const acWidth = ctx.measureText(academyName).width;
-  if (acWidth > W - 200) ctx.font = "900 34px 'Cairo', 'Arial', sans-serif";
-  ctx.fillText(academyName, W - 90, acadSecY + 92);
-  ctx.restore();
+    captainsList.forEach((c, i) => {
+      const colIndex = i % numCols;
+      const rowIndex = Math.floor(i / numCols);
 
-  // Separator dot
-  ctx.save();
-  ctx.fillStyle = pal.cardBorder;
-  ctx.fillRect(90, acadSecY + 108, W - 200, 1);
-  ctx.restore();
+      // RTL layout: col 0 is rightmost
+      const itemX = (W - 60) - (colIndex + 1) * itemW - colIndex * gapX;
+      const itemY = actualGridY + rowIndex * (itemH + gapY);
 
-  // Captain label
-  ctx.save();
-  ctx.font = "700 22px 'Cairo', 'Arial', sans-serif";
-  ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textMuted;
-  ctx.fillText("🥋  المدرب", W - 90, acadSecY + 132);
-  ctx.restore();
+      const acad = (c.academyName || c.name || "أكاديمية الفنون القتالية").trim();
+      const capt = (c.name || "كابتن الأكاديمية").trim();
 
-  // Captain name
-  ctx.save();
-  ctx.font = "800 36px 'Cairo', 'Arial', sans-serif";
-  ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.gold;
-  ctx.shadowColor = pal.gold; ctx.shadowBlur = 10;
-  ctx.fillText(captainName, W - 90, acadSecY + 172);
-  ctx.restore();
+      // Card box
+      ctx.save();
+      roundRect(ctx, itemX, itemY, itemW, itemH, 16);
+      ctx.fillStyle = pal.cardBg; ctx.fill();
+      ctx.strokeStyle = pal.cardBorder; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.restore();
 
-  // 7. Features Grid (2 col)
-  const featSecY = acadSecY + 198;
+      // Right accent micro-bar
+      ctx.save();
+      const accentGrad = ctx.createLinearGradient(0, itemY, 0, itemY + itemH);
+      accentGrad.addColorStop(0, i % 3 === 0 ? pal.accent : i % 3 === 1 ? pal.gold : pal.accent2);
+      accentGrad.addColorStop(1, i % 3 === 0 ? pal.accent2 : i % 3 === 1 ? pal.accent : pal.gold);
+      roundRect(ctx, itemX + itemW - 6, itemY, 6, itemH, 16);
+      ctx.fillStyle = accentGrad; ctx.fill();
+      ctx.restore();
 
-  ctx.save();
-  ctx.font = "900 34px 'Cairo', 'Arial', sans-serif";
-  ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
-  ctx.fillText("✨  مميزات النظام", W / 2, featSecY + 36);
-  ctx.restore();
+      // Emoji icon
+      const icon = c.icon || "🥋";
+      ctx.save();
+      ctx.font = itemH >= 70 ? "24px serif" : "18px serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(icon, itemX + itemW - 24, itemY + itemH / 2);
+      ctx.restore();
 
-  const gap = 14;
-  const colW = (W - 120 - gap) / 2;
-  const itemH = 84;
-  const gridY = featSecY + 58;
+      // Font sizing logic (adapted smoothly to count)
+      const textRightX = itemX + itemW - 48;
+      const maxTextW = itemW - 60;
 
-  featureList.forEach((feat, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    // RTL: col 0 → right half, col 1 → left half
-    const itemX = col === 0 ? 60 + colW + gap : 60;
-    const itemY = gridY + row * (itemH + gap);
-    const fw = colW;
+      if (itemH >= 75) {
+        // Large layout
+        ctx.save();
+        ctx.font = "900 24px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(acad, textRightX, itemY + 32, maxTextW);
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = "700 17px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.gold;
+        ctx.fillText(`كابتن: ${capt}`, textRightX, itemY + 60, maxTextW);
+        ctx.restore();
+      } else if (itemH >= 58) {
+        // Medium layout
+        ctx.save();
+        ctx.font = "900 20px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(acad, textRightX, itemY + 26, maxTextW);
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = "700 14px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.gold;
+        ctx.fillText(`كابتن: ${capt}`, textRightX, itemY + 47, maxTextW);
+        ctx.restore();
+      } else {
+        // Compact layout for large number of subscribers
+        ctx.save();
+        ctx.font = "900 16px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(acad, textRightX, itemY + 21, maxTextW);
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = "700 12px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.gold;
+        ctx.fillText(`كابتن: ${capt}`, textRightX, itemY + 39, maxTextW);
+        ctx.restore();
+      }
+    });
+
+    // Features Strip (Summary pills)
+    const pillsY = actualGridY + numRows * (itemH + gapY) + 18;
+    const highlightPills = [
+      "👥 إدارة اللاعبين",
+      "🏟️ الفروع والحصص",
+      "💳 الاشتراكات",
+      "🏆 البطولات",
+      "📊 التقارير الذكية",
+      "📱 موبايل وكمبيوتر",
+    ];
+
+    const pillGap = 10;
+    const pillCols = 3;
+    const pillW = (gridW - (pillCols - 1) * pillGap) / pillCols;
+    const pillH = 36;
+
+    highlightPills.forEach((pText, pi) => {
+      const pCol = pi % pillCols;
+      const pRow = Math.floor(pi / pillCols);
+      const px = (W - 60) - (pCol + 1) * pillW - pCol * pillGap;
+      const py = pillsY + pRow * (pillH + 8);
+
+      ctx.save();
+      roundRect(ctx, px, py, pillW, pillH, 10);
+      ctx.fillStyle = pal.cardBg; ctx.fill();
+      ctx.strokeStyle = pal.cardBorder; ctx.lineWidth = 1; ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.font = "700 14px 'Cairo', 'Arial', sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.direction = "rtl";
+      ctx.fillStyle = pal.textSecondary;
+      ctx.fillText(pText, px + pillW / 2, py + pillH / 2);
+      ctx.restore();
+    });
+
+    // CTA Banner
+    const ctaY = pillsY + 2 * (pillH + 8) + 16;
+    ctx.save();
+    const ctaGrad = ctx.createLinearGradient(60, ctaY, W - 60, ctaY + 95);
+    ctaGrad.addColorStop(0, pal.accent); ctaGrad.addColorStop(1, pal.accent2);
+    roundRect(ctx, 60, ctaY, W - 120, 95, 22);
+    ctx.fillStyle = ctaGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 24; ctx.fill();
+    ctx.restore();
 
     ctx.save();
-    roundRect(ctx, itemX, itemY, fw, itemH, 18);
+    ctx.font = "900 28px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = "#ffffff";
+    ctx.fillText("انضم لنخبة الأكاديميات وسجل أكاديميتك الآن! 🚀", W / 2, ctaY + 38);
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = "600 19px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.fillText("طور منظومة تدريبك للمستوى الاحترافي مع CoachMaster ⚡", W / 2, ctaY + 72);
+    ctx.restore();
+
+  } else {
+    // ══════════════════════════════════════════════════════════════════════════
+    // 👤 SINGLE ACADEMY PROMO CARD LAYOUT
+    // ══════════════════════════════════════════════════════════════════════════
+    const acadSecY = headerY + 250;
+
+    ctx.save();
+    roundRect(ctx, 60, acadSecY, W - 120, 175, 24);
     ctx.fillStyle = pal.cardBg; ctx.fill();
-    ctx.strokeStyle = pal.cardBorder; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = pal.cardBorder; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.restore();
 
-    // micro bar
+    // Right accent stripe
     ctx.save();
-    roundRect(ctx, itemX, itemY, 5, itemH, 18);
-    ctx.fillStyle = i % 3 === 0 ? pal.accent : i % 3 === 1 ? pal.gold : pal.accent2;
-    ctx.fill();
+    const stripeGrad = ctx.createLinearGradient(0, acadSecY, 0, acadSecY + 175);
+    stripeGrad.addColorStop(0, pal.accent); stripeGrad.addColorStop(1, pal.accent2);
+    roundRect(ctx, W - 68, acadSecY, 8, 175, 24);
+    ctx.fillStyle = stripeGrad; ctx.fill();
     ctx.restore();
 
-    const icon = typeof feat === "object" ? feat.icon : feat.split(" ")[0];
-    const text = typeof feat === "object" ? feat.text : feat.split(" ").slice(1).join(" ");
-
+    // Academy label
     ctx.save();
-    ctx.font = "28px serif"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
-    ctx.fillText(icon, itemX + fw - 20, itemY + itemH / 2);
+    ctx.font = "700 22px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textMuted;
+    ctx.fillText("🏫  الأكاديمية المعتمدة", W - 90, acadSecY + 40);
     ctx.restore();
 
+    // Academy name
+    ctx.save();
+    ctx.font = "900 44px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+    ctx.shadowColor = pal.accent; ctx.shadowBlur = 12;
+    const acWidth = ctx.measureText(academyName).width;
+    if (acWidth > W - 200) ctx.font = "900 32px 'Cairo', 'Arial', sans-serif";
+    ctx.fillText(academyName, W - 90, acadSecY + 90);
+    ctx.restore();
+
+    // Separator line
+    ctx.save();
+    ctx.fillStyle = pal.cardBorder;
+    ctx.fillRect(90, acadSecY + 108, W - 180, 1);
+    ctx.restore();
+
+    // Captain label
     ctx.save();
     ctx.font = "700 20px 'Cairo', 'Arial', sans-serif";
-    ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.direction = "rtl";
-    ctx.fillStyle = pal.textSecondary;
-    ctx.fillText(text, itemX + fw - 56, itemY + itemH / 2);
+    ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textMuted;
+    ctx.fillText("🥋  المدرب المسئول", W - 90, acadSecY + 132);
     ctx.restore();
-  });
 
-  // 8. CTA Banner
-  const rows = Math.ceil(featureList.length / 2);
-  const ctaY = gridY + rows * (itemH + gap) + 20;
+    // Captain name
+    ctx.save();
+    ctx.font = "800 34px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.gold;
+    ctx.shadowColor = pal.gold; ctx.shadowBlur = 10;
+    ctx.fillText(captainName, W - 90, acadSecY + 168);
+    ctx.restore();
 
-  ctx.save();
-  const ctaGrad = ctx.createLinearGradient(60, ctaY, W - 60, ctaY + 110);
-  ctaGrad.addColorStop(0, pal.accent); ctaGrad.addColorStop(1, pal.accent2);
-  roundRect(ctx, 60, ctaY, W - 120, 110, 24);
-  ctx.fillStyle = ctaGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 28; ctx.fill();
-  ctx.restore();
+    // Features Grid (2 col)
+    const featSecY = acadSecY + 198;
 
-  ctx.save();
-  ctx.font = "900 32px 'Cairo', 'Arial', sans-serif";
-  ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = "#ffffff";
-  ctx.shadowColor = "rgba(0,0,0,0.3)"; ctx.shadowBlur = 8;
-  ctx.fillText("انضم لمنصة CoachMaster الآن! 🚀", W / 2, ctaY + 45);
-  ctx.restore();
+    ctx.save();
+    ctx.font = "900 32px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+    ctx.fillText("✨  مميزات النظام", W / 2, featSecY + 36);
+    ctx.restore();
 
-  ctx.save();
-  ctx.font = "600 22px 'Cairo', 'Arial', sans-serif";
-  ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.fillText("وطور أكاديميتك للمستوى الاحترافي ⚡", W / 2, ctaY + 83);
-  ctx.restore();
+    const gap = 14;
+    const colW = (W - 120 - gap) / 2;
+    const itemH = 84;
+    const gridY = featSecY + 56;
 
-  // 9. Footer
-  const footerY = ctaY + 130;
+    featureList.forEach((feat, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const itemX = col === 0 ? 60 + colW + gap : 60;
+      const itemY = gridY + row * (itemH + gap);
+      const fw = colW;
+
+      ctx.save();
+      roundRect(ctx, itemX, itemY, fw, itemH, 18);
+      ctx.fillStyle = pal.cardBg; ctx.fill();
+      ctx.strokeStyle = pal.cardBorder; ctx.lineWidth = 1; ctx.stroke();
+      ctx.restore();
+
+      // Micro bar
+      ctx.save();
+      roundRect(ctx, itemX + fw - 5, itemY, 5, itemH, 18);
+      ctx.fillStyle = i % 3 === 0 ? pal.accent : i % 3 === 1 ? pal.gold : pal.accent2;
+      ctx.fill();
+      ctx.restore();
+
+      const icon = typeof feat === "object" ? feat.icon : feat.split(" ")[0];
+      const text = typeof feat === "object" ? feat.text : feat.split(" ").slice(1).join(" ");
+
+      ctx.save();
+      ctx.font = "28px serif"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      ctx.fillText(icon, itemX + fw - 20, itemY + itemH / 2);
+      ctx.restore();
+
+      ctx.save();
+      ctx.font = "700 20px 'Cairo', 'Arial', sans-serif";
+      ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.direction = "rtl";
+      ctx.fillStyle = pal.textSecondary;
+      ctx.fillText(text, itemX + fw - 56, itemY + itemH / 2);
+      ctx.restore();
+    });
+
+    // CTA Banner
+    const rows = Math.ceil(featureList.length / 2);
+    const ctaY = gridY + rows * (itemH + gap) + 18;
+
+    ctx.save();
+    const ctaGrad = ctx.createLinearGradient(60, ctaY, W - 60, ctaY + 105);
+    ctaGrad.addColorStop(0, pal.accent); ctaGrad.addColorStop(1, pal.accent2);
+    roundRect(ctx, 60, ctaY, W - 120, 105, 24);
+    ctx.fillStyle = ctaGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 26; ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = "900 30px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = "#ffffff";
+    ctx.fillText("انضم لمنصة CoachMaster الآن! 🚀", W / 2, ctaY + 42);
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = "600 20px 'Cairo', 'Arial', sans-serif";
+    ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.fillText("وطور أكاديميتك للمستوى الاحترافي ⚡", W / 2, ctaY + 78);
+    ctx.restore();
+  }
+
+  // 6. Footer (Shared)
+  const footerY = H - 85;
 
   ctx.save();
   const footGrad = ctx.createLinearGradient(100, 0, W - 100, 0);
@@ -345,21 +521,21 @@ export async function generatePromoCardCanvas({
   ctx.restore();
 
   ctx.save();
-  ctx.font = "700 22px 'Cairo', 'Arial', sans-serif";
+  ctx.font = "700 20px 'Cairo', 'Arial', sans-serif";
   ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = pal.textMuted;
-  ctx.fillText("تصميم وتطوير: Fox Developer  •  CoachMaster © 2025", W / 2, footerY + 40);
+  ctx.fillText("تصميم وتطوير: Fox Developer  •  CoachMaster © 2025", W / 2, footerY + 38);
   ctx.restore();
 
   // Stars near footer
-  [[160, footerY + 40], [W - 160, footerY + 40], [W / 2 - 250, footerY + 40], [W / 2 + 250, footerY + 40]]
+  [[160, footerY + 38], [W - 160, footerY + 38], [W / 2 - 250, footerY + 38], [W / 2 + 250, footerY + 38]]
     .forEach(([sx, sy]) => {
       ctx.save(); ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText("⭐", sx, sy); ctx.restore();
     });
 
-  // 10. Subtle watermark
+  // 7. Subtle background watermark
   ctx.save();
-  ctx.globalAlpha = 0.04;
+  ctx.globalAlpha = 0.035;
   ctx.font = "bold 90px 'Cairo', 'Arial', sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.direction = "ltr";
   ctx.fillStyle = theme === "light" ? "#000" : "#fff";

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Sparkles,
   Download,
@@ -11,20 +11,11 @@ import {
   Zap,
   Shield,
   Users,
-  Trophy,
   Building2,
-  CreditCard,
-  Cake,
-  BarChart3,
-  Smartphone,
-  Lock,
   CheckSquare,
   Square,
-  ChevronDown,
-  ChevronUp,
   Loader2,
   FileImage,
-  Info,
   Package,
 } from "lucide-react";
 import {
@@ -41,86 +32,7 @@ const THEMES = [
   { id: "red",   label: "كلاسيك", desc: "دافئ وجذاب",    from: "#7f1d1d", to: "#3b0000", accent: "#fbbf24" },
 ];
 
-// ─── Full system description sections ────────────────────────────────────────
-const SYSTEM_SECTIONS = [
-  {
-    icon: "👥",
-    title: "إدارة اللاعبين والأبطال",
-    color: "violet",
-    points: [
-      "تسجيل بيانات اللاعبين كاملةً (الاسم، السن، الحزام، ولي الأمر)",
-      "متابعة حالة سداد رسوم كل لاعب",
-      "تصفية وبحث متقدم عبر كل الفروع",
-      "كارت تهنئة عيد ميلاد لكل لاعب بضغطة واحدة",
-    ],
-  },
-  {
-    icon: "🏟️",
-    title: "الصالات والفروع",
-    color: "blue",
-    points: [
-      "إضافة أكثر من صالة وفرع تدريبي",
-      "تحديد أيام وجداول التدريب لكل فرع",
-      "معرفة عدد اللاعبين في كل مقر",
-      "إدارة حضور وغياب تفصيلية لكل جلسة",
-    ],
-  },
-  {
-    icon: "🏆",
-    title: "الفعاليات والبطولات",
-    color: "amber",
-    points: [
-      "إنشاء وإدارة بطولات ورحلات تدريبية",
-      "تسجيل المشاركين وتتبع رسوم الاشتراك",
-      "جداول الفعاليات القادمة والسابقة",
-      "إشعارات تلقائية لأولياء الأمور",
-    ],
-  },
-  {
-    icon: "💳",
-    title: "الاشتراكات والمالية",
-    color: "emerald",
-    points: [
-      "متابعة رسوم اشتراك كل لاعب شهرياً",
-      "تسجيل المدفوع والمتبقي والمتأخر",
-      "سجل المدفوعات الكامل مع التواريخ",
-      "تنبيهات المتأخرين في السداد",
-    ],
-  },
-  {
-    icon: "📊",
-    title: "التقارير ولوحة التحكم",
-    color: "rose",
-    points: [
-      "لوحة إحصائيات شاملة في الوقت الفعلي",
-      "تقارير دورية قابلة للتصدير",
-      "عرض أداء كل فرع مقارنةً بالآخرين",
-      "تتبع نمو الأكاديمية على مدار الوقت",
-    ],
-  },
-  {
-    icon: "📱",
-    title: "يعمل على كل الأجهزة",
-    color: "sky",
-    points: [
-      "تصميم متجاوب يعمل بشكل مثالي على الجوال",
-      "واجهة سلسة على الكمبيوتر واللوح",
-      "لا يحتاج تحميل تطبيق — يعمل من المتصفح",
-      "سرعة عالية وأداء محسّن",
-    ],
-  },
-];
-
-const COLOR_MAP = {
-  violet: { bg: "bg-violet-50", border: "border-violet-200", icon: "text-violet-600", dot: "bg-violet-500", title: "text-violet-900" },
-  blue:   { bg: "bg-blue-50",   border: "border-blue-200",   icon: "text-blue-600",   dot: "bg-blue-500",   title: "text-blue-900"   },
-  amber:  { bg: "bg-amber-50",  border: "border-amber-200",  icon: "text-amber-600",  dot: "bg-amber-500",  title: "text-amber-900"  },
-  emerald:{ bg: "bg-emerald-50",border: "border-emerald-200",icon: "text-emerald-600",dot: "bg-emerald-500",title: "text-emerald-900"},
-  rose:   { bg: "bg-rose-50",   border: "border-rose-200",   icon: "text-rose-600",   dot: "bg-rose-500",   title: "text-rose-900"   },
-  sky:    { bg: "bg-sky-50",    border: "border-sky-200",    icon: "text-sky-600",    dot: "bg-sky-500",    title: "text-sky-900"    },
-};
-
-// ─── Single captain card row ─────────────────────────────────────────────────
+// ─── Single captain card row (for bulk list) ─────────────────────────────────
 function CaptainCardRow({ captain, theme, onGenerate }) {
   const [state, setState] = useState("idle"); // idle | generating | done | error
   const [dataUrl, setDataUrl] = useState("");
@@ -154,7 +66,7 @@ function CaptainCardRow({ captain, theme, onGenerate }) {
   };
 
   return (
-    <div className={`rounded-2xl border bg-white p-3.5 shadow-sm transition ${
+    <div className={`rounded-2xl border bg-white p-3.5 shadow-2xs transition ${
       state === "done" ? "border-emerald-200" : state === "error" ? "border-red-200" : "border-slate-200"
     }`}>
       <div className="flex items-center gap-3">
@@ -228,10 +140,11 @@ function CaptainCardRow({ captain, theme, onGenerate }) {
 
 // ─── Main Tab ─────────────────────────────────────────────────────────────────
 export default function AdminPromoTab({ captains = [] }) {
-  const [mode, setMode] = useState("manual"); // "manual" | "select" | "bulk"
+  const [mode, setMode] = useState("all"); // "all" | "select" | "manual" | "bulk"
   const [manualName, setManualName] = useState("");
   const [manualAcademy, setManualAcademy] = useState("");
-  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [selectedCaptainId, setSelectedCaptainId] = useState("");
+  const [selectedBulkIds, setSelectedBulkIds] = useState(new Set());
   const [theme, setTheme] = useState("dark");
   const [dataUrl, setDataUrl] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -239,14 +152,27 @@ export default function AdminPromoTab({ captains = [] }) {
   const [notice, setNotice] = useState(null);
   const [generated, setGenerated] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0, running: false });
-  const [showFeatures, setShowFeatures] = useState(false);
   const canvasRef = useRef(null);
 
-  const captainName = mode === "manual" ? (manualName || "كابتن الأكاديمية") : "";
-  const academyName = mode === "manual" ? (manualAcademy || "أكاديمية الفنون القتالية") : "";
+  const selectedCaptain = captains.find((c) => (c.id || c._id) === selectedCaptainId) || null;
 
-  const toggleId = (id) => {
-    setSelectedIds((prev) => {
+  const captainName =
+    mode === "manual"
+      ? manualName || "كابتن الأكاديمية"
+      : mode === "select"
+      ? selectedCaptain?.name || "كابتن الأكاديمية"
+      : "كابتن الأكاديمية";
+
+  const academyName =
+    mode === "manual"
+      ? manualAcademy || "أكاديمية الفنون القتالية"
+      : mode === "select"
+      ? selectedCaptain?.academyName || "أكاديمية الفنون القتالية"
+      : "كل المشتركين";
+
+  // Bulk selection toggles
+  const toggleBulkId = (id) => {
+    setSelectedBulkIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -254,24 +180,51 @@ export default function AdminPromoTab({ captains = [] }) {
     });
   };
 
-  const toggleAll = () => {
-    if (selectedIds.size === captains.length) {
-      setSelectedIds(new Set());
+  const toggleAllBulk = () => {
+    if (selectedBulkIds.size === captains.length) {
+      setSelectedBulkIds(new Set());
     } else {
-      setSelectedIds(new Set(captains.map((c) => c.id || c._id)));
+      setSelectedBulkIds(new Set(captains.map((c) => c.id || c._id)));
     }
   };
 
-  const allSelected = captains.length > 0 && selectedIds.size === captains.length;
-  const someSelected = selectedIds.size > 0 && !allSelected;
+  const allBulkSelected = captains.length > 0 && selectedBulkIds.size === captains.length;
+  const someBulkSelected = selectedBulkIds.size > 0 && !allBulkSelected;
 
-  // Single card generation (manual or single select)
-  const generateCard = async () => {
+  const showNotice = useCallback((msg, type = "success") => {
+    setNotice({ msg, type });
+    setTimeout(() => setNotice(null), 4000);
+  }, []);
+
+  // Auto-generate card on initial mount or mode switch
+  const generateCard = useCallback(async () => {
     setGenerating(true);
     setDataUrl("");
     setGenerated(false);
     try {
-      const canvas = await generatePromoCardCanvas({ captainName, academyName, theme });
+      let canvas = null;
+      if (mode === "all") {
+        canvas = await generatePromoCardCanvas({
+          captains: captains.length > 0 ? captains : [
+            { name: "كابتن الأكاديمية", academyName: "أكاديمية الفنون القتالية" },
+          ],
+          isAllSubscribers: true,
+          theme,
+        });
+      } else if (mode === "select") {
+        canvas = await generatePromoCardCanvas({
+          captainName: selectedCaptain?.name || "كابتن الأكاديمية",
+          academyName: selectedCaptain?.academyName || "أكاديمية الفنون القتالية",
+          theme,
+        });
+      } else if (mode === "manual") {
+        canvas = await generatePromoCardCanvas({
+          captainName: manualName || "كابتن الأكاديمية",
+          academyName: manualAcademy || "أكاديمية الفنون القتالية",
+          theme,
+        });
+      }
+
       if (!canvas) return;
       canvasRef.current = canvas;
       setDataUrl(canvas.toDataURL("image/png", 1.0));
@@ -282,11 +235,11 @@ export default function AdminPromoTab({ captains = [] }) {
     } finally {
       setGenerating(false);
     }
-  };
+  }, [mode, captains, theme, selectedCaptain, manualName, manualAcademy, showNotice]);
 
-  // Bulk generation — download all as separate PNGs
+  // Bulk download as separate cards
   const generateBulk = async () => {
-    const targets = captains.filter((c) => selectedIds.has(c.id || c._id));
+    const targets = captains.filter((c) => selectedBulkIds.has(c.id || c._id));
     if (!targets.length) return;
     setBulkProgress({ done: 0, total: targets.length, running: true });
 
@@ -299,7 +252,6 @@ export default function AdminPromoTab({ captains = [] }) {
           theme,
         });
         if (canvas) {
-          // slight delay between downloads so browser doesn't block
           await new Promise((r) => setTimeout(r, 300));
           downloadPromoCard(canvas, `CoachMaster-${(c.academyName || c.name || "card").replace(/\s+/g, "-")}.png`);
         }
@@ -314,7 +266,11 @@ export default function AdminPromoTab({ captains = [] }) {
 
   const handleDownload = () => {
     if (!canvasRef.current) return;
-    downloadPromoCard(canvasRef.current, `CoachMaster-${academyName.replace(/\s+/g, "-")}.png`);
+    const fName =
+      mode === "all"
+        ? "CoachMaster-All-Subscribers.png"
+        : `CoachMaster-${academyName.replace(/\s+/g, "-")}.png`;
+    downloadPromoCard(canvasRef.current, fName);
     showNotice("تم تحميل الكارت بنجاح ✅");
   };
 
@@ -324,17 +280,26 @@ export default function AdminPromoTab({ captains = [] }) {
     try {
       const blob = await canvasToBlob(canvasRef.current);
       if (!blob) return;
-      const file = new File([blob], "CoachMaster-PromoCard.png", { type: "image/png" });
+      const fName =
+        mode === "all"
+          ? "CoachMaster-All-Subscribers.png"
+          : "CoachMaster-PromoCard.png";
+      const file = new File([blob], fName, { type: "image/png" });
+      const shareText =
+        mode === "all"
+          ? `نخبة المشتركين والأكاديميات المعتمدة على CoachMaster! 🥋`
+          : `أكاديمية ${academyName} تستخدم CoachMaster! 🥋`;
+
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           title: "CoachMaster - منصة إدارة الأكاديميات",
-          text: `أكاديمية ${academyName} تستخدم CoachMaster! 🥋`,
+          text: shareText,
           files: [file],
         });
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = "CoachMaster-PromoCard.png"; a.click();
+        a.href = url; a.download = fName; a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
         showNotice("تم تحميل الكارت — شاركه من جهازك 📲");
       }
@@ -343,11 +308,6 @@ export default function AdminPromoTab({ captains = [] }) {
     } finally {
       setSharing(false);
     }
-  };
-
-  const showNotice = (msg, type = "success") => {
-    setNotice({ msg, type });
-    setTimeout(() => setNotice(null), 4000);
   };
 
   return (
@@ -360,10 +320,10 @@ export default function AdminPromoTab({ captains = [] }) {
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-red-600 to-orange-500 flex items-center justify-center shadow-lg shadow-red-200">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-black text-slate-900">الكارت الترويجي</h1>
+            <h1 className="text-xl font-black text-slate-900">الكارت الترويجي للمنصة</h1>
           </div>
           <p className="text-xs text-slate-500 font-medium pr-1">
-            أنشئ كروتاً دعائية احترافية لمشتركي منصة CoachMaster — جاهزة للنشر والطباعة 🚀
+            أنشئ كارت ترويجي مجمّع يجمع كل المشتركين في كارت واحد عالي الدقة للنشر والطباعة 🚀
           </p>
         </div>
         <div className="flex items-center gap-2 text-[11px] font-black">
@@ -374,88 +334,32 @@ export default function AdminPromoTab({ captains = [] }) {
         </div>
       </div>
 
-      {/* ── System Description (collapsible) ───────────────────── */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setShowFeatures(!showFeatures)}
-          className="w-full flex items-center justify-between p-4 text-right cursor-pointer"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center">
-              <Package className="w-4 h-4 text-red-400" />
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-black text-white">شرح كامل لمميزات CoachMaster</p>
-              <p className="text-[11px] text-slate-400 font-medium">اضغط لعرض/إخفاء قائمة المميزات التفصيلية</p>
-            </div>
-          </div>
-          {showFeatures
-            ? <ChevronUp className="w-5 h-5 text-slate-400" />
-            : <ChevronDown className="w-5 h-5 text-slate-400" />}
-        </button>
-
-        {showFeatures && (
-          <div className="px-4 pb-5 space-y-3 border-t border-slate-700/60 pt-4">
-            {/* System intro */}
-            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 text-[12px] text-slate-300 font-medium leading-relaxed">
-              <span className="text-white font-black">CoachMaster</span> هو نظام متكامل لإدارة أكاديميات الفنون القتالية والرياضات القتالية.
-              صُمِّم خصيصاً للمدربين والكباتن لتوفير وقتهم وتنظيم عملهم بشكل احترافي —
-              من إدارة اللاعبين وصولاً لتتبع المدفوعات وتنظيم البطولات.
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {SYSTEM_SECTIONS.map((sec) => {
-                const col = COLOR_MAP[sec.color];
-                return (
-                  <div key={sec.title} className={`rounded-xl border p-3.5 ${col.bg} ${col.border} bg-opacity-10`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xl leading-none">{sec.icon}</span>
-                      <h4 className={`text-xs font-black ${col.title}`}>{sec.title}</h4>
-                    </div>
-                    <ul className="space-y-1">
-                      {sec.points.map((pt, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-[11px] text-slate-700 font-medium">
-                          <span className={`w-1.5 h-1.5 rounded-full ${col.dot} shrink-0 mt-1`} />
-                          {pt}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Developer credit */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
-              <span className="text-[11px] text-slate-400 font-medium">تصميم وتطوير النظام</span>
-              <span className="text-[11px] text-amber-400 font-black">Fox Developer ⭐</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Mode Tabs ──────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-4">
-        <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl">
+      {/* ── Mode Selection Tabs ─────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-xl">
           {[
-            { id: "manual", label: "✏️  إدخال يدوي" },
-            { id: "select", label: "👤  كابتن واحد" },
-            { id: "bulk",   label: "👥  كل الكباتن", badge: captains.length },
+            { id: "all",    label: "🌟 كارت مجمّع لكل المشتركين", badge: captains.length },
+            { id: "select", label: "👤 كارت كابتن محدد" },
+            { id: "manual", label: "✏️ إدخال يدوي" },
+            { id: "bulk",   label: "📦 تحميل كل كارت منفصل", badge: captains.length },
           ].map((m) => (
             <button
               key={m.id}
               type="button"
-              onClick={() => setMode(m.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-black transition cursor-pointer ${
+              onClick={() => {
+                setMode(m.id);
+                setDataUrl("");
+                setGenerated(false);
+              }}
+              className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-black transition cursor-pointer text-center ${
                 mode === m.id
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white text-slate-900 shadow-xs scale-[1.01]"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <span>{m.label}</span>
+              <span className="truncate">{m.label}</span>
               {m.badge !== undefined && m.badge > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
                   mode === m.id ? "bg-red-600 text-white" : "bg-slate-200 text-slate-600"
                 }`}>
                   {m.badge}
@@ -465,7 +369,96 @@ export default function AdminPromoTab({ captains = [] }) {
           ))}
         </div>
 
-        {/* Manual mode */}
+        {/* 1. All Subscribers Mode Banner & Info */}
+        {mode === "all" && (
+          <div className="space-y-3">
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/80 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-xs">
+                  {captains.length}
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-900">
+                    كارت مجمّع لجميع المشتركين ({captains.length} أكاديمية / كابتن)
+                  </h4>
+                  <p className="text-[11px] font-semibold text-slate-600 mt-0.5">
+                    يتم رسم وتنسيق جميع الأكاديميات في شبكة متناسقة بخطوط وأحجام متكيفة تلقائياً داخل كارت واحد.
+                  </p>
+                </div>
+              </div>
+              <span className="hidden sm:inline-flex px-2.5 py-1 rounded-lg bg-white border border-red-200 text-[10px] font-black text-red-700">
+                1080×1350 بكسل
+              </span>
+            </div>
+
+            {/* List of included academies/captains */}
+            {captains.length > 0 && (
+              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                <p className="text-[11px] font-black text-slate-500 mb-1.5">الأكاديميات المشمولة داخل الكارت:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {captains.map((c, i) => (
+                    <div
+                      key={c.id || c._id || i}
+                      className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80 text-right"
+                    >
+                      <span className="w-6 h-6 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-black text-[10px] shrink-0">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-black text-slate-900 truncate">
+                          {c.academyName || c.name || "أكاديمية"}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-500 truncate">
+                          كابتن: {c.name || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 2. Single Select Mode */}
+        {mode === "select" && (
+          <div className="space-y-3">
+            <label className="block text-[11px] font-black text-slate-500">اختر المشترك لتوليد كارته الشخصي</label>
+            {captains.length === 0 ? (
+              <p className="text-xs text-slate-400 font-medium text-center py-3">لا توجد حسابات مسجلة</p>
+            ) : (
+              <select
+                value={selectedCaptainId}
+                onChange={(e) => {
+                  setSelectedCaptainId(e.target.value);
+                  setDataUrl("");
+                  setGenerated(false);
+                }}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition cursor-pointer"
+                dir="rtl"
+              >
+                <option value="">-- اضغط لاختيار كابتن --</option>
+                {captains.map((c) => (
+                  <option key={c.id || c._id} value={c.id || c._id}>
+                    {c.academyName ? `${c.academyName} — ` : ""}{c.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {selectedCaptain && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+                  🥋 كابتن: {selectedCaptain.name}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+                  🏫 أكاديمية: {selectedCaptain.academyName || "—"}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 3. Manual Mode */}
         {mode === "manual" && (
           <div className="space-y-2.5">
             <div>
@@ -473,7 +466,11 @@ export default function AdminPromoTab({ captains = [] }) {
               <input
                 type="text"
                 value={manualName}
-                onChange={(e) => setManualName(e.target.value)}
+                onChange={(e) => {
+                  setManualName(e.target.value);
+                  setDataUrl("");
+                  setGenerated(false);
+                }}
                 placeholder="مثال: كابتن أحمد محمد"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition"
                 dir="rtl"
@@ -484,7 +481,11 @@ export default function AdminPromoTab({ captains = [] }) {
               <input
                 type="text"
                 value={manualAcademy}
-                onChange={(e) => setManualAcademy(e.target.value)}
+                onChange={(e) => {
+                  setManualAcademy(e.target.value);
+                  setDataUrl("");
+                  setGenerated(false);
+                }}
                 placeholder="مثال: أكاديمية النصر للكاراتيه"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition"
                 dir="rtl"
@@ -493,81 +494,42 @@ export default function AdminPromoTab({ captains = [] }) {
           </div>
         )}
 
-        {/* Single select mode */}
-        {mode === "select" && (
-          <div>
-            <label className="block text-[11px] font-black text-slate-500 mb-1">اختر كابتن مشترك</label>
-            {captains.length === 0 ? (
-              <p className="text-xs text-slate-400 font-medium text-center py-3">لا توجد حسابات مسجلة</p>
-            ) : (
-              <select
-                onChange={(e) => {
-                  const found = captains.find((c) => (c.id || c._id) === e.target.value);
-                  setManualName(found?.name || "");
-                  setManualAcademy(found?.academyName || "");
-                }}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition cursor-pointer"
-                dir="rtl"
-              >
-                <option value="">-- اختر كابتن --</option>
-                {captains.map((c) => (
-                  <option key={c.id || c._id} value={c.id || c._id}>
-                    {c.name} — {c.academyName || "أكاديمية"}
-                  </option>
-                ))}
-              </select>
-            )}
-            {(manualName || manualAcademy) && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
-                  🥋 {manualName}
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
-                  🏫 {manualAcademy}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Bulk mode */}
+        {/* 4. Bulk Mode (Download each card individually) */}
         {mode === "bulk" && (
           <div className="space-y-3">
             {captains.length === 0 ? (
               <p className="text-xs text-slate-400 font-medium text-center py-4">لا توجد حسابات مسجلة حتى الآن</p>
             ) : (
               <>
-                {/* Select all toggle */}
                 <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-slate-50 border border-slate-200">
                   <button
                     type="button"
-                    onClick={toggleAll}
+                    onClick={toggleAllBulk}
                     className="flex items-center gap-2.5 text-xs font-black text-slate-800 cursor-pointer"
                   >
-                    {allSelected ? (
+                    {allBulkSelected ? (
                       <CheckSquare className="w-4 h-4 text-red-600" />
-                    ) : someSelected ? (
+                    ) : someBulkSelected ? (
                       <CheckSquare className="w-4 h-4 text-slate-400" />
                     ) : (
                       <Square className="w-4 h-4 text-slate-400" />
                     )}
-                    {allSelected ? "إلغاء تحديد الكل" : "تحديد الكل"}
+                    {allBulkSelected ? "إلغاء تحديد الكل" : "تحديد الكل"}
                   </button>
                   <span className="text-[11px] text-slate-500 font-bold">
-                    {selectedIds.size} / {captains.length} مُحدَّد
+                    {selectedBulkIds.size} / {captains.length} مُحدَّد
                   </span>
                 </div>
 
-                {/* Captain list with checkboxes */}
                 <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                   {captains.map((c) => {
                     const id = c.id || c._id;
-                    const checked = selectedIds.has(id);
+                    const checked = selectedBulkIds.has(id);
                     return (
                       <button
                         key={id}
                         type="button"
-                        onClick={() => toggleId(id)}
+                        onClick={() => toggleBulkId(id)}
                         className={`w-full flex items-center gap-3 p-2.5 rounded-xl border text-right transition cursor-pointer ${
                           checked
                             ? "bg-red-50 border-red-200"
@@ -597,23 +559,27 @@ export default function AdminPromoTab({ captains = [] }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* ── Left: Theme + Generate ─────────────────────────── */}
+        {/* ── Left: Theme + Generate Button ─────────────────── */}
         <div className="space-y-4">
           {/* Theme picker */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3">
             <h3 className="text-xs font-black text-slate-700 flex items-center gap-2">
               <Palette className="w-4 h-4 text-violet-500" />
-              ثيم التصميم
+              ثيم وتصميم الكارت
             </h3>
             <div className="grid grid-cols-3 gap-2.5">
               {THEMES.map((t) => (
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => setTheme(t.id)}
+                  onClick={() => {
+                    setTheme(t.id);
+                    setDataUrl("");
+                    setGenerated(false);
+                  }}
                   className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border transition cursor-pointer ${
                     theme === t.id
-                      ? "border-red-500 bg-red-50 shadow-sm shadow-red-100"
+                      ? "border-red-500 bg-red-50 shadow-2xs shadow-red-100"
                       : "border-slate-200 bg-slate-50 hover:border-slate-300"
                   }`}
                 >
@@ -635,11 +601,11 @@ export default function AdminPromoTab({ captains = [] }) {
             </div>
           </div>
 
-          {/* Features on card preview */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-2">
+          {/* Features badge overview */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-2">
             <h3 className="text-xs font-black text-slate-700 flex items-center gap-2">
               <Shield className="w-4 h-4 text-emerald-500" />
-              مميزات تظهر داخل الكارت
+              مميزات تبرز داخل الكارت الترويجي
             </h3>
             <div className="grid grid-cols-2 gap-1.5">
               {SYSTEM_FEATURES.map((feat, i) => (
@@ -651,7 +617,7 @@ export default function AdminPromoTab({ captains = [] }) {
             </div>
           </div>
 
-          {/* Generate / Bulk button */}
+          {/* Generate or Bulk Button */}
           {mode === "bulk" ? (
             <div className="space-y-2">
               {bulkProgress.running && (
@@ -668,13 +634,13 @@ export default function AdminPromoTab({ captains = [] }) {
               <button
                 type="button"
                 onClick={generateBulk}
-                disabled={selectedIds.size === 0 || bulkProgress.running}
+                disabled={selectedBulkIds.size === 0 || bulkProgress.running}
                 className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-l from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black text-sm transition cursor-pointer disabled:opacity-50 shadow-lg shadow-red-200 active:scale-[0.98]"
               >
                 {bulkProgress.running ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /><span>جارٍ التحميل...</span></>
                 ) : (
-                  <><FileImage className="w-4 h-4" /><span>تحميل {selectedIds.size} كارت دفعةً واحدة ⬇️</span></>
+                  <><FileImage className="w-4 h-4" /><span>تحميل {selectedBulkIds.size} كارت دفعةً واحدة ⬇️</span></>
                 )}
               </button>
             </div>
@@ -688,12 +654,12 @@ export default function AdminPromoTab({ captains = [] }) {
               {generating ? (
                 <><RefreshCw className="w-4 h-4 animate-spin" /><span>جارٍ توليد الكارت...</span></>
               ) : (
-                <><Sparkles className="w-4 h-4" /><span>🎨 توليد الكارت الترويجي</span></>
+                <><Sparkles className="w-4 h-4" /><span>🎨 {mode === "all" ? "توليد كارت كل المشتركين المجمّع" : "توليد الكارت الترويجي"}</span></>
               )}
             </button>
           )}
 
-          {/* Tips */}
+          {/* Publishing tips */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700 p-4 space-y-2.5">
             <h3 className="text-xs font-black text-white flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-400" />نصائح للنشر
@@ -712,12 +678,10 @@ export default function AdminPromoTab({ captains = [] }) {
           </div>
         </div>
 
-        {/* ── Right: Preview (manual/select) or Per-captain list (bulk) ── */}
+        {/* ── Right: Preview & Download ──────────────────────── */}
         <div className="space-y-4">
-
           {mode === "bulk" ? (
-            /* Bulk: show per-captain card rows */
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black text-slate-700 flex items-center gap-2">
                   <FileImage className="w-4 h-4 text-red-500" />
@@ -740,12 +704,11 @@ export default function AdminPromoTab({ captains = [] }) {
               )}
             </div>
           ) : (
-            /* Single / Manual: show preview */
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black text-slate-700 flex items-center gap-2">
                   <Star className="w-4 h-4 text-amber-500" />
-                  معاينة الكارت
+                  معاينة الكارت الترويجي
                 </h3>
                 {generated && (
                   <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
@@ -754,23 +717,25 @@ export default function AdminPromoTab({ captains = [] }) {
                 )}
               </div>
 
-              <div className="rounded-xl overflow-hidden bg-slate-900 min-h-[260px] flex items-center justify-center">
+              <div className="rounded-xl overflow-hidden bg-slate-900 min-h-[300px] flex items-center justify-center p-2">
                 {generating ? (
                   <div className="flex flex-col items-center gap-3 text-slate-400 py-16">
                     <div className="w-10 h-10 border-3 border-red-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-xs font-black text-slate-300">يتم الرسم...</p>
+                    <p className="text-xs font-black text-slate-300">يتم رسم وتنسيق الكارت...</p>
                     <p className="text-[11px] text-slate-500">جودة HD 1080×1350 🎨</p>
                   </div>
                 ) : dataUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={dataUrl} alt="كارت CoachMaster" className="w-full h-auto block rounded-xl" draggable="false" />
+                  <img src={dataUrl} alt="كارت CoachMaster" className="w-full h-auto block rounded-xl shadow-lg" draggable="false" />
                 ) : (
                   <div className="flex flex-col items-center gap-3 text-slate-500 py-16 px-4 text-center">
                     <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center">
                       <Sparkles className="w-8 h-8 text-slate-600" />
                     </div>
-                    <p className="text-xs font-black text-slate-400">اضغط &quot;توليد الكارت&quot; لعرض المعاينة</p>
-                    <p className="text-[11px] text-slate-600 max-w-[200px]">أدخل البيانات واختر الثيم أولاً</p>
+                    <p className="text-xs font-black text-slate-400">اضغط &quot;توليد الكارت&quot; لعرض المعاينة المباشرة</p>
+                    <p className="text-[11px] text-slate-600 max-w-[240px]">
+                      {mode === "all" ? `سيتم جمع جميع المشتركين (${captains.length}) في كارت واحد` : "اختر الثيم والبيانات واضغط توليد"}
+                    </p>
                   </div>
                 )}
               </div>
@@ -805,7 +770,7 @@ export default function AdminPromoTab({ captains = [] }) {
                     </button>
                   </div>
                   <p className="text-center text-[10px] text-slate-400 font-medium">
-                    📐 1080×1350 — مناسب للإنستجرام وواتساب
+                    📐 1080×1350 — مقاس رأسي مثالي للمشاركة والطباعة
                   </p>
                 </>
               )}

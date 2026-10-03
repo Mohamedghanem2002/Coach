@@ -71,6 +71,7 @@ import BranchAttendanceModal from "../components/dashboard/BranchAttendanceModal
 import AccountSettingsModal from "../components/dashboard/AccountSettingsModal";
 import SubscriptionSuspended from "../components/SubscriptionSuspended";
 import DashboardHero from "../components/dashboard/DashboardHero";
+import SystemFeaturesModal from "../components/dashboard/SystemFeaturesModal";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 
@@ -108,6 +109,7 @@ export default function Home() {
   const [welcomePlayer, setWelcomePlayer] = useState(null);
   const [branchAttendanceReport, setBranchAttendanceReport] = useState(null);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
   const [subscriptionInactive, setSubscriptionInactive] = useState(null);
 
   // Events management state
@@ -1103,6 +1105,7 @@ export default function Home() {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         onOpenAccountSettings={() => setShowAccountSettings(true)}
+        onOpenFeatures={() => setShowFeaturesModal(true)}
         onInstantCloudBackup={handleInstantCloudBackup}
         onRestore={() => setShowRestoreModal(true)}
         onDownloadBackup={handleDownloadBackup}
@@ -1168,6 +1171,7 @@ export default function Home() {
                 setMobileTab("stats");
               }}
               onFilterStatus={(status) => setStatusFilter(status)}
+              onOpenFeatures={() => setShowFeaturesModal(true)}
             />
           </div>
         )}
@@ -2549,6 +2553,13 @@ export default function Home() {
           onUserUpdated={() => {
             // Re-render or trigger updates
           }}
+        />
+      )}
+
+      {showFeaturesModal && (
+        <SystemFeaturesModal
+          isOpen={showFeaturesModal}
+          onClose={() => setShowFeaturesModal(false)}
         />
       )}
       {/* ━━━ Global Fixed Toast Notification Overlay ━━━

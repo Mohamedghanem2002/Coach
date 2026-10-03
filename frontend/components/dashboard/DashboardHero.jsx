@@ -49,6 +49,7 @@ export default function DashboardHero({
   onOpenBirthdays,
   onOpenFinances,
   onFilterStatus,
+  onOpenFeatures,
 }) {
   const today = localDate();
   const firstName = (captainName || "").split(" ")[0] || "كابتن";
@@ -145,6 +146,18 @@ export default function DashboardHero({
               <span>تسجيل لاعب جديد</span>
             </button>
 
+            {onOpenFeatures && (
+              <button
+                type="button"
+                onClick={onOpenFeatures}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-amber-300/90 bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-900 text-xs font-black shadow-2xs active-press transition cursor-pointer"
+                title="شرح كامل لمميزات ودليل المنصة للكابتن"
+              >
+                <Sparkles className="h-4 w-4 text-amber-600" />
+                <span>دليل ومميزات المنصة ✨</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => onOpenAttendanceReport?.(branch === "كل الصالات" ? branches[0]?.name || "كل الصالات" : branch)}
@@ -192,14 +205,26 @@ export default function DashboardHero({
             <span className="truncate">لاعب جديد</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => onOpenAttendanceReport?.(branch === "كل الصالات" ? branches[0]?.name || "كل الصالات" : branch)}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-red-200 bg-red-50/80 text-red-700 text-[10px] font-black active-press cursor-pointer"
-          >
-            <FileText className="h-4 w-4 text-red-600" />
-            <span className="truncate">تقرير الحضور</span>
-          </button>
+          {onOpenFeatures ? (
+            <button
+              type="button"
+              onClick={onOpenFeatures}
+              className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50 text-amber-900 text-[10px] font-black active-press cursor-pointer"
+              title="دليل المنصة"
+            >
+              <Sparkles className="h-4 w-4 text-amber-600" />
+              <span className="truncate">دليل المنصة</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onOpenAttendanceReport?.(branch === "كل الصالات" ? branches[0]?.name || "كل الصالات" : branch)}
+              className="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border border-red-200 bg-red-50/80 text-red-700 text-[10px] font-black active-press cursor-pointer"
+            >
+              <FileText className="h-4 w-4 text-red-600" />
+              <span className="truncate">تقرير الحضور</span>
+            </button>
+          )}
 
           <button
             type="button"
