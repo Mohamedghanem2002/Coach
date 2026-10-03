@@ -320,11 +320,14 @@ export default function ExportExcelModal({
                     className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-hidden"
                   >
                     <option value="all">كافة الأحزمة</option>
-                    {BELTS.map((belt) => (
-                      <option key={belt} value={belt}>
-                        حزام {belt} ({players.filter((p) => p.belt === belt).length})
-                      </option>
-                    ))}
+                    {BELTS.map((belt) => {
+                      const beltName = typeof belt === "string" ? belt : belt.name;
+                      return (
+                        <option key={beltName} value={beltName}>
+                          حزام {beltName} ({players.filter((p) => p.belt === beltName).length})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
