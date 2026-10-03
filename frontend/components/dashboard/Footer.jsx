@@ -66,7 +66,7 @@ export default function Footer({ academyName = "CoachMaster" } = {}) {
       className="w-full mt-10 sm:mt-12 border-t border-slate-200/70 bg-slate-50/40 py-5 pb-24 md:pb-6 transition-colors"
       dir="rtl"
     >
-      <div className="mx-auto max-w-7xl px-3.5 sm:px-6 lg:px-8 space-y-3.5">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-3.5">
         {/* ━━━ كبسولات التواصل المدمجة (كبسولة لكل رقم + كبسولة فيسبوك) ━━━ */}
         <div className="flex flex-wrap items-center justify-center sm:justify-between gap-2.5">
           <div className="flex flex-wrap items-center justify-center gap-2">

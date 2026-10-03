@@ -1207,7 +1207,7 @@ export default function Home() {
         isBackingUp={isBackingUp}
       />
 
-      <section className="mx-auto w-full max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1560px] px-3 sm:px-6 pt-3.5 pb-28 sm:py-7 lg:px-8 overflow-x-hidden">
+      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-3.5 pb-28 sm:py-6 overflow-x-hidden">
         <input
           ref={restoreFileRef}
           type="file"
