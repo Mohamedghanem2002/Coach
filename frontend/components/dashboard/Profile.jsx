@@ -574,7 +574,7 @@ export default function Profile({
       `🥋 تقرير متابعة البطل - شهر ${activeMonthLabel}`,
       `📨 إشراف وتدريب الكابتن: ${captainName}`,
       "",
-      `👤 اسم البطل: ${player.name}${player.fileNumber ? ` (ملف: #${player.fileNumber})` : ""}`,
+      `👤 اسم البطل: ${player.name}`,
       `🥋 الحزام: ${player.belt || "أبيض"} (مستوى ${player.level || "A"})`,
       `🏢 الصالة: ${player.branch}`,
       ...(guardianPhone ? [`📞 هاتف ولي الأمر: ${guardianPhone}`] : []),
@@ -796,19 +796,19 @@ export default function Profile({
       "#fecaca",
     );
 
-    // Athlete Banner Box (Enlarged to 380px for a prominent hero photo)
+    // Athlete Banner Box (Enlarged to 440px for a massive hero photo)
     context.fillStyle = "#f8fafc";
     context.beginPath();
-    context.roundRect(72, 236, canvas.width - 144, 380, 24);
+    context.roundRect(72, 236, canvas.width - 144, 440, 26);
     context.fill();
     context.strokeStyle = "#e2e8f0";
     context.lineWidth = 2;
     context.stroke();
 
-    // Photo / Monogram Avatar (Substantially enlarged: Center 255, 426, Radius 160, Diameter 320px)
-    const avatarRadius = 160;
-    const avatarCenterX = 255;
-    const avatarCenterY = 426;
+    // Photo / Monogram Avatar (Significantly enlarged: Center 275, 456, Radius 195, Diameter 390px)
+    const avatarRadius = 195;
+    const avatarCenterX = 275;
+    const avatarCenterY = 456;
 
     let photoDrawn = false;
     if (player.photo) {
@@ -834,16 +834,16 @@ export default function Profile({
 
         // Outer soft ambient glow ring
         context.beginPath();
-        context.arc(avatarCenterX, avatarCenterY, avatarRadius + 10, 0, Math.PI * 2);
+        context.arc(avatarCenterX, avatarCenterY, avatarRadius + 12, 0, Math.PI * 2);
         context.strokeStyle = "rgba(220, 38, 38, 0.15)";
-        context.lineWidth = 10;
+        context.lineWidth = 12;
         context.stroke();
 
         // Gold decorative champion ring
         context.beginPath();
-        context.arc(avatarCenterX, avatarCenterY, avatarRadius + 4, 0, Math.PI * 2);
+        context.arc(avatarCenterX, avatarCenterY, avatarRadius + 5, 0, Math.PI * 2);
         context.strokeStyle = "#f59e0b";
-        context.lineWidth = 4;
+        context.lineWidth = 5;
         context.stroke();
 
         // Center-crop (object-fit: cover) to preserve aspect ratio without stretching
@@ -872,7 +872,7 @@ export default function Profile({
         context.beginPath();
         context.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
         context.strokeStyle = "#dc2626";
-        context.lineWidth = 6;
+        context.lineWidth = 7;
         context.stroke();
         photoDrawn = true;
       }
@@ -881,15 +881,15 @@ export default function Profile({
     if (!photoDrawn) {
       // Soft outer ambient glow ring
       context.beginPath();
-      context.arc(avatarCenterX, avatarCenterY, avatarRadius + 10, 0, Math.PI * 2);
+      context.arc(avatarCenterX, avatarCenterY, avatarRadius + 12, 0, Math.PI * 2);
       context.strokeStyle = "rgba(220, 38, 38, 0.15)";
-      context.lineWidth = 10;
+      context.lineWidth = 12;
       context.stroke();
 
       const avatarGrad = context.createRadialGradient(
-        avatarCenterX - 40,
-        avatarCenterY - 40,
-        20,
+        avatarCenterX - 45,
+        avatarCenterY - 45,
+        25,
         avatarCenterX,
         avatarCenterY,
         avatarRadius
@@ -905,30 +905,27 @@ export default function Profile({
       context.beginPath();
       context.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
       context.strokeStyle = "#ffffff";
-      context.lineWidth = 6;
+      context.lineWidth = 7;
       context.stroke();
 
       drawCenter(
         player.name ? player.name.charAt(0) : "ك",
         avatarCenterX,
-        avatarCenterY + 48,
-        "900 135px Cairo, sans-serif",
+        avatarCenterY + 56,
+        "900 160px Cairo, sans-serif",
         "#ffffff"
       );
     }
 
-    // Athlete Details (Evenly spaced in the right area)
-    const displayNameWithFile = player.fileNumber
-      ? `${player.name}  (#${player.fileNumber})`
-      : player.name;
-    drawRight(displayNameWithFile, 965, 310, "900 44px Cairo, sans-serif", "#0f172a");
-    drawRight(`🥋 الحزام: ${player.belt || "أبيض"}  •  المستوى: ${player.level || "A"}`, 965, 360, "800 27px Cairo, sans-serif", "#b91c1c");
-    drawRight(`🏢 الصالة: ${player.branch}`, 965, 410, "700 25px Cairo, sans-serif", "#334155");
-    drawRight(`🎂 السن: ${currentAge} سنة`, 965, 458, "700 25px Cairo, sans-serif", "#334155");
+    // Athlete Details (Evenly spaced in the right area - NO file number shown)
+    drawRight(player.name, 970, 315, "900 48px Cairo, sans-serif", "#0f172a");
+    drawRight(`🥋 الحزام: ${player.belt || "أبيض"}  •  المستوى: ${player.level || "A"}`, 970, 372, "800 28px Cairo, sans-serif", "#b91c1c");
+    drawRight(`🏢 الصالة: ${player.branch}`, 970, 428, "700 27px Cairo, sans-serif", "#334155");
+    drawRight(`🎂 السن: ${currentAge} سنة`, 970, 478, "700 27px Cairo, sans-serif", "#334155");
     if (guardianPhone) {
-      drawRight(`📞 ولي الأمر: ${guardianPhone}`, 965, 506, "700 25px Cairo, sans-serif", "#047857");
+      drawRight(`📞 ولي الأمر: ${guardianPhone}`, 970, 528, "700 27px Cairo, sans-serif", "#047857");
     }
-    drawRight(`📅 تاريخ التسجيل: ${registrationDate}`, 965, 552, "600 22px Cairo, sans-serif", "#94a3b8");
+    drawRight(`📅 تاريخ التسجيل: ${registrationDate}`, 970, 578, "600 24px Cairo, sans-serif", "#94a3b8");
 
     // ─── Financial Status Section: 2 Side-by-Side Cards (Width: 456px each) ───
     // Card 1 (Right): اشتراك الشهر
@@ -936,38 +933,38 @@ export default function Profile({
     const mIsPartial = mStatus === "partially_paid";
     context.fillStyle = mIsPaid ? "#f0fdf4" : mIsPartial ? "#fffbeb" : "#fef2f2";
     context.beginPath();
-    context.roundRect(552, 636, 456, 155, 20);
+    context.roundRect(552, 692, 456, 155, 20);
     context.fill();
     context.strokeStyle = mIsPaid ? "#86efac" : mIsPartial ? "#fde68a" : "#fca5a5";
     context.lineWidth = 2.5;
     context.stroke();
 
-    drawRight(`💳 اشتراك شهر ${paymentMonth}`, 552 + 456 - 22, 676, "800 23px Cairo, sans-serif", mIsPaid ? "#065f46" : mIsPartial ? "#92400e" : "#991b1b");
+    drawRight(`💳 اشتراك شهر ${paymentMonth}`, 552 + 456 - 22, 732, "800 23px Cairo, sans-serif", mIsPaid ? "#065f46" : mIsPartial ? "#92400e" : "#991b1b");
     const mStatusText = mIsPaid
       ? "مدفوع بالكامل ✓"
       : mIsPartial
       ? `سداد جزئي (${mPaid} ج.م)`
       : (mHasConfigured ? "غير مسدد ⚠️" : "لم يدفع ⚠️");
-    drawCenter(mStatusText, 552 + 228, 725, "900 34px Cairo, sans-serif", mIsPaid ? "#047857" : mIsPartial ? "#b45309" : "#b91c1c");
+    drawCenter(mStatusText, 552 + 228, 781, "900 34px Cairo, sans-serif", mIsPaid ? "#047857" : mIsPartial ? "#b45309" : "#b91c1c");
     const mSubText = mIsPaid
       ? (mHasConfigured ? `سدد ${mPaid} ج.م من أصل ${mTotal} ج.م` : "تم سداد الاشتراك بالكامل ✓")
       : mIsPartial
       ? (mHasConfigured ? `فاضل عليه: ${mRemaining} ج.م (من ${mTotal})` : `سدد ${mPaid} ج.م`)
       : (mHasConfigured ? `المبلغ المطلوب: ${mTotal || mRemaining} ج.م` : "لم يدفع");
-    drawCenter(mSubText, 552 + 228, 766, "700 21px Cairo, sans-serif", mIsPaid ? "#065f46" : mIsPartial ? "#b45309" : "#9f1239");
+    drawCenter(mSubText, 552 + 228, 822, "700 21px Cairo, sans-serif", mIsPaid ? "#065f46" : mIsPartial ? "#b45309" : "#9f1239");
 
     // Card 2 (Left): المشتريات والبدل والأدوات
     const hasGearDebt = pSummary.remainingAmount > 0;
     const hasPurchases = pSummary.count > 0;
     context.fillStyle = hasGearDebt ? "#fffbeb" : hasPurchases ? "#f0fdf4" : "#f8fafc";
     context.beginPath();
-    context.roundRect(72, 636, 456, 155, 20);
+    context.roundRect(72, 692, 456, 155, 20);
     context.fill();
     context.strokeStyle = hasGearDebt ? "#fde68a" : hasPurchases ? "#86efac" : "#e2e8f0";
     context.lineWidth = 2.5;
     context.stroke();
 
-    drawRight("🥋 المشتريات والبدل والأدوات", 72 + 456 - 22, 676, "800 23px Cairo, sans-serif", hasGearDebt ? "#92400e" : hasPurchases ? "#065f46" : "#475569");
+    drawRight("🥋 المشتريات والبدل والأدوات", 72 + 456 - 22, 732, "800 23px Cairo, sans-serif", hasGearDebt ? "#92400e" : hasPurchases ? "#065f46" : "#475569");
     let gearStatusText = "الحساب خالص ✓";
     let gearSubText = "لا توجد مديونية أدوات مسجلة";
     if (hasGearDebt) {
@@ -982,32 +979,32 @@ export default function Profile({
       gearStatusText = `مسددة بالكامل (${pSummary.totalAmount} ج.م) ✓`;
       gearSubText = "تم سداد كافة المستلزمات والبدل";
     }
-    drawCenter(gearStatusText, 72 + 228, 725, "900 32px Cairo, sans-serif", hasGearDebt ? "#b45309" : hasPurchases ? "#047857" : "#334155");
-    drawCenter(gearSubText, 72 + 228, 766, "700 21px Cairo, sans-serif", hasGearDebt ? "#92400e" : hasPurchases ? "#065f46" : "#64748b");
+    drawCenter(gearStatusText, 72 + 228, 781, "900 32px Cairo, sans-serif", hasGearDebt ? "#b45309" : hasPurchases ? "#047857" : "#334155");
+    drawCenter(gearSubText, 72 + 228, 822, "700 21px Cairo, sans-serif", hasGearDebt ? "#92400e" : hasPurchases ? "#065f46" : "#64748b");
 
     // ─── Attendance Summary Chips (Side-by-Side) ───
     context.fillStyle = "#ecfdf5";
     context.beginPath();
-    context.roundRect(552, 808, 456, 62, 16);
+    context.roundRect(552, 864, 456, 62, 16);
     context.fill();
     context.strokeStyle = "#a7f3d0";
     context.lineWidth = 1.5;
     context.stroke();
-    drawCenter(`✅ حضور التدريبات: ${attendedSessions} من ${totalSessions} حصة مسجلة`, 552 + 228, 847, "800 22px Cairo, sans-serif", "#047857");
+    drawCenter(`✅ حضور التدريبات: ${attendedSessions} من ${totalSessions} حصة مسجلة`, 552 + 228, 903, "800 22px Cairo, sans-serif", "#047857");
 
     context.fillStyle = "#f1f5f9";
     context.beginPath();
-    context.roundRect(72, 808, 456, 62, 16);
+    context.roundRect(72, 864, 456, 62, 16);
     context.fill();
     context.strokeStyle = "#cbd5e1";
     context.lineWidth = 1.5;
     context.stroke();
     const rateNote = attRate >= 75 ? "ممتاز 🌟" : attRate >= 50 ? "جيد 👍" : "يحتاج متابعة ⚠️";
-    drawCenter(`📋 نسبة الالتزام: ${attRate}% (${rateNote})`, 72 + 228, 847, "800 22px Cairo, sans-serif", "#1e293b");
+    drawCenter(`📋 نسبة الالتزام: ${attRate}% (${rateNote})`, 72 + 228, 903, "800 22px Cairo, sans-serif", "#1e293b");
 
     // ─── Section 1: Attendance History ───
-    drawRight("🥋 آخر سجلات الحضور والغياب (التدريبات)", 1008, 905, "900 28px Cairo, sans-serif", "#0f172a");
-    let y = 926;
+    drawRight("🥋 آخر سجلات الحضور والغياب (التدريبات)", 1008, 960, "900 28px Cairo, sans-serif", "#0f172a");
+    let y = 980;
     const attList = attendanceHistory.slice(0, 4);
     if (attList.length === 0) {
       context.fillStyle = "#f8fafc";
@@ -1039,7 +1036,7 @@ export default function Profile({
     }
 
     // ─── Section 2: Active Month Financial Status ───
-    y = Math.max(y + 15, 1140);
+    y = Math.max(y + 16, 1195);
     drawRight(`💳 تفاصيل اشتراك شهر ${monthLabel}`, 1008, y, "900 28px Cairo, sans-serif", "#0f172a");
     y += 24;
 
@@ -1075,7 +1072,7 @@ export default function Profile({
     y += 82;
 
     // ─── Section 3: Gear & Purchases Details ───
-    y = Math.max(y + 15, 1325);
+    y = Math.max(y + 16, 1375);
     drawRight("🛍️ بيان المشتريات والبدل والأدوات المسجلة", 1008, y, "900 28px Cairo, sans-serif", "#0f172a");
     y += 22;
     const purchasesToShow = purchasesList.slice(0, 4);

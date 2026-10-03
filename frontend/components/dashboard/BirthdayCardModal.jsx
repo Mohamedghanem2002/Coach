@@ -218,7 +218,7 @@ export default function BirthdayCardModal({
       onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}
     >
       <div
-        className="relative flex flex-col w-full max-w-sm sm:max-w-md h-auto max-h-[92dvh] sm:max-h-[90dvh] rounded-3xl border border-amber-300/40 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-3.5 sm:p-5 text-white shadow-2xl overflow-hidden"
+        className="relative flex flex-col w-full max-w-sm sm:max-w-lg h-auto max-h-[92dvh] sm:max-h-[90dvh] rounded-3xl border border-amber-300/40 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-3.5 sm:p-5 text-white shadow-2xl overflow-hidden"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header: shrink-0 so it is permanently pinned and never pushed off */}

@@ -251,7 +251,7 @@ export default function ProfileCardModal({
       dir="rtl"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative max-h-[94vh] w-full max-w-sm sm:max-w-md overflow-y-auto rounded-3xl border border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 p-4 sm:p-5 text-white shadow-2xl">
+      <div className="relative max-h-[94vh] w-full max-w-sm sm:max-w-lg overflow-y-auto rounded-3xl border border-slate-700 bg-gradient-to-b from-slate-900 to-slate-950 p-4 sm:p-5 text-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
           <div className="flex items-center gap-2">
@@ -322,7 +322,7 @@ export default function ProfileCardModal({
             <img
               src={dataUrl}
               alt={`بطاقة اللاعب ${player.name} شهر ${monthLabel}`}
-              className="max-h-[56vh] sm:max-h-[62vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
+              className="max-h-[58vh] sm:max-h-[66vh] w-auto rounded-xl shadow-xl object-contain ring-1 ring-white/10"
             />
           ) : (
             <span className="text-xs text-rose-400">تعذر إنشاء البطاقة</span>

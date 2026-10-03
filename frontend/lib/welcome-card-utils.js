@@ -137,8 +137,8 @@ export async function generateWelcomeCardCanvas(
   );
 
   // 4. Hero Athlete Showcase (Huge Center Stage - occupying half the card!)
-  const heroBoxY = 230;
-  const heroBoxHeight = 880;
+  const heroBoxY = 226;
+  const heroBoxHeight = 914;
   const heroGrad = context.createLinearGradient(72, heroBoxY, 72, heroBoxY + heroBoxHeight);
   heroGrad.addColorStop(0, "#ffffff");
   heroGrad.addColorStop(1, "#f8fafc");
@@ -150,10 +150,10 @@ export async function generateWelcomeCardCanvas(
   context.lineWidth = 2.5;
   context.stroke();
 
-  // 5. Massive Centered Athlete Portrait (Radius: 300px, Diameter: 600px! Takes ~half the card!)
+  // 5. Massive Centered Athlete Portrait (Enlarged: Radius 330px, Diameter 660px - Impressive Focal Hero)
   const photoCenterX = 540;
-  const photoCenterY = 570;
-  const photoRadius = 300;
+  const photoCenterY = 575;
+  const photoRadius = 330;
 
   // Set high quality image smoothing
   context.imageSmoothingEnabled = true;
@@ -235,9 +235,9 @@ export async function generateWelcomeCardCanvas(
     context.stroke();
 
     const avatarGrad = context.createRadialGradient(
-      photoCenterX - 70,
-      photoCenterY - 70,
-      35,
+      photoCenterX - 75,
+      photoCenterY - 75,
+      40,
       photoCenterX,
       photoCenterY,
       photoRadius
@@ -259,14 +259,14 @@ export async function generateWelcomeCardCanvas(
     drawCenter(
       player.name ? player.name.charAt(0) : "ك",
       photoCenterX,
-      photoCenterY + 80,
-      "900 240px Cairo, sans-serif",
+      photoCenterY + 90,
+      "900 260px Cairo, sans-serif",
       "#ffffff"
     );
   }
 
   // Floating Belt Badge overlapping bottom edge of the photo
-  const beltPillY = 845;
+  const beltPillY = 880;
   const beltPillW = 340;
   const beltPillH = 54;
   context.fillStyle = "#ffffff";
@@ -288,13 +288,13 @@ export async function generateWelcomeCardCanvas(
   drawCenter(
     `البطل / ${player.name}`,
     photoCenterX,
-    950,
+    988,
     "900 52px Cairo, sans-serif",
     "#0f172a"
   );
 
   // Athlete Info Chips Row (Centered and crisp)
-  const chipsY = 1005;
+  const chipsY = 1042;
   const chipH = 48;
   const chip1Text = `🏢 ${player.branch || "الفرع الرئيسي"}`;
   const chip2Text = `🎂 ${currentAge} سنة`;
@@ -318,7 +318,7 @@ export async function generateWelcomeCardCanvas(
   }
 
   // 6. Celebratory Welcome Card
-  const welcomeBoxY = 1135;
+  const welcomeBoxY = 1155;
   const welcomeGrad = context.createLinearGradient(72, welcomeBoxY, canvas.width - 72, welcomeBoxY + 175);
   welcomeGrad.addColorStop(0, "#f0fdf4");
   welcomeGrad.addColorStop(1, "#ecfdf5");
@@ -360,7 +360,7 @@ export async function generateWelcomeCardCanvas(
     },
   ];
 
-  let pY = 1330;
+  let pY = 1345;
   for (const item of pillarList) {
     context.fillStyle = item.bg;
     context.beginPath();

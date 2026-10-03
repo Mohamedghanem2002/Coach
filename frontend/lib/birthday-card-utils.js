@@ -337,7 +337,7 @@ export async function generateBirthdayCardCanvas(
   drawCenter(
     "🎉 عـيـد مـيـلاد سـعـيـد 🎉",
     540,
-    132,
+    124,
     "900 44px Cairo, sans-serif",
     "#be123c",
     { color: "rgba(190, 18, 60, 0.25)", blur: 12, y: 3 }
@@ -346,16 +346,16 @@ export async function generateBirthdayCardCanvas(
   drawCenter(
     "★ HAPPY BIRTHDAY CHAMPION ★",
     540,
-    166,
-    "800 16px Cairo, sans-serif",
+    154,
+    "800 15px Cairo, sans-serif",
     "#b45309",
     { color: "rgba(180, 83, 9, 0.2)", blur: 6, y: 2 }
   );
 
-  // 7. HERO PLAYER PHOTO (Massive: Radius 265px, Diameter 530px - Takes ~half the card with ultra-high quality!)
+  // 7. HERO PLAYER PHOTO (Enlarged: Radius 290px, Diameter 580px - High Impact Hero Portrait)
   const avatarX = 540;
-  const avatarY = 450;
-  const avatarRadius = 265;
+  const avatarY = 445;
+  const avatarRadius = 290;
 
   // Birthday Balloons flanking the large photo
   const drawBalloon = (bx, by, color, angle = 0) => {
@@ -406,7 +406,7 @@ export async function generateBirthdayCardCanvas(
   drawBalloon(avatarX + avatarRadius + 95, avatarY + 45, "#db2777", 22);
 
   // Floating Birthday Candles above the Hero Photo
-  const candleY = avatarY - avatarRadius - 14;
+  const candleY = avatarY - avatarRadius - 12;
   const drawCandle = (cx, cy) => {
     ctx.save();
     // Candle body
@@ -539,14 +539,14 @@ export async function generateBirthdayCardCanvas(
     ctx.fill();
 
     // Player Initial
-    ctx.font = "900 180px Cairo, sans-serif";
+    ctx.font = "900 195px Cairo, sans-serif";
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.direction = "rtl";
     ctx.shadowColor = "rgba(0,0,0,0.3)";
     ctx.shadowBlur = 12;
-    ctx.fillText((player.name || "ب").charAt(0), avatarX, avatarY + 12);
+    ctx.fillText((player.name || "ب").charAt(0), avatarX, avatarY + 14);
     ctx.restore();
   }
 
@@ -565,7 +565,7 @@ export async function generateBirthdayCardCanvas(
   );
 
   // Floating Belt Badge overlapping bottom edge of the photo
-  const beltPillY = avatarY + avatarRadius - 10;
+  const beltPillY = avatarY + avatarRadius - 12;
   drawBadge(
     `🥋 ${player.belt || "حزام أبيض"}  •  مستوى ${player.level || "A"}`,
     avatarX,
@@ -583,7 +583,7 @@ export async function generateBirthdayCardCanvas(
   drawCenter(
     `البطل / ${player.name}`,
     540,
-    782,
+    786,
     "900 46px Cairo, sans-serif",
     "#0f172a",
     { color: "rgba(0,0,0,0.12)", blur: 6, y: 2 }
@@ -593,7 +593,7 @@ export async function generateBirthdayCardCanvas(
   drawBadge(
     `🎂 كبرت سنة وبقيت ${turningAge} سنين! 🥳🎈`,
     540,
-    838,
+    842,
     480,
     46,
     "#e11d48",
@@ -606,9 +606,9 @@ export async function generateBirthdayCardCanvas(
   // 10. WARM, FRIENDLY CELEBRATION MESSAGE CARD
   ctx.save();
   const boxX = 75;
-  const boxY = 880;
+  const boxY = 884;
   const boxW = 930;
-  const boxH = 370;
+  const boxH = 366;
 
   // Box Card Background with soft drop shadow
   ctx.shadowColor = "rgba(0, 0, 0, 0.06)";
