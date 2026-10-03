@@ -227,7 +227,6 @@ export default function SignInPage() {
   const [confirmNewPass, setConfirmNewPass] = useState("");
   const [showNewPass, setShowNewPass] = useState(false);
   const [showConfirmNewPass, setShowConfirmNewPass] = useState(false);
-  const [simulatedOtpNotice, setSimulatedOtpNotice] = useState("");
 
   // Calculate password strength (0 to 4)
   const passwordStrength = useMemo(() => {
@@ -309,7 +308,7 @@ export default function SignInPage() {
   async function submitForgotStep1(e) {
     e?.preventDefault();
     if (busy) return;
-    setError(""); setSuccess(""); setSimulatedOtpNotice("");
+    setError(""); setSuccess("");
     const cleanEmail = forgotEmail.trim().toLowerCase();
     if (!cleanEmail || !/^\S+@\S+\.\S+$/.test(cleanEmail)) { setError("يرجى كتابة البريد الإلكتروني بشكل صحيح"); return; }
     setBusy(true);
@@ -318,8 +317,7 @@ export default function SignInPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "تعذر إرسال رمز التحقق"); return; }
       setForgotStep(2);
-      setSuccess(data.message || "إذا كان هذا البريد مسجلاً لدينا، فستصلك تعليمات استعادة كلمة المرور ورمز التحقق.");
-      if (data.code) setSimulatedOtpNotice(data.code);
+      setSuccess(data.message || "إذا كان هذا البريد مسجلاً لدينا، فستصلك رسالة تحتوي على رمز التحقق ورمز الاستعادة.");
     } catch { setError("حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً."); }
     finally { setBusy(false); }
   }
@@ -627,27 +625,6 @@ export default function SignInPage() {
                         تعديل
                       </button>
                     </div>
-
-                    {simulatedOtpNotice && (
-                      <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1.5">
-                        <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                          <span>🔐</span>
-                          <span>رمز التحقق السريع للاختبار:</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-lg border border-amber-200">
-                          <span className="font-mono text-base font-black tracking-widest text-red-600 select-all">
-                            {simulatedOtpNotice}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setForgotOtp(simulatedOtpNotice)}
-                            className="text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 px-2 py-0.5 rounded cursor-pointer"
-                          >
-                            تعبئة تلقائية
-                          </button>
-                        </div>
-                      </div>
-                    )}
 
                     <div>
                       <label htmlFor="forgot-otp" className="block text-xs font-bold text-slate-700 mb-1.5">

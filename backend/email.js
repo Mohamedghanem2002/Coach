@@ -33,9 +33,11 @@ async function createTransporter() {
   }
 
   // 2. Gmail fallback via backup settings or GMAIL_* env vars
-  const backupSettings = getEmailBackupSettings();
-  const gmailUser = process.env.GMAIL_USER || backupSettings.gmailUser;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD || backupSettings.gmailAppPassword;
+  const backupSettings = await getEmailBackupSettings().catch(() => ({}));
+  const rawGmailUser = process.env.GMAIL_USER || backupSettings?.gmailUser || "";
+  const rawGmailPass = process.env.GMAIL_APP_PASSWORD || backupSettings?.gmailAppPassword || "";
+  const gmailUser = rawGmailUser.trim();
+  const gmailPass = rawGmailPass.replace(/\s+/g, "").trim();
 
   if (gmailUser && gmailPass) {
     return {

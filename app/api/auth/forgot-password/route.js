@@ -72,7 +72,19 @@ export async function POST(request) {
       userName: user.name || "",
     });
 
-    if (!mailRes.success) {
+    if (!mailRes.success || mailRes.simulated) {
+      if (mailRes.simulated) {
+        console.warn("[Password Reset] SMTP not configured. Real email delivery is disabled.");
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "لم يتم ضبط خادم إرسال البريد الإلكتروني (SMTP) في النظام بعد. يرجى إضافة بيانات البريد في ملف .env.local أو التواصل مع الإدارة.",
+          },
+          { status: 503 }
+        );
+      }
+
       console.warn("[Password Reset] Email delivery failed:", mailRes.error);
       return NextResponse.json(
         {
