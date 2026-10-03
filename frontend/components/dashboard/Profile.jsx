@@ -53,6 +53,7 @@ import {
   Sparkles,
   Maximize2,
   FileText,
+  Loader2,
 } from "lucide-react";
 
 // Fast in-memory cache for player photo elements to prevent re-fetching and decoding delay
@@ -2855,7 +2856,7 @@ export default function Profile({
                                   type="button"
                                   onClick={() => handleToggleDelivery(item)}
                                   disabled={deliveryLoadingSet.has(item.id)}
-                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border disabled:opacity-70 disabled:cursor-default ${
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border disabled:opacity-75 disabled:cursor-wait ${
                                     (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received"
                                       ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shadow-2xs"
                                       : "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 shadow-2xs"
@@ -2867,15 +2868,18 @@ export default function Profile({
                                   }
                                 >
                                   {deliveryLoadingSet.has(item.id) ? (
-                                    <span className="h-3 w-3 rounded-full border-2 border-current/30 border-t-current animate-spin" />
+                                    <>
+                                      <Loader2 className="h-3 w-3 animate-spin text-current shrink-0" />
+                                      <span>جاري الحفظ...</span>
+                                    </>
                                   ) : (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received" ? (
                                     <>
-                                      <Check className="h-3 w-3 text-emerald-600 stroke-[3]" />
+                                      <Check className="h-3.5 w-3.5 text-emerald-600 stroke-[3] shrink-0" />
                                       <span>استلم ✓</span>
                                     </>
                                   ) : (
                                     <>
-                                      <Clock className="h-3 w-3 text-amber-600" />
+                                      <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
                                       <span>لم يستلم ⏳</span>
                                     </>
                                   )}

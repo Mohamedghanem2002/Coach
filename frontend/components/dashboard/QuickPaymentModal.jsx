@@ -14,6 +14,7 @@ import {
   Tag,
   Clock,
   Package,
+  Loader2,
 } from "lucide-react";
 import { toEnglishDigits, localDate, getPurchasesSummary } from "../../lib/dashboard-utils";
 
@@ -129,12 +130,18 @@ export default function QuickPaymentModal({
   const [newDate, setNewDate] = useState(localDate());
   const [isAddingPurchase, setIsAddingPurchase] = useState(false);
   const [addPurchaseError, setAddPurchaseError] = useState("");
+  const [deliveryLoadingSet, setDeliveryLoadingSet] = useState(new Set());
+  const [optimisticDeliveryMap, setOptimisticDeliveryMap] = useState({});
 
   const savePurchaseFn = onSavePurchase || onSave;
 
   async function handleToggleDelivery(purchase) {
-    const isCurrentlyReceived = purchase.deliveryStatus === "received";
+    if (deliveryLoadingSet.has(purchase.id)) return;
+    const isCurrentlyReceived =
+      (optimisticDeliveryMap[purchase.id] ?? purchase.deliveryStatus) === "received";
     const nextStatus = isCurrentlyReceived ? "pending" : "received";
+    setOptimisticDeliveryMap((prev) => ({ ...prev, [purchase.id]: nextStatus }));
+    setDeliveryLoadingSet((prev) => new Set([...prev, purchase.id]));
     try {
       await savePurchaseFn({
         purchaseAction: "toggle_delivery",
@@ -143,6 +150,17 @@ export default function QuickPaymentModal({
       });
     } catch (err) {
       console.error(err);
+    } finally {
+      setDeliveryLoadingSet((prev) => {
+        const s = new Set(prev);
+        s.delete(purchase.id);
+        return s;
+      });
+      setOptimisticDeliveryMap((prev) => {
+        const next = { ...prev };
+        delete next[purchase.id];
+        return next;
+      });
     }
   }
 
@@ -713,25 +731,31 @@ export default function QuickPaymentModal({
                             <button
                               type="button"
                               onClick={() => handleToggleDelivery(item)}
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border ${
-                                item.deliveryStatus === "received"
+                              disabled={deliveryLoadingSet.has(item.id)}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer active:scale-95 touch-manipulation border disabled:opacity-75 disabled:cursor-wait ${
+                                (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received"
                                   ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shadow-2xs"
                                   : "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 shadow-2xs"
                               }`}
                               title={
-                                item.deliveryStatus === "received"
+                                (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received"
                                   ? "استلم اللاعب السلعة ✓ (انقر لتغييرها إلى: لم يستلم)"
                                   : "اللاعب لم يستلم السلعة بعد ⏳ (انقر لتسجيل أنه استلم)"
                               }
                             >
-                              {item.deliveryStatus === "received" ? (
+                              {deliveryLoadingSet.has(item.id) ? (
                                 <>
-                                  <Check className="h-3 w-3 text-emerald-600 stroke-[3]" />
+                                  <Loader2 className="h-3 w-3 animate-spin text-current shrink-0" />
+                                  <span>جاري الحفظ...</span>
+                                </>
+                              ) : (optimisticDeliveryMap[item.id] ?? item.deliveryStatus) === "received" ? (
+                                <>
+                                  <Check className="h-3.5 w-3.5 text-emerald-600 stroke-[3] shrink-0" />
                                   <span>استلم ✓</span>
                                 </>
                               ) : (
                                 <>
-                                  <Clock className="h-3 w-3 text-amber-600" />
+                                  <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
                                   <span>لم يستلم ⏳</span>
                                 </>
                               )}
