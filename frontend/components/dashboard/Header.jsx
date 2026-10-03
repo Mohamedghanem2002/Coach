@@ -11,7 +11,6 @@ import {
   Zap,
   Sparkles,
   FileSpreadsheet,
-  User,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -53,7 +52,6 @@ export default function Header({
   const fullName = session?.user?.name || "حساب الأكاديمية";
   const academyName = session?.user?.academyName || "CoachMaster";
   const firstName = fullName.split(" ")[0] || "كابتن";
-  const initials = firstName.charAt(0);
   const [congratulateTick, setCongratulateTick] = useState(0);
 
   useEffect(() => {
@@ -107,13 +105,13 @@ export default function Header({
       <div className="mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8">
         
         {/* ═══════════════════════════════════════════════════════════════
-            الصف الأول (Row 1): اللوجو والهوية ويقابله مباشرة زر تسجيل الخروج
+            الصف الأول (Row 1): اللوجو والهوية ويقابله أيقونة الإعدادات وتسجيل الخروج
             ═══════════════════════════════════════════════════════════════ */}
         <div className="flex min-h-[56px] sm:min-h-[64px] items-center justify-between gap-3 py-2.5 border-b border-slate-100">
           
           {/* الجانب الأيمن: اللوجو واسم الأكاديمية والمنصة */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
-            {/* أيقونة اللوجو الاحترافية مع مؤشر النشاط */}
+            {/* أيقونة اللوجو مع مؤشر النشاط */}
             <div className="relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-red-600 to-rose-700 text-white shadow-sm shadow-red-600/20 ring-2 ring-red-100">
               <Zap className="h-5 w-5 fill-white stroke-white" />
               <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
@@ -140,7 +138,7 @@ export default function Header({
             </div>
           </div>
 
-          {/* في الوسط (للشاشات الكبيرة): رسالة ترحيب بالكابتن والتاريخ */}
+          {/* في الوسط (للشاشات الكبيرة): رسالة ترحيب بالكابتن */}
           <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded-full px-4 py-1 shadow-2xs">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
             <span className="text-xs font-bold text-slate-700">
@@ -148,8 +146,25 @@ export default function Header({
             </span>
           </div>
 
-          {/* الجانب الأيسر: زر تسجيل الخروج (يقابل اللوجو تماماً وموضح بوضوح) */}
-          <div className="shrink-0">
+          {/* الجانب الأيسر: أيقونة الإعدادات (أيقونة فقط بدون نصوص) + زر تسجيل الخروج */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* أيقونة الإعدادات (Icon Only with badge) */}
+            <button
+              type="button"
+              id="header-settings-btn"
+              onClick={onOpenAccountSettings}
+              className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs transition-all cursor-pointer active-press"
+              title="إعدادات الحساب وتفاصيل الاشتراك"
+            >
+              <Settings className="h-4.5 w-4.5 text-slate-600" />
+              {hasUnreadPlanUpdate && (
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce ring-1.5 ring-white">
+                  1
+                </span>
+              )}
+            </button>
+
+            {/* زر تسجيل الخروج */}
             <button
               type="button"
               id="header-signout-btn"
@@ -474,26 +489,6 @@ export default function Header({
                 </>
               )}
             </div>
-
-            {/* 5. ⚙️ زر إعدادات الحساب والاشتراك (مع إشعار التعديل) */}
-            <button
-              type="button"
-              id="row2-settings-btn"
-              onClick={onOpenAccountSettings}
-              className="relative flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-black transition-all cursor-pointer shadow-2xs active-press shrink-0"
-              title="إعدادات الحساب وتفاصيل خطة الاشتراك"
-            >
-              <div className="flex h-4.5 w-4.5 items-center justify-center rounded-md bg-slate-800 text-[10px] font-black text-white shrink-0">
-                {initials}
-              </div>
-              <span className="font-cairo">إعدادات الحساب</span>
-              <Settings className="h-3.5 w-3.5 text-slate-400" />
-              {hasUnreadPlanUpdate && (
-                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs animate-bounce">
-                  1
-                </span>
-              )}
-            </button>
 
           </div>
 
