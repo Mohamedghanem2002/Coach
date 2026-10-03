@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import clientPromise from "./mongodb";
+import clientPromise from "./mongodb.js";
 
 let _cachedNodemailer = null;
 async function getNodemailer() {

@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { getEmailBackupSettings } from "./emailBackup.js";
 
 let _cachedNodemailer = null;
@@ -9,33 +11,67 @@ async function getNodemailer() {
   return _cachedNodemailer;
 }
 
+function getEnvFallback() {
+  const envVars = {};
+  try {
+    const envPath = path.join(process.cwd(), ".env.local");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const eqIdx = trimmed.indexOf("=");
+        if (eqIdx !== -1) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          let val = trimmed.slice(eqIdx + 1).trim();
+          if (
+            (val.startsWith('"') && val.endsWith('"')) ||
+            (val.startsWith("'") && val.endsWith("'"))
+          ) {
+            val = val.slice(1, -1);
+          }
+          envVars[key] = val;
+        }
+      }
+    }
+  } catch {}
+  return envVars;
+}
+
 /**
  * Creates a transporter using either generic SMTP environment variables
- * or existing Gmail credentials from settings / env.
+ * or existing Gmail credentials from settings / env / .env.local.
  */
 async function createTransporter() {
   const nm = await getNodemailer();
+  const fileEnv = getEnvFallback();
+
+  const smtpHost = (process.env.SMTP_HOST || fileEnv.SMTP_HOST || "").trim();
+  const smtpUser = (process.env.SMTP_USER || fileEnv.SMTP_USER || "").trim();
+  const smtpPass = (process.env.SMTP_PASSWORD || fileEnv.SMTP_PASSWORD || "").trim();
+  const smtpPort = process.env.SMTP_PORT || fileEnv.SMTP_PORT;
+  const smtpFrom = process.env.SMTP_FROM || fileEnv.SMTP_FROM;
 
   // 1. Generic SMTP configuration via environment variables
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+  if (smtpHost && smtpUser && smtpPass) {
     return {
       transporter: nm.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465,
+        host: smtpHost,
+        port: Number(smtpPort) || 587,
+        secure: Number(smtpPort) === 465,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD,
+          user: smtpUser,
+          pass: smtpPass,
         },
       }),
-      fromEmail: process.env.SMTP_FROM || process.env.SMTP_USER,
+      fromEmail: smtpFrom || smtpUser,
     };
   }
 
-  // 2. Gmail fallback via backup settings or GMAIL_* env vars
+  // 2. Gmail fallback via backup settings or GMAIL_* env vars / .env.local
   const backupSettings = await getEmailBackupSettings().catch(() => ({}));
-  const rawGmailUser = process.env.GMAIL_USER || backupSettings?.gmailUser || "";
-  const rawGmailPass = process.env.GMAIL_APP_PASSWORD || backupSettings?.gmailAppPassword || "";
+  const rawGmailUser = process.env.GMAIL_USER || fileEnv.GMAIL_USER || backupSettings?.gmailUser || "";
+  const rawGmailPass = process.env.GMAIL_APP_PASSWORD || fileEnv.GMAIL_APP_PASSWORD || backupSettings?.gmailAppPassword || "";
   const gmailUser = rawGmailUser.trim();
   const gmailPass = rawGmailPass.replace(/\s+/g, "").trim();
 
