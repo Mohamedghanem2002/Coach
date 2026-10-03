@@ -16,7 +16,7 @@ import {
   Square,
   Loader2,
   FileImage,
-  Package,
+  Filter,
 } from "lucide-react";
 import {
   generatePromoCardCanvas,
@@ -145,6 +145,7 @@ export default function AdminPromoTab({ captains = [] }) {
   const [manualAcademy, setManualAcademy] = useState("");
   const [selectedCaptainId, setSelectedCaptainId] = useState("");
   const [selectedBulkIds, setSelectedBulkIds] = useState(new Set());
+  const [excludedCaptainIds, setExcludedCaptainIds] = useState(new Set());
   const [theme, setTheme] = useState("dark");
   const [dataUrl, setDataUrl] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -170,7 +171,7 @@ export default function AdminPromoTab({ captains = [] }) {
       ? selectedCaptain?.academyName || "أكاديمية الفنون القتالية"
       : "كل المشتركين";
 
-  // Bulk selection toggles
+  // Bulk selection toggles (for downloading separate cards)
   const toggleBulkId = (id) => {
     setSelectedBulkIds((prev) => {
       const next = new Set(prev);
@@ -191,6 +192,27 @@ export default function AdminPromoTab({ captains = [] }) {
   const allBulkSelected = captains.length > 0 && selectedBulkIds.size === captains.length;
   const someBulkSelected = selectedBulkIds.size > 0 && !allBulkSelected;
 
+  // Unified all-subscribers inclusion / exclusion toggles
+  const toggleIncludeCaptain = (id) => {
+    setExcludedCaptainIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const includeAllCaptains = () => {
+    setExcludedCaptainIds(new Set());
+  };
+
+  const excludeAllCaptains = () => {
+    setExcludedCaptainIds(new Set(captains.map((c) => c.id || c._id)));
+  };
+
+  const includedCaptainsList = captains.filter((c) => !excludedCaptainIds.has(c.id || c._id));
+  const includedCount = includedCaptainsList.length;
+
   const showNotice = useCallback((msg, type = "success") => {
     setNotice({ msg, type });
     setTimeout(() => setNotice(null), 4000);
@@ -204,8 +226,14 @@ export default function AdminPromoTab({ captains = [] }) {
     try {
       let canvas = null;
       if (mode === "all") {
+        const targets = captains.filter((c) => !excludedCaptainIds.has(c.id || c._id));
+        if (targets.length === 0 && captains.length > 0) {
+          showNotice("يرجى تحديد مشترك واحد على الأقل لإدراجه داخل الكارت", "error");
+          setGenerating(false);
+          return;
+        }
         canvas = await generatePromoCardCanvas({
-          captains: captains.length > 0 ? captains : [
+          captains: targets.length > 0 ? targets : [
             { name: "كابتن الأكاديمية", academyName: "أكاديمية الفنون القتالية" },
           ],
           isAllSubscribers: true,
@@ -235,7 +263,7 @@ export default function AdminPromoTab({ captains = [] }) {
     } finally {
       setGenerating(false);
     }
-  }, [mode, captains, theme, selectedCaptain, manualName, manualAcademy, showNotice]);
+  }, [mode, captains, excludedCaptainIds, theme, selectedCaptain, manualName, manualAcademy, showNotice]);
 
   // Bulk download as separate cards
   const generateBulk = async () => {
@@ -323,7 +351,7 @@ export default function AdminPromoTab({ captains = [] }) {
             <h1 className="text-xl font-black text-slate-900">الكارت الترويجي للمنصة</h1>
           </div>
           <p className="text-xs text-slate-500 font-medium pr-1">
-            أنشئ كارت ترويجي مجمّع يجمع كل المشتركين في كارت واحد عالي الدقة للنشر والطباعة 🚀
+            أنشئ كارت ترويجي مجمّع يجمع كل المشتركين في كارت واحد عالي الدقة مع إمكانية استثناء أي مشترك بسهولة 🚀
           </p>
         </div>
         <div className="flex items-center gap-2 text-[11px] font-black">
@@ -338,7 +366,7 @@ export default function AdminPromoTab({ captains = [] }) {
       <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-xl">
           {[
-            { id: "all",    label: "🌟 كارت مجمّع لكل المشتركين", badge: captains.length },
+            { id: "all",    label: "🌟 كارت مجمّع لكل المشتركين", badge: includedCount },
             { id: "select", label: "👤 كارت كابتن محدد" },
             { id: "manual", label: "✏️ إدخال يدوي" },
             { id: "bulk",   label: "📦 تحميل كل كارت منفصل", badge: captains.length },
@@ -369,51 +397,92 @@ export default function AdminPromoTab({ captains = [] }) {
           ))}
         </div>
 
-        {/* 1. All Subscribers Mode Banner & Info */}
+        {/* 1. All Subscribers Mode Banner & Inclusion Checklist */}
         {mode === "all" && (
           <div className="space-y-3">
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/80 flex items-center justify-between gap-3">
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 border border-red-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-xs">
-                  {captains.length}
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-orange-500 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
+                  {includedCount}
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-slate-900">
-                    كارت مجمّع لجميع المشتركين ({captains.length} أكاديمية / كابتن)
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-black text-slate-900">
+                      كارت مجمّع للمشتركين ({includedCount} من {captains.length} مشمول)
+                    </h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-red-200 text-red-700">
+                      1080×1350 بكسل
+                    </span>
+                  </div>
                   <p className="text-[11px] font-semibold text-slate-600 mt-0.5">
-                    يتم رسم وتنسيق جميع الأكاديميات في شبكة متناسقة بخطوط وأحجام متكيفة تلقائياً داخل كارت واحد.
+                    اضغط على أي مشترك بالأسفل لتحديده أو استثنائه من الظهور داخل الكارت 🎯
                   </p>
                 </div>
               </div>
-              <span className="hidden sm:inline-flex px-2.5 py-1 rounded-lg bg-white border border-red-200 text-[10px] font-black text-red-700">
-                1080×1350 بكسل
-              </span>
+
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={includeAllCaptains}
+                  className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-black transition cursor-pointer shadow-2xs"
+                  title="تحديد وإدراج جميع المشتركين"
+                >
+                  تحديد الكل ✓
+                </button>
+                <button
+                  type="button"
+                  onClick={excludeAllCaptains}
+                  className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-600 hover:text-red-700 text-[11px] font-black transition cursor-pointer shadow-2xs"
+                  title="استثناء وإلغاء تحديد الجميع"
+                >
+                  استثناء الكل ✕
+                </button>
+              </div>
             </div>
 
-            {/* List of included academies/captains */}
+            {/* List of included / excluded academies */}
             {captains.length > 0 && (
-              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                <p className="text-[11px] font-black text-slate-500 mb-1.5">الأكاديميات المشمولة داخل الكارت:</p>
+              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {captains.map((c, i) => (
-                    <div
-                      key={c.id || c._id || i}
-                      className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80 text-right"
-                    >
-                      <span className="w-6 h-6 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-black text-[10px] shrink-0">
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-black text-slate-900 truncate">
-                          {c.academyName || c.name || "أكاديمية"}
-                        </p>
-                        <p className="text-[10px] font-bold text-slate-500 truncate">
-                          كابتن: {c.name || "—"}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                  {captains.map((c, i) => {
+                    const id = c.id || c._id || String(i);
+                    const isIncluded = !excludedCaptainIds.has(id);
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => toggleIncludeCaptain(id)}
+                        className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl border text-right transition cursor-pointer ${
+                          isIncluded
+                            ? "bg-red-50/70 border-red-200 shadow-2xs"
+                            : "bg-slate-50/80 border-slate-200/80 opacity-60 hover:opacity-90"
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-xs font-black transition ${
+                          isIncluded
+                            ? "bg-red-600 text-white"
+                            : "border border-slate-300 bg-white text-transparent"
+                        }`}>
+                          ✓
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-black truncate ${isIncluded ? "text-slate-900" : "text-slate-500 line-through"}`}>
+                            {c.academyName || c.name || "أكاديمية"}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-500 truncate">
+                            كابتن: {c.name || "—"}
+                          </p>
+                        </div>
+                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md shrink-0 ${
+                          isIncluded
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-slate-200 text-slate-600"
+                        }`}>
+                          {isIncluded ? "مشمول ✓" : "مستثنى ✕"}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -601,17 +670,22 @@ export default function AdminPromoTab({ captains = [] }) {
             </div>
           </div>
 
-          {/* Features badge overview */}
+          {/* Features badge overview with subtext */}
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-2">
             <h3 className="text-xs font-black text-slate-700 flex items-center gap-2">
               <Shield className="w-4 h-4 text-emerald-500" />
               مميزات تبرز داخل الكارت الترويجي
             </h3>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {SYSTEM_FEATURES.map((feat, i) => (
-                <div key={i} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                  <span className="text-sm leading-none">{feat.icon}</span>
-                  <span className="text-[11px] font-bold text-slate-600 leading-tight">{feat.text}</span>
+                <div key={i} className="flex flex-col gap-0.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100/90 text-right">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base leading-none">{feat.icon}</span>
+                    <span className="text-xs font-bold text-slate-800 leading-tight">{feat.title || feat.text}</span>
+                  </div>
+                  {feat.desc && (
+                    <p className="text-[10.5px] text-slate-500 font-medium mr-6 leading-tight">{feat.desc}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -654,7 +728,7 @@ export default function AdminPromoTab({ captains = [] }) {
               {generating ? (
                 <><RefreshCw className="w-4 h-4 animate-spin" /><span>جارٍ توليد الكارت...</span></>
               ) : (
-                <><Sparkles className="w-4 h-4" /><span>🎨 {mode === "all" ? "توليد كارت كل المشتركين المجمّع" : "توليد الكارت الترويجي"}</span></>
+                <><Sparkles className="w-4 h-4" /><span>🎨 {mode === "all" ? `توليد كارت المشتركين المجمّع (${includedCount})` : "توليد الكارت الترويجي"}</span></>
               )}
             </button>
           )}
@@ -734,7 +808,7 @@ export default function AdminPromoTab({ captains = [] }) {
                     </div>
                     <p className="text-xs font-black text-slate-400">اضغط &quot;توليد الكارت&quot; لعرض المعاينة المباشرة</p>
                     <p className="text-[11px] text-slate-600 max-w-[240px]">
-                      {mode === "all" ? `سيتم جمع جميع المشتركين (${captains.length}) في كارت واحد` : "اختر الثيم والبيانات واضغط توليد"}
+                      {mode === "all" ? `سيتم إدراج المشتركين المحددين (${includedCount}) داخل الكارت المجمّع` : "اختر الثيم والبيانات واضغط توليد"}
                     </p>
                   </div>
                 )}

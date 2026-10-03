@@ -8,14 +8,54 @@
 
 // Features list shown on the card
 export const SYSTEM_FEATURES = [
-  { icon: "👥", text: "إدارة اللاعبين والأبطال" },
-  { icon: "🏟️", text: "إدارة الصالات والفروع" },
-  { icon: "🏆", text: "الاختبارات والبطولات" },
-  { icon: "💳", text: "متابعة الاشتراكات والمدفوعات" },
-  { icon: "🎂", text: "كروت تهنئة أعياد الميلاد" },
-  { icon: "📊", text: "تقارير ولوحة تحكم ذكية" },
-  { icon: "📱", text: "يعمل على الجوال والكمبيوتر" },
-  { icon: "🔒", text: "نظام آمن وموثوق" },
+  {
+    icon: "👥",
+    text: "إدارة اللاعبين والأبطال",
+    title: "إدارة اللاعبين والأبطال",
+    desc: "بيانات كاملة، كروت بروفايل وترحيب لكل بطل",
+  },
+  {
+    icon: "🏟️",
+    text: "إدارة الصالات والفروع",
+    title: "إدارة الصالات والفروع",
+    desc: "تنظيم الحصص بنظام 12 ساعة وتحضير ذكي",
+  },
+  {
+    icon: "🏆",
+    text: "الاختبارات والبطولات",
+    title: "الاختبارات والبطولات",
+    desc: "تنظيم الفعاليات، المعسكرات وكشوفات المشاركة",
+  },
+  {
+    icon: "💳",
+    text: "متابعة الاشتراكات والمدفوعات",
+    title: "متابعة الاشتراكات والمدفوعات",
+    desc: "تتبع سداد الرسوم وتسليم البدل والأدوات",
+  },
+  {
+    icon: "🎂",
+    text: "كروت تهنئة أعياد الميلاد",
+    title: "كروت تهنئة أعياد الميلاد",
+    desc: "تنبيه يومي وتوليد كروت واتساب احترافية فوراً",
+  },
+  {
+    icon: "📊",
+    text: "تقارير ولوحة تحكم ذكية",
+    title: "تقارير ولوحة تحكم ذكية",
+    desc: "مؤشرات حضور يومية وإحصائيات مالية دقيقة",
+  },
+  {
+    icon: "📱",
+    text: "يعمل على الجوال والكمبيوتر",
+    title: "يعمل على الجوال والكمبيوتر",
+    desc: "واجهة فائقة السرعة وبدون تحميل أي تطبيق",
+  },
+  {
+    icon: "🔒",
+    text: "نظام آمن وموثوق",
+    title: "نظام آمن وموثوق",
+    desc: "نسخ احتياطي سحابي فوري وحماية تامة للبيانات",
+  },
 ];
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -380,73 +420,73 @@ export async function generatePromoCardCanvas({
     // ══════════════════════════════════════════════════════════════════════════
     // 👤 SINGLE ACADEMY PROMO CARD LAYOUT
     // ══════════════════════════════════════════════════════════════════════════
-    const acadSecY = headerY + 250;
+    const acadSecY = headerY + 235;
 
     ctx.save();
-    roundRect(ctx, 60, acadSecY, W - 120, 175, 24);
+    roundRect(ctx, 60, acadSecY, W - 120, 165, 24);
     ctx.fillStyle = pal.cardBg; ctx.fill();
     ctx.strokeStyle = pal.cardBorder; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.restore();
 
     // Right accent stripe
     ctx.save();
-    const stripeGrad = ctx.createLinearGradient(0, acadSecY, 0, acadSecY + 175);
+    const stripeGrad = ctx.createLinearGradient(0, acadSecY, 0, acadSecY + 165);
     stripeGrad.addColorStop(0, pal.accent); stripeGrad.addColorStop(1, pal.accent2);
-    roundRect(ctx, W - 68, acadSecY, 8, 175, 24);
+    roundRect(ctx, W - 68, acadSecY, 8, 165, 24);
     ctx.fillStyle = stripeGrad; ctx.fill();
     ctx.restore();
 
     // Academy label
     ctx.save();
-    ctx.font = "700 22px 'Cairo', 'Arial', sans-serif";
+    ctx.font = "700 20px 'Cairo', 'Arial', sans-serif";
     ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textMuted;
-    ctx.fillText("🏫  الأكاديمية المعتمدة", W - 90, acadSecY + 40);
+    ctx.fillText("🏫  الأكاديمية المعتمدة", W - 90, acadSecY + 36);
     ctx.restore();
 
     // Academy name
     ctx.save();
-    ctx.font = "900 44px 'Cairo', 'Arial', sans-serif";
+    ctx.font = "900 40px 'Cairo', 'Arial', sans-serif";
     ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
     ctx.shadowColor = pal.accent; ctx.shadowBlur = 12;
     const acWidth = ctx.measureText(academyName).width;
-    if (acWidth > W - 200) ctx.font = "900 32px 'Cairo', 'Arial', sans-serif";
-    ctx.fillText(academyName, W - 90, acadSecY + 90);
+    if (acWidth > W - 200) ctx.font = "900 30px 'Cairo', 'Arial', sans-serif";
+    ctx.fillText(academyName, W - 90, acadSecY + 84);
     ctx.restore();
 
     // Separator line
     ctx.save();
     ctx.fillStyle = pal.cardBorder;
-    ctx.fillRect(90, acadSecY + 108, W - 180, 1);
+    ctx.fillRect(90, acadSecY + 102, W - 180, 1);
     ctx.restore();
 
     // Captain label
     ctx.save();
-    ctx.font = "700 20px 'Cairo', 'Arial', sans-serif";
+    ctx.font = "700 18px 'Cairo', 'Arial', sans-serif";
     ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textMuted;
-    ctx.fillText("🥋  المدرب المسئول", W - 90, acadSecY + 132);
+    ctx.fillText("🥋  المدرب المسئول", W - 90, acadSecY + 124);
     ctx.restore();
 
     // Captain name
     ctx.save();
-    ctx.font = "800 34px 'Cairo', 'Arial', sans-serif";
+    ctx.font = "800 30px 'Cairo', 'Arial', sans-serif";
     ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.gold;
     ctx.shadowColor = pal.gold; ctx.shadowBlur = 10;
-    ctx.fillText(captainName, W - 90, acadSecY + 168);
+    ctx.fillText(captainName, W - 90, acadSecY + 155);
     ctx.restore();
 
-    // Features Grid (2 col)
-    const featSecY = acadSecY + 198;
+    // Features Grid (2 col) with detailed descriptions
+    const featSecY = acadSecY + 175;
 
     ctx.save();
-    ctx.font = "900 32px 'Cairo', 'Arial', sans-serif";
+    ctx.font = "900 28px 'Cairo', 'Arial', sans-serif";
     ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
-    ctx.fillText("✨  مميزات النظام", W / 2, featSecY + 36);
+    ctx.fillText("✨  أبرز إمكانيات ومميزات النظام", W / 2, featSecY + 28);
     ctx.restore();
 
-    const gap = 14;
+    const gap = 12;
     const colW = (W - 120 - gap) / 2;
-    const itemH = 84;
-    const gridY = featSecY + 56;
+    const itemH = 92;
+    const gridY = featSecY + 44;
 
     featureList.forEach((feat, i) => {
       const col = i % 2;
@@ -469,42 +509,65 @@ export async function generatePromoCardCanvas({
       ctx.restore();
 
       const icon = typeof feat === "object" ? feat.icon : feat.split(" ")[0];
-      const text = typeof feat === "object" ? feat.text : feat.split(" ").slice(1).join(" ");
+      const title = typeof feat === "object" ? (feat.title || feat.text) : feat.split(" ").slice(1).join(" ");
+      const desc = typeof feat === "object" && feat.desc ? feat.desc : "";
 
+      // Icon
       ctx.save();
-      ctx.font = "28px serif"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
-      ctx.fillText(icon, itemX + fw - 20, itemY + itemH / 2);
+      ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(icon, itemX + fw - 24, itemY + 34);
       ctx.restore();
 
-      ctx.save();
-      ctx.font = "700 20px 'Cairo', 'Arial', sans-serif";
-      ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.direction = "rtl";
-      ctx.fillStyle = pal.textSecondary;
-      ctx.fillText(text, itemX + fw - 56, itemY + itemH / 2);
-      ctx.restore();
+      const textRightX = itemX + fw - 52;
+      const maxTextW = fw - 62;
+
+      if (desc) {
+        // Title
+        ctx.save();
+        ctx.font = "900 18px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl";
+        ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(title, textRightX, itemY + 32, maxTextW);
+        ctx.restore();
+
+        // Subline description
+        ctx.save();
+        ctx.font = "600 13px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl";
+        ctx.fillStyle = pal.textSecondary;
+        ctx.fillText(desc, textRightX, itemY + 62, maxTextW);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.font = "900 20px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl";
+        ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(title, textRightX, itemY + itemH / 2 + 7, maxTextW);
+        ctx.restore();
+      }
     });
 
     // CTA Banner
     const rows = Math.ceil(featureList.length / 2);
-    const ctaY = gridY + rows * (itemH + gap) + 18;
+    const ctaY = gridY + rows * (itemH + gap) + 14;
 
     ctx.save();
-    const ctaGrad = ctx.createLinearGradient(60, ctaY, W - 60, ctaY + 105);
+    const ctaGrad = ctx.createLinearGradient(60, ctaY, W - 60, ctaY + 98);
     ctaGrad.addColorStop(0, pal.accent); ctaGrad.addColorStop(1, pal.accent2);
-    roundRect(ctx, 60, ctaY, W - 120, 105, 24);
-    ctx.fillStyle = ctaGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 26; ctx.fill();
+    roundRect(ctx, 60, ctaY, W - 120, 98, 22);
+    ctx.fillStyle = ctaGrad; ctx.shadowColor = pal.accent; ctx.shadowBlur = 24; ctx.fill();
     ctx.restore();
 
     ctx.save();
-    ctx.font = "900 30px 'Cairo', 'Arial', sans-serif";
+    ctx.font = "900 28px 'Cairo', 'Arial', sans-serif";
     ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = "#ffffff";
-    ctx.fillText("انضم لمنصة CoachMaster الآن! 🚀", W / 2, ctaY + 42);
+    ctx.fillText("انضم لمنصة CoachMaster الآن! 🚀", W / 2, ctaY + 38);
     ctx.restore();
 
     ctx.save();
-    ctx.font = "600 20px 'Cairo', 'Arial', sans-serif";
+    ctx.font = "600 19px 'Cairo', 'Arial', sans-serif";
     ctx.textAlign = "center"; ctx.direction = "rtl"; ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.fillText("وطور أكاديميتك للمستوى الاحترافي ⚡", W / 2, ctaY + 78);
+    ctx.fillText("وطور أكاديميتك للمستوى الاحترافي ⚡", W / 2, ctaY + 72);
     ctx.restore();
   }
 
