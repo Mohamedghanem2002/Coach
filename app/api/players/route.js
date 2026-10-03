@@ -461,26 +461,38 @@ export async function PATCH(request) {
           { status: 400 },
         );
       }
-      await collection.updateOne(
-        { _id: new ObjectId(body.id), ownerId },
-        {
-          $pull: {
-            attendance: { date },
+      let player;
+      try {
+        player = await collection.findOneAndUpdate(
+          { _id: new ObjectId(body.id), ownerId },
+          {
+            $pull: { attendance: { date } },
+            $push: { attendance: { date, status: body.attendanceStatus } },
           },
-        },
-      );
-      const player = await collection.findOneAndUpdate(
-        { _id: new ObjectId(body.id), ownerId },
-        {
-          $push: {
-            attendance: {
-              date,
-              status: body.attendanceStatus,
+          { returnDocument: "after" }
+        );
+      } catch (_) {
+        await collection.updateOne(
+          { _id: new ObjectId(body.id), ownerId },
+          {
+            $pull: {
+              attendance: { date },
             },
           },
-        },
-        { returnDocument: "after" },
-      );
+        );
+        player = await collection.findOneAndUpdate(
+          { _id: new ObjectId(body.id), ownerId },
+          {
+            $push: {
+              attendance: {
+                date,
+                status: body.attendanceStatus,
+              },
+            },
+          },
+          { returnDocument: "after" },
+        );
+      }
       return NextResponse.json(player ? serializePlayer(player) : null);
     }
     if (body.paymentStatus === "clear") {

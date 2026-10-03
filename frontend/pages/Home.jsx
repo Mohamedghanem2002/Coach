@@ -1,5 +1,5 @@
 "use client";
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -77,6 +77,20 @@ import ExportExcelModal from "../components/dashboard/ExportExcelModal";
 const today = localDate();
 const currentMonth = today.slice(0, 7);
 const DASHBOARD_CACHE_KEY = "coachmaster_dashboard_cache_v2";
+
+/** Cross-tab real-time sync broadcaster */
+function broadcastSyncEvent(payload) {
+  try {
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      const channel = new BroadcastChannel("coachmaster_sync");
+      channel.postMessage(payload);
+      channel.close();
+    }
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem("coachmaster_sync_event", Date.now().toString());
+    }
+  } catch (_) {}
+}
 
 export default function Home() {
   const router = useRouter();
@@ -352,6 +366,120 @@ export default function Home() {
       clearTimeout(backupTimer);
     };
   }, [router, sessionStatus]);
+
+  // ─── Silent Real-time Revalidation Function ───
+  const revalidateDashboard = useCallback(async ({ silent = true } = {}) => {
+    if (sessionStatus !== "authenticated") return;
+    try {
+      const bootstrapRes = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
+      if (bootstrapRes.status === 401) {
+        router.push("/auth/signin");
+        return;
+      }
+      if (bootstrapRes.ok) {
+        const data = await bootstrapRes.json();
+        if (data?.success) {
+          if (Array.isArray(data.players)) {
+            setPlayers(data.players.map((p) => normalizePlayer(p)));
+          }
+          if (Array.isArray(data.branches)) {
+            setBranches(data.branches);
+          }
+          if (Array.isArray(data.events)) {
+            setEvents(data.events);
+          }
+          if (data.user) {
+            if (data.user.name) setLocalCoachName(data.user.name);
+            if (data.user.academyName) setLocalAcademyName(data.user.academyName);
+            setAccountUser(data.user);
+          }
+          try {
+            localStorage.setItem(
+              DASHBOARD_CACHE_KEY,
+              JSON.stringify({
+                players: data.players,
+                branches: data.branches,
+                events: data.events,
+                timestamp: Date.now(),
+              })
+            );
+          } catch (_) {}
+        }
+      }
+    } catch (err) {
+      if (!silent) console.warn("Background revalidation warning:", err);
+    }
+  }, [router, sessionStatus]);
+
+  // ─── Real-Time Live Sync & Auto-Revalidation Hooks ───
+  useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
+
+    // 1. Silent revalidation on Window / App Focus
+    const handleFocus = () => {
+      revalidateDashboard({ silent: true });
+    };
+
+    // 2. Silent revalidation when Tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        revalidateDashboard({ silent: true });
+      }
+    };
+
+    // 3. Periodic Background Sync (every 25 seconds if tab is active)
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        revalidateDashboard({ silent: true });
+      }
+    }, 25000);
+
+    // 4. Cross-Tab Real-Time Sync via BroadcastChannel & Storage Event
+    let channel = null;
+    try {
+      if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+        channel = new BroadcastChannel("coachmaster_sync");
+        channel.onmessage = (event) => {
+          if (
+            event.data?.type === "REFRESH" ||
+            event.data?.type === "PLAYER_UPDATED" ||
+            event.data?.type === "PLAYER_ADDED" ||
+            event.data?.type === "PLAYER_DELETED" ||
+            event.data?.type === "EVENTS_UPDATED"
+          ) {
+            revalidateDashboard({ silent: true });
+          }
+        };
+      }
+    } catch (_) {}
+
+    const handleStorage = (e) => {
+      if (e.key === "coachmaster_sync_event") {
+        revalidateDashboard({ silent: true });
+      }
+    };
+
+    // 5. In-App Custom Event Listener for instant sync from any component/modal
+    const handleCustomRefresh = () => {
+      revalidateDashboard({ silent: true });
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("coachmaster_refresh_data", handleCustomRefresh);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("coachmaster_refresh_data", handleCustomRefresh);
+      clearInterval(pollInterval);
+      if (channel) {
+        channel.close();
+      }
+    };
+  }, [sessionStatus, revalidateDashboard]);
 
   function showToast(message, type = "success") {
     if (!message) {
@@ -726,6 +854,83 @@ export default function Home() {
       setNotice("لا يمكن تسجيل حضور أو غياب في تاريخ مستقبلي.");
       return null;
     }
+
+    // ─── 1. Instant 0ms Optimistic UI for Attendance & Payment ───
+    let previousPlayer = null;
+    let didOptimistic = false;
+
+    if (data.attendanceStatus || data.paymentStatus) {
+      didOptimistic = true;
+      setPlayers((current) =>
+        current.map((p) => {
+          if (p._id !== id) return p;
+          previousPlayer = p;
+          let updated = { ...p };
+
+          if (data.attendanceStatus) {
+            const currentAtt = Array.isArray(p.attendance) ? p.attendance : [];
+            const filteredAtt = currentAtt.filter((item) => item.date !== data.date);
+            if (data.attendanceStatus !== "clear") {
+              filteredAtt.push({ date: data.date, status: data.attendanceStatus });
+            }
+            updated.attendance = filteredAtt;
+          }
+
+          if (data.paymentStatus) {
+            const month = data.paymentMonth || paymentMonth;
+            const history = Array.isArray(p.paymentHistory) ? p.paymentHistory : [];
+            const otherPayments = history.filter((pay) => pay.month !== month);
+            const amount = p.totalAmount || p.defaultTotalAmount || 0;
+            if (data.paymentStatus === "paid") {
+              otherPayments.push({
+                month,
+                status: "paid",
+                paidAmount: amount,
+                remainingAmount: 0,
+                totalAmount: amount,
+                updatedAt: new Date().toISOString(),
+              });
+              updated.paymentStatus = "paid";
+              updated.paidAmount = amount;
+              updated.remainingAmount = 0;
+            } else {
+              otherPayments.push({
+                month,
+                status: "unpaid",
+                paidAmount: 0,
+                remainingAmount: amount,
+                totalAmount: amount,
+                updatedAt: new Date().toISOString(),
+              });
+              updated.paymentStatus = "unpaid";
+              updated.paidAmount = 0;
+              updated.remainingAmount = amount;
+            }
+            updated.paymentHistory = otherPayments;
+          }
+
+          return normalizePlayer(updated);
+        })
+      );
+
+      setSelected((current) => {
+        if (current?._id !== id) return current;
+        let updated = { ...current };
+        if (data.attendanceStatus) {
+          const currentAtt = Array.isArray(current.attendance) ? current.attendance : [];
+          const filteredAtt = currentAtt.filter((item) => item.date !== data.date);
+          if (data.attendanceStatus !== "clear") {
+            filteredAtt.push({ date: data.date, status: data.attendanceStatus });
+          }
+          updated.attendance = filteredAtt;
+        }
+        if (data.paymentStatus) {
+          updated.paymentStatus = data.paymentStatus;
+        }
+        return normalizePlayer(updated);
+      });
+    }
+
     try {
       const response = await fetch("/api/players", {
         method: "PATCH",
@@ -738,6 +943,14 @@ export default function Home() {
       });
       const result = await response.json();
       if (!response.ok || !result) {
+        if (didOptimistic && previousPlayer) {
+          setPlayers((current) =>
+            current.map((p) => (p._id === id ? previousPlayer : p))
+          );
+          setSelected((current) =>
+            current?._id === id ? previousPlayer : current
+          );
+        }
         setNotice(
           (result === null || result === void 0 ? void 0 : result.error) ||
             "تعذر تحديث بيانات اللاعب.",
@@ -753,6 +966,10 @@ export default function Home() {
           ? safePlayer
           : current,
       );
+
+      // Broadcast update across tabs
+      broadcastSyncEvent({ type: "PLAYER_UPDATED", player: safePlayer });
+
       if (data.attendanceStatus) {
         setNotice(
           `تم تسجيل ${data.attendanceStatus === "present" ? "حضور" : "غياب"} اللاعب بنجاح.`,
@@ -778,6 +995,14 @@ export default function Home() {
       }
       return safePlayer;
     } catch (_a) {
+      if (didOptimistic && previousPlayer) {
+        setPlayers((current) =>
+          current.map((p) => (p._id === id ? previousPlayer : p))
+        );
+        setSelected((current) =>
+          current?._id === id ? previousPlayer : current
+        );
+      }
       setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
       return null;
     }
@@ -797,6 +1022,7 @@ export default function Home() {
       const newPlayer = normalizePlayer(result);
       setPlayers((current) => [newPlayer, ...current]);
       setShowForm(false);
+      broadcastSyncEvent({ type: "PLAYER_ADDED", player: newPlayer });
       setNotice("تمت إضافة اللاعب بنجاح! تم تجهيز كارت الترحيب 🥋");
       setWelcomePlayer(newPlayer);
     } catch (_error) {
@@ -914,6 +1140,7 @@ export default function Home() {
     }
     setPlayers((current) => current.filter((player) => player._id !== id));
     setSelected(null);
+    broadcastSyncEvent({ type: "PLAYER_DELETED", id });
     setNotice("تم حذف اللاعب.");
   }
   async function handleQuickBranchSubmit(e) {
