@@ -634,6 +634,7 @@ export default function Home() {
 
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [restoreProgressModal, setRestoreProgressModal] = useState(null);
   const restoreFileRef = useRef(null);
 
   async function handleInstantCloudBackup() {
@@ -722,24 +723,70 @@ export default function Home() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (restoreFileRef.current) restoreFileRef.current.value = "";
+
+    const sizeStr = (bytes) => {
+      if (!bytes || bytes === 0) return "0 بايت";
+      const k = 1024;
+      const sizes = ["بايت", "كيلوبايت", "ميجابايت", "جيجابايت"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+    };
+
+    const formattedSize = sizeStr(file.size);
+
+    // 1. Immediately activate loader so screen is NEVER static
+    setIsRestoring(true);
+    setRestoreProgressModal({
+      status: "reading",
+      fileName: file.name,
+      fileSize: formattedSize,
+      stepText: "جارٍ قراءة وفحص ملف النسخة من ذاكرة الجهاز...",
+      subText: "يتم قراءة محتوى الملف والتحقق من سلامة البيانات",
+    });
+
     try {
+      // Yield execution to paint the loader immediately
+      await new Promise((r) => setTimeout(r, 80));
+
       const text = await file.text();
-      const parsed = JSON.parse(text);
+
+      setRestoreProgressModal((prev) => ({
+        ...prev,
+        status: "analyzing",
+        stepText: "جارٍ فحص سلامة البيانات وتوافق اللاعبين...",
+      }));
+
+      await new Promise((r) => setTimeout(r, 80));
+
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        setRestoreProgressModal(null);
+        setIsRestoring(false);
+        showToast("الملف المحدد ليس ملف JSON صالحاً أو تالف.", "error");
+        return;
+      }
+
       const backupData = parsed?.data || parsed;
       const countPlayers = (backupData.players || []).length;
       const countBranches = (backupData.branches || []).length;
 
       if (!countPlayers && !countBranches) {
+        setRestoreProgressModal(null);
+        setIsRestoring(false);
         showToast("الملف المحدد لا يحتوي على بيانات صالحة للاستعادة.", "error");
         return;
       }
 
-      const confirmed = window.confirm(
-        `هل أنت متأكد من استعادة النسخة الاحتياطية؟\n\n- عدد اللاعبين: ${countPlayers}\n- عدد الصالات: ${countBranches}\n\nسيتم استرجاع هؤلاء اللاعبين فوراً إلى النظام.`
-      );
-      if (!confirmed) return;
+      setRestoreProgressModal((prev) => ({
+        ...prev,
+        status: "restoring",
+        stepText: `جارٍ استرجاع وحفظ البيانات في السحابة (${countPlayers} لاعب)...`,
+        subText: "يتم الآن تحديث قاعدة بيانات الأكاديمية وربط الحساب",
+      }));
 
-      setIsRestoring(true);
       let res;
       try {
         res = await fetch("/api/backup", {
@@ -776,9 +823,19 @@ export default function Home() {
         const errorMsg = result.details
           ? `${result.error || "تعذر استعادة النسخة الاحتياطية"}: ${result.details}`
           : result.error || `تعذر استعادة النسخة الاحتياطية (${res?.status || "خطأ اتصال"})`;
+        setRestoreProgressModal(null);
+        setIsRestoring(false);
         showToast(errorMsg, "error");
         return;
       }
+
+      // Success!
+      setRestoreProgressModal((prev) => ({
+        ...prev,
+        status: "success",
+        stepText: "تمت الاستعادة بنجاح!",
+        subText: `تم استرجاع (${result.stats?.playersRestored ?? countPlayers}) لاعب و (${result.stats?.branchesRestored ?? countBranches}) صالة`,
+      }));
 
       // Reload fresh data
       const [pRes, bRes, eRes] = await Promise.all([
@@ -800,11 +857,17 @@ export default function Home() {
       }
 
       showToast(`✓ تمت الاستعادة بنجاح! تم استرجاع (${result.stats?.playersRestored ?? countPlayers}) لاعب.`);
+
+      setTimeout(() => {
+        setRestoreProgressModal(null);
+        setIsRestoring(false);
+      }, 1200);
     } catch (err) {
       console.error("Restore failed:", err);
+      setRestoreProgressModal(null);
+      setIsRestoring(false);
       showToast("حدث خطأ أثناء قراءة ملف النسخة الاحتياطية.", "error");
     } finally {
-      setIsRestoring(false);
       if (restoreFileRef.current) restoreFileRef.current.value = "";
     }
   }
@@ -2944,6 +3007,62 @@ export default function Home() {
           showToast={showToast}
           onRestoreSuccess={reloadAllData}
         />
+      )}
+
+      {restoreProgressModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-backdrop"
+          dir="rtl"
+        >
+          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl text-center space-y-4 animate-scale-up">
+            <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 shadow-2xs">
+              {restoreProgressModal.status === "success" ? (
+                <CheckCircle2 className="h-7 w-7 text-emerald-600 animate-bounce" />
+              ) : (
+                <RotateCcw className="h-7 w-7 animate-spin text-emerald-600" />
+              )}
+            </div>
+
+            <div>
+              <h3 className="font-cairo text-sm font-black text-slate-900">
+                {restoreProgressModal.status === "success"
+                  ? "تمت الاستعادة بنجاح!"
+                  : "جارٍ استعادة النسخة الاحتياطية..."}
+              </h3>
+              <p className="text-xs font-bold text-emerald-700 mt-1">
+                {restoreProgressModal.stepText}
+              </p>
+              {restoreProgressModal.subText && (
+                <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                  {restoreProgressModal.subText}
+                </p>
+              )}
+              {restoreProgressModal.fileName && (
+                <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-mono text-slate-600">
+                  <span className="truncate max-w-[170px]">{restoreProgressModal.fileName}</span>
+                  <span>•</span>
+                  <span>{restoreProgressModal.fileSize}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Animated Progress Bar */}
+            {restoreProgressModal.status !== "success" ? (
+              <div className="space-y-1.5 pt-1">
+                <div className="h-2.5 w-full bg-emerald-100 rounded-full overflow-hidden p-0.5">
+                  <div className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 rounded-full animate-pulse w-full" />
+                </div>
+                <div className="text-[10px] text-slate-400 font-semibold">
+                  يرجى الانتظار، جاري قراءة الملف وتحديث الأكاديمية...
+                </div>
+              </div>
+            ) : (
+              <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 py-1.5 px-3 rounded-xl border border-emerald-200">
+                ✓ تم تحديث جميع القوائم واللاعبين بنجاح
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {welcomePlayer && (

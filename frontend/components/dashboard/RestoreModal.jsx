@@ -16,7 +16,16 @@ import {
   FileText,
   AlertTriangle,
   RefreshCw,
+  Trophy,
 } from "lucide-react";
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return "0 بايت";
+  const k = 1024;
+  const sizes = ["بايت", "كيلوبايت", "ميجابايت", "جيجابايت"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
 
 export default function RestoreModal({
   isOpen,
@@ -29,8 +38,14 @@ export default function RestoreModal({
   const [restoringId, setRestoringId] = useState(null);
   const [showOlderSnapshots, setShowOlderSnapshots] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [fileProgress, setFileProgress] = useState(null);
 
   const fileInputRef = useRef(null);
+
+  const handleClose = () => {
+    setFileProgress(null);
+    onClose?.();
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -80,7 +95,7 @@ export default function RestoreModal({
       if (typeof onRestoreSuccess === "function") {
         await onRestoreSuccess();
       }
-      onClose();
+      handleClose();
     } catch {
       showToast("حدث خطأ أثناء الاتصال بالخادم للاسترجاع", "error");
     } finally {
@@ -88,52 +103,144 @@ export default function RestoreModal({
     }
   }
 
-  // File Upload Restore (Fallback)
+  // File Upload Restore with Instant Non-Blocking Loader
   async function handleManualFileSelected(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    const formattedSize = formatBytes(file.size);
+    setFileProgress({
+      status: "reading",
+      fileName: file.name,
+      fileSize: formattedSize,
+      stepText: "جارٍ قراءة وفحص ملف النسخة من ذاكرة الجهاز...",
+    });
+
     try {
+      // Yield to allow UI to paint immediately
+      await new Promise((r) => setTimeout(r, 80));
+
       const text = await file.text();
-      const parsed = JSON.parse(text);
+
+      setFileProgress((prev) => ({
+        ...prev,
+        status: "analyzing",
+        stepText: "جارٍ تحليل هيكل البيانات ومطابقة اللاعبين...",
+      }));
+
+      await new Promise((r) => setTimeout(r, 80));
+
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        setFileProgress({
+          status: "error",
+          fileName: file.name,
+          fileSize: formattedSize,
+          errorMessage: "الملف المحدد ليس ملف JSON صالحاً أو أنه تالف.",
+        });
+        showToast("الملف المحدد ليس ملف JSON صالحاً أو أنه تالف.", "error");
+        return;
+      }
+
       const backupData = parsed?.data || parsed;
-      const countPlayers = (backupData.players || []).length;
-      const countBranches = (backupData.branches || []).length;
+      const countPlayers = Array.isArray(backupData.players) ? backupData.players.length : 0;
+      const countBranches = Array.isArray(backupData.branches) ? backupData.branches.length : 0;
+      const countEvents = Array.isArray(backupData.events) ? backupData.events.length : 0;
+      const backupDate = parsed?.exportedAt || parsed?.createdAt || parsed?.date || null;
 
       if (!countPlayers && !countBranches) {
+        setFileProgress({
+          status: "error",
+          fileName: file.name,
+          fileSize: formattedSize,
+          errorMessage: "الملف لا يحتوي على أي بيانات صالحة للاستعادة (0 لاعب، 0 صالة).",
+        });
         showToast("الملف المحدد لا يحتوي على بيانات صالحة للاستعادة.", "error");
         return;
       }
 
-      const confirmed = window.confirm(
-        `هل تريد استرجاع النسخة من الملف المحدد؟\n\n- عدد اللاعبين: ${countPlayers}\n- عدد الصالات: ${countBranches}\n\nسيتم استرجاع هؤلاء اللاعبين فوراً إلى النظام.`
-      );
-      if (!confirmed) return;
+      setFileProgress({
+        status: "confirm",
+        fileName: file.name,
+        fileSize: formattedSize,
+        countPlayers,
+        countBranches,
+        countEvents,
+        backupDate,
+        parsedData: parsed,
+      });
+    } catch (err) {
+      console.error("Error reading restore file:", err);
+      setFileProgress({
+        status: "error",
+        fileName: file.name,
+        fileSize: formattedSize,
+        errorMessage: "تعذر قراءة الملف من الجهاز: " + (err?.message || "خطأ غير معروف"),
+      });
+      showToast("تعذر قراءة الملف من الجهاز", "error");
+    }
+  }
 
-      setUploadingFile(true);
+  async function handleConfirmFileRestore() {
+    if (!fileProgress?.parsedData) return;
+
+    setFileProgress((prev) => ({
+      ...prev,
+      status: "restoring",
+      stepText: "جارٍ استرجاع وحفظ البيانات في السحابة وتحديث الأكاديمية...",
+    }));
+
+    try {
       const res = await fetch("/api/backup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed),
+        body: JSON.stringify(fileProgress.parsedData),
       });
 
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {
+        setFileProgress((prev) => ({
+          ...prev,
+          status: "error",
+          errorMessage: result.error || result.details || "تعذر استعادة النسخة الاحتياطية",
+        }));
         showToast(result.error || result.details || "تعذر استعادة النسخة من الملف", "error");
         return;
       }
 
-      showToast(`✓ تمت الاستعادة بنجاح من الملف! (${countPlayers} لاعب)`);
+      setFileProgress((prev) => ({
+        ...prev,
+        status: "success",
+        stepText: "تمت الاستعادة بنجاح!",
+      }));
+
+      showToast(`✓ تمت الاستعادة بنجاح من الملف! (${fileProgress.countPlayers} لاعب)`);
+
       if (typeof onRestoreSuccess === "function") {
         await onRestoreSuccess();
       }
-      onClose();
-    } catch {
-      showToast("ملف غير صالح أو حدث خطأ أثناء قراءة الملف", "error");
-    } finally {
-      setUploadingFile(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      setTimeout(() => {
+        handleClose();
+      }, 1200);
+    } catch (err) {
+      console.error("Restore upload failed:", err);
+      setFileProgress((prev) => ({
+        ...prev,
+        status: "error",
+        errorMessage: "حدث خطأ أثناء الاتصال بالخادم للاسترجاع",
+      }));
+      showToast("حدث خطأ أثناء الاتصال بالخادم للاسترجاع", "error");
     }
+  }
+
+  function handleCancelFileRestore() {
+    setFileProgress(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   if (!isOpen) return null;
@@ -144,7 +251,7 @@ export default function RestoreModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 sm:p-4 backdrop-blur-xs animate-backdrop"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xl space-y-4 animate-scale-up max-h-[90vh] overflow-y-auto"
@@ -168,7 +275,7 @@ export default function RestoreModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition cursor-pointer"
           >
             <X className="h-4 w-4" />
@@ -309,7 +416,7 @@ export default function RestoreModal({
         )}
 
         {/* Section 3: Manual File Upload (Fallback) */}
-        <div className="pt-1 border-t border-slate-100">
+        <div className="pt-2 border-t border-slate-100">
           <input
             ref={fileInputRef}
             type="file"
@@ -317,26 +424,166 @@ export default function RestoreModal({
             onChange={handleManualFileSelected}
             className="hidden"
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadingFile}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-slate-300 hover:border-slate-400 bg-slate-50/60 hover:bg-slate-100/60 text-slate-600 font-bold text-xs transition cursor-pointer"
-          >
-            <UploadCloud className="h-4 w-4 text-slate-500" />
-            <span>
-              {uploadingFile
-                ? "جار قراءة الملف واسترجاعه..."
-                : "أو اختيار ملف نسخة احتياطية (.json) من جهازك يدوياً"}
-            </span>
-          </button>
+
+          {!fileProgress ? (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2.5 py-3 px-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50/70 hover:bg-emerald-50/40 text-slate-700 font-bold text-xs transition cursor-pointer group"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-white border border-slate-200 group-hover:border-emerald-300 group-hover:bg-emerald-100/50 transition shadow-2xs">
+                <UploadCloud className="h-4 w-4 text-slate-500 group-hover:text-emerald-600 transition" />
+              </div>
+              <span className="font-cairo">أو اختيار ملف نسخة احتياطية (.json) من جهازك يدوياً</span>
+            </button>
+          ) : (
+            <div className="rounded-2xl border-2 border-emerald-400/80 bg-gradient-to-br from-emerald-50/90 via-teal-50/40 to-white p-4 space-y-3 shadow-sm animate-scale-up" dir="rtl">
+              {/* Card Header */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-emerald-200 text-emerald-600 shadow-2xs">
+                    {fileProgress.status === "reading" || fileProgress.status === "analyzing" || fileProgress.status === "restoring" ? (
+                      <RefreshCw className="h-4 w-4 animate-spin text-emerald-600" />
+                    ) : fileProgress.status === "success" ? (
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    ) : fileProgress.status === "error" ? (
+                      <AlertTriangle className="h-5 w-5 text-rose-600" />
+                    ) : (
+                      <FileText className="h-4 w-4 text-emerald-600" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-cairo text-xs font-black text-slate-900 truncate">
+                        {fileProgress.fileName}
+                      </span>
+                      {fileProgress.fileSize && (
+                        <span className="text-[9.5px] font-mono font-bold text-slate-500 bg-white/90 px-1.5 py-0.5 rounded-md border border-slate-200/80 shrink-0">
+                          {fileProgress.fileSize}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-700 block mt-0.5">
+                      {fileProgress.stepText || "فحص ملف النسخة الاحتياطية"}
+                    </span>
+                  </div>
+                </div>
+
+                {fileProgress.status !== "reading" && fileProgress.status !== "analyzing" && fileProgress.status !== "restoring" && (
+                  <button
+                    type="button"
+                    onClick={handleCancelFileRestore}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                    title="إلغاء واختيار ملف آخر"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Animated Progress Loader for reading, analyzing, or restoring */}
+              {(fileProgress.status === "reading" || fileProgress.status === "analyzing" || fileProgress.status === "restoring") && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="h-2.5 w-full bg-emerald-100/90 rounded-full overflow-hidden p-0.5">
+                    <div className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 rounded-full animate-pulse w-full" />
+                  </div>
+                  <div className="flex items-center justify-between text-[10.5px] text-slate-500 font-semibold px-0.5">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                      <span>
+                        {fileProgress.status === "reading"
+                          ? "جارٍ قراءة البيانات من ذاكرة الجهاز..."
+                          : fileProgress.status === "analyzing"
+                          ? "جارٍ فحص سلامة وتوافق البيانات..."
+                          : "جارٍ استرجاع وحفظ البيانات في السحابة..."}
+                      </span>
+                    </span>
+                    <span className="font-bold text-emerald-800">يرجى الانتظار</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirm Stats Preview */}
+              {fileProgress.status === "confirm" && (
+                <div className="space-y-3 pt-1">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-white/95 rounded-xl p-2.5 border border-emerald-100 shadow-2xs">
+                      <div className="text-[10px] text-slate-500 font-bold flex items-center justify-center gap-1">
+                        <Users className="h-3 w-3 text-emerald-600" />
+                        <span>اللاعبين</span>
+                      </div>
+                      <div className="text-sm font-black text-slate-900 mt-0.5">{fileProgress.countPlayers}</div>
+                    </div>
+                    <div className="bg-white/95 rounded-xl p-2.5 border border-emerald-100 shadow-2xs">
+                      <div className="text-[10px] text-slate-500 font-bold flex items-center justify-center gap-1">
+                        <Building2 className="h-3 w-3 text-teal-600" />
+                        <span>الصالات</span>
+                      </div>
+                      <div className="text-sm font-black text-slate-900 mt-0.5">{fileProgress.countBranches}</div>
+                    </div>
+                    <div className="bg-white/95 rounded-xl p-2.5 border border-emerald-100 shadow-2xs">
+                      <div className="text-[10px] text-slate-500 font-bold flex items-center justify-center gap-1">
+                        <Trophy className="h-3 w-3 text-amber-600" />
+                        <span>الفعاليات</span>
+                      </div>
+                      <div className="text-sm font-black text-slate-900 mt-0.5">{fileProgress.countEvents || 0}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleConfirmFileRestore}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-cairo font-black text-xs shadow-md transition cursor-pointer"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>تأكيد استرجاع النسخة ({fileProgress.countPlayers} لاعب)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+                    >
+                      ملف آخر
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Error State */}
+              {fileProgress.status === "error" && (
+                <div className="space-y-2 pt-1">
+                  <div className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-2.5">
+                    {fileProgress.errorMessage}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-2 px-3 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition cursor-pointer"
+                  >
+                    اختيار ملف آخر من جهازك
+                  </button>
+                </div>
+              )}
+
+              {/* Success State */}
+              {fileProgress.status === "success" && (
+                <div className="text-center py-2 space-y-1">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-800 bg-emerald-100/90 px-3.5 py-1.5 rounded-full border border-emerald-200">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span>تمت استعادة وتحديث البيانات بنجاح!</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="flex justify-end pt-1">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="py-2 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
           >
             إغلاق
