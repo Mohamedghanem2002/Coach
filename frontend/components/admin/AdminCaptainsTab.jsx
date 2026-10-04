@@ -695,22 +695,81 @@ export default function AdminCaptainsTab({
 
                         {/* Action Buttons */}
                         <td className="p-4 text-center">
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {/* View Details */}
                             <button
                               type="button"
                               onClick={() => onSelectCaptain(c.id || c._id)}
-                              className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1 transition cursor-pointer"
-                              title="عرض التفاصيل الكاملة"
+                              className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1 transition cursor-pointer active:scale-95"
+                              title="عرض التفاصيل الكاملة للكابتن"
                             >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>عرض</span>
+                              <Eye className="w-3.5 h-3.5 text-blue-600" />
+                              <span className="hidden xl:inline">عرض</span>
                             </button>
 
+                            {/* Quick Extend */}
+                            <button
+                              type="button"
+                              onClick={() => onOpenExtend(c)}
+                              className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs flex items-center gap-1 transition cursor-pointer border border-purple-200/80 active:scale-95"
+                              title="تمديد فترة الصلاحية والاشتراك"
+                            >
+                              <Calendar className="w-3.5 h-3.5 text-purple-600" />
+                              <span className="hidden 2xl:inline">تمديد</span>
+                            </button>
+
+                            {/* Quick Payment Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => onTogglePayment(c)}
+                              className={`p-1.5 sm:px-2 sm:py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition cursor-pointer border active:scale-95 ${
+                                c.subscriptionPaid
+                                  ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200"
+                                  : "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200"
+                              }`}
+                              title={c.subscriptionPaid ? "مسدد (انقر لإلغاء السداد)" : "غير مسدد (انقر لتسجيل السداد)"}
+                            >
+                              <CreditCard className="w-3.5 h-3.5" />
+                              <span className="hidden 2xl:inline">{c.subscriptionPaid ? "مسدد" : "سداد"}</span>
+                            </button>
+
+                            {/* Quick Suspend / Reactivate */}
+                            {isSuspended ? (
+                              <button
+                                type="button"
+                                onClick={() => onOpenReactivate(c)}
+                                className="p-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition cursor-pointer border border-emerald-200"
+                                title="إعادة تفعيل الحساب"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => onOpenSuspend(c)}
+                                className="p-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 transition cursor-pointer border border-amber-200"
+                                title="تعليق الحساب مؤقتاً"
+                              >
+                                <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
+                              </button>
+                            )}
+
+                            {/* Quick Delete */}
+                            <button
+                              type="button"
+                              onClick={() => onOpenDelete(c)}
+                              className="p-1.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              title="حذف الحساب نهائياً"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* More Options Dropdown Trigger */}
                             <button
                               type="button"
                               onClick={() => setSelectedActionCaptain(c)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
-                              title="إجراءات إضافية"
+                              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                              title="خيارات إضافية"
                             >
                               <MoreVertical className="w-4 h-4" />
                             </button>
