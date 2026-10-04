@@ -60,7 +60,13 @@ export async function GET(request, context) {
     const db = client.db(process.env.MONGODB_DB);
 
     const queryId = parseQueryId(id);
-    const user = await db.collection("users").findOne({ _id: queryId });
+    let user = await db.collection("users").findOne({ _id: queryId });
+    if (!user && typeof id === "string") {
+      user = await db.collection("users").findOne({ _id: id });
+    }
+    if (!user && typeof id === "string") {
+      user = await db.collection("users").findOne({ email: id.toLowerCase().trim() });
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -102,6 +108,9 @@ export async function GET(request, context) {
     }
 
     // Query real DB records belonging to this account
+    const uOId = user._id;
+    const uStrId = user._id.toString();
+
     const ownerFilter = {
       $or: [{ ownerId: uStrId }, { ownerId: uOId }],
     };
@@ -187,6 +196,9 @@ export async function GET(request, context) {
         hallsCount: branches.length,
         eventsCount: events.length,
       },
+      halls: branches.map((b) => ({ ...b, _id: b._id?.toString(), id: b._id?.toString() })),
+      branches: branches.map((b) => ({ ...b, _id: b._id?.toString(), id: b._id?.toString() })),
+      events: events.map((e) => ({ ...e, _id: e._id?.toString(), id: e._id?.toString() })),
       auditLogs: auditLogs.map((log) => ({
         ...log,
         _id: log._id?.toString(),
@@ -222,7 +234,13 @@ export async function PATCH(request, context) {
     const db = client.db(process.env.MONGODB_DB);
 
     const queryId = parseQueryId(id);
-    const user = await db.collection("users").findOne({ _id: queryId });
+    let user = await db.collection("users").findOne({ _id: queryId });
+    if (!user && typeof id === "string") {
+      user = await db.collection("users").findOne({ _id: id });
+    }
+    if (!user && typeof id === "string") {
+      user = await db.collection("users").findOne({ email: id.toLowerCase().trim() });
+    }
 
     if (!user) {
       return NextResponse.json(
