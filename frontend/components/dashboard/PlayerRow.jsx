@@ -493,36 +493,36 @@ function PlayerRow({
       </div>
 
       {/* ════════════════════ DESKTOP TABLE ROW (>= md) ════════════════════ */}
-      <div className={`group relative hidden min-w-0 md:grid md:grid-cols-[minmax(280px,2.4fr)_85px_130px_180px_minmax(270px,2.4fr)_48px] md:items-center md:gap-4 md:border-b md:border-slate-100/90 md:px-6 md:py-3 md:hover:bg-slate-50/70 transition-all duration-200 ${isSelected ? "md:bg-red-50/30"
-          : birthdayInfo?.isToday ? "bg-rose-50/20"
-            : birthdayInfo?.daysLeft === 1 ? "bg-amber-50/15"
-              : isNew ? "bg-emerald-50/10"
+      <div className={`group relative hidden min-w-0 md:grid md:grid-cols-[minmax(320px,2.8fr)_100px_150px_210px_minmax(300px,2.6fr)_56px] xl:grid-cols-[minmax(360px,3.2fr)_110px_170px_230px_minmax(340px,2.8fr)_60px] md:items-center md:gap-4 xl:gap-5 md:border-b md:border-slate-100/90 md:px-6 xl:px-8 md:py-3.5 xl:py-4 md:hover:bg-slate-50/80 transition-all duration-200 ${isSelected ? "md:bg-red-50/40"
+          : birthdayInfo?.isToday ? "bg-rose-50/30"
+            : birthdayInfo?.daysLeft === 1 ? "bg-amber-50/20"
+              : isNew ? "bg-emerald-50/15"
                 : "bg-white"
         }`}>
 
         {/* Accent right border on hover / selected */}
-        <div className={`absolute right-0 top-0 bottom-0 hidden w-[3px] rounded-l-full md:block transition-all duration-200 ${isSelected ? "bg-red-500 opacity-100" : "bg-red-400 opacity-0 group-hover:opacity-100"}`} />
+        <div className={`absolute right-0 top-0 bottom-0 hidden w-[4px] rounded-l-full md:block transition-all duration-200 ${isSelected ? "bg-red-600 opacity-100" : "bg-red-400 opacity-0 group-hover:opacity-100"}`} />
 
         {/* ── Col 1: Player info ── */}
-        <div className="flex min-w-0 items-center gap-3">
-          <input type="checkbox" aria-label={`اختيار ${player.name}`} checked={isSelected} onChange={() => onToggleSelection(player._id)} className="h-4 w-4 shrink-0 rounded-md border-slate-300 accent-red-600 cursor-pointer" />
-          <button type="button" className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-right cursor-pointer" onClick={onOpen}>
+        <div className="flex min-w-0 items-center gap-3.5">
+          <input type="checkbox" aria-label={`اختيار ${player.name}`} checked={isSelected} onChange={() => onToggleSelection(player._id)} className="h-4.5 w-4.5 shrink-0 rounded-md border-slate-300 accent-red-600 cursor-pointer" />
+          <button type="button" className="flex min-h-12 min-w-0 flex-1 items-center gap-3.5 text-right cursor-pointer" onClick={onOpen}>
             <PlayerAvatar player={player} birthdayInfo={birthdayInfo} isNew={isNew} />
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <strong className="truncate text-sm font-extrabold text-slate-900 transition-colors group-hover:text-red-600">{player.name}</strong>
+              <div className="flex flex-wrap items-center gap-2">
+                <strong className="truncate text-sm xl:text-base font-extrabold text-slate-900 transition-colors group-hover:text-red-600">{player.name}</strong>
                 <SpecialBadge birthdayInfo={birthdayInfo} isNew={isNew} />
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-bold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border} shrink-0`}>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] xl:text-xs">
+                <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-bold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border} shrink-0`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${beltStyle.dot}`} />
                   حزام {player.belt || "أبيض"}
                 </span>
-                <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/70 px-1.5 py-0.5 font-black text-red-700 shrink-0">
+                <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/70 px-2 py-0.5 font-black text-red-700 shrink-0">
                   مستوى {player.level || "A"}
                 </span>
                 {player.fileNumber && (
-                  <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 border border-slate-200/90 px-1.5 py-0.5 font-bold text-slate-700 shrink-0" title={`رقم الملف: ${player.fileNumber}`}>
+                  <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 border border-slate-200/90 px-2 py-0.5 font-bold text-slate-700 shrink-0" title={`رقم الملف: ${player.fileNumber}`}>
                     <span className="text-slate-400">ملف:</span>
                     <span>#{player.fileNumber}</span>
                   </span>
@@ -539,28 +539,28 @@ function PlayerRow({
 
         {/* ── Col 2: Age ── */}
         <div>
-          <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 font-bold text-[11px] ${birthdayInfo?.isToday ? "bg-rose-100 text-rose-800 ring-1 ring-rose-300 animate-pulse"
+          <span className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-bold text-xs xl:text-sm ${birthdayInfo?.isToday ? "bg-rose-100 text-rose-800 ring-1 ring-rose-300 animate-pulse"
               : birthdayInfo?.daysLeft === 1 ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300 animate-pulse"
-                : "bg-slate-100/80 text-slate-700"
+                : "bg-slate-100/90 text-slate-700 border border-slate-200/60"
             }`}>
-            <UserRound className="h-3 w-3" />
+            <UserRound className="h-3.5 w-3.5 text-slate-400" />
             {currentAge} سنة
-            {birthdayInfo?.isToday && <Cake className="h-3 w-3 text-rose-500 animate-bounce" />}
-            {birthdayInfo?.daysLeft === 1 && <Cake className="h-3 w-3 text-amber-600 animate-pulse" />}
+            {birthdayInfo?.isToday && <Cake className="h-3.5 w-3.5 text-rose-500 animate-bounce" />}
+            {birthdayInfo?.daysLeft === 1 && <Cake className="h-3.5 w-3.5 text-amber-600 animate-pulse" />}
           </span>
         </div>
 
         {/* ── Col 3: Branch ── */}
         <div className="truncate">
-          <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-200/60 px-2 py-1 text-[11px] font-semibold text-slate-600">
-            <ChevronRight className="h-3 w-3 text-slate-400" />
-            {player.branch}
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-50 border border-slate-200/80 px-2.5 py-1.5 text-xs xl:text-sm font-semibold text-slate-700">
+            <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">{player.branch}</span>
           </span>
         </div>
 
         {/* ── Col 4: Attendance ── */}
-        <div className="flex flex-col gap-1 min-h-10 justify-center">
-          <div className="flex items-center gap-1.5">
+        <div className="flex flex-col gap-1.5 min-h-12 justify-center">
+          <div className="flex items-center gap-2">
             <AttendBtn
               active={isWorkingDay && present}
               color="green"
@@ -568,8 +568,8 @@ function PlayerRow({
               disabled={!isWorkingDay}
               onClick={() => updateAttendance(present ? "absent" : "present")}
             >
-              <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-              <span>{present ? "حاضر ✓" : "حضور"}</span>
+              <Check className="h-4 w-4" strokeWidth={2.5} />
+              <span className="text-xs xl:text-sm">{present ? "حاضر ✓" : "حضور"}</span>
             </AttendBtn>
             <AttendBtn
               active={isWorkingDay && absent}
@@ -580,57 +580,57 @@ function PlayerRow({
                 if (present) updateAttendance("absent");
               }}
             >
-              <X className="h-3.5 w-3.5" strokeWidth={2.5} />
-              <span>غائب</span>
+              <X className="h-4 w-4" strokeWidth={2.5} />
+              <span className="text-xs xl:text-sm">غائب</span>
             </AttendBtn>
           </div>
           {!isWorkingDay && (
             <span
-              className="text-[9.5px] text-center font-bold text-slate-400 flex items-center justify-center gap-1 select-none"
+              className="text-[10px] text-center font-bold text-slate-400 flex items-center justify-center gap-1 select-none"
               title={`أيام عمل الصالة: ${formattedBranchDays}`}
             >
-              <Lock className="h-2.5 w-2.5 shrink-0" />
+              <Lock className="h-3 w-3 shrink-0" />
               <span>غير متاح اليوم ({formattedBranchDays})</span>
             </span>
           )}
         </div>
 
         {/* ── Col 5: Financial ── */}
-        <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex flex-col gap-1.5 min-w-0">
           {/* Subscription */}
           <button type="button"
-            className={`min-h-9 rounded-xl px-2.5 text-xs font-extrabold transition-all duration-200 flex items-center justify-between gap-1.5 cursor-pointer active:scale-95 border ${paymentStatus === "paid" ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+            className={`min-h-10 rounded-xl px-3 text-xs xl:text-sm font-extrabold transition-all duration-200 flex items-center justify-between gap-2 cursor-pointer active:scale-95 border ${paymentStatus === "paid" ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
                 : paymentStatus === "partially_paid" ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-black"
                   : "border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
               }`}
             onClick={() => { setPaymentModalTab("subscription"); setShowPaymentModal(true); }}
             title={`تحصيل اشتراك شهر ${paymentMonth}`}
           >
-            <div className="flex items-center gap-1.5 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               {paymentStatus === "paid"
-                ? <><CreditCard className="h-3.5 w-3.5 shrink-0 text-emerald-600" /><span className="truncate font-black text-xs">اشتراك مدفوع ({paidAmount} ج.م) ✓</span></>
+                ? <><CreditCard className="h-4 w-4 shrink-0 text-emerald-600" /><span className="truncate font-black text-xs xl:text-sm">اشتراك مدفوع ({paidAmount} ج.م) ✓</span></>
                 : paymentStatus === "partially_paid"
-                  ? <><span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" /><span className="truncate font-black text-xs">دفع {paidAmount} • باقي {remainingAmount} ج.م</span></>
-                  : <><Clock className="h-3.5 w-3.5 shrink-0 text-rose-600" /><span className="truncate font-black text-xs">{totalAmount > 0 ? `غير مسدد (${totalAmount || remainingAmount} ج.م)` : "غير مسدد"}</span></>}
+                  ? <><span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" /><span className="truncate font-black text-xs xl:text-sm">دفع {paidAmount} • باقي {remainingAmount} ج.م</span></>
+                  : <><Clock className="h-4 w-4 shrink-0 text-rose-600" /><span className="truncate font-black text-xs xl:text-sm">{totalAmount > 0 ? `غير مسدد (${totalAmount || remainingAmount} ج.م)` : "غير مسدد"}</span></>}
             </div>
-            <span className="text-[10px] font-black text-slate-400 shrink-0">💳</span>
+            <span className="text-xs font-black text-slate-400 shrink-0">💳</span>
           </button>
 
           {/* Purchases */}
           {purchasesSummary.count > 0 ? (
             <button type="button"
               onClick={() => { setPaymentModalTab("purchases"); setShowPaymentModal(true); }}
-              className={`min-h-7 text-[10px] font-black rounded-lg px-2 py-0.5 text-center transition cursor-pointer flex items-center justify-between gap-1 border ${
+              className={`min-h-7.5 text-[11px] xl:text-xs font-black rounded-lg px-2.5 py-1 text-center transition cursor-pointer flex items-center justify-between gap-1.5 border ${
                 hasPurchasePending
                   ? "text-amber-950 bg-amber-50/95 border-amber-300 hover:bg-amber-100 shadow-2xs"
                   : "text-emerald-800 bg-emerald-50/60 border-emerald-200/80 hover:bg-emerald-100"
               }`}
             >
-              <div className="flex items-center gap-1 min-w-0 truncate">
-                <ShoppingBag className={`h-3 w-3 shrink-0 ${hasPurchasePending ? "text-amber-600" : "text-emerald-600"}`} />
+              <div className="flex items-center gap-1.5 min-w-0 truncate">
+                <ShoppingBag className={`h-3.5 w-3.5 shrink-0 ${hasPurchasePending ? "text-amber-600" : "text-emerald-600"}`} />
                 <span className="truncate">{purchaseDebtLabelDesktop}</span>
               </div>
-              <span className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${
+              <span className={`text-[10px] px-2 py-0.5 rounded-md shrink-0 ${
                 purchasesSummary.remainingAmount > 0
                   ? "bg-amber-600 text-white font-black"
                   : purchasesSummary.undeliveredCount > 0
@@ -647,9 +647,9 @@ function PlayerRow({
           ) : (
             <button type="button"
               onClick={() => { setPaymentModalTab("purchases"); setShowPaymentModal(true); }}
-              className="min-h-6 text-[9px] font-bold text-slate-400 hover:text-amber-800 hover:bg-amber-50/70 rounded-lg py-0.5 px-1.5 transition cursor-pointer border border-dashed border-slate-200 hover:border-amber-300 flex items-center justify-center gap-1"
+              className="min-h-7 text-[10px] xl:text-[11px] font-bold text-slate-400 hover:text-amber-800 hover:bg-amber-50/70 rounded-lg py-1 px-2 transition cursor-pointer border border-dashed border-slate-200 hover:border-amber-300 flex items-center justify-center gap-1.5"
             >
-              <ShoppingBag className="h-2.5 w-2.5" />
+              <ShoppingBag className="h-3 w-3" />
               <span>+ تسجيل بدلة / أدوات</span>
             </button>
           )}
@@ -657,7 +657,7 @@ function PlayerRow({
 
         {/* ── Col 6: Open profile ── */}
         <button type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-900 active:scale-90 cursor-pointer"
+          className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-900 active:scale-90 cursor-pointer"
           onClick={onOpen}
           title="عرض وتعديل ملف اللاعب"
         >

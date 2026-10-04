@@ -493,7 +493,7 @@ export default function Header({
       dir="rtl"
       className="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/95 backdrop-blur-md shadow-xs transition-all select-none"
     >
-      <div className="mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1600px] 2xl:max-w-[1760px] px-3 sm:px-6 lg:px-8 xl:px-10">
         
         {/* ═══════════════════════════════════════════════════════════════════
             الجزء العلوي (TOP ROW): الوجو والإعدادات (وتسجيل الخروج داخل الإعدادات)

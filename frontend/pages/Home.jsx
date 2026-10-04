@@ -423,6 +423,23 @@ export default function Home() {
     }
   }, [router, sessionStatus, isUserAdmin]);
 
+  // ─── Instant Cache Persistence on Any State Change ───
+  useEffect(() => {
+    if (players.length > 0 || branches.length > 0 || events.length > 0) {
+      try {
+        localStorage.setItem(
+          DASHBOARD_CACHE_KEY,
+          JSON.stringify({
+            players,
+            branches,
+            events,
+            timestamp: Date.now(),
+          })
+        );
+      } catch (_) {}
+    }
+  }, [players, branches, events]);
+
   // ─── Real-Time Live Sync & Auto-Revalidation Hooks ───
   useEffect(() => {
     if (sessionStatus !== "authenticated") return;
@@ -439,12 +456,12 @@ export default function Home() {
       }
     };
 
-    // 3. Periodic Background Sync (every 25 seconds if tab is active)
+    // 3. Periodic Background Sync (every 15 seconds if tab is active)
     const pollInterval = setInterval(() => {
       if (document.visibilityState === "visible") {
         revalidateDashboard({ silent: true });
       }
-    }, 25000);
+    }, 15000);
 
     // 4. Cross-Tab Real-Time Sync via BroadcastChannel & Storage Event
     let channel = null;
@@ -452,15 +469,34 @@ export default function Home() {
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
         channel = new BroadcastChannel("coachmaster_sync");
         channel.onmessage = (event) => {
-          if (
-            event.data?.type === "REFRESH" ||
-            event.data?.type === "PLAYER_UPDATED" ||
-            event.data?.type === "PLAYER_ADDED" ||
-            event.data?.type === "PLAYER_DELETED" ||
-            event.data?.type === "EVENTS_UPDATED"
-          ) {
-            revalidateDashboard({ silent: true });
+          const payload = event.data;
+          if (!payload) return;
+          // ── Instant 0ms Cross-Tab State Updates ──
+          if (payload.type === "PLAYER_UPDATED" && payload.player) {
+            const safe = normalizePlayer(payload.player);
+            setPlayers((current) =>
+              current.map((p) => (p._id === safe._id ? safe : p))
+            );
+            setSelected((current) =>
+              current?._id === safe._id ? safe : current
+            );
+          } else if (payload.type === "PLAYER_ADDED" && payload.player) {
+            const safe = normalizePlayer(payload.player);
+            setPlayers((current) => {
+              if (current.some((p) => p._id === safe._id)) return current;
+              return [safe, ...current];
+            });
+          } else if (payload.type === "PLAYER_DELETED" && payload.id) {
+            setPlayers((current) => current.filter((p) => p._id !== payload.id));
+            setSelected((current) => (current?._id === payload.id ? null : current));
+          } else if (payload.type === "BULK_PLAYERS_DELETED" && Array.isArray(payload.ids)) {
+            setPlayers((current) => current.filter((p) => !payload.ids.includes(p._id)));
+            setSelected((current) => (payload.ids.includes(current?._id) ? null : current));
+          } else if (payload.type === "BRANCHES_UPDATED" && Array.isArray(payload.branches)) {
+            setBranches(payload.branches);
           }
+          // Also perform background silent reconciliation with server
+          revalidateDashboard({ silent: true });
         };
       }
     } catch (_) {}
@@ -930,81 +966,78 @@ export default function Home() {
       return null;
     }
 
-    // ─── 1. Instant 0ms Optimistic UI for Attendance & Payment ───
+    // ─── 1. Instant 0ms Optimistic UI for ALL Player Updates (No Refresh Needed) ───
     let previousPlayer = null;
-    let didOptimistic = false;
+    const didOptimistic = true;
 
-    if (data.attendanceStatus || data.paymentStatus) {
-      didOptimistic = true;
-      setPlayers((current) =>
-        current.map((p) => {
-          if (p._id !== id) return p;
-          previousPlayer = p;
-          let updated = { ...p };
+    setPlayers((current) =>
+      current.map((p) => {
+        if (p._id !== id) return p;
+        previousPlayer = p;
+        let updated = { ...p, ...data };
 
-          if (data.attendanceStatus) {
-            const currentAtt = Array.isArray(p.attendance) ? p.attendance : [];
-            const filteredAtt = currentAtt.filter((item) => item.date !== data.date);
-            if (data.attendanceStatus !== "clear") {
-              filteredAtt.push({ date: data.date, status: data.attendanceStatus });
-            }
-            updated.attendance = filteredAtt;
-          }
-
-          if (data.paymentStatus) {
-            const month = data.paymentMonth || paymentMonth;
-            const history = Array.isArray(p.paymentHistory) ? p.paymentHistory : [];
-            const otherPayments = history.filter((pay) => pay.month !== month);
-            const amount = p.totalAmount || p.defaultTotalAmount || 0;
-            if (data.paymentStatus === "paid") {
-              otherPayments.push({
-                month,
-                status: "paid",
-                paidAmount: amount,
-                remainingAmount: 0,
-                totalAmount: amount,
-                updatedAt: new Date().toISOString(),
-              });
-              updated.paymentStatus = "paid";
-              updated.paidAmount = amount;
-              updated.remainingAmount = 0;
-            } else {
-              otherPayments.push({
-                month,
-                status: "unpaid",
-                paidAmount: 0,
-                remainingAmount: amount,
-                totalAmount: amount,
-                updatedAt: new Date().toISOString(),
-              });
-              updated.paymentStatus = "unpaid";
-              updated.paidAmount = 0;
-              updated.remainingAmount = amount;
-            }
-            updated.paymentHistory = otherPayments;
-          }
-
-          return normalizePlayer(updated);
-        })
-      );
-
-      setSelected((current) => {
-        if (current?._id !== id) return current;
-        let updated = { ...current };
         if (data.attendanceStatus) {
-          const currentAtt = Array.isArray(current.attendance) ? current.attendance : [];
+          const currentAtt = Array.isArray(p.attendance) ? p.attendance : [];
           const filteredAtt = currentAtt.filter((item) => item.date !== data.date);
           if (data.attendanceStatus !== "clear") {
             filteredAtt.push({ date: data.date, status: data.attendanceStatus });
           }
           updated.attendance = filteredAtt;
         }
+
         if (data.paymentStatus) {
-          updated.paymentStatus = data.paymentStatus;
+          const month = data.paymentMonth || paymentMonth;
+          const history = Array.isArray(p.paymentHistory) ? p.paymentHistory : [];
+          const otherPayments = history.filter((pay) => pay.month !== month);
+          const amount = p.totalAmount || p.defaultTotalAmount || 0;
+          if (data.paymentStatus === "paid") {
+            otherPayments.push({
+              month,
+              status: "paid",
+              paidAmount: amount,
+              remainingAmount: 0,
+              totalAmount: amount,
+              updatedAt: new Date().toISOString(),
+            });
+            updated.paymentStatus = "paid";
+            updated.paidAmount = amount;
+            updated.remainingAmount = 0;
+          } else {
+            otherPayments.push({
+              month,
+              status: "unpaid",
+              paidAmount: 0,
+              remainingAmount: amount,
+              totalAmount: amount,
+              updatedAt: new Date().toISOString(),
+            });
+            updated.paymentStatus = "unpaid";
+            updated.paidAmount = 0;
+            updated.remainingAmount = amount;
+          }
+          updated.paymentHistory = otherPayments;
         }
+
         return normalizePlayer(updated);
-      });
-    }
+      })
+    );
+
+    setSelected((current) => {
+      if (current?._id !== id) return current;
+      let updated = { ...current, ...data };
+      if (data.attendanceStatus) {
+        const currentAtt = Array.isArray(current.attendance) ? current.attendance : [];
+        const filteredAtt = currentAtt.filter((item) => item.date !== data.date);
+        if (data.attendanceStatus !== "clear") {
+          filteredAtt.push({ date: data.date, status: data.attendanceStatus });
+        }
+        updated.attendance = filteredAtt;
+      }
+      if (data.paymentStatus) {
+        updated.paymentStatus = data.paymentStatus;
+      }
+      return normalizePlayer(updated);
+    });
 
     try {
       const response = await fetch("/api/players", {
@@ -1042,20 +1075,18 @@ export default function Home() {
           : current,
       );
 
-      // Broadcast update across tabs
+      // Broadcast update across tabs immediately
       broadcastSyncEvent({ type: "PLAYER_UPDATED", player: safePlayer });
 
       if (data.attendanceStatus) {
         setNotice(
           `تم تسجيل ${data.attendanceStatus === "present" ? "حضور" : "غياب"} اللاعب بنجاح.`,
         );
-      }
-      if (data.paymentStatus) {
+      } else if (data.paymentStatus) {
         setNotice(
           `تم ${data.paymentStatus === "paid" ? "تسجيل دفع" : "إلغاء الدفع"} اللاعب بنجاح.`,
         );
-      }
-      if (data.purchaseAction === "add") {
+      } else if (data.purchaseAction === "add") {
         setNotice(`تم تسجيل السلعة (${data.title || "السلعة"}) بنجاح.`);
       } else if (data.purchaseAction === "toggle_delivery") {
         setNotice(
@@ -1067,6 +1098,8 @@ export default function Home() {
         setNotice("تم تحديث بيانات السلعة بنجاح.");
       } else if (data.purchaseAction === "delete") {
         setNotice("تم حذف السلعة من حساب اللاعب بنجاح.");
+      } else {
+        setNotice("تم تحديث بيانات اللاعب بنجاح ✓");
       }
       return safePlayer;
     } catch (_a) {
@@ -1097,6 +1130,11 @@ export default function Home() {
       const newPlayer = normalizePlayer(result);
       setPlayers((current) => [newPlayer, ...current]);
       setShowForm(false);
+      // Ensure newly added player is visible without filtering hurdles
+      if (branch !== "كل الصالات" && newPlayer.branch && newPlayer.branch !== branch) {
+        setBranch(newPlayer.branch);
+      }
+      setSearch("");
       broadcastSyncEvent({ type: "PLAYER_ADDED", player: newPlayer });
       setNotice("تمت إضافة اللاعب بنجاح! تم تجهيز كارت الترحيب 🥋");
       setWelcomePlayer(newPlayer);
@@ -1118,7 +1156,9 @@ export default function Home() {
         setNotice(errMsg);
         return null;
       }
-      setBranches((current) => [...current, data]);
+      const nextBranches = [...branches, data];
+      setBranches(nextBranches);
+      broadcastSyncEvent({ type: "BRANCHES_UPDATED", branches: nextBranches });
       showToast("تمت إضافة الصالة ومواعيدها بنجاح.");
       setNotice("تمت إضافة الفرع بنجاح.");
       return data;
@@ -1141,17 +1181,17 @@ export default function Home() {
         return { success: false, error: errMsg };
       }
       const effectiveName = data.newName || oldName;
-      setBranches((current) =>
-        current.map((b) =>
-          (b.name || "").trim() === (oldName || "").trim()
-            ? {
-                ...b,
-                name: effectiveName,
-                days: data.days !== undefined ? data.days : b.days,
-              }
-            : b
-        )
+      const nextBranches = branches.map((b) =>
+        (b.name || "").trim() === (oldName || "").trim()
+          ? {
+              ...b,
+              name: effectiveName,
+              days: data.days !== undefined ? data.days : b.days,
+            }
+          : b
       );
+      setBranches(nextBranches);
+      broadcastSyncEvent({ type: "BRANCHES_UPDATED", branches: nextBranches });
       if (data.newName && data.newName !== oldName) {
         setPlayers((current) =>
           current.map((p) =>
@@ -1183,9 +1223,9 @@ export default function Home() {
       setNotice(data.error || "تعذر حذف الفرع.");
       return;
     }
-    setBranches((current) =>
-      current.filter((branchItem) => branchItem.name !== name),
-    );
+    const nextBranches = branches.filter((branchItem) => branchItem.name !== name);
+    setBranches(nextBranches);
+    broadcastSyncEvent({ type: "BRANCHES_UPDATED", branches: nextBranches });
     if (branch === name) setBranch("كل الصالات");
     setNotice("تم حذف الفرع.");
   }
@@ -1337,6 +1377,7 @@ export default function Home() {
       if (selected && selectedPlayerIds.includes(selected._id)) {
         setSelected(null);
       }
+      broadcastSyncEvent({ type: "BULK_PLAYERS_DELETED", ids: selectedPlayerIds });
       setSelectedPlayerIds([]);
       setNotice(`✓ تم حذف ${deletedCount} لاعب بنجاح.`);
     } catch (err) {
@@ -1366,6 +1407,7 @@ export default function Home() {
         setEvents((prev) => [saved, ...prev]);
         showToast("تم إنشاء الفعالية بنجاح");
       }
+      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
       setShowAddEventModal(false);
       setEditingEvent(null);
     } catch {
@@ -1380,6 +1422,7 @@ export default function Home() {
       const res = await fetch(`/api/events?id=${eventId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       setEvents((prev) => prev.filter((e) => e._id !== eventId));
+      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
       showToast("تم حذف الفعالية بنجاح");
     } catch {
       showToast("تعذر حذف الفعالية", "error");
@@ -1402,6 +1445,7 @@ export default function Home() {
       if (!res.ok) throw new Error();
       const updated = await res.json();
       setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
       showToast(`تمت إضافة (${playerIds.length}) لاعبين إلى الفعالية بنجاح`);
       setAddParticipantsEvent(null);
     } catch {
@@ -1430,6 +1474,7 @@ export default function Home() {
       if (!res.ok) throw new Error();
       const updated = await res.json();
       setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
       showToast("تم تسجيل دفعة الفعالية بنجاح");
       setPaymentParticipantData(null);
     } catch {
@@ -1454,6 +1499,7 @@ export default function Home() {
       if (!res.ok) throw new Error();
       const updated = await res.json();
       setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
     } catch {
       showToast("تعذر تحديث الحضور", "error");
     }
@@ -1473,6 +1519,7 @@ export default function Home() {
       if (!res.ok) throw new Error();
       const updated = await res.json();
       setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
       showToast("تمت إزالة اللاعب من الفعالية");
     } catch {
       showToast("تعذر إزالة اللاعب", "error");
@@ -1494,6 +1541,7 @@ export default function Home() {
       if (!res.ok) throw new Error();
       const updated = await res.json();
       setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
+      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
       showToast("تم تحديث السداد الجماعي بنجاح");
     } catch {
       showToast("تعذر تحديث السداد الجماعي", "error");
@@ -1589,7 +1637,7 @@ export default function Home() {
         hasUnreadGuide={hasUnreadGuide}
       />
 
-      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-3.5 pb-28 sm:py-6 overflow-x-hidden">
+      <section className="mx-auto w-full max-w-[1600px] 2xl:max-w-[1760px] px-3 sm:px-6 lg:px-8 xl:px-10 pt-3.5 pb-28 sm:py-6 overflow-x-hidden">
         <input
           ref={restoreFileRef}
           type="file"
@@ -2234,15 +2282,19 @@ export default function Home() {
         </div>
 
         {/* ━━━ Executive Workspace Navigation Bar (على الديسكتوب فقط) ━━━ */}
-        <div className="hidden md:flex items-center justify-between gap-3 lg:gap-4 border-b border-slate-200/80 pb-3.5 mb-5">
-          <div className="workspace-tabs-container shadow-2xs overflow-x-auto scrollbar-none min-w-0 flex-1 max-w-fit">
+        <div className="hidden md:flex items-center justify-between gap-3 xl:gap-4 border-b border-slate-200/90 pb-4 mb-6">
+          <div className="workspace-tabs-container shadow-2xs overflow-x-auto scrollbar-none min-w-0 flex-1 max-w-fit p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/80">
             <button
               type="button"
               onClick={() => {
                 setActiveView("players");
                 setMobileTab("players");
               }}
-              className={`workspace-tab-btn cursor-pointer ${activeView === "players" ? "active" : ""}`}
+              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
+                activeView === "players"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+              }`}
             >
               <Users className="h-4 w-4 text-red-600 shrink-0" />
               <span className="shrink-0 whitespace-nowrap">قائمة الأبطال والتحضير</span>
@@ -2256,13 +2308,21 @@ export default function Home() {
                 setActiveView("finances");
                 setMobileTab("stats");
               }}
-              className={`workspace-tab-btn cursor-pointer ${activeView === "finances" ? "active" : ""}`}
+              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
+                activeView === "finances"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+              }`}
             >
               <CreditCard className="h-4 w-4 text-sky-600 shrink-0" />
               <span className="shrink-0 whitespace-nowrap">المركز المالي والتقارير</span>
-              {totalPendingPaymentCount > 0 && (
+              {totalPendingPaymentCount > 0 ? (
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-black text-amber-800 shrink-0">
                   {totalPendingPaymentCount} معلق
+                </span>
+              ) : (
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-800 shrink-0">
+                  منضبط ✨
                 </span>
               )}
             </button>
@@ -2272,7 +2332,11 @@ export default function Home() {
                 setActiveView("branches");
                 setMobileTab("branches");
               }}
-              className={`workspace-tab-btn cursor-pointer ${activeView === "branches" ? "active" : ""}`}
+              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
+                activeView === "branches"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+              }`}
             >
               <Building2 className="h-4 w-4 text-emerald-600 shrink-0" />
               <span className="shrink-0 whitespace-nowrap">الصالات ومراكز التدريب</span>
@@ -2286,7 +2350,11 @@ export default function Home() {
                 setActiveView("events");
                 setMobileTab("events");
               }}
-              className={`workspace-tab-btn cursor-pointer ${activeView === "events" ? "active" : ""}`}
+              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
+                activeView === "events"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+              }`}
             >
               <Compass className="h-4 w-4 text-purple-600 shrink-0" />
               <span className="shrink-0 whitespace-nowrap">الفعاليات والبطولات</span>
@@ -2302,7 +2370,11 @@ export default function Home() {
                 setActiveView("birthdays");
                 setMobileTab("birthdays");
               }}
-              className={`workspace-tab-btn cursor-pointer ${activeView === "birthdays" ? "active" : ""}`}
+              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
+                activeView === "birthdays"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+              }`}
             >
               <Cake className="h-4 w-4 text-rose-600 shrink-0" />
               <span className="shrink-0 whitespace-nowrap">تذكار أعياد الميلاد</span>
@@ -2319,7 +2391,7 @@ export default function Home() {
               type="button"
               id="workspace-add-player-btn"
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-xs font-black text-white shadow-xs shadow-red-600/20 cursor-pointer active-press transition shrink-0 whitespace-nowrap select-none"
+              className="flex items-center gap-2 px-4 xl:px-5 py-2.5 xl:py-3 rounded-xl xl:rounded-2xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-xs xl:text-sm font-black text-white shadow-xs shadow-red-600/20 cursor-pointer active-press transition shrink-0 whitespace-nowrap select-none"
             >
               <Plus className="h-4 w-4 stroke-[3] shrink-0" />
               <span className="shrink-0 whitespace-nowrap">تسجيل لاعب جديد</span>
@@ -2421,16 +2493,16 @@ export default function Home() {
 
         {/* ━━━ Workspace 1: الأبطال والتحضير اليومي على الديسكتوب ━━━ */}
         {activeView === "players" && (
-          <div className="hidden md:block space-y-3 mb-5 animate-fade-in-scale">
-            {/* Unified Command Bar */}
-            <div className="command-bar-surface p-4 space-y-3">
+          <div className="hidden md:block space-y-4 mb-6 animate-fade-in-scale">
+            {/* Unified Command Bar Surface */}
+            <div className="command-bar-surface p-4 sm:p-5 xl:p-6 space-y-4 rounded-2xl xl:rounded-3xl border border-slate-200/90 bg-white shadow-xs">
               {/* Row 1: Search + Branches Segment + Branch Management */}
-              <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5">
                 {/* Search Box */}
-                <div className="relative flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-3 transition-all focus-within:border-red-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 lg:w-80">
-                  <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <div className="relative flex min-h-12 min-w-0 items-center gap-2.5 rounded-xl xl:rounded-2xl border border-slate-200/90 bg-slate-50/70 px-3.5 transition-all focus-within:border-red-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 lg:w-84 xl:w-96">
+                  <Search className="h-4.5 w-4.5 shrink-0 text-slate-400" />
                   <input
-                    className="min-w-0 flex-1 bg-transparent px-1 py-2 text-xs font-bold text-slate-900 outline-none placeholder:text-slate-400"
+                    className="min-w-0 flex-1 bg-transparent px-1 py-2 text-xs xl:text-sm font-bold text-slate-900 outline-none placeholder:text-slate-400"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="بحث باسم اللاعب، رقم الملف، أو الهاتف..."
@@ -2439,7 +2511,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setSearch("")}
-                      className="text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
+                      className="text-xs text-slate-400 hover:text-slate-700 cursor-pointer p-1"
                     >
                       ✕
                     </button>
@@ -2448,13 +2520,13 @@ export default function Home() {
 
                 {/* Branch Pills */}
                 <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
-                  <div className="flex min-w-max items-center gap-1.5 py-0.5">
+                  <div className="flex min-w-max items-center gap-2 py-0.5">
                     <button
                       type="button"
-                      className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
+                      className={`whitespace-nowrap rounded-xl xl:rounded-2xl px-4 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
                         branch === "كل الصالات"
-                          ? "bg-red-600 text-white shadow-sm shadow-red-600/20"
-                          : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                          ? "bg-red-600 text-white shadow-sm shadow-red-600/20 font-black"
+                          : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/70"
                       }`}
                       onClick={() => setBranch("كل الصالات")}
                     >
@@ -2466,10 +2538,10 @@ export default function Home() {
                         <button
                           type="button"
                           key={item._id}
-                          className={`whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
+                          className={`whitespace-nowrap rounded-xl xl:rounded-2xl px-4 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
                             branch === item.name
-                              ? "bg-red-600 text-white shadow-sm shadow-red-600/20"
-                              : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                              ? "bg-red-600 text-white shadow-sm shadow-red-600/20 font-black"
+                              : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/70"
                           }`}
                           onClick={() => setBranch(item.name)}
                         >
@@ -2491,18 +2563,18 @@ export default function Home() {
                         value={quickBranchName}
                         onChange={(e) => setQuickBranchName(e.target.value)}
                         placeholder="اسم الصالة..."
-                        className="h-9 min-w-0 rounded-lg border border-emerald-300 bg-white px-2.5 text-right text-xs font-bold text-slate-900 outline-none w-36"
+                        className="h-10 min-w-0 rounded-lg border border-emerald-300 bg-white px-2.5 text-right text-xs font-bold text-slate-900 outline-none w-36"
                         autoFocus
                         required
                       />
                       <button
-                        className="h-9 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700 cursor-pointer"
+                        className="h-10 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700 cursor-pointer"
                         type="submit"
                       >
                         حفظ
                       </button>
                       <button
-                        className="h-9 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold text-slate-600 cursor-pointer"
+                        className="h-10 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold text-slate-600 cursor-pointer"
                         type="button"
                         onClick={() => setIsAddingBranch(false)}
                       >
@@ -2512,7 +2584,7 @@ export default function Home() {
                   ) : (
                     <button
                       type="button"
-                      className="flex h-10 items-center justify-center gap-1 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 cursor-pointer"
+                      className="flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl xl:rounded-2xl border border-emerald-200 bg-emerald-50/70 px-3.5 text-xs xl:text-sm font-black text-emerald-800 transition hover:bg-emerald-100 cursor-pointer"
                       onClick={() => setIsAddingBranch(true)}
                     >
                       <span>＋</span>
@@ -2522,7 +2594,7 @@ export default function Home() {
 
                   <button
                     type="button"
-                    className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 cursor-pointer"
+                    className="flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl xl:rounded-2xl border border-slate-200/90 bg-white px-3.5 text-xs xl:text-sm font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 cursor-pointer"
                     onClick={() => setShowBranches(true)}
                   >
                     <span>⚙️</span>
@@ -2532,12 +2604,12 @@ export default function Home() {
               </div>
 
               {/* Row 2: Date + Month + Sort + Status Filters */}
-              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 border-t border-slate-100 pt-3">
+              <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-3.5 border-t border-slate-100 pt-3.5">
                 {/* Date & Month & Sort */}
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs">
-                    <CalendarDays className="h-3.5 w-3.5 text-red-600" />
-                    <span className="font-bold text-slate-500">حصة:</span>
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <div className="flex items-center gap-2 rounded-xl xl:rounded-2xl border border-slate-200/90 bg-slate-50/70 px-3 py-2 text-xs xl:text-sm">
+                    <CalendarDays className="h-4 w-4 text-red-600 shrink-0" />
+                    <span className="font-bold text-slate-500 shrink-0">حصة:</span>
                     <input
                       type="date"
                       max={today}
@@ -2545,27 +2617,27 @@ export default function Home() {
                       onChange={(e) => {
                         if (e.target.value <= today) setSessionDate(e.target.value);
                       }}
-                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs"
+                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs xl:text-sm"
                     />
                   </div>
 
-                  <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs">
-                    <CreditCard className="h-3.5 w-3.5 text-red-600" />
-                    <span className="font-bold text-slate-500">اشتراك:</span>
+                  <div className="flex items-center gap-2 rounded-xl xl:rounded-2xl border border-slate-200/90 bg-slate-50/70 px-3 py-2 text-xs xl:text-sm">
+                    <CreditCard className="h-4 w-4 text-red-600 shrink-0" />
+                    <span className="font-bold text-slate-500 shrink-0">اشتراك:</span>
                     <input
                       type="month"
                       value={paymentMonth}
                       onChange={(e) => setPaymentMonth(e.target.value)}
-                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs"
+                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs xl:text-sm"
                     />
                   </div>
 
-                  <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1 text-xs">
-                    <ArrowUpDown className="h-3.5 w-3.5 text-red-600" />
+                  <div className="flex items-center gap-2 rounded-xl xl:rounded-2xl border border-slate-200/90 bg-slate-50/70 px-3 py-2 text-xs xl:text-sm">
+                    <ArrowUpDown className="h-4 w-4 text-red-600 shrink-0" />
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs"
+                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs xl:text-sm"
                     >
                       <option value="newest">الأحدث تسجيلاً</option>
                       <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
@@ -2580,70 +2652,70 @@ export default function Home() {
                 </div>
 
                 {/* Fast Status Filter Pills */}
-                <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <div className="flex flex-wrap items-center gap-2 overflow-x-auto no-scrollbar">
                   <button
                     type="button"
-                    className={`h-8 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`h-9 xl:h-10 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
                       statusFilter === "all"
                         ? "bg-slate-900 text-white shadow-xs"
-                        : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                        : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/70"
                     }`}
                     onClick={() => setStatusFilter("all")}
                   >
-                    الكل
+                    الكل ({dashboardPlayers.length})
                   </button>
                   <button
                     type="button"
-                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
                       statusFilter === "present"
                         ? "bg-emerald-600 text-white shadow-xs shadow-emerald-500/20"
-                        : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
+                        : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/70"
                     }`}
                     onClick={() => setStatusFilter("present")}
                   >
-                    <Check className="h-3 w-3 stroke-[2.5]" />
+                    <Check className="h-3.5 w-3.5 stroke-[2.5]" />
                     <span>حاضر ({presentToday})</span>
                   </button>
                   <button
                     type="button"
-                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
                       statusFilter === "absent"
                         ? "bg-rose-600 text-white shadow-xs shadow-rose-500/20"
-                        : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60"
+                        : "bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200/70"
                     }`}
                     onClick={() => setStatusFilter("absent")}
                   >
-                    <X className="h-3 w-3 stroke-[2.5]" />
+                    <X className="h-3.5 w-3.5 stroke-[2.5]" />
                     <span>غائب ({absentToday})</span>
                   </button>
                   <button
                     type="button"
-                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
                       statusFilter === "paid"
                         ? "bg-sky-600 text-white shadow-xs shadow-sky-500/20"
-                        : "bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200/60"
+                        : "bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200/70"
                     }`}
                     onClick={() => setStatusFilter("paid")}
                   >
-                    <CreditCard className="h-3 w-3" />
+                    <CreditCard className="h-3.5 w-3.5" />
                     <span>مسدد ({paidCount})</span>
                   </button>
                   <button
                     type="button"
-                    className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
                       statusFilter === "unpaid"
                         ? "bg-amber-600 text-white shadow-xs shadow-amber-500/20"
-                        : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/60"
+                        : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200/70"
                     }`}
                     onClick={() => setStatusFilter("unpaid")}
                   >
-                    <Clock className="h-3 w-3" />
+                    <Clock className="h-3.5 w-3.5" />
                     <span>متأخر ({totalPendingPaymentCount})</span>
                   </button>
                   {purchasesDebtCount > 0 && (
                     <button
                       type="button"
-                      className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                      className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
                         statusFilter === "purchases_debt"
                           ? "bg-amber-600 text-white shadow-xs"
                           : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300"
@@ -2654,21 +2726,21 @@ export default function Home() {
                         )
                       }
                     >
-                      <ShoppingBag className="h-3 w-3 text-amber-600" />
+                      <ShoppingBag className="h-3.5 w-3.5 text-amber-600" />
                       <span>أدوات ({purchasesDebtCount})</span>
                     </button>
                   )}
                   {todayBirthdaysCount > 0 && (
                     <button
                       type="button"
-                      className={`flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${
+                      className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
                         statusFilter === "birthday"
                           ? "bg-red-600 text-white shadow-xs"
                           : "bg-rose-100/90 text-rose-800 hover:bg-rose-200 border border-rose-300 ring-2 ring-rose-200/80 animate-pulse"
                       }`}
                       onClick={() => setStatusFilter("birthday")}
                     >
-                      <Cake className="h-3 w-3 text-rose-600 animate-bounce" />
+                      <Cake className="h-3.5 w-3.5 text-rose-600 animate-bounce" />
                       <span>عيد ميلاد ({todayBirthdaysCount})</span>
                     </button>
                   )}
@@ -2781,13 +2853,13 @@ export default function Home() {
             )}
           </div>
           <div className="mt-3 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/80 md:bg-white md:shadow-xs">
-            <div className="hidden grid-cols-[minmax(280px,2.4fr)_85px_130px_180px_minmax(270px,2.4fr)_48px] items-center gap-4 border-b border-slate-100 bg-slate-50/90 px-6 py-3 font-cairo text-xs font-black text-slate-500 md:grid">
+            <div className="hidden grid-cols-[minmax(320px,2.8fr)_100px_150px_210px_minmax(300px,2.6fr)_56px] xl:grid-cols-[minmax(360px,3.2fr)_110px_170px_230px_minmax(340px,2.8fr)_60px] items-center gap-4 xl:gap-5 border-b border-slate-200/90 bg-slate-50/95 px-6 xl:px-8 py-3.5 font-cairo text-xs xl:text-sm font-black text-slate-600 md:grid">
               <span>اللاعب والبيانات</span>
               <span>العمر</span>
               <span>الصالة</span>
               <span className="text-center">تسجيل الحضور اليوم</span>
               <span>الاشتراك والمشتريات</span>
-              <span className="text-center">خيارات</span>
+              <span className="text-center">الملف</span>
             </div>
 
             {loading ? (
