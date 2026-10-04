@@ -38,21 +38,27 @@ export async function GET() {
     const allUsers = await db.collection("users").find({}).toArray();
     const captainUsers = allUsers.filter((u) => !isSystemAdmin(u));
 
-    // 2. Query all players, branches, events, and audit logs
-    const [allPlayers, allBranches, allEvents, recentAuditLogs] = await Promise.all([
-      db.collection("players").find({}).toArray(),
+    // 2. Query player counts per owner via aggregation, plus branches, events, and audit logs
+    const [playerCounts, playersLast7Days, playersLast30Days, allBranches, allEvents, recentAuditLogs] = await Promise.all([
+      db.collection("players").aggregate([
+        {
+          $group: {
+            _id: { $toString: "$ownerId" },
+            count: { $sum: 1 },
+          },
+        },
+      ]).toArray(),
+      db.collection("players").countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
+      db.collection("players").countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
       db.collection("branches").find({}).toArray(),
       db.collection("events").find({}).toArray(),
       db.collection("audit_logs").find({}).sort({ createdAt: -1 }).limit(10).toArray(),
     ]);
 
-    // Build lookup maps by ownerId
-    const playersByOwner = new Map();
-    for (const p of allPlayers) {
-      const oId = p.ownerId ? p.ownerId.toString() : "";
-      if (!playersByOwner.has(oId)) playersByOwner.set(oId, []);
-      playersByOwner.get(oId).push(p);
-    }
+    // Build lookup map for player counts by ownerId (0 player documents loaded into memory)
+    const playerCountByOwner = new Map(
+      playerCounts.map((item) => [item._id, item.count])
+    );
 
     const branchesByOwner = new Map();
     for (const b of allBranches) {
@@ -105,7 +111,7 @@ export async function GET() {
 
     for (const u of captainUsers) {
       const uId = u._id.toString();
-      const pCount = (playersByOwner.get(uId) || []).length;
+      const pCount = playerCountByOwner.get(uId) || 0;
       const bCount = (branchesByOwner.get(uId) || []).length;
       const eCount = (eventsByOwner.get(uId) || []).length;
 
@@ -146,7 +152,7 @@ export async function GET() {
 
     const recentAccounts = sortedUsers.slice(0, 6).map((u) => {
       const uId = u._id.toString();
-      const playersCount = (playersByOwner.get(uId) || []).length;
+      const playersCount = playerCountByOwner.get(uId) || 0;
       const branchesCount = (branchesByOwner.get(uId) || []).length;
       const eventsCount = (eventsByOwner.get(uId) || []).length;
 
@@ -187,14 +193,9 @@ export async function GET() {
       total: captainUsers.length,
     };
 
-    const captainPlayers = allPlayers.filter((p) => {
-      const oId = p.ownerId ? p.ownerId.toString() : "";
-      return playersByOwner.has(oId);
-    });
-
     const playersGrowth = {
-      last7Days: captainPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= sevenDaysAgo).length,
-      last30Days: captainPlayers.filter((p) => p.createdAt && new Date(p.createdAt) >= thirtyDaysAgo).length,
+      last7Days: playersLast7Days,
+      last30Days: playersLast30Days,
       total: totalCaptainsPlayers,
     };
 

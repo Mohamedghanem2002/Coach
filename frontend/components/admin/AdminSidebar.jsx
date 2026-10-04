@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import CoachMasterLogo from "../dashboard/CoachMasterLogo";
 
 export default function AdminSidebar({
   activeTab,
@@ -107,8 +108,11 @@ export default function AdminSidebar({
         <div className="space-y-6">
           {/* Platform Admin Brand */}
           <div className="flex items-center gap-3 px-2 py-1">
-            <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-red-600 via-rose-600 to-amber-600 flex items-center justify-center text-white shadow-md shadow-red-500/20 ring-2 ring-red-100">
-              <Crown className="w-6 h-6 fill-white/20 stroke-white" />
+            <div className="relative shrink-0">
+              <CoachMasterLogo size="default" />
+              <span className="absolute -bottom-1 -left-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-amber-500 text-white text-[9px] font-black ring-2 ring-white shadow-xs">
+                👑
+              </span>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -120,7 +124,7 @@ export default function AdminSidebar({
                 </span>
               </div>
               <p className="text-[11px] font-bold text-slate-400">
-                إدارة شاملة لكافة البيانات
+                منظومة CoachMaster المركزية
               </p>
             </div>
           </div>
@@ -207,12 +211,15 @@ export default function AdminSidebar({
           dir="rtl"
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-red-600 to-amber-600 flex items-center justify-center text-white shadow-xs">
-              <Crown className="w-4 h-4 fill-white/20 stroke-white" />
+            <div className="relative shrink-0">
+              <CoachMasterLogo size="sm" />
+              <span className="absolute -bottom-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-white text-[7.5px] font-black ring-1 ring-white">
+                👑
+              </span>
             </div>
             <div>
               <span className="block text-xs font-black text-slate-900 leading-tight">
-                لوحة تحكم المنصة 👑
+                لوحة تحكم المنصة
               </span>
               <span className="block text-[10px] text-slate-400 font-mono truncate max-w-[170px]" dir="ltr">
                 {adminUser?.email || "mg0447837@gmail.com"}

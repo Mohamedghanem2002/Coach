@@ -42,19 +42,34 @@ export async function GET(request) {
     const allUsers = await db.collection("users").find({}).toArray();
     const captainUsers = allUsers.filter((u) => !isSystemAdmin(u));
 
-    // 2. Fetch all real data to calculate exact counts and platform totals
-    const [allPlayers, allBranches, allEvents] = await Promise.all([
-      db.collection("players").find({}).toArray(),
+    // 2. Fetch aggregation counts and infrastructure data
+    const [branchPlayerCounts, allBranches, allEvents] = await Promise.all([
+      db.collection("players").aggregate([
+        {
+          $group: {
+            _id: {
+              ownerId: { $toString: "$ownerId" },
+              branch: { $trim: { input: { $ifNull: ["$branch", ""] } } },
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ]).toArray(),
       db.collection("branches").find({}).toArray(),
       db.collection("events").find({}).toArray(),
     ]);
 
-    // Build lookup maps by ownerId (string) to prevent N+1 query overhead
-    const playersByOwner = new Map();
-    for (const p of allPlayers) {
-      const oId = p.ownerId ? p.ownerId.toString() : "";
-      if (!playersByOwner.has(oId)) playersByOwner.set(oId, []);
-      playersByOwner.get(oId).push(p);
+    // Build lookup maps for counts: key = `${ownerId}:::${branchName}` and totalCountByOwner
+    const branchCountMap = new Map();
+    const totalCountByOwner = new Map();
+
+    for (const item of branchPlayerCounts) {
+      const oId = item._id.ownerId;
+      const bName = (item._id.branch || "").toLowerCase();
+      const count = item.count || 0;
+
+      branchCountMap.set(`${oId}:::${bName}`, count);
+      totalCountByOwner.set(oId, (totalCountByOwner.get(oId) || 0) + count);
     }
 
     const branchesByOwner = new Map();
@@ -74,16 +89,14 @@ export async function GET(request) {
     // 3. Process every captain account with actual database relationships (Admins are strictly excluded)
     const processedCaptains = captainUsers.map((u) => {
       const uId = u._id.toString();
-      const uPlayers = playersByOwner.get(uId) || [];
+      const captainPlayersCount = totalCountByOwner.get(uId) || 0;
       const uBranches = branchesByOwner.get(uId) || [];
       const uEvents = eventsByOwner.get(uId) || [];
 
-      // Calculate players per branch/hall
+      // Calculate players count per branch/hall
       const branchesDetails = uBranches.map((b) => {
         const bName = (b.name || "").trim().toLowerCase();
-        const pInBranch = uPlayers.filter(
-          (p) => (p.branch || "").trim().toLowerCase() === bName
-        ).length;
+        const pInBranch = branchCountMap.get(`${uId}:::${bName}`) || 0;
         return {
           id: b._id.toString(),
           name: b.name,
@@ -140,11 +153,11 @@ export async function GET(request) {
         daysRemaining,
         // Exact real relationship counters
         stats: {
-          players: uPlayers.length,
+          players: captainPlayersCount,
           halls: uBranches.length,
           events: uEvents.length,
         },
-        playersCount: uPlayers.length,
+        playersCount: captainPlayersCount,
         branchesCount: uBranches.length,
         hallsCount: uBranches.length,
         eventsCount: uEvents.length,

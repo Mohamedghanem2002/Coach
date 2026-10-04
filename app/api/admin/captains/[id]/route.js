@@ -102,29 +102,20 @@ export async function GET(request, context) {
     }
 
     // Query real DB records belonging to this account
-    const uOId = user._id;
-    const uStrId = user._id.toString();
+    const ownerFilter = {
+      $or: [{ ownerId: uStrId }, { ownerId: uOId }],
+    };
 
-    const [allP, allB, allE, auditLogs] = await Promise.all([
-      db.collection("players").find({}).toArray(),
-      db.collection("branches").find({}).toArray(),
-      db.collection("events").find({}).toArray(),
+    const [playersCount, branches, events, auditLogs] = await Promise.all([
+      db.collection("players").countDocuments(ownerFilter),
+      db.collection("branches").find(ownerFilter).toArray(),
+      db.collection("events").find(ownerFilter).toArray(),
       db.collection("audit_logs")
         .find({ targetAcademyId: uStrId })
         .sort({ createdAt: -1 })
         .limit(20)
         .toArray(),
     ]);
-
-    const players = allP.filter(
-      (p) => p.ownerId && (p.ownerId.toString() === uStrId || String(p.ownerId) === String(uOId))
-    );
-    const branches = allB.filter(
-      (b) => b.ownerId && (b.ownerId.toString() === uStrId || String(b.ownerId) === String(uOId))
-    );
-    const events = allE.filter(
-      (e) => e.ownerId && (e.ownerId.toString() === uStrId || String(e.ownerId) === String(uOId))
-    );
 
     const subTotal = Number(user.subscriptionTotalAmount || 0);
     const subPaid = Number(user.subscriptionPaidAmount || 0);
@@ -191,7 +182,7 @@ export async function GET(request, context) {
         createdAt: user.createdAt,
       },
       stats: {
-        playersCount: players.length,
+        playersCount: playersCount,
         branchesCount: branches.length,
         hallsCount: branches.length,
         eventsCount: events.length,

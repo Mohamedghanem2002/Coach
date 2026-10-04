@@ -66,8 +66,8 @@ export default function AdminOverviewTab({
       color: "from-violet-600 to-purple-600",
       textColor: "text-violet-600",
       bgColor: "bg-violet-50 border-violet-200/80",
-      description: "أبطال مسجلين بالأكاديميات",
-      tab: "accounts",
+      description: "إجمالي أبطال الأكاديميات (إحصائي)",
+      tab: null,
     },
     {
       title: "إجمالي الصالات والملاعب",

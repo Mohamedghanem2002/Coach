@@ -12,7 +12,9 @@ import {
   Cloud,
   ChevronDown,
   X,
+  Crown,
 } from "lucide-react";
+import Link from "next/link";
 import {
   getTodayBirthdays,
   getUpcomingBirthdays,
@@ -436,6 +438,11 @@ export default function Header({
   const academyName = propAcademyName || session?.user?.academyName || "CoachMaster";
   const firstName = fullName.split(" ")[0] || "كابتن";
 
+  const adminEmail = "mg0447837@gmail.com";
+  const isAdmin =
+    session?.user?.role === "admin" ||
+    (session?.user?.email && session.user.email.trim().toLowerCase() === adminEmail);
+
   const [congratulateTick, setCongratulateTick] = useState(0);
 
   useEffect(() => {
@@ -532,8 +539,22 @@ export default function Header({
             </div>
           </div>
 
-          {/* 2. زر الإعدادات الموحّد (الجانب الأيسر) */}
-          <div className="relative">
+          {/* 2. أزرار الجانب الأيسر (تحكم المنصة للأدمن + الإعدادات) */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                id="header-admin-portal-btn"
+                className="flex h-9 items-center gap-1.5 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50/70 hover:from-amber-100 hover:to-orange-100/90 text-amber-900 px-2.5 sm:px-3 text-xs font-black transition-all shadow-2xs active:scale-97 cursor-pointer shrink-0"
+                title="الدخول للوحة تحكم المنصة المركزية"
+              >
+                <Crown className="h-3.5 w-3.5 text-amber-600 fill-amber-500/20 shrink-0" />
+                <span className="font-cairo font-bold">تحكم المنصة</span>
+              </Link>
+            )}
+
+            {/* زر الإعدادات الموحّد */}
+            <div className="relative">
             <button
               type="button"
               id="header-settings-btn"
@@ -589,6 +610,7 @@ export default function Header({
                 onClose={() => setActiveMenu(null)}
               />
             )}
+            </div>
           </div>
 
         </div>
