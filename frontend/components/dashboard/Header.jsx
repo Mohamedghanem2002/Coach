@@ -18,6 +18,7 @@ import {
   getUpcomingBirthdays,
 } from "../../lib/dashboard-utils";
 import { sendBirthdayCardViaWhatsApp } from "../../lib/birthday-card-utils";
+import CoachMasterLogo from "./CoachMasterLogo";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MODULE-LEVEL HELPER COMPONENTS (Satisfies react-hooks/static-components)
@@ -407,6 +408,7 @@ function BirthdayFlyout({
 export default function Header({
   players = [],
   onOpenPlayer,
+  academyName: propAcademyName,
   currentView = "players",
   onToggleEventsView, // Not rendered in header anymore per user request
   eventsCount = 0,
@@ -431,7 +433,7 @@ export default function Header({
   const headerRef = useRef(null);
 
   const fullName = session?.user?.name || "حساب الأكاديمية";
-  const academyName = session?.user?.academyName || "CoachMaster";
+  const academyName = propAcademyName || session?.user?.academyName || "CoachMaster";
   const firstName = fullName.split(" ")[0] || "كابتن";
 
   const [congratulateTick, setCongratulateTick] = useState(0);
@@ -497,31 +499,36 @@ export default function Header({
             ═══════════════════════════════════════════════════════════════════ */}
         <div className="flex h-13 sm:h-14 items-center justify-between gap-3 border-b border-slate-100">
           
-          {/* 1. الوجو وهوية الأكاديمية (الجانب الأيمن) */}
-          <div className="flex items-center gap-2.5 min-w-0">
-            {/* الشعار */}
-            <div
-              className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xs"
-              aria-hidden="true"
-            >
-              <span className="font-cairo text-sm font-black tracking-tight leading-none">
-                C<span className="text-red-500">M</span>
-              </span>
-            </div>
+          {/* 1. الوجو وهوية المنصة والأكاديمية (الجانب الأيمن) */}
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            {/* الشعار الجديد الفاتح الخاص بالمنصة */}
+            <CoachMasterLogo size="default" />
 
-            {/* اسم الأكاديمية مع شارة PRO */}
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="min-w-0">
-                <h1 className="font-cairo text-sm sm:text-[15px] font-extrabold tracking-tight text-slate-900 truncate max-w-[150px] xs:max-w-[200px] sm:max-w-[280px]">
+            {/* هوية المنصة فوق + اسم أكاديمية الكابتن تحت (في جميع الشاشات) */}
+            <div className="flex flex-col justify-center min-w-0">
+              {/* السطر الأول: اسم المنصة (ظاهر في جميع الشاشات) */}
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="font-cairo text-[10.5px] sm:text-[11.5px] font-black tracking-wide text-red-600 flex items-center gap-1 select-none">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse" />
+                  CoachMaster
+                </span>
+                <span className="text-[9px] font-bold text-slate-400 select-none">
+                  · المنصة
+                </span>
+              </div>
+
+              {/* السطر الثاني: اسم أكاديمية الكابتن + شارة PRO */}
+              <div className="flex items-center gap-1.5 min-w-0 mt-0.5">
+                <h1
+                  className="font-cairo text-xs sm:text-[14px] font-extrabold tracking-tight text-slate-900 truncate max-w-[125px] xs:max-w-[170px] sm:max-w-[240px] md:max-w-[320px] leading-tight"
+                  title={academyName}
+                >
                   {academyName}
                 </h1>
-                <p className="hidden md:block text-[10px] font-semibold text-slate-400 leading-none mt-0.5">
-                  منصة إدارة أبطال الكاراتيه
-                </p>
+                <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 text-[8.5px] sm:text-[9px] font-black text-red-700 leading-none shrink-0 shadow-2xs">
+                  PRO
+                </span>
               </div>
-              <span className="hidden sm:inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-[9.5px] font-bold text-slate-600 border border-slate-200/70">
-                PRO
-              </span>
             </div>
           </div>
 

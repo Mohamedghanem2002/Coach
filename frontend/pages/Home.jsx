@@ -1476,6 +1476,7 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col justify-between text-slate-900 selection:bg-red-500 selection:text-white w-full max-w-full overflow-x-hidden" dir="rtl">
       <Header
+        academyName={academyName}
         players={players}
         onOpenPlayer={(player) => setSelected(player)}
         currentView={activeView}

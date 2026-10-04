@@ -154,7 +154,7 @@ export default function Footer({ academyName = "CoachMaster" } = {}) {
             {academyName && academyName !== "CoachMaster" && (
               <>
                 <span className="text-slate-300">•</span>
-                <span className="font-bold text-slate-700">{academyName}</span>
+
               </>
             )}
           </div>

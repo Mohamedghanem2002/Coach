@@ -9,6 +9,7 @@ import {
   CreditCard, Trophy, CloudUpload, Phone, Copy, Check,
   ExternalLink, ChevronDown, ChevronUp,
 } from "lucide-react";
+import CoachMasterLogo from "../components/dashboard/CoachMasterLogo";
 
 function WhatsAppIcon({ className = "w-3.5 h-3.5" }) {
   return (
@@ -362,9 +363,7 @@ export default function SignInPage() {
       {/* ── Top Header: هادئ ومتناسق مع تصميم الموقع ── */}
       <header className="w-full max-w-5xl mx-auto px-4 pt-5 sm:pt-7 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-red-600 text-white shadow-xs">
-            <Zap className="h-5 w-5 fill-white" />
-          </div>
+          <CoachMasterLogo size="lg" />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-cairo text-lg sm:text-xl font-black text-slate-900 tracking-tight">
