@@ -95,6 +95,10 @@ function broadcastSyncEvent(payload) {
 export default function Home() {
   const router = useRouter();
   const { data: session, status: sessionStatus, update: updateSession } = useSession();
+  const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
+  const isUserAdmin =
+    session?.user?.role === "admin" ||
+    (session?.user?.email && session.user.email.trim().toLowerCase() === adminEmail);
   const [localCoachName, setLocalCoachName] = useState(null);
   const [localAcademyName, setLocalAcademyName] = useState(null);
   const captainName = localCoachName || session?.user?.name || "كابتن";
@@ -237,6 +241,10 @@ export default function Home() {
       router.push("/auth/signin");
       return;
     }
+    if (sessionStatus === "authenticated" && isUserAdmin) {
+      router.replace("/admin");
+      return;
+    }
     let cancelled = false;
 
     // Defer non-critical background backup check
@@ -277,6 +285,10 @@ export default function Home() {
         }
         if (bootstrapRes.status === 403) {
           const errData = await bootstrapRes.json().catch(() => ({}));
+          if (errData?.isAdmin || errData?.redirectTo) {
+            router.replace(errData.redirectTo || "/admin");
+            return;
+          }
           if (
             (errData.code === "SUBSCRIPTION_INACTIVE" ||
               errData.code === "ACCOUNT_SUSPENDED" ||
@@ -365,11 +377,11 @@ export default function Home() {
       cancelled = true;
       clearTimeout(backupTimer);
     };
-  }, [router, sessionStatus]);
+  }, [router, sessionStatus, isUserAdmin]);
 
   // ─── Silent Real-time Revalidation Function ───
   const revalidateDashboard = useCallback(async ({ silent = true } = {}) => {
-    if (sessionStatus !== "authenticated") return;
+    if (sessionStatus !== "authenticated" || isUserAdmin) return;
     try {
       const bootstrapRes = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
       if (bootstrapRes.status === 401) {
@@ -409,7 +421,7 @@ export default function Home() {
     } catch (err) {
       if (!silent) console.warn("Background revalidation warning:", err);
     }
-  }, [router, sessionStatus]);
+  }, [router, sessionStatus, isUserAdmin]);
 
   // ─── Real-Time Live Sync & Auto-Revalidation Hooks ───
   useEffect(() => {
@@ -1471,6 +1483,16 @@ export default function Home() {
 
   if (sessionStatus === "unauthenticated") {
     return null;
+  }
+
+  if (sessionStatus === "authenticated" && isUserAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800 p-6" dir="rtl">
+        <div className="w-12 h-12 border-3 border-red-600 border-t-transparent rounded-full animate-spin mb-4" />
+        <h2 className="text-base font-black text-slate-900">حساب إدارة المنصة 👑</h2>
+        <p className="text-xs text-slate-500 font-bold mt-1">هذا الحساب مخصص لإدارة المنصة فقط، جاري تحويلك إلى لوحة التحكم...</p>
+      </div>
+    );
   }
 
   return (

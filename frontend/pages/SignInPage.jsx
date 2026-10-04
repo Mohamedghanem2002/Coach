@@ -297,11 +297,19 @@ export default function SignInPage() {
         setBusy(false); return;
       }
       const session = await getSession();
-      if (mode === "admin") {
-        if (session?.user?.role !== "admin") { await signOut({ redirect: false }); setError("عذراً، هذا الحساب ليس لديه صلاحيات الوصول إلى لوحة تحكم المنصة الإدارية."); setBusy(false); return; }
-        router.push("/admin"); router.refresh(); return;
+      if (session?.user?.role === "admin") {
+        router.push("/admin");
+        router.refresh();
+        return;
       }
-      router.push("/"); router.refresh();
+      if (mode === "admin") {
+        await signOut({ redirect: false });
+        setError("عذراً، هذا الحساب ليس لديه صلاحيات الوصول إلى لوحة تحكم المنصة الإدارية.");
+        setBusy(false);
+        return;
+      }
+      router.push("/");
+      router.refresh();
     } catch { setError("تعذر الاتصال بالخادم. يرجى التأكد من اتصال الإنترنت والمحاولة مجدداً."); setBusy(false); }
   }
 

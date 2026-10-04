@@ -241,22 +241,41 @@ export const { handlers, auth } = NextAuth({
             { status: 401 }
           );
         }
-        if (session.user.role !== "admin") {
-          const isSuspended =
-            session.user.status === "suspended" ||
-            session.user.status === "disabled";
-          if (isSuspended) {
+        if (session.user.role === "admin") {
+          const coachEndpoints = [
+            "/api/dashboard",
+            "/api/players",
+            "/api/branches",
+            "/api/events",
+            "/api/backup",
+          ];
+          if (coachEndpoints.some((ep) => pathname === ep || pathname.startsWith(ep + "/"))) {
             return NextResponse.json(
               {
-                error: "ACCOUNT_SUSPENDED",
-                reason:
-                  session.user.suspensionReason ||
-                  "تم إيقاف هذا الحساب من قِبل إدارة المنصة",
-                code: "ACCOUNT_SUSPENDED",
+                error: "حساب الإدارة مخصص للوحة تحكم المنصة فقط",
+                isAdmin: true,
+                code: "ADMIN_ACCOUNT_ISOLATED",
               },
               { status: 403 }
             );
           }
+          return true;
+        }
+
+        const isSuspended =
+          session.user.status === "suspended" ||
+          session.user.status === "disabled";
+        if (isSuspended) {
+          return NextResponse.json(
+            {
+              error: "ACCOUNT_SUSPENDED",
+              reason:
+                session.user.suspensionReason ||
+                "تم إيقاف هذا الحساب من قِبل إدارة المنصة",
+              code: "ACCOUNT_SUSPENDED",
+            },
+            { status: 403 }
+          );
         }
         return true;
       }
@@ -265,6 +284,9 @@ export const { handlers, auth } = NextAuth({
       if (pathname === "/") {
         if (!session?.user) {
           return false; // NextAuth redirects to /auth/signin
+        }
+        if (session.user.role === "admin") {
+          return NextResponse.redirect(new URL("/admin", request.url));
         }
         return true;
       }

@@ -8,16 +8,13 @@ import {
   History,
   ShieldCheck,
   LogOut,
-  ExternalLink,
   Crown,
-  ChevronLeft,
   UserCheck,
   LayoutGrid,
   X,
   Sparkles,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import Link from "next/link";
 import CoachMasterLogo from "../dashboard/CoachMasterLogo";
 
 export default function AdminSidebar({
@@ -181,21 +178,10 @@ export default function AdminSidebar({
         </div>
 
         {/* Bottom Actions */}
-        <div className="space-y-2 pt-4 border-t border-slate-100">
-          <Link
-            href="/"
-            className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-black transition cursor-pointer"
-          >
-            <div className="flex items-center gap-2.5">
-              <ExternalLink className="w-4 h-4 text-slate-400" />
-              <span>العودة لبرنامج الأكاديمية</span>
-            </div>
-            <ChevronLeft className="w-4 h-4 text-slate-400" />
-          </Link>
-
+        <div className="pt-4 border-t border-slate-100">
           <button
             onClick={() => signOut({ callbackUrl: "/auth/signin?admin=true" })}
-            className="w-full flex items-center gap-2.5 p-3 rounded-2xl border border-red-100 bg-red-50/50 hover:bg-red-100/80 text-red-600 text-xs font-black transition cursor-pointer"
+            className="w-full flex items-center justify-center gap-2.5 p-3 rounded-2xl border border-red-100 bg-red-50/50 hover:bg-red-100/80 text-red-600 text-xs font-black transition cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>تسجيل الخروج</span>
@@ -228,20 +214,13 @@ export default function AdminSidebar({
           </div>
 
           <div className="flex items-center gap-1.5">
-            <Link
-              href="/"
-              className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1"
-            >
-              <span>التطبيق</span>
-              <ExternalLink className="w-3 h-3 text-slate-400" />
-            </Link>
-
             <button
               onClick={() => signOut({ callbackUrl: "/auth/signin?admin=true" })}
-              className="p-1.5 rounded-xl text-red-600 hover:bg-red-50"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-red-100 bg-red-50/50 hover:bg-red-100/80 text-red-600 text-xs font-bold transition"
               title="تسجيل الخروج"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
+              <span>خروج</span>
             </button>
           </div>
         </div>

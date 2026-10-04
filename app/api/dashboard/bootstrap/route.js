@@ -170,6 +170,16 @@ export async function GET() {
   try {
     const tenant = await requireActiveTenant();
     if (!tenant.allowed) return tenant.response;
+    if (tenant.isAdmin) {
+      return NextResponse.json(
+        {
+          error: "حساب الإدارة مخصص للوحة تحكم المنصة فقط",
+          isAdmin: true,
+          redirectTo: "/admin",
+        },
+        { status: 403 }
+      );
+    }
     const ownerId = tenant.ownerId;
 
     const client = await clientPromise;
