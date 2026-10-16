@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import clientPromise from "../../../../../backend/mongodb";
 import { requireAdmin } from "../../../../../backend/admin-auth";
 import { recordAuditLog } from "../../../../../backend/audit";
+import { clearTenantCache } from "../../../../../backend/tenant";
 import {
   computeSubscriptionExpiry,
   calculateDaysRemaining,
@@ -366,6 +367,10 @@ export async function PATCH(request, context) {
       { $set: updateFields }
     );
 
+    // Invalidate cached tenant permissions immediately
+    clearTenantCache(user._id.toString());
+    if (user.email) clearTenantCache(user.email);
+
     // Record audit log
     await recordAuditLog({
       action: auditAction,
@@ -476,6 +481,10 @@ export async function DELETE(request, context) {
     if (targetEmail) {
       await db.collection("users").deleteOne({ email: targetEmail });
     }
+
+    // Invalidate cached tenant permissions immediately
+    clearTenantCache(user._id.toString());
+    if (targetEmail) clearTenantCache(targetEmail);
 
     // Record audit log
     await recordAuditLog({

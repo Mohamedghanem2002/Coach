@@ -12,6 +12,7 @@ import {
   getSubscriptionAlertInfo,
 } from "../../../../../backend/subscription-utils";
 import { computeCaptainActivityStats } from "../../../../../backend/activity-tracking";
+import { clearTenantCache } from "../../../../../backend/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -587,6 +588,10 @@ export async function PATCH(request, context) {
     // Apply update
     await db.collection("users").updateOne({ _id: user._id }, { $set: updateFields });
 
+    // Invalidate cached tenant permissions immediately
+    clearTenantCache(user._id.toString());
+    if (user.email) clearTenantCache(user.email);
+
     // Record audit log
     if (auditAction) {
       await recordAuditLog({
@@ -703,6 +708,10 @@ export async function DELETE(request, context) {
     if (targetEmail) {
       await db.collection("users").deleteOne({ email: targetEmail });
     }
+
+    // Invalidate cached tenant permissions immediately
+    clearTenantCache(user._id.toString());
+    if (targetEmail) clearTenantCache(targetEmail);
 
     // 6. Record Audit Log
     await recordAuditLog({

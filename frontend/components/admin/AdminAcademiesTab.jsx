@@ -178,7 +178,7 @@ export default function AdminAcademiesTab({
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-slate-800 to-slate-900 text-white font-black flex items-center justify-center text-sm shadow-xs shrink-0">
-                              {ac.academyName.charAt(0)}
+                              {(ac.academyName || ac.name || "أ").charAt(0)}
                             </div>
                             <div className="min-w-0">
                               <button
@@ -186,7 +186,7 @@ export default function AdminAcademiesTab({
                                 onClick={() => onSelectAcademy(ac.id)}
                                 className="font-black text-slate-900 hover:text-red-600 transition text-sm text-right truncate max-w-[200px] cursor-pointer"
                               >
-                                {ac.academyName}
+                                {ac.academyName || ac.name || "أكاديمية"}
                               </button>
                               <span className="block text-[11px] text-slate-400 font-medium truncate">
                                 {ac.name} &bull; {ac.email}
@@ -373,11 +373,11 @@ export default function AdminAcademiesTab({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-slate-800 to-slate-900 text-white font-black flex items-center justify-center text-sm shrink-0">
-                        {ac.academyName.charAt(0)}
+                        {(ac.academyName || ac.name || "أ").charAt(0)}
                       </div>
                       <div className="min-w-0">
                         <strong className="block text-sm font-black text-slate-900 truncate">
-                          {ac.academyName}
+                          {ac.academyName || ac.name || "أكاديمية"}
                         </strong>
                         <span className="block text-xs font-bold text-slate-400 truncate">
                           {ac.name} &bull; {ac.email}

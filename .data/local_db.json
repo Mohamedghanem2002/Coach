@@ -20,7 +20,10 @@
         "lastSentDate": null,
         "lastSentTime": null,
         "lastAuthFailedDate": "2026-10-04"
-      }
+      },
+      "lastLoginAt": "2026-10-16T14:55:46.481Z",
+      "lastActiveAt": "2026-10-16T14:55:46.481Z",
+      "lastSeenAt": "2026-10-16T14:55:46.481Z"
     },
     {
       "name": "كابتن أحمد سامي",
@@ -147,6 +150,49 @@
       "_id": "6ab9847ca8a4820d9e786c8a",
       "updatedAt": "2026-09-28T21:58:03.305Z",
       "suspensionReason": null
+    },
+    {
+      "name": "كابتن أحمد سامي",
+      "academyName": "أكاديمية النجوم للألعاب القتالية",
+      "email": "coach_test_1792161683136@example.com",
+      "phone": "01011223344",
+      "passwordHash": "$2b$12$mcinwkbcD6SJztEZ75viFOkxH083BZr9ZSPIH665JgbVwtI7dSZ2.",
+      "role": "user",
+      "status": "suspended",
+      "subscriptionStatus": "suspended",
+      "subscriptionPlan": "trial",
+      "subscriptionStartedAt": "2026-10-16T14:41:23.322Z",
+      "subscriptionExpiresAt": "2026-11-16T15:41:23.322Z",
+      "subscriptionPaid": true,
+      "createdAt": "2026-10-16T14:41:23.322Z",
+      "_id": "6ad23793d8d530e8cbbb2260",
+      "lastLoginAt": "2026-10-16T14:41:24.113Z",
+      "lastActiveAt": "2026-10-16T14:41:24.113Z",
+      "lastSeenAt": "2026-10-16T14:41:24.113Z",
+      "updatedAt": "2026-10-16T14:41:25.779Z",
+      "suspensionReason": "تأخر في تجديد الاشتراك السنوي ولم يتم إرسال إيصال السداد"
+    },
+    {
+      "name": "كابتن سيف الدين",
+      "academyName": "أكاديمية الفرسان الدولية",
+      "email": "academy_test_1792162546670@example.com",
+      "phone": "01012345678",
+      "passwordHash": "$2b$12$D3V1HFvmNlAfIhHgaK/nh.SwiQczdyr3bUT397aMK9X/zokfB2fE6",
+      "role": "user",
+      "status": "suspended",
+      "subscriptionStatus": "expired",
+      "subscriptionPlan": "standard",
+      "subscriptionStartedAt": "2026-10-16T14:55:46.676Z",
+      "subscriptionExpiresAt": "2026-11-15T14:55:47.745Z",
+      "subscriptionPaid": true,
+      "createdAt": "2026-10-16T14:55:46.676Z",
+      "_id": "6ad23af3d8d530e8cbbb2271",
+      "lastLoginAt": "2026-10-16T14:55:47.441Z",
+      "lastActiveAt": "2026-10-16T14:55:47.441Z",
+      "lastSeenAt": "2026-10-16T14:55:47.441Z",
+      "updatedAt": "2026-10-16T14:55:47.741Z",
+      "suspensionReason": "انتهت فترة صلاحية الاشتراك في النظام. يرجى سداد أو تجديد الاشتراك مع إدارة المنصة لاستئناف الخدمة ومواصلة الاستخدام.",
+      "isLifetime": false
     }
   ],
   "branches": [
@@ -209,6 +255,54 @@
       "ownerId": "6ab959f9a0992fdb8db3cc42",
       "name": "دوجو الكوميتيه للأبطال",
       "createdAt": "2026-09-27T18:01:29.068Z"
+    },
+    {
+      "ownerId": "6ad23793d8d530e8cbbb2260",
+      "name": "فرع المعادي",
+      "days": [
+        {
+          "day": "السبت",
+          "from": "",
+          "to": ""
+        },
+        {
+          "day": "الثلاثاء",
+          "from": "",
+          "to": ""
+        }
+      ],
+      "createdAt": "2026-10-16T14:41:24.447Z",
+      "_id": "6ad23794d8d530e8cbbb2262"
+    },
+    {
+      "ownerId": "6ad23793d8d530e8cbbb2260",
+      "name": "فرع التجمع",
+      "days": [
+        {
+          "day": "الأحد",
+          "from": "",
+          "to": ""
+        },
+        {
+          "day": "الأربعاء",
+          "from": "",
+          "to": ""
+        }
+      ],
+      "createdAt": "2026-10-16T14:41:24.482Z",
+      "_id": "6ad23794d8d530e8cbbb2263"
+    },
+    {
+      "_id": "6ad23af3d8d530e8cbbb2273",
+      "ownerId": "6ad23af3d8d530e8cbbb2271",
+      "name": "صالة الكاتا الرئيسية",
+      "createdAt": "2026-10-16T14:55:47.057Z"
+    },
+    {
+      "_id": "6ad23af3d8d530e8cbbb2274",
+      "ownerId": "6ad23af3d8d530e8cbbb2271",
+      "name": "دوجو الكوميتيه للأبطال",
+      "createdAt": "2026-10-16T14:55:47.057Z"
     }
   ],
   "players": [
@@ -279,6 +373,78 @@
       "attendance": [],
       "createdAt": "2026-09-27T18:01:29.487Z",
       "_id": "6ab959f9a0992fdb8db3cc46"
+    },
+    {
+      "ownerId": "6ad23793d8d530e8cbbb2260",
+      "name": "يوسف عمر",
+      "fileNumber": "",
+      "age": 11,
+      "dateOfBirth": "2015-01-01",
+      "guardianPhone": "",
+      "branch": "فرع المعادي",
+      "belt": "أصفر",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "unpaid",
+      "paymentHistory": [],
+      "purchases": [],
+      "attendance": [],
+      "createdAt": "2026-10-16T14:41:24.670Z",
+      "_id": "6ad23794d8d530e8cbbb2264"
+    },
+    {
+      "ownerId": "6ad23793d8d530e8cbbb2260",
+      "name": "كريم شريف",
+      "fileNumber": "",
+      "age": 12,
+      "dateOfBirth": "2014-06-15",
+      "guardianPhone": "",
+      "branch": "فرع المعادي",
+      "belt": "أخضر",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "unpaid",
+      "paymentHistory": [],
+      "purchases": [],
+      "attendance": [],
+      "createdAt": "2026-10-16T14:41:24.694Z",
+      "_id": "6ad23794d8d530e8cbbb2265"
+    },
+    {
+      "ownerId": "6ad23793d8d530e8cbbb2260",
+      "name": "مازن طارق",
+      "fileNumber": "",
+      "age": 12,
+      "dateOfBirth": "2013-11-20",
+      "guardianPhone": "",
+      "branch": "فرع التجمع",
+      "belt": "أزرق",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "unpaid",
+      "paymentHistory": [],
+      "purchases": [],
+      "attendance": [],
+      "createdAt": "2026-10-16T14:41:24.718Z",
+      "_id": "6ad23794d8d530e8cbbb2266"
+    },
+    {
+      "ownerId": "6ad23af3d8d530e8cbbb2271",
+      "name": "البطل عمر سيف",
+      "fileNumber": "",
+      "age": 11,
+      "dateOfBirth": "2015-05-10",
+      "guardianPhone": "01099887766",
+      "branch": "صالة الكاتا الرئيسية",
+      "belt": "أبيض",
+      "level": "A",
+      "photo": "",
+      "paymentStatus": "unpaid",
+      "paymentHistory": [],
+      "purchases": [],
+      "attendance": [],
+      "createdAt": "2026-10-16T14:55:47.468Z",
+      "_id": "6ad23af3d8d530e8cbbb2275"
     }
   ],
   "events": [],
@@ -1290,6 +1456,137 @@
       },
       "createdAt": "2026-09-28T22:06:56.819Z",
       "_id": "6abae5000c0f5b0fe93d032e"
+    },
+    {
+      "action": "register_academy",
+      "targetAcademyId": "6ad23793d8d530e8cbbb2260",
+      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
+      "adminEmail": "نظام التسجيل التلقائي",
+      "adminId": null,
+      "details": {
+        "ownerName": "كابتن أحمد سامي",
+        "email": "coach_test_1792161683136@example.com",
+        "phone": "01011223344",
+        "plan": "trial",
+        "expiresAt": "2026-11-16T15:41:23.322Z"
+      },
+      "createdAt": "2026-10-16T14:41:23.691Z",
+      "_id": "6ad23793d8d530e8cbbb2261"
+    },
+    {
+      "action": "suspend_academy",
+      "targetAcademyId": "6ad23793d8d530e8cbbb2260",
+      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "reason": "تأخر في تجديد الاشتراك السنوي ولم يتم إرسال إيصال السداد"
+      },
+      "createdAt": "2026-10-16T14:41:25.780Z",
+      "_id": "6ad23795d8d530e8cbbb2267"
+    },
+    {
+      "action": "register_academy",
+      "targetAcademyId": "6ad238f0d8d530e8cbbb2268",
+      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
+      "adminEmail": "نظام التسجيل التلقائي",
+      "adminId": null,
+      "details": {
+        "ownerName": "كابتن أحمد سامي",
+        "email": "coach_test_1792162031970@example.com",
+        "phone": "01011223344",
+        "plan": "trial",
+        "expiresAt": "2026-11-16T15:47:11.978Z"
+      },
+      "createdAt": "2026-10-16T14:47:12.411Z",
+      "_id": "6ad238f0d8d530e8cbbb2269"
+    },
+    {
+      "action": "suspend_academy",
+      "targetAcademyId": "6ad238f0d8d530e8cbbb2268",
+      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "reason": "تأخر في تجديد الاشتراك السنوي ولم يتم إرسال إيصال السداد"
+      },
+      "createdAt": "2026-10-16T14:47:13.053Z",
+      "_id": "6ad238f1d8d530e8cbbb226f"
+    },
+    {
+      "action": "delete_academy_permanent",
+      "targetAcademyId": "6ad238f0d8d530e8cbbb2268",
+      "targetAcademyName": "أكاديمية النجوم للألعاب القتالية",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "deletedEmail": "coach_test_1792162031970@example.com",
+        "deletedName": "أكاديمية النجوم للألعاب القتالية",
+        "deletedPlayersCount": 3,
+        "deletedBranchesCount": 2,
+        "deletedEventsCount": 0,
+        "deletedSnapshotsCount": 0
+      },
+      "createdAt": "2026-10-16T14:47:13.110Z",
+      "_id": "6ad238f1d8d530e8cbbb2270"
+    },
+    {
+      "action": "register_academy",
+      "targetAcademyId": "6ad23af3d8d530e8cbbb2271",
+      "targetAcademyName": "أكاديمية الفرسان الدولية",
+      "adminEmail": "نظام التسجيل التلقائي",
+      "adminId": null,
+      "details": {
+        "ownerName": "كابتن سيف الدين",
+        "email": "academy_test_1792162546670@example.com",
+        "phone": "01012345678",
+        "plan": "trial",
+        "expiresAt": "2026-11-16T15:55:46.676Z"
+      },
+      "createdAt": "2026-10-16T14:55:47.028Z",
+      "_id": "6ad23af3d8d530e8cbbb2272"
+    },
+    {
+      "action": "suspend_academy",
+      "targetAcademyId": "6ad23af3d8d530e8cbbb2271",
+      "targetAcademyName": "أكاديمية الفرسان الدولية",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "reason": "تأخر سداد الاشتراك السنوي للأكاديمية"
+      },
+      "createdAt": "2026-10-16T14:55:47.536Z",
+      "_id": "6ad23af3d8d530e8cbbb2276"
+    },
+    {
+      "action": "reactivate_academy",
+      "targetAcademyId": "6ad23af3d8d530e8cbbb2271",
+      "targetAcademyName": "أكاديمية الفرسان الدولية",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "restoredExpiresAt": "2026-11-16T15:55:46.676Z"
+      },
+      "createdAt": "2026-10-16T14:55:47.633Z",
+      "_id": "6ad23af3d8d530e8cbbb2277"
+    },
+    {
+      "action": "extend_subscription",
+      "targetAcademyId": "6ad23af3d8d530e8cbbb2271",
+      "targetAcademyName": "أكاديمية الفرسان الدولية",
+      "adminEmail": "mg0447837@gmail.com",
+      "adminId": "6aa1d2acc20ba8a6e482c3a3",
+      "details": {
+        "mode": "from_entry",
+        "months": null,
+        "days": 90,
+        "entryDate": "2026-10-16T14:55:46.676Z",
+        "newExpiresAt": "2027-01-16T15:55:46.676Z",
+        "daysRemaining": 93,
+        "plan": "standard"
+      },
+      "createdAt": "2026-10-16T14:55:47.694Z",
+      "_id": "6ad23af3d8d530e8cbbb2278"
     }
   ]
 }
