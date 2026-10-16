@@ -353,6 +353,23 @@ export default function CaptainDetailsModal({
                         <span>نشط 🟢</span>
                       </span>
                     )}
+
+                    {/* شارة النشاط والاستخدام */}
+                    {captain?.activity && (
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black border shrink-0 ${
+                          captain.activity.level === "daily"
+                            ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                            : captain.activity.level === "weekly"
+                            ? "bg-blue-50 text-blue-800 border-blue-300"
+                            : captain.activity.level === "dormant"
+                            ? "bg-slate-100 text-slate-700 border-slate-300"
+                            : "bg-amber-50 text-amber-800 border-amber-300"
+                        }`}
+                      >
+                        <span>{captain.activity.badgeLabel}</span>
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
                     <span className="font-bold text-red-600 inline-flex items-center gap-1 truncate">
@@ -535,6 +552,151 @@ export default function CaptainDetailsModal({
                     حتى التجديد
                   </span>
                 </div>
+              </div>
+
+              {/* ━━━ Expiry Alert Warning Card (within 3 days) ━━━ */}
+              {captain?.expiryAlert?.isExpiringSoon && (
+                <div className="p-4 rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-950 shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 font-black text-xs sm:text-sm text-amber-900">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 animate-pulse" />
+                      <span>
+                        ⚠️ تنبيه انتهاء الاشتراك: متبقي{" "}
+                        {captain.expiryAlert.daysRemaining}{" "}
+                        {captain.expiryAlert.daysRemaining === 1 ? "يوم واحد" : captain.expiryAlert.daysRemaining === 2 ? "يومان" : "أيام"} فقط!
+                      </span>
+                    </div>
+                    {captain.expiryAlert.reminderWhatsAppUrl && (
+                      <a
+                        href={captain.expiryAlert.reminderWhatsAppUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer"
+                      >
+                        <WhatsAppIcon className="w-3.5 h-3.5" />
+                        <span>إرسال تذكير التجديد للكابتن عبر واتساب</span>
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-xs text-amber-800 font-semibold leading-relaxed">
+                    ينتهي اشتراك هذا الكابتن بتاريخ{" "}
+                    <strong>{captain.expiryAlert.expiresAtFormatted}</strong>. يمكنك الضغط على الزر أعلاه لإرسال رسالة تذكير فورية مجهزة للكابتن.
+                  </p>
+                </div>
+              )}
+
+              {/* ━━━ Activity & Platform Engagement Card ━━━ */}
+              <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-3.5">
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900">
+                        نشاط وتفاعل الكابتن مع المنصة ⚡
+                      </h3>
+                      <span className="text-[11px] text-slate-400 font-bold">
+                        تتبع الاستخدام اليومي وتسجيل الحضور وإدارة اللاعبين
+                      </span>
+                    </div>
+                  </div>
+
+                  {captain?.activity && (
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-black border flex items-center gap-1.5 shadow-2xs ${
+                        captain.activity.level === "daily"
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                          : captain.activity.level === "weekly"
+                          ? "bg-blue-50 text-blue-800 border-blue-300"
+                          : captain.activity.level === "dormant"
+                          ? "bg-slate-100 text-slate-700 border-slate-300"
+                          : "bg-amber-50 text-amber-800 border-amber-300"
+                      }`}
+                    >
+                      <span>{captain.activity.badgeLabel}</span>
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                    <span className="text-slate-500 font-bold block mb-1">آخر تفاعل / حضور:</span>
+                    <strong className="text-slate-900 font-black text-sm">
+                      {captain?.activity?.lastActiveFormatted || "لا يوجد بعد"}
+                    </strong>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                    <span className="text-slate-500 font-bold block mb-1">آخر تسجيل دخول:</span>
+                    <strong className="text-slate-900 font-black text-sm">
+                      {captain?.lastLoginAt
+                        ? new Date(captain.lastLoginAt).toLocaleDateString("ar-EG", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "لم يسجل بعد"}
+                    </strong>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                    <span className="text-slate-500 font-bold block mb-1">عمليات الحضور المسجلة:</span>
+                    <strong className="text-slate-900 font-black text-sm">
+                      {captain?.activity?.attendanceLogsCount || 0} عملية حضور
+                    </strong>
+                  </div>
+                </div>
+
+                {/* مقياس التفاعل الحي */}
+                <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-600">درجة التفاعل الحي مع النظام:</span>
+                    <span className="font-mono font-black text-slate-900">
+                      {captain?.activity?.score || 0}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        (captain?.activity?.score || 0) >= 70
+                          ? "bg-emerald-500"
+                          : (captain?.activity?.score || 0) >= 35
+                          ? "bg-blue-500"
+                          : "bg-amber-500"
+                      }`}
+                      style={{
+                        width: `${Math.min(100, Math.max(5, captain?.activity?.score || 0))}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* تنبيه للكابتن الذي سجل ولم يبدأ */}
+                {captain?.activity?.isRegisteredNeverStarted && (
+                  <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
+                    <div className="font-black flex items-center gap-1.5 text-amber-800">
+                      <span>💤 كابتن سجل حسابه لكن لم يبدأ بعد:</span>
+                    </div>
+                    <p className="text-[11.5px] leading-relaxed">
+                      هذا الحساب لديه 0 لاعبين مسجلين ولم يتم تسجيل أي حضور حتى الآن. يُنصح بالتواصل معه وتقديم شرح أو مساعدة لبدء استخدام المنصة.
+                    </p>
+                    {captain?.phone && (
+                      <a
+                        href={`https://wa.me/${String(captain.phone).replace(/\D/g, "")}?text=${encodeURIComponent(
+                          `أهلاً كابتن ${captain.name || ""}، مرحباً بك في منصة CoachMaster! معك الدعم الفني، هل تحتاج لأي مساعدة في إضافة أول صالة أو تسجيل لاعبيك؟`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition"
+                      >
+                        <WhatsAppIcon className="w-3.5 h-3.5" />
+                        <span>مراسلة الكابتن للمساعدة في البدء</span>
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Suspended Alert Banner */}

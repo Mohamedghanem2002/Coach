@@ -8,6 +8,8 @@ import {
   calculateDaysRemaining,
   isSubscriptionExpired,
   computeSubscriptionExpiry,
+  computeCaptainActivity,
+  getSubscriptionAlertInfo,
 } from "../../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
@@ -126,6 +128,22 @@ export async function GET(request, context) {
         .toArray(),
     ]);
 
+    const latestPlayer = await db.collection("players").find(ownerFilter).sort({ updatedAt: -1 }).limit(1).toArray();
+    const latestPlayerUpdate = latestPlayer[0]?.updatedAt || null;
+
+    const activity = computeCaptainActivity(
+      user,
+      {
+        playersCount,
+        hallsCount: branches.length,
+        eventsCount: events.length,
+        latestPlayerUpdate,
+      },
+      now
+    );
+
+    const expiryAlert = getSubscriptionAlertInfo(user, now);
+
     const subTotal = Number(user.subscriptionTotalAmount || 0);
     const subPaid = Number(user.subscriptionPaidAmount || 0);
     const subRemaining = Math.max(0, subTotal - subPaid);
@@ -142,54 +160,48 @@ export async function GET(request, context) {
       subPaymentStatus = "paid";
     }
 
+    const captainPayload = {
+      id: user._id.toString(),
+      _id: user._id.toString(),
+      name: user.name,
+      academyName: user.academyName || "CoachMaster",
+      email: user.email,
+      phone: user.phone || "",
+      role: user.role || "user",
+      isAdmin: isUserAdmin,
+      status: user.status || "active",
+      subscriptionStatus: computedStatus,
+      subscriptionPlan: user.subscriptionPlan || "trial",
+      subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
+      subscriptionExpiresAt: user.subscriptionExpiresAt || null,
+      subscriptionPaid: user.subscriptionPaid !== false,
+      subscriptionTotalAmount: subTotal,
+      subscriptionPaidAmount: subPaid,
+      subscriptionRemainingAmount: subRemaining,
+      subscriptionPaymentStatus: subPaymentStatus,
+      suspensionReason: user.suspensionReason || null,
+      daysRemaining,
+      // Activity classification
+      activityStatus: activity.activityStatus,
+      activityLabel: activity.activityLabel,
+      activityBadge: activity.activityBadge,
+      activityScore: activity.activityScore,
+      lastActiveAt: activity.lastActiveAt,
+      lastActiveFormatted: activity.lastActiveFormatted,
+      isDailyActive: activity.isDailyActive,
+      isWeeklyActive: activity.isWeeklyActive,
+      isDormant: activity.isDormant,
+      hasEverStarted: activity.hasEverStarted,
+      // Expiration warning alert
+      isExpiringSoon: expiryAlert.isExpiringSoon,
+      expiryAlert,
+      createdAt: user.createdAt,
+    };
+
     return NextResponse.json({
       success: true,
-      captain: {
-        id: user._id.toString(),
-        _id: user._id.toString(),
-        name: user.name,
-        academyName: user.academyName || "CoachMaster",
-        email: user.email,
-        phone: user.phone || "",
-        role: user.role || "user",
-        isAdmin: isUserAdmin,
-        status: user.status || "active",
-        subscriptionStatus: computedStatus,
-        subscriptionPlan: user.subscriptionPlan || "trial",
-        subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
-        subscriptionExpiresAt: user.subscriptionExpiresAt || null,
-        subscriptionPaid: user.subscriptionPaid !== false,
-        subscriptionTotalAmount: subTotal,
-        subscriptionPaidAmount: subPaid,
-        subscriptionRemainingAmount: subRemaining,
-        subscriptionPaymentStatus: subPaymentStatus,
-        suspensionReason: user.suspensionReason || null,
-        daysRemaining,
-        createdAt: user.createdAt,
-      },
-      academy: {
-        id: user._id.toString(),
-        _id: user._id.toString(),
-        name: user.name,
-        academyName: user.academyName || "CoachMaster",
-        email: user.email,
-        phone: user.phone || "",
-        role: user.role || "user",
-        isAdmin: isUserAdmin,
-        status: user.status || "active",
-        subscriptionStatus: computedStatus,
-        subscriptionPlan: user.subscriptionPlan || "trial",
-        subscriptionStartedAt: user.subscriptionStartedAt || user.createdAt,
-        subscriptionExpiresAt: user.subscriptionExpiresAt || null,
-        subscriptionPaid: user.subscriptionPaid !== false,
-        subscriptionTotalAmount: subTotal,
-        subscriptionPaidAmount: subPaid,
-        subscriptionRemainingAmount: subRemaining,
-        subscriptionPaymentStatus: subPaymentStatus,
-        suspensionReason: user.suspensionReason || null,
-        daysRemaining,
-        createdAt: user.createdAt,
-      },
+      captain: captainPayload,
+      academy: captainPayload,
       stats: {
         playersCount: playersCount,
         branchesCount: branches.length,

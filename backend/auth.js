@@ -125,6 +125,14 @@ export const { handlers, auth } = NextAuth({
           }
         }
 
+        const loginTime = new Date();
+        users
+          .updateOne(
+            { _id: user._id },
+            { $set: { lastLoginAt: loginTime, lastActiveAt: loginTime } }
+          )
+          .catch(() => {});
+
         return {
           id: user._id.toString(),
           name: user.name,

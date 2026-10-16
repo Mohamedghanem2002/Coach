@@ -31,6 +31,8 @@ import MobileCommandSurface from "../components/dashboard/MobileCommandSurface";
 import BulkActionDock from "../components/dashboard/BulkActionDock";
 import DashboardModals from "../components/dashboard/DashboardModals";
 import ToastNotification from "../components/dashboard/ToastNotification";
+import SubscriptionExpiringBanner from "../components/dashboard/SubscriptionExpiringBanner";
+import SubscriptionExpiringModal from "../components/dashboard/SubscriptionExpiringModal";
 
 export default function Home() {
   // 1. Notifications & Toasts
@@ -43,6 +45,9 @@ export default function Home() {
     window.addEventListener("birthday_congratulated", handleCongratulated);
     return () => window.removeEventListener("birthday_congratulated", handleCongratulated);
   }, []);
+
+  // 2.5 Subscription Expiry Modal State
+  const [showExpiryModal, setShowExpiryModal] = useState(false);
 
   // 3. Unified Dashboard Data & Real-Time Sync
   const {
@@ -72,6 +77,29 @@ export default function Home() {
     setHasUnreadGuide,
     reloadAllData,
   } = useDashboardData({ setNotice });
+
+  // 3.5 Auto-notify captain if subscription expires within 3 days
+  useEffect(() => {
+    if (!accountUser?.subscriptionExpiringAlert?.isExpiringSoon) return;
+    try {
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const storageKey = `coachmaster_expiry_notified_${todayKey}`;
+      const alreadyNotified = sessionStorage.getItem(storageKey);
+      if (!alreadyNotified) {
+        sessionStorage.setItem(storageKey, "true");
+        const timer = setTimeout(() => {
+          setShowExpiryModal(true);
+          const days = accountUser.subscriptionExpiringAlert.daysRemaining;
+          const msg =
+            days === 0
+              ? "⚠️ تنبيه: اشتراكك ينتهي اليوم! يُرجى التجديد لضمان استمرار الخدمة."
+              : `⚠️ تنبيه اشتراك الأكاديمية: متبقي ${days} ${days === 1 ? "يوم واحد" : days === 2 ? "يومان" : "أيام"} على انتهاء اشتراكك!`;
+          showToast(msg, "warning");
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    } catch (_) {}
+  }, [accountUser?.subscriptionExpiringAlert, showToast]);
 
   // 4. Player Filtering, Sorting, and Metrics
   const {
@@ -347,6 +375,13 @@ export default function Home() {
         isBackingUp={isBackingUp}
         hasUnreadPlanUpdate={hasUnreadPlanUpdate}
         hasUnreadGuide={hasUnreadGuide}
+        subscriptionExpiringAlert={accountUser?.subscriptionExpiringAlert}
+      />
+
+      {/* ━━━ شريط تنبيه انتهاء الاشتراك (إذا كان متبقي 3 أيام أو أقل) ━━━ */}
+      <SubscriptionExpiringBanner
+        alertInfo={accountUser?.subscriptionExpiringAlert}
+        onOpenModal={() => setShowExpiryModal(true)}
       />
 
       <section className="mx-auto w-full max-w-[1600px] 2xl:max-w-[1760px] px-3 sm:px-6 lg:px-8 xl:px-10 pt-3.5 pb-28 sm:py-6 overflow-x-hidden">
@@ -1011,6 +1046,15 @@ export default function Home() {
 
       {/* ━━━ Global Fixed Toast Notification Overlay ━━━ */}
       <ToastNotification toast={toast} onClose={() => setToast(null)} />
+
+      {/* ━━━ نافذة تنبيه انتهاء الاشتراك المنبثقة (قبل 3 أيام) ━━━ */}
+      <SubscriptionExpiringModal
+        isOpen={showExpiryModal}
+        onClose={() => setShowExpiryModal(false)}
+        alertInfo={accountUser?.subscriptionExpiringAlert}
+        captainName={captainName}
+        academyName={academyName}
+      />
     </main>
   );
 }

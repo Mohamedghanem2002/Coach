@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import clientPromise from "../../../../backend/mongodb";
 import { requireActiveTenant } from "../../../../backend/tenant";
+import {
+  getSubscriptionAlertInfo,
+  calculateDaysRemaining,
+} from "../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -214,6 +218,10 @@ export async function GET() {
     const players = rawPlayers.map(serializePlayer);
     const events = rawEvents.map(serializeEvent);
 
+    const now = new Date();
+    const expiryAlert = getSubscriptionAlertInfo(tenant.user, now);
+    const daysRemaining = calculateDaysRemaining(tenant.user?.subscriptionExpiresAt, now, tenant.user);
+
     return NextResponse.json({
       success: true,
       players,
@@ -232,6 +240,8 @@ export async function GET() {
         subscriptionRemainingAmount: Number(tenant.user?.subscriptionRemainingAmount || 0),
         subscriptionTotalAmount: Number(tenant.user?.subscriptionTotalAmount || 0),
         subscriptionPaymentStatus: tenant.user?.subscriptionPaymentStatus || (tenant.user?.subscriptionPaid ? "paid" : "unpaid"),
+        daysRemaining,
+        subscriptionExpiringAlert: expiryAlert,
         updatedAt: tenant.user?.updatedAt || tenant.user?.subscriptionUpdatedAt || null,
       },
     });

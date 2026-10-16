@@ -213,3 +213,187 @@ export async function autoSyncExpiredAccounts(usersCollection, now = new Date())
     return 0;
   }
 }
+
+/**
+ * Computes captain activity status, engagement score, and formatted activity string.
+ * Accurately differentiates captains who use the platform daily from those who registered and never started.
+ *
+ * @param {Object} user
+ * @param {Object} context
+ * @param {number} [context.playersCount]
+ * @param {number} [context.hallsCount]
+ * @param {number} [context.eventsCount]
+ * @param {Date|string} [context.latestPlayerUpdate]
+ * @param {number} [context.recentAttendanceCount]
+ * @param {Date} [now]
+ * @returns {Object}
+ */
+export function computeCaptainActivity(
+  user,
+  {
+    playersCount = 0,
+    hallsCount = 0,
+    eventsCount = 0,
+    latestPlayerUpdate = null,
+    recentAttendanceCount = 0,
+  } = {},
+  now = new Date()
+) {
+  if (!user) {
+    return {
+      activityStatus: "dormant",
+      activityLabel: "غير محدد",
+      activityScore: 0,
+      lastActiveAt: null,
+      lastActiveFormatted: "لم ينشط بعد",
+      isDailyActive: false,
+      isWeeklyActive: false,
+      isDormant: true,
+      hasEverStarted: false,
+    };
+  }
+
+  // 1. Determine effective lastActive timestamp
+  const userLastActive = user.lastActiveAt ? new Date(user.lastActiveAt) : null;
+  const userLastLogin = user.lastLoginAt ? new Date(user.lastLoginAt) : null;
+  const playerUpdate = latestPlayerUpdate ? new Date(latestPlayerUpdate) : null;
+  const userCreated = user.createdAt ? new Date(user.createdAt) : null;
+
+  let effectiveDate = userLastActive;
+  if (userLastLogin && (!effectiveDate || userLastLogin > effectiveDate)) {
+    effectiveDate = userLastLogin;
+  }
+  if (playerUpdate && (!effectiveDate || playerUpdate > effectiveDate)) {
+    effectiveDate = playerUpdate;
+  }
+  if (!effectiveDate) {
+    effectiveDate = userCreated;
+  }
+
+  const msSinceActive = effectiveDate ? Math.max(0, now.getTime() - effectiveDate.getTime()) : null;
+  const hoursSinceActive = msSinceActive !== null ? msSinceActive / (1000 * 60 * 60) : null;
+  const daysSinceActive = hoursSinceActive !== null ? hoursSinceActive / 24 : null;
+
+  // Format relative Arabic time
+  let lastActiveFormatted = "لم ينشط بعد";
+  if (effectiveDate) {
+    if (hoursSinceActive < 1) {
+      lastActiveFormatted = "نشط الآن 🟢";
+    } else if (hoursSinceActive < 24) {
+      const h = Math.floor(hoursSinceActive);
+      lastActiveFormatted = h === 1 ? "منذ ساعة" : h === 2 ? "منذ ساعتين" : `منذ ${h} ساعات`;
+    } else if (daysSinceActive < 2) {
+      lastActiveFormatted = "أمس";
+    } else if (daysSinceActive < 7) {
+      const d = Math.floor(daysSinceActive);
+      lastActiveFormatted = d === 2 ? "منذ يومين" : `منذ ${d} أيام`;
+    } else if (daysSinceActive < 30) {
+      const w = Math.floor(daysSinceActive / 7);
+      lastActiveFormatted = w === 1 ? "منذ أسبوع" : w === 2 ? "منذ أسبوعين" : `منذ ${w} أسابيع`;
+    } else {
+      const m = Math.floor(daysSinceActive / 30);
+      lastActiveFormatted = m === 1 ? "منذ شهر" : m === 2 ? "منذ شهرين" : `منذ ${m} أشهر`;
+    }
+  }
+
+  // 2. Activity Classification
+  const hasEverStarted = playersCount > 0 || hallsCount > 0 || eventsCount > 0;
+
+  let activityStatus = "dormant";
+  let activityLabel = "خامل 💤";
+  let activityBadge = "خامل / لم يبدأ 💤";
+  let activityScore = 10;
+
+  if (!hasEverStarted) {
+    activityStatus = "dormant";
+    activityLabel = "سجّل ولم يبدأ 💤";
+    activityBadge = "سجّل ولم يبدأ (0 لاعبين)";
+    activityScore = 5;
+  } else if (hoursSinceActive !== null && hoursSinceActive <= 48 && (playersCount > 0 || recentAttendanceCount > 0)) {
+    // Active in the last 48 hours or marked attendance recently
+    activityStatus = "daily";
+    activityLabel = "نشط شبه يومي ⚡";
+    activityBadge = "نشط شبه يومي ⚡";
+    activityScore = 95 - Math.min(20, Math.floor(hoursSinceActive / 2));
+  } else if (daysSinceActive !== null && daysSinceActive <= 7) {
+    activityStatus = "weekly";
+    activityLabel = "نشط أسبوعياً 🟢";
+    activityBadge = "نشط أسبوعياً 🟢";
+    activityScore = 70 - Math.min(20, Math.floor(daysSinceActive * 2));
+  } else if (daysSinceActive !== null && daysSinceActive <= 30) {
+    activityStatus = "low";
+    activityLabel = "قليل التفاعل 🟡";
+    activityBadge = "قليل التفاعل 🟡";
+    activityScore = 40 - Math.min(20, Math.floor((daysSinceActive - 7) / 2));
+  } else {
+    activityStatus = "dormant";
+    activityLabel = "خامل (شهر+) 💤";
+    activityBadge = "خامل منذ أكثر من شهر";
+    activityScore = 15;
+  }
+
+  return {
+    activityStatus,
+    activityLabel,
+    activityBadge,
+    activityScore,
+    lastActiveAt: effectiveDate,
+    lastActiveFormatted,
+    daysSinceActive: daysSinceActive !== null ? Math.round(daysSinceActive) : null,
+    isDailyActive: activityStatus === "daily",
+    isWeeklyActive: activityStatus === "weekly",
+    isDormant: activityStatus === "dormant",
+    hasEverStarted,
+  };
+}
+
+/**
+ * Checks if a captain's subscription is expiring in 3 days or less and builds the warning alert payload.
+ *
+ * @param {Object} user
+ * @param {Date} [now]
+ * @returns {Object}
+ */
+export function getSubscriptionAlertInfo(user, now = new Date()) {
+  if (!user || user.role === "admin" || user.subscriptionPlan === "lifetime" || user.isLifetime) {
+    return { isExpiringSoon: false, daysRemaining: null };
+  }
+
+  const daysRemaining = calculateDaysRemaining(user.subscriptionExpiresAt, now, user);
+  if (daysRemaining === null || daysRemaining < 0 || daysRemaining > 3) {
+    return { isExpiringSoon: false, daysRemaining };
+  }
+
+  const urgent = daysRemaining <= 1;
+  const academyName = user.academyName || "الأكاديمية";
+
+  let title = `⚠️ متبقي ${daysRemaining} أيام على انتهاء اشتراك الأكاديمية`;
+  let message = `متبقي ${daysRemaining} أيام على انتهاء اشتراك أكاديمية (${academyName}). يُرجى تجديد الاشتراك لاستمرار الخدمة دون أي انقطاع.`;
+
+  if (daysRemaining === 0) {
+    title = "⚠️ تنبيه عاجل: اليوم هو آخر موعد في اشتراك الأكاديمية!";
+    message = `ينتهي اشتراك أكاديمية (${academyName}) اليوم بنهاية اليوم! يُرجى سرعة التجديد الآن لتجنب تعليق الخدمة التلقائي.`;
+  } else if (daysRemaining === 1) {
+    title = "⚠️ متبقي يوم واحد فقط على انتهاء اشتراك الأكاديمية!";
+    message = `متبقي 24 ساعة تقريباً على انتهاء اشتراك أكاديمية (${academyName})! يُرجى سرعة التجديد الآن لضمان استمرار النظام وفروعه.`;
+  } else if (daysRemaining === 2) {
+    title = "⚠️ متبقي يومان على انتهاء اشتراك الأكاديمية!";
+    message = `متبقي يومان على انتهاء اشتراك أكاديمية (${academyName}). يُرجى التجديد لضمان استمرار الخدمة دون أي انقطاع.`;
+  }
+
+  return {
+    isExpiringSoon: true,
+    daysRemaining,
+    urgent,
+    title,
+    message,
+    academyName,
+    subscriptionExpiresAt: user.subscriptionExpiresAt,
+    whatsAppNumber: "201552488179",
+    contactPhones: ["0155 248 8179", "0102 813 8408"],
+    renewalWhatsAppUrl: `https://wa.me/201552488179?text=${encodeURIComponent(
+      `السلام عليكم إدارة CoachMaster، أنا كابتن ${user.name || ""} من أكاديمية (${academyName})، متبقي على اشتراكي ${daysRemaining} يوم وأرغب في تجديد الاشتراك.`
+    )}`,
+  };
+}
+

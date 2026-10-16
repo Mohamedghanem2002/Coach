@@ -5,6 +5,8 @@ import {
   autoSyncExpiredAccounts,
   calculateDaysRemaining,
   isSubscriptionExpired,
+  computeCaptainActivity,
+  getSubscriptionAlertInfo,
 } from "../../../../backend/subscription-utils";
 
 export const dynamic = "force-dynamic";
@@ -76,6 +78,30 @@ export async function GET(request) {
           count,
         };
       });
+    }
+
+    // 2.1 Fetch latest player activity (last update & attendance count) per captain
+    const latestPlayerActivityMap = new Map();
+    try {
+      if (typeof db.collection("players").aggregate === "function") {
+        const activities = await db.collection("players").aggregate([
+          {
+            $group: {
+              _id: { $toString: "$ownerId" },
+              latestUpdate: { $max: "$updatedAt" },
+              totalAttendance: { $sum: { $size: { $ifNull: ["$attendance", []] } } },
+            },
+          },
+        ]).toArray();
+        for (const item of activities) {
+          latestPlayerActivityMap.set(item._id, {
+            latestUpdate: item.latestUpdate,
+            attendanceCount: item.totalAttendance || 0,
+          });
+        }
+      }
+    } catch {
+      // Graceful fallback
     }
 
     const [allBranches, allEvents] = await Promise.all([
@@ -154,6 +180,23 @@ export async function GET(request) {
         subPaymentStatus = "paid";
       }
 
+      // Compute activity metrics (differentiating daily active coaches from dormant ones)
+      const playerActivity = latestPlayerActivityMap.get(uId) || {};
+      const activity = computeCaptainActivity(
+        u,
+        {
+          playersCount: captainPlayersCount,
+          hallsCount: uBranches.length,
+          eventsCount: uEvents.length,
+          latestPlayerUpdate: playerActivity.latestUpdate,
+          recentAttendanceCount: playerActivity.attendanceCount || 0,
+        },
+        now
+      );
+
+      // Check for 3-day subscription expiration warning
+      const expiryAlert = getSubscriptionAlertInfo(u, now);
+
       return {
         id: uId,
         _id: uId,
@@ -175,6 +218,20 @@ export async function GET(request) {
         subscriptionPaymentStatus: subPaymentStatus,
         suspensionReason: u.suspensionReason || null,
         daysRemaining,
+        // Activity classification
+        activityStatus: activity.activityStatus,
+        activityLabel: activity.activityLabel,
+        activityBadge: activity.activityBadge,
+        activityScore: activity.activityScore,
+        lastActiveAt: activity.lastActiveAt,
+        lastActiveFormatted: activity.lastActiveFormatted,
+        isDailyActive: activity.isDailyActive,
+        isWeeklyActive: activity.isWeeklyActive,
+        isDormant: activity.isDormant,
+        hasEverStarted: activity.hasEverStarted,
+        // Expiration notification alert
+        isExpiringSoon: expiryAlert.isExpiringSoon,
+        expiryAlert,
         // Exact real relationship counters
         stats: {
           players: captainPlayersCount,
@@ -204,12 +261,21 @@ export async function GET(request) {
       0
     );
 
+    const dailyActiveCaptains = processedCaptains.filter((c) => c.activityStatus === "daily").length;
+    const weeklyActiveCaptains = processedCaptains.filter((c) => c.activityStatus === "weekly").length;
+    const dormantCaptains = processedCaptains.filter((c) => c.activityStatus === "dormant").length;
+    const expiringSoonCaptains = processedCaptains.filter((c) => c.isExpiringSoon).length;
+
     const summary = {
       totalCaptains: processedCaptains.length,
       totalAccounts: processedCaptains.length,
       totalPlayers: totalCaptainsPlayers,
       totalHalls: totalCaptainsHalls,
       totalEvents: totalCaptainsEvents,
+      dailyActiveCaptains,
+      weeklyActiveCaptains,
+      dormantCaptains,
+      expiringSoonCaptains,
     };
 
     // 5. Apply Search & Filters
@@ -235,7 +301,15 @@ export async function GET(request) {
       if (statusFilter === "has_halls" && c.stats.halls === 0) return false;
       if (statusFilter === "has_events" && c.stats.events === 0) return false;
 
-      // 5.3 Registration Date Filter
+      // 5.3 Activity & Engagement filters (Requirement 1)
+      if (statusFilter === "daily_active" && c.activityStatus !== "daily") return false;
+      if (statusFilter === "weekly_active" && c.activityStatus !== "weekly") return false;
+      if (statusFilter === "dormant" && c.activityStatus !== "dormant") return false;
+
+      // 5.4 Expiring Soon filter (Requirement 2)
+      if (statusFilter === "expiring_soon" && !c.isExpiringSoon) return false;
+
+      // 5.5 Registration Date Filter
       if (dateFilter && dateFilter !== "all" && c.createdAt) {
         const createdDate = new Date(c.createdAt);
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -259,6 +333,17 @@ export async function GET(request) {
 
     // 6. Sorting
     filtered.sort((a, b) => {
+      if (sortBy === "activity_desc") {
+        return (b.activityScore || 0) - (a.activityScore || 0);
+      }
+      if (sortBy === "activity_asc") {
+        return (a.activityScore || 0) - (b.activityScore || 0);
+      }
+      if (sortBy === "expiring_soon") {
+        const da = a.daysRemaining !== null ? a.daysRemaining : 9999;
+        const db = b.daysRemaining !== null ? b.daysRemaining : 9999;
+        return da - db;
+      }
       if (sortBy === "oldest") {
         return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
       }

@@ -26,6 +26,9 @@ import {
   Copy,
   Check,
   CheckCircle2,
+  Zap,
+  AlertTriangle,
+  Activity,
 } from "lucide-react";
 
 function WhatsAppIcon({ className = "w-3.5 h-3.5" }) {
@@ -77,6 +80,10 @@ export default function AdminCaptainsTab({
 
   const statusOptions = [
     { id: "all", label: "الكل", badge: summary.totalAccounts ?? summary.totalCaptains ?? null },
+    { id: "daily_active", label: "نشط شبه يومي ⚡", badge: summary.dailyActiveCaptains ?? null },
+    { id: "weekly_active", label: "نشط أسبوعياً 🟢", badge: summary.weeklyActiveCaptains ?? null },
+    { id: "dormant", label: "خامل / لم يبدأ 💤", badge: summary.dormantCaptains ?? null },
+    { id: "expiring_soon", label: "ينتهي قريباً (3 أيام) ⏳", badge: summary.expiringSoonCaptains ?? null },
     { id: "active", label: "نشطة 🟢" },
     { id: "has_players", label: "بها أبطال 🥋" },
     { id: "suspended", label: "موقوفة ⛔" },
@@ -94,6 +101,9 @@ export default function AdminCaptainsTab({
 
   const sortOptions = [
     { id: "newest", label: "الأحدث انضماماً ⏱️" },
+    { id: "activity_desc", label: "الأكثر تفاعلاً ونشاطاً ⚡" },
+    { id: "activity_asc", label: "الخامل والأقل نشاطاً 💤" },
+    { id: "expiring_soon", label: "الأقرب انتهاءً (تجديد) ⏳" },
     { id: "oldest", label: "الأقدم انضماماً 📅" },
     { id: "players_desc", label: "الأكثر لاعبين 👥" },
     { id: "halls_desc", label: "الأكثر صالات 🏟️" },
@@ -124,7 +134,7 @@ export default function AdminCaptainsTab({
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-bold mt-0.5">
-                متابعة اشتراكات الأكاديميات، الصالات، والفعاليات، والتواصل المباشر مع مديري الفروع
+                متابعة نشاط الكباتن واستخدام المنصة، اشتراكات الأكاديميات، والتواصل المباشر مع مديري الفروع
               </p>
             </div>
           </div>
@@ -156,9 +166,18 @@ export default function AdminCaptainsTab({
           </div>
         </div>
 
-        {/* Integrated KPI Capsules Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mt-4 pt-4 border-t border-slate-200/70">
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+        {/* Integrated KPI Capsules Strip (Interactive Quick Filters) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5 mt-4 pt-4 border-t border-slate-200/70">
+          {/* Total Captains */}
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange("all")}
+            className={`flex items-center justify-between p-3 rounded-2xl border text-right transition cursor-pointer active:scale-95 ${
+              statusFilter === "all"
+                ? "bg-red-50/70 border-red-300 ring-2 ring-red-100"
+                : "bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/70"
+            }`}
+          >
             <div>
               <span className="block text-[11px] font-bold text-slate-400">إجمالي الكباتن</span>
               <strong className="text-lg sm:text-xl font-black text-slate-900">{totalDisplayAccounts}</strong>
@@ -166,8 +185,76 @@ export default function AdminCaptainsTab({
             <div className="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
               <Users className="w-4 h-4" />
             </div>
-          </div>
+          </button>
 
+          {/* Daily Active Coaches */}
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange("daily_active")}
+            className={`flex items-center justify-between p-3 rounded-2xl border text-right transition cursor-pointer active:scale-95 ${
+              statusFilter === "daily_active"
+                ? "bg-emerald-50 border-emerald-300 ring-2 ring-emerald-200"
+                : "bg-emerald-50/40 border-emerald-200/70 hover:bg-emerald-50/80"
+            }`}
+            title="الكباتن التي تستخدم الموقع بشكل يومي"
+          >
+            <div>
+              <span className="block text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                <span>نشط يومياً</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </span>
+              <strong className="text-lg sm:text-xl font-black text-emerald-800">{summary.dailyActiveCaptains ?? 0}</strong>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Zap className="w-4 h-4" />
+            </div>
+          </button>
+
+          {/* Dormant / Never Started Coaches */}
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange("dormant")}
+            className={`flex items-center justify-between p-3 rounded-2xl border text-right transition cursor-pointer active:scale-95 ${
+              statusFilter === "dormant"
+                ? "bg-rose-50 border-rose-300 ring-2 ring-rose-200"
+                : "bg-slate-50/70 border-slate-200/80 hover:bg-rose-50/40"
+            }`}
+            title="كباتن سجلت ولم تبدأ الاستخدام أو غير نشطة"
+          >
+            <div>
+              <span className="block text-[11px] font-bold text-rose-700">خامل / لم يبدأ</span>
+              <strong className="text-lg sm:text-xl font-black text-rose-900">{summary.dormantCaptains ?? 0}</strong>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4" />
+            </div>
+          </button>
+
+          {/* Expiring Soon (3 days) */}
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange("expiring_soon")}
+            className={`flex items-center justify-between p-3 rounded-2xl border text-right transition cursor-pointer active:scale-95 ${
+              statusFilter === "expiring_soon"
+                ? "bg-amber-50 border-amber-300 ring-2 ring-amber-200"
+                : (summary.expiringSoonCaptains ?? 0) > 0
+                ? "bg-amber-50/60 border-amber-200 hover:bg-amber-100/70"
+                : "bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/70"
+            }`}
+            title="كباتن متبقي على اشتراكها 3 أيام أو أقل"
+          >
+            <div>
+              <span className="block text-[11px] font-bold text-amber-700">ينتهي خلال 3 أيام</span>
+              <strong className="text-lg sm:text-xl font-black text-amber-900">{summary.expiringSoonCaptains ?? 0}</strong>
+            </div>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+              (summary.expiringSoonCaptains ?? 0) > 0 ? "bg-amber-500 text-white animate-bounce" : "bg-amber-100 text-amber-700"
+            }`}>
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+          </button>
+
+          {/* Total Players */}
           <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 border border-slate-200/80">
             <div>
               <span className="block text-[11px] font-bold text-slate-400">إجمالي الأبطال</span>
@@ -178,6 +265,7 @@ export default function AdminCaptainsTab({
             </div>
           </div>
 
+          {/* Total Halls */}
           <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 border border-slate-200/80">
             <div>
               <span className="block text-[11px] font-bold text-slate-400">صالات ومقرات</span>
@@ -185,16 +273,6 @@ export default function AdminCaptainsTab({
             </div>
             <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
               <Building2 className="w-4 h-4" />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 border border-slate-200/80">
-            <div>
-              <span className="block text-[11px] font-bold text-slate-400">بطولات وأنشطة</span>
-              <strong className="text-lg sm:text-xl font-black text-amber-700">{summary.totalEvents ?? 0}</strong>
-            </div>
-            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-              <Trophy className="w-4 h-4" />
             </div>
           </div>
         </div>
@@ -437,6 +515,41 @@ export default function AdminCaptainsTab({
                     </div>
                   </div>
 
+                  {/* Activity Badge & Expiry Warning Banner (Mobile) */}
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 p-2 rounded-xl bg-slate-50/90 border border-slate-100 text-xs">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {c.isDailyActive ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black border border-emerald-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>نشط شبه يومي ⚡</span>
+                        </span>
+                      ) : c.isWeeklyActive ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-bold border border-blue-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          <span>نشط أسبوعياً 🟢</span>
+                        </span>
+                      ) : c.isDormant ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-800 text-[10px] font-black border border-rose-200">
+                          <span>{c.activityLabel || "سجّل ولم يبدأ 💤"}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
+                          <span>قليل التفاعل 🟡</span>
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-500 font-bold truncate">
+                        {c.lastActiveFormatted ? `آخر تواجد: ${c.lastActiveFormatted}` : ""}
+                      </span>
+                    </div>
+
+                    {c.isExpiringSoon && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black animate-pulse">
+                        <AlertTriangle className="w-3 h-3 text-amber-700" />
+                        <span>ينتهي خلال {c.daysRemaining === 0 ? "اليوم" : c.daysRemaining === 1 ? "يوم" : `${c.daysRemaining} أيام`} ⏳</span>
+                      </span>
+                    )}
+                  </div>
+
                   {/* Quick Contact & Date Strip */}
                   <div className="p-2 rounded-xl bg-slate-50/80 border border-slate-100 text-[11px] space-y-1.5">
                     <div className="flex items-center justify-between text-slate-500">
@@ -500,6 +613,21 @@ export default function AdminCaptainsTab({
                     )}
                   </div>
 
+                  {/* Expiring Soon Reminder Trigger Button for Mobile */}
+                  {c.isExpiringSoon && cleanPhone && (
+                    <a
+                      href={`https://wa.me/${cleanPhone.startsWith("0") ? `2${cleanPhone}` : cleanPhone}?text=${encodeURIComponent(
+                        `السلام عليكم كابتن ${c.name}، نود تذكيركم بأن اشتراك أكاديمية (${c.academyName}) في منصة CoachMaster متبقي عليه ${c.daysRemaining} أيام. يُرجى التجديد لضمان استمرار الخدمة.`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition shadow-xs"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>إرسال تنبيه تجديد الاشتراك واتساب ({c.daysRemaining} يوم) 💬</span>
+                    </a>
+                  )}
+
                   {/* 3 Native KPI Pills */}
                   <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
                     <div className="p-1.5 rounded-xl bg-violet-50/70 border border-violet-100">
@@ -541,10 +669,11 @@ export default function AdminCaptainsTab({
                   <tr>
                     <th className="p-4">الكابتن والأكاديمية</th>
                     <th className="p-4">التواصل والانضمام</th>
+                    <th className="p-4">نشاط واستخدام المنصة ⚡</th>
                     <th className="p-4 text-center">اللاعبين</th>
                     <th className="p-4 text-center">الصالات</th>
                     <th className="p-4 text-center">الفعاليات</th>
-                    <th className="p-4">حالة الحساب</th>
+                    <th className="p-4">حالة الحساب والاشتراك</th>
                     <th className="p-4 text-center">الإجراءات</th>
                   </tr>
                 </thead>
@@ -624,6 +753,38 @@ export default function AdminCaptainsTab({
                           )}
                         </td>
 
+                        {/* Activity & Platform Usage (Requirement 1) */}
+                        <td className="p-4">
+                          <div className="space-y-1">
+                            {c.isDailyActive ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-[11px] font-black shadow-2xs">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span>نشط شبه يومي ⚡</span>
+                              </span>
+                            ) : c.isWeeklyActive ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200/80 text-[11px] font-bold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                <span>نشط أسبوعياً 🟢</span>
+                              </span>
+                            ) : c.isDormant ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200 text-[11px] font-black">
+                                <span>{c.activityLabel || "سجّل ولم يبدأ 💤"}</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
+                                <span>قليل التفاعل 🟡</span>
+                              </span>
+                            )}
+                            <span className="block text-[10px] text-slate-500 font-bold">
+                              {c.stats?.players === 0
+                                ? "لم يضف أي لاعبين بعد"
+                                : c.lastActiveFormatted
+                                ? `آخر تواجد: ${c.lastActiveFormatted}`
+                                : "لم ينشط مؤخراً"}
+                            </span>
+                          </div>
+                        </td>
+
                         {/* Players Count Badge */}
                         <td className="p-4 text-center">
                           <span className="inline-flex items-center justify-center gap-1 min-w-[65px] px-2.5 py-1 rounded-lg bg-violet-50 text-violet-800 border border-violet-200/80 font-bold text-xs">
@@ -668,11 +829,20 @@ export default function AdminCaptainsTab({
                                 نشط 🟢
                               </span>
                             )}
+
+                            {/* 3-day Expiring Soon Urgent Banner (Requirement 2) */}
+                            {c.isExpiringSoon && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black animate-pulse">
+                                <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                <span>ينتهي خلال {c.daysRemaining === 0 ? "اليوم" : c.daysRemaining === 1 ? "24 ساعة" : `${c.daysRemaining} أيام`} ⏳</span>
+                              </span>
+                            )}
+
                             {isLifetime && !c.isAdmin ? (
                               <span className="block text-[10px] font-bold text-purple-600">
                                 دائم ومفتوح ♾️
                               </span>
-                            ) : c.daysRemaining !== null && !c.isAdmin && (
+                            ) : c.daysRemaining !== null && !c.isAdmin && !c.isExpiringSoon && (
                               <span
                                 className={`block text-[10px] font-mono font-black ${
                                   c.daysRemaining <= 0
@@ -717,6 +887,38 @@ export default function AdminCaptainsTab({
                               <Eye className="w-3.5 h-3.5 text-blue-600" />
                               <span className="hidden xl:inline">عرض</span>
                             </button>
+
+                            {/* Expiring Soon: One-click WhatsApp Renewal Reminder */}
+                            {c.isExpiringSoon && cleanPhone && (
+                              <a
+                                href={`https://wa.me/${cleanPhone.startsWith("0") ? `2${cleanPhone}` : cleanPhone}?text=${encodeURIComponent(
+                                  `السلام عليكم كابتن ${c.name}، نود تذكيركم بأن اشتراك أكاديمية (${c.academyName}) في منصة CoachMaster متبقي عليه ${c.daysRemaining} أيام. يُرجى التجديد لضمان استمرار الخدمة.`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs flex items-center gap-1 transition cursor-pointer shadow-2xs active:scale-95 animate-pulse"
+                                title="إرسال تنبيه تجديد الاشتراك عبر واتساب"
+                              >
+                                <WhatsAppIcon className="w-3.5 h-3.5" />
+                                <span className="hidden 2xl:inline">تنبيه تجديد</span>
+                              </a>
+                            )}
+
+                            {/* Dormant Coach Assistance WhatsApp */}
+                            {c.isDormant && c.stats?.players === 0 && cleanPhone && !c.isExpiringSoon && (
+                              <a
+                                href={`https://wa.me/${cleanPhone.startsWith("0") ? `2${cleanPhone}` : cleanPhone}?text=${encodeURIComponent(
+                                  `السلام عليكم كابتن ${c.name}، مرحباً بك في CoachMaster! لاحظنا تسجيلك حديثاً.. هل تحتاج لأي مساعدة في بدء استخدام النظام وإضافة اللاعبين والصالات؟ فريق الدعم جاهز لمساعدتك.`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 transition cursor-pointer border border-blue-200 active:scale-95"
+                                title="مراسلة الكابتن للمساعدة في بدء الاستخدام"
+                              >
+                                <WhatsAppIcon className="w-3.5 h-3.5" />
+                                <span className="hidden 2xl:inline">مساعدة</span>
+                              </a>
+                            )}
 
                             {/* Quick Extend */}
                             <button

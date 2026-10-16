@@ -12,6 +12,7 @@ import {
   Cloud,
   ChevronDown,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -134,6 +135,7 @@ function SettingsFlyout({
   onInstantCloudBackup,
   onSignOut,
   onClose,
+  subscriptionExpiringAlert,
 }) {
   return (
     <>
@@ -184,6 +186,29 @@ function SettingsFlyout({
             </button>
           </div>
         </div>
+
+        {/* تنبيه انتهاء الاشتراك إذا كان متبقي 3 أيام أو أقل */}
+        {subscriptionExpiringAlert?.isExpiringSoon && (
+          <div className="mx-1 mb-2 p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-bold space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-1.5 text-amber-900 font-black">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 animate-pulse" />
+              <span>تنبيه اشتراك الأكاديمية</span>
+            </div>
+            <p className="text-[11px] text-amber-900 leading-tight">
+              متبقي <strong>{subscriptionExpiringAlert.daysRemaining} {subscriptionExpiringAlert.daysRemaining === 1 ? "يوم واحد" : subscriptionExpiringAlert.daysRemaining === 2 ? "يومان" : "أيام"}</strong> على انتهاء اشتراكك.
+            </p>
+            {subscriptionExpiringAlert.renewalWhatsAppUrl && (
+              <a
+                href={subscriptionExpiringAlert.renewalWhatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black transition cursor-pointer"
+              >
+                <span>تجديد الاشتراك عبر واتساب 💬</span>
+              </a>
+            )}
+          </div>
+        )}
 
         {/* List of Settings Options */}
         <div className="space-y-0.5">
@@ -424,6 +449,7 @@ export default function Header({
   isBackingUp = false,
   hasUnreadPlanUpdate = false,
   hasUnreadGuide = false,
+  subscriptionExpiringAlert = null,
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -457,7 +483,10 @@ export default function Header({
   }, [players, congratulateTick]);
 
   const totalBirthdayCount = todayBirthdays.length + upcomingBirthdays.length;
-  const hasSettingsNotification = hasUnreadPlanUpdate || hasUnreadGuide;
+  const hasSettingsNotification =
+    hasUnreadPlanUpdate ||
+    hasUnreadGuide ||
+    Boolean(subscriptionExpiringAlert?.isExpiringSoon);
 
   // Click outside to close any open menu
   useEffect(() => {
@@ -533,8 +562,21 @@ export default function Header({
             </div>
           </div>
 
-          {/* 2. أزرار الجانب الأيسر (الإعدادات) */}
+          {/* 2. أزرار الجانب الأيسر (الإعدادات والتنبيهات) */}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* كبسولة تنبيه انتهاء الاشتراك السريعة */}
+            {subscriptionExpiringAlert?.isExpiringSoon && (
+              <a
+                href={subscriptionExpiringAlert.renewalWhatsAppUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-300 text-amber-950 text-xs font-black hover:bg-amber-500/25 transition cursor-pointer shadow-2xs"
+                title="انقر لتجديد الاشتراك عبر واتساب"
+              >
+                <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping inline-block" />
+                <span>متبقي {subscriptionExpiringAlert.daysRemaining} {subscriptionExpiringAlert.daysRemaining === 1 ? "يوم" : "أيام"} للاشتراك</span>
+              </a>
+            )}
 
             {/* زر الإعدادات الموحّد */}
             <div className="relative">
@@ -591,6 +633,7 @@ export default function Header({
                 onInstantCloudBackup={onInstantCloudBackup}
                 onSignOut={handleSignOut}
                 onClose={() => setActiveMenu(null)}
+                subscriptionExpiringAlert={subscriptionExpiringAlert}
               />
             )}
             </div>
