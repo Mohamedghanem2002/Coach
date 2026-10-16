@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import clientPromise from "../../../../backend/mongodb";
 import { requireAdmin } from "../../../../backend/admin-auth";
+import { computeCaptainActivityStats } from "../../../../backend/activity-tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -109,6 +110,42 @@ export async function GET(request) {
           daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
         }
 
+        // Calculate genuine activity and effective last login
+        const attendanceDates = [];
+        const paymentDates = [];
+        const mutationDates = [];
+
+        if (u.createdAt) mutationDates.push(u.createdAt);
+        if (u.updatedAt) mutationDates.push(u.updatedAt);
+
+        for (const p of uPlayers) {
+          if (p.createdAt) mutationDates.push(p.createdAt);
+          if (p.updatedAt) mutationDates.push(p.updatedAt);
+          if (Array.isArray(p.attendance)) {
+            for (const att of p.attendance) {
+              if (att?.date) attendanceDates.push(att.date);
+              else if (typeof att === "string") attendanceDates.push(att);
+            }
+          }
+          if (Array.isArray(p.paymentHistory)) {
+            for (const pay of p.paymentHistory) {
+              if (pay?.date) paymentDates.push(pay.date);
+              else if (pay?.createdAt) paymentDates.push(pay.createdAt);
+            }
+          }
+        }
+
+        for (const b of uBranches) {
+          if (b.createdAt) mutationDates.push(b.createdAt);
+          if (b.updatedAt) mutationDates.push(b.updatedAt);
+        }
+
+        const activityStats = computeCaptainActivityStats(
+          u,
+          { attendanceDates, paymentDates, mutationDates },
+          now
+        );
+
         return {
           id: uId,
           _id: uId,
@@ -128,6 +165,11 @@ export async function GET(request) {
           branchesCount: uBranches.length,
           branchesDetails,
           eventsCount,
+          lastLoginFormatted: activityStats.lastLoginFormatted,
+          lastLoginExact: activityStats.lastLoginExact,
+          lastLoginAt: activityStats.lastLoginAt,
+          lastSeenFormatted: activityStats.lastSeenFormatted,
+          isOnline: activityStats.isOnline,
           createdAt: u.createdAt,
         };
       })

@@ -652,7 +652,9 @@ export default function CaptainDetailsModal({
                     <strong className="text-slate-900 font-black text-sm block">
                       {captain?.lastLoginFormatted || "لم يسجل بعد"}
                     </strong>
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">تسجيل دخول موثق</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block truncate" title={captain?.lastLoginExact || ""}>
+                      {captain?.lastLoginExact || "تسجيل دخول موثق"}
+                    </span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">

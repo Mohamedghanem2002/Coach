@@ -188,8 +188,13 @@ export default function AdminAcademiesTab({
                               >
                                 {ac.academyName || ac.name || "أكاديمية"}
                               </button>
-                              <span className="block text-[11px] text-slate-400 font-medium truncate">
+                              <span className="block text-[11px] text-slate-400 font-medium truncate" title={ac.lastLoginExact || ""}>
                                 {ac.name} &bull; {ac.email}
+                                {ac.lastLoginFormatted && (
+                                  <span className="mr-1 text-slate-500 font-bold">
+                                    &bull; آخر دخول: <strong className="text-slate-700">{ac.lastLoginFormatted}</strong>
+                                  </span>
+                                )}
                               </span>
                             </div>
                           </div>
@@ -379,8 +384,13 @@ export default function AdminAcademiesTab({
                         <strong className="block text-sm font-black text-slate-900 truncate">
                           {ac.academyName || ac.name || "أكاديمية"}
                         </strong>
-                        <span className="block text-xs font-bold text-slate-400 truncate">
+                        <span className="block text-xs font-bold text-slate-400 truncate" title={ac.lastLoginExact || ""}>
                           {ac.name} &bull; {ac.email}
+                          {ac.lastLoginFormatted && (
+                            <span className="block text-[11px] text-slate-500 font-medium mt-0.5">
+                              آخر دخول: <strong className="text-slate-700 font-bold">{ac.lastLoginFormatted}</strong>
+                            </span>
+                          )}
                         </span>
                       </div>
                     </div>

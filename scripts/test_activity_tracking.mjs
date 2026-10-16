@@ -139,6 +139,37 @@ assert.equal(afterGenuine.activeDays.length, 2, 'Should now have 2 active days')
 await usersColl.deleteOne({ _id: testUserId });
 console.log('✓ Heartbeat isolation, genuine activity $addToSet, and DB interactions verified.');
 
+console.log('--- 6. Testing Relative Last Login Formatting & Candidate Fallback ---');
+// Test exact relative format
+const d1Day = new Date(now.getTime() - 25 * 3600 * 1000);
+assert.equal(formatRelativeArabicTime(d1Day, now), 'منذ يوم', '25h ago should be "منذ يوم"');
+
+const d2Days = new Date(now.getTime() - 50 * 3600 * 1000);
+assert.equal(formatRelativeArabicTime(d2Days, now), 'منذ يومين', '50h ago should be "منذ يومين"');
+
+const d5Days = new Date(now.getTime() - 5 * 24 * 3600 * 1000);
+assert.equal(formatRelativeArabicTime(d5Days, now), 'منذ 5 أيام', '5d ago should be "منذ 5 أيام"');
+
+const d18Days = new Date(now.getTime() - 18 * 24 * 3600 * 1000);
+assert.equal(formatRelativeArabicTime(d18Days, now), 'منذ 18 يوماً', '18d ago should be "منذ 18 يوماً"');
+
+// Test account with undefined lastLoginAt falling back to createdAt / updatedAt
+const mockLegacyUser = {
+  _id: 'legacy_captain_1',
+  name: 'كابتن قديم',
+  email: 'legacy@example.com',
+  lastLoginAt: undefined,
+  lastSeenAt: undefined,
+  updatedAt: d2Days.toISOString(),
+  createdAt: d18Days.toISOString(),
+};
+
+const legacyStats = computeCaptainActivityStats(mockLegacyUser, {}, now);
+assert.equal(legacyStats.lastLoginFormatted, 'منذ يومين', 'Legacy account without lastLoginAt must fallback to updatedAt');
+assert.ok(legacyStats.lastLoginExact.length > 5, 'Exact timestamp should be populated');
+
+console.log('✓ Relative last login formatting and candidate timestamp fallback verified.');
+
 console.log('\n========================================');
 console.log('ALL ACTIVITY TRACKING TESTS PASSED (100%)');
 console.log('========================================\n');

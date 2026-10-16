@@ -153,7 +153,7 @@ export function formatRelativeArabicTime(date, now = new Date()) {
 
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays === 1) {
-    return "أمس";
+    return "منذ يوم";
   }
   if (diffDays === 2) {
     return "منذ يومين";
@@ -213,6 +213,7 @@ export function computeCaptainActivityStats(user, historicalData = {}, now = new
       lastSeenFormatted: "لم ينشط بعد",
       lastLoginAt: null,
       lastLoginFormatted: "لم يسجل بعد",
+      lastLoginExact: "لم يسجل بعد",
       activeDays7: 0,
       activeDays30: 0,
       activityClassification: "insufficient_data",
@@ -223,16 +224,71 @@ export function computeCaptainActivityStats(user, historicalData = {}, now = new
   }
 
   const nowMs = now.getTime();
-  const lastSeenDate = user.lastSeenAt ? new Date(user.lastSeenAt) : null;
-  const lastLoginDate = user.lastLoginAt ? new Date(user.lastLoginAt) : null;
 
-  // 1. Online status with 120-second timeout
-  const isValidSeen = lastSeenDate && !isNaN(lastSeenDate.getTime());
-  const isOnline = Boolean(isValidSeen && nowMs - lastSeenDate.getTime() <= ONLINE_TIMEOUT_MS);
+  // 1. Resolve Effective Last Login / Last Interaction Timestamp
+  // Prefer explicit lastLoginAt, but gracefully fallback to candidate dates:
+  // lastSeenAt, lastActiveAt, historical mutation/attendance/payment dates, activeDays, updatedAt, createdAt
+  const candidateDates = [];
+  const collectDate = (val) => {
+    if (!val) return;
+    try {
+      const d = val instanceof Date ? val : new Date(val);
+      if (!isNaN(d.getTime()) && d.getTime() > 0) {
+        candidateDates.push(d);
+      }
+    } catch {}
+  };
+
+  collectDate(user.lastLoginAt);
+  collectDate(user.lastSeenAt);
+  collectDate(user.lastActiveAt);
+
+  if (Array.isArray(historicalData.attendanceDates)) {
+    historicalData.attendanceDates.forEach(collectDate);
+  }
+  if (Array.isArray(historicalData.paymentDates)) {
+    historicalData.paymentDates.forEach(collectDate);
+  }
+  if (Array.isArray(historicalData.mutationDates)) {
+    historicalData.mutationDates.forEach(collectDate);
+  }
+  if (Array.isArray(user.activeDays)) {
+    user.activeDays.forEach(collectDate);
+  }
+
+  collectDate(user.updatedAt);
+  collectDate(user.createdAt);
+
+  const effectiveLastLoginDate = candidateDates.length > 0
+    ? new Date(Math.max(...candidateDates.map((d) => d.getTime())))
+    : null;
+
+  // 2. Online status with 120-second timeout
+  const explicitSeen = user.lastSeenAt ? new Date(user.lastSeenAt) : null;
+  const isValidSeen = explicitSeen && !isNaN(explicitSeen.getTime());
+  const isOnline = Boolean(isValidSeen && nowMs - explicitSeen.getTime() <= ONLINE_TIMEOUT_MS);
   const onlineStatus = isOnline ? "online" : "offline";
 
-  const lastSeenFormatted = isOnline ? "متصل الآن 🟢" : formatRelativeArabicTime(lastSeenDate, now);
-  const lastLoginFormatted = formatTimestampArabic(lastLoginDate);
+  // Last seen formatted
+  const lastSeenRefDate = isValidSeen ? explicitSeen : effectiveLastLoginDate;
+  const lastSeenFormatted = isOnline
+    ? "متصل الآن 🟢"
+    : lastSeenRefDate
+    ? formatRelativeArabicTime(lastSeenRefDate, now)
+    : "لم ينشط بعد";
+
+  // Last login formatted in relative Arabic ("منذ يوم", "منذ يومين", "منذ 17 يوماً", etc.)
+  const lastLoginFormatted = effectiveLastLoginDate
+    ? formatRelativeArabicTime(effectiveLastLoginDate, now)
+    : "لم يسجل بعد";
+
+  const lastLoginExact = effectiveLastLoginDate
+    ? formatTimestampArabic(effectiveLastLoginDate)
+    : "لم يسجل بعد";
+
+  const lastLoginAt = effectiveLastLoginDate
+    ? effectiveLastLoginDate.toISOString()
+    : null;
 
   // 2. Aggregate Genuine Active Days (Strictly genuine activity, NOT logins or heartbeats alone)
   const genuineDaysSet = new Set();
@@ -337,10 +393,11 @@ export function computeCaptainActivityStats(user, historicalData = {}, now = new
   return {
     isOnline,
     onlineStatus,
-    lastSeenAt: isValidSeen ? lastSeenDate.toISOString() : null,
+    lastSeenAt: lastSeenRefDate ? lastSeenRefDate.toISOString() : null,
     lastSeenFormatted,
-    lastLoginAt: lastLoginDate && !isNaN(lastLoginDate.getTime()) ? lastLoginDate.toISOString() : null,
+    lastLoginAt,
     lastLoginFormatted,
+    lastLoginExact,
     activeDays7,
     activeDays30,
     totalRecordedActiveDays: genuineDaysSet.size,

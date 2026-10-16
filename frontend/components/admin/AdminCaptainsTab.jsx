@@ -607,7 +607,7 @@ export default function AdminCaptainsTab({
                       </div>
                       <div className="text-slate-500 font-medium">
                         <span className="text-slate-400">آخر دخول: </span>
-                        <span className="font-bold text-slate-700">{c.lastLoginFormatted || "لم يسجل بعد"}</span>
+                        <span className="font-bold text-slate-700" title={c.lastLoginExact || (c.lastLoginAt ? new Date(c.lastLoginAt).toLocaleString("ar-EG") : "")}>{c.lastLoginFormatted || "لم يسجل بعد"}</span>
                       </div>
                     </div>
                   </div>
@@ -865,7 +865,7 @@ export default function AdminCaptainsTab({
                             </div>
 
                             {/* Last Login Timestamp */}
-                            <div className="text-[10px] text-slate-500 font-medium truncate" title={c.lastLoginAt ? new Date(c.lastLoginAt).toLocaleString("ar-EG") : ""}>
+                            <div className="text-[10px] text-slate-500 font-medium truncate" title={c.lastLoginExact || (c.lastLoginAt ? new Date(c.lastLoginAt).toLocaleString("ar-EG") : "")}>
                               <span className="text-slate-400">آخر دخول: </span>
                               <strong className="text-slate-700 font-bold">{c.lastLoginFormatted || "لم يسجل بعد"}</strong>
                             </div>

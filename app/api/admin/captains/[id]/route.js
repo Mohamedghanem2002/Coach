@@ -236,6 +236,7 @@ export async function GET(request, context) {
       lastSeenFormatted: activityTracking.lastSeenFormatted,
       lastLoginAt: activityTracking.lastLoginAt,
       lastLoginFormatted: activityTracking.lastLoginFormatted,
+      lastLoginExact: activityTracking.lastLoginExact,
       activeDays7: activityTracking.activeDays7,
       activeDays30: activityTracking.activeDays30,
       totalRecordedActiveDays: activityTracking.totalRecordedActiveDays,
