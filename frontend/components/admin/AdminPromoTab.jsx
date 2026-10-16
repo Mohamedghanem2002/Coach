@@ -348,7 +348,7 @@ export default function AdminPromoTab({ captains = [] }) {
   // Apply Presets
   const applyPreset = useCallback((presetKey) => {
     setActivePreset(presetKey);
-    const targetIds = FEATURE_PRESETS[presetKey] || FEATURE_PRESETS.default;
+    const targetIds = FEATURE_PRESETS[presetKey] || FEATURE_PRESETS.all || FEATURE_PRESETS.default;
     const targetSet = new Set(targetIds);
     setSelectedFeatureIds(targetSet);
 
@@ -356,6 +356,7 @@ export default function AdminPromoTab({ captains = [] }) {
     saveStoredPromoFeatures(matched);
 
     const labelMap = {
+      all: "جميع مميزات المنصة بالكامل",
       default: "الافتراضي الشامل (بما فيها Excel)",
       new_features: "أحدث الإضافات والإمكانيات",
       finance_admin: "الباقة الإدارية والمالية",
@@ -364,7 +365,7 @@ export default function AdminPromoTab({ captains = [] }) {
     showNotice(`تم تفعيل: ${labelMap[presetKey] || presetKey} بنجاح! ✅`, "success");
   }, [promoFeatures, showNotice]);
 
-  // Toggle single feature inclusion in promo card
+  // Toggle single feature inclusion in promo card (Unlimited features supported)
   const toggleFeatureSelection = useCallback((feat) => {
     const id = feat.id || feat.title;
     setSelectedFeatureIds((prev) => {
@@ -376,16 +377,32 @@ export default function AdminPromoTab({ captains = [] }) {
         }
         next.delete(id);
       } else {
-        if (next.size >= 8) {
-          showNotice("الحد الأقصى لكارت الترويج 8 مميزات للحفاظ على فخامة وتناسق التصميم", "warning");
-          return prev;
-        }
+        // No limit! User can add all features
         next.add(id);
       }
       const updatedActive = promoFeatures.filter((f) => next.has(f.id || f.title));
       saveStoredPromoFeatures(updatedActive);
       return next;
     });
+  }, [promoFeatures, showNotice]);
+
+  // Select all features at once
+  const selectAllFeatures = useCallback(() => {
+    const allIds = new Set(promoFeatures.map((f) => f.id || f.title));
+    setSelectedFeatureIds(allIds);
+    saveStoredPromoFeatures(promoFeatures);
+    setActivePreset("all");
+    showNotice(`تم تحديد جميع المميزات (${promoFeatures.length}) للكارت الترويجي! ✨`, "success");
+  }, [promoFeatures, showNotice]);
+
+  // Deselect all except 1
+  const deselectAllFeatures = useCallback(() => {
+    const firstId = promoFeatures[0]?.id || promoFeatures[0]?.title;
+    const minSet = firstId ? new Set([firstId]) : new Set();
+    setSelectedFeatureIds(minSet);
+    const updated = promoFeatures.filter((f) => minSet.has(f.id || f.title));
+    saveStoredPromoFeatures(updated);
+    showNotice("تم إلغاء تحديد المميزات (تم الإبقاء على ميزة واحدة)", "warning");
   }, [promoFeatures, showNotice]);
 
   // Add custom feature
@@ -411,9 +428,7 @@ export default function AdminPromoTab({ captains = [] }) {
 
     setSelectedFeatureIds((prev) => {
       const next = new Set(prev);
-      if (next.size < 8) {
-        next.add(customId);
-      }
+      next.add(customId);
       const updatedActive = updatedFeatures.filter((f) => next.has(f.id || f.title));
       saveStoredPromoFeatures(updatedActive);
       return next;
@@ -857,20 +872,29 @@ export default function AdminPromoTab({ captains = [] }) {
                     مولد ومُنسق مميزات الكارت الترويجي
                   </h3>
                   <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-black ${
-                    selectedFeatureIds.size === 8
+                    selectedFeatureIds.size === promoFeatures.length
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                      : "bg-blue-50 text-blue-700 border border-blue-200"
                   }`}>
-                    {selectedFeatureIds.size} من 8 للكارت
+                    {selectedFeatureIds.size} من {promoFeatures.length} ميزة مفعّلة للكارت
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  فحص تلقائي لاكتشاف أي ميزة جديدة أضيفت للنظام (مثل تصدير Excel) وإدراجها بالكارت
+                  يمكنك إضافة كل المميزات معاً بدون حد أقصى وسيتكيف الكارت تلقائياً مع حجم الخطوط والمربعات
                 </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                <button
+                  type="button"
+                  onClick={selectedFeatureIds.size === promoFeatures.length ? deselectAllFeatures : selectAllFeatures}
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                  title={selectedFeatureIds.size === promoFeatures.length ? "إلغاء تحديد الكل" : "تحديد كل المميزات للكارت"}
+                >
+                  <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{selectedFeatureIds.size === promoFeatures.length ? "إلغاء الكل" : "تحديد كل المميزات"}</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleAutoDetect}
@@ -905,7 +929,8 @@ export default function AdminPromoTab({ captains = [] }) {
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
               <span className="text-slate-400 font-black shrink-0 text-[10px]">باقات جاهزة:</span>
               {[
-                { id: "default", label: "🌟 الافتراضي (مع Excel)" },
+                { id: "all", label: "✨ كل المميزات معاً" },
+                { id: "default", label: "🌟 الافتراضي المتكامل" },
                 { id: "new_features", label: "🚀 أحدث الإمكانيات" },
                 { id: "finance_admin", label: "💼 الإدارية والمالية" },
                 { id: "training", label: "🥋 التدريب والبطولات" },

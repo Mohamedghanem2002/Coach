@@ -92,21 +92,24 @@ export const PLATFORM_CAPABILITIES_REGISTRY = [
   },
 ];
 
-// Features list shown on the card by default (Includes newly added Excel Export)
-export const SYSTEM_FEATURES = [
-  PLATFORM_CAPABILITIES_REGISTRY[0], // excel_export (NEW!)
-  PLATFORM_CAPABILITIES_REGISTRY[1], // players
-  PLATFORM_CAPABILITIES_REGISTRY[2], // branches
-  PLATFORM_CAPABILITIES_REGISTRY[3], // events
-  PLATFORM_CAPABILITIES_REGISTRY[4], // finances
-  PLATFORM_CAPABILITIES_REGISTRY[5], // birthdays
-  PLATFORM_CAPABILITIES_REGISTRY[7], // reports
-  PLATFORM_CAPABILITIES_REGISTRY[8], // security
-];
+// Features list shown on the card by default (Includes all platform capabilities)
+export const SYSTEM_FEATURES = [...PLATFORM_CAPABILITIES_REGISTRY];
 
 export const PROMO_FEATURES_STORAGE_KEY = "coachmaster_promo_card_features_v2";
 
 export const FEATURE_PRESETS = {
+  all: [
+    "excel_export",
+    "players",
+    "branches",
+    "events",
+    "finances",
+    "birthdays",
+    "whatsapp_attendance",
+    "reports",
+    "security",
+    "mobile_fast",
+  ],
   default: [
     "excel_export",
     "players",
@@ -114,8 +117,10 @@ export const FEATURE_PRESETS = {
     "events",
     "finances",
     "birthdays",
+    "whatsapp_attendance",
     "reports",
     "security",
+    "mobile_fast",
   ],
   new_features: [
     "excel_export",
@@ -205,16 +210,17 @@ export function autoDetectPlatformFeatures(currentFeatures = []) {
     }
   });
 
-  // Build the optimal 8 features (placing new features like excel_export in high visibility)
-  const defaultIds = FEATURE_PRESETS.default;
-  const recommendedFeatures = defaultIds
-    .map((id) => combinedAll.find((f) => f.id === id))
-    .filter(Boolean);
+  // Build the recommended features (all registered and custom capabilities)
+  const allIds = FEATURE_PRESETS.all;
+  const recommendedFeatures = [
+    ...allIds.map((id) => combinedAll.find((f) => f.id === id)).filter(Boolean),
+    ...existingCustom,
+  ];
 
   return {
     detectedFeatures: combinedAll,
     addedFeatures,
-    recommendedFeatures: recommendedFeatures.slice(0, 8),
+    recommendedFeatures,
   };
 }
 
@@ -267,7 +273,7 @@ export async function generatePromoCardCanvas({
   const activeFeatures = (features && features.length > 0)
     ? features
     : (getStoredPromoFeatures() || SYSTEM_FEATURES);
-  const featureList = activeFeatures.slice(0, 8);
+  const featureList = activeFeatures;
   const isMultiCaptains = isAllSubscribers || (Array.isArray(captains) && captains.length > 0);
   const captainsList = Array.isArray(captains) && captains.length > 0 ? captains : [];
 
@@ -519,8 +525,9 @@ export async function generatePromoCardCanvas({
     // Calculate features grid height to absorb the exact remaining budget to 100% fill the card!
     const remainingForFeatGrid = totalContentBudget - fixedElementsH;
     const featGridH = Math.max(260, remainingForFeatGrid);
-    const featGapY = numRows <= 2 ? 12 : numRows <= 4 ? 9 : 7;
-    const featItemH = (featGridH - 3 * featGapY) / 4;
+    const featRows = Math.max(1, Math.ceil(featureList.length / 2));
+    const featGapY = featRows <= 4 ? (numRows <= 2 ? 12 : 9) : (featRows <= 6 ? 7 : 5);
+    const featItemH = (featGridH - (featRows - 1) * featGapY) / featRows;
 
     // ── SECTION 1: SUBSCRIBERS HEADER & GRID ──────────────────────────────
     const subHeaderY = startContentY;
@@ -963,7 +970,6 @@ export async function generatePromoCardCanvas({
     ctx.restore();
 
     const gapX = 16;
-    const gapY = 12;
     const colW = (W - 100 - gapX) / 2;
     const ctaH = 120;
     const sectionGap2 = 20;
@@ -971,7 +977,9 @@ export async function generatePromoCardCanvas({
     // Remaining height exactly calculated for features grid
     const featGridY = featSecY + featTitleH + 8;
     const featGridH = (footerTopY - sectionGap2 - ctaH) - featGridY;
-    const itemH = (featGridH - 3 * gapY) / 4; // ~130px per feature card!
+    const featRows = Math.max(1, Math.ceil(featureList.length / 2));
+    const gapY = featRows <= 4 ? 12 : featRows <= 5 ? 10 : featRows <= 6 ? 8 : 6;
+    const itemH = (featGridH - (featRows - 1) * gapY) / featRows;
 
     featureList.forEach((feat, i) => {
       const col = i % 2;
@@ -979,15 +987,17 @@ export async function generatePromoCardCanvas({
       const itemX = col === 0 ? 50 + colW + gapX : 50;
       const itemY = featGridY + row * (itemH + gapY);
 
+      const fCornerR = itemH >= 110 ? 20 : itemH >= 85 ? 16 : itemH >= 65 ? 12 : 10;
       ctx.save();
-      roundRect(ctx, itemX, itemY, colW, itemH, 20);
+      roundRect(ctx, itemX, itemY, colW, itemH, fCornerR);
       ctx.fillStyle = pal.cardBg; ctx.fill();
       ctx.strokeStyle = pal.cardBorder; ctx.lineWidth = 1.3; ctx.stroke();
       ctx.restore();
 
       // Micro accent bar
+      const barW = itemH >= 90 ? 5.5 : 4;
       ctx.save();
-      roundRect(ctx, itemX + colW - 5.5, itemY, 5.5, itemH, 20);
+      roundRect(ctx, itemX + colW - barW, itemY, barW, itemH, fCornerR);
       ctx.fillStyle = i % 3 === 0 ? pal.accent : i % 3 === 1 ? pal.gold : pal.accent2;
       ctx.fill();
       ctx.restore();
@@ -998,15 +1008,15 @@ export async function generatePromoCardCanvas({
       const isNew = Boolean(feat.isNew || feat.badge);
       const badgeText = typeof feat === "object" && feat.badge ? feat.badge : (isNew ? "جديد ⚡" : null);
 
-      if (badgeText) {
+      if (badgeText && itemH >= 60) {
         ctx.save();
-        ctx.font = "900 11.5px 'Cairo', 'Arial', sans-serif";
+        ctx.font = itemH >= 90 ? "900 11.5px 'Cairo', sans-serif" : "900 9.5px 'Cairo', sans-serif";
         const bTextW = ctx.measureText(badgeText).width;
-        const bW = bTextW + 16;
-        const bH = 22;
-        const bx = itemX + 14;
-        const by = itemY + 12;
-        roundRect(ctx, bx, by, bW, bH, 11);
+        const bW = bTextW + (itemH >= 90 ? 16 : 12);
+        const bH = itemH >= 90 ? 22 : 18;
+        const bx = itemX + (itemH >= 90 ? 14 : 10);
+        const by = itemY + (itemH >= 90 ? 12 : 8);
+        roundRect(ctx, bx, by, bW, bH, itemH >= 90 ? 11 : 9);
         ctx.fillStyle = "rgba(239, 68, 68, 0.22)";
         ctx.fill();
         ctx.strokeStyle = pal.accent;
@@ -1021,36 +1031,104 @@ export async function generatePromoCardCanvas({
         ctx.restore();
       }
 
-      // Large Icon
-      ctx.save();
-      ctx.font = "34px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(icon, itemX + colW - 32, itemY + itemH * 0.38);
-      ctx.restore();
-
-      const textRightX = itemX + colW - 68;
-      const maxTextW = colW - 80;
-
-      // Title
-      ctx.save();
-      ctx.font = "900 22px 'Cairo', 'Arial', sans-serif";
-      ctx.textAlign = "right"; ctx.direction = "rtl";
-      ctx.fillStyle = pal.textPrimary;
-      ctx.fillText(title, textRightX, itemY + itemH * 0.36, maxTextW);
-      ctx.restore();
-
-      // Description subline
-      if (desc) {
+      // Adaptive text & icon rendering for single academy features
+      if (itemH >= 110) {
+        // High luxury layout (up to 4 rows / 8 features)
         ctx.save();
-        ctx.font = "700 15px 'Cairo', 'Arial', sans-serif";
-        ctx.textAlign = "right"; ctx.direction = "rtl";
-        ctx.fillStyle = pal.textSecondary;
-        ctx.fillText(`↳ ${desc}`, textRightX, itemY + itemH * 0.74, maxTextW);
+        ctx.font = "34px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(icon, itemX + colW - 32, itemY + itemH * 0.38);
         ctx.restore();
+
+        const textRightX = itemX + colW - 68;
+        const maxTextW = colW - 80;
+
+        ctx.save();
+        ctx.font = "900 22px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(title, textRightX, itemY + itemH * 0.36, maxTextW);
+        ctx.restore();
+
+        if (desc) {
+          ctx.save();
+          ctx.font = "700 15px 'Cairo', 'Arial', sans-serif";
+          ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textSecondary;
+          ctx.fillText(`↳ ${desc}`, textRightX, itemY + itemH * 0.74, maxTextW);
+          ctx.restore();
+        }
+      } else if (itemH >= 85) {
+        // Generous layout (5 rows / 10 features)
+        ctx.save();
+        ctx.font = "28px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(icon, itemX + colW - 28, itemY + itemH * 0.38);
+        ctx.restore();
+
+        const textRightX = itemX + colW - 60;
+        const maxTextW = colW - 72;
+
+        ctx.save();
+        ctx.font = "900 18.5px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(title, textRightX, itemY + itemH * 0.36, maxTextW);
+        ctx.restore();
+
+        if (desc) {
+          ctx.save();
+          ctx.font = "700 13px 'Cairo', 'Arial', sans-serif";
+          ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textSecondary;
+          ctx.fillText(`↳ ${desc}`, textRightX, itemY + itemH * 0.75, maxTextW);
+          ctx.restore();
+        }
+      } else if (itemH >= 65) {
+        // Standard layout (6 rows / 12 features)
+        ctx.save();
+        ctx.font = "23px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(icon, itemX + colW - 24, itemY + itemH * 0.40);
+        ctx.restore();
+
+        const textRightX = itemX + colW - 52;
+        const maxTextW = colW - 62;
+
+        ctx.save();
+        ctx.font = "900 16px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(title, textRightX, itemY + itemH * 0.37, maxTextW);
+        ctx.restore();
+
+        if (desc) {
+          ctx.save();
+          ctx.font = "600 11.5px 'Cairo', 'Arial', sans-serif";
+          ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textSecondary;
+          ctx.fillText(`↳ ${desc}`, textRightX, itemY + itemH * 0.77, maxTextW);
+          ctx.restore();
+        }
+      } else {
+        // Compact layout (7+ rows / 14+ features)
+        ctx.save();
+        ctx.font = "19px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(icon, itemX + colW - 20, itemY + itemH * 0.42);
+        ctx.restore();
+
+        const textRightX = itemX + colW - 44;
+        const maxTextW = colW - 52;
+
+        ctx.save();
+        ctx.font = "900 14px 'Cairo', 'Arial', sans-serif";
+        ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textPrimary;
+        ctx.fillText(title, textRightX, itemY + itemH * 0.38, maxTextW);
+        ctx.restore();
+
+        if (desc) {
+          ctx.save();
+          ctx.font = "600 10px 'Cairo', 'Arial', sans-serif";
+          ctx.textAlign = "right"; ctx.direction = "rtl"; ctx.fillStyle = pal.textSecondary;
+          ctx.fillText(`↳ ${desc}`, textRightX, itemY + itemH * 0.78, maxTextW);
+          ctx.restore();
+        }
       }
     });
 
     // ── SECTION 3: CTA BANNER ───────────────────────────────────────────────
-    const ctaY = featGridY + 4 * (itemH + gapY) + sectionGap2;
+    const ctaY = featGridY + featRows * (itemH + gapY) + sectionGap2;
 
     ctx.save();
     const ctaGrad = ctx.createLinearGradient(50, ctaY, W - 50, ctaY + ctaH);
