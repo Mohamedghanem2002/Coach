@@ -6,57 +6,217 @@
  * 2. Dedicated Single Academy Card with full features guide.
  */
 
-// Features list shown on the card
-export const SYSTEM_FEATURES = [
+// ─── Platform Capabilities Registry (All detectable system features) ────────
+export const PLATFORM_CAPABILITIES_REGISTRY = [
   {
+    id: "excel_export",
+    icon: "📊",
+    text: "تصدير كشوفات Excel متكاملة",
+    title: "تصدير كشوفات Excel متكاملة",
+    desc: "تصدير بيانات اللاعبين، الحضور، والفعاليات بملفات Excel منسقة",
+    isNew: true,
+    badge: "جديد ⚡",
+    category: "tools",
+  },
+  {
+    id: "players",
     icon: "👥",
     text: "إدارة اللاعبين والأبطال",
     title: "إدارة اللاعبين والأبطال",
     desc: "بيانات كاملة، كروت بروفايل وترحيب لكل بطل",
+    category: "core",
   },
   {
+    id: "branches",
     icon: "🏟️",
-    text: "إدارة الصالات والفروع",
-    title: "إدارة الصالات والفروع",
+    text: "إدارة الصالات ومواعيد الحصص",
+    title: "إدارة الصالات ومواعيد الحصص",
     desc: "تنظيم الحصص بنظام 12 ساعة وتحضير ذكي",
+    category: "core",
   },
   {
+    id: "events",
     icon: "🏆",
-    text: "الاختبارات والبطولات",
-    title: "الاختبارات والبطولات",
-    desc: "تنظيم الفعاليات، المعسكرات وكشوفات المشاركة",
+    text: "الاختبارات والبطولات والمعسكرات",
+    title: "الاختبارات والبطولات والمعسكرات",
+    desc: "تنظيم الفعاليات، متابعة الرسوم وكشوفات المشاركة",
+    category: "core",
   },
   {
+    id: "finances",
     icon: "💳",
     text: "متابعة الاشتراكات والمدفوعات",
     title: "متابعة الاشتراكات والمدفوعات",
     desc: "تتبع سداد الرسوم وتسليم البدل والأدوات",
+    category: "finance",
   },
   {
+    id: "birthdays",
     icon: "🎂",
     text: "كروت تهنئة أعياد الميلاد",
     title: "كروت تهنئة أعياد الميلاد",
     desc: "تنبيه يومي وتوليد كروت واتساب احترافية فوراً",
+    category: "marketing",
   },
   {
-    icon: "📊",
+    id: "whatsapp_attendance",
+    icon: "💬",
+    text: "تقارير حضور للواتساب",
+    title: "تقارير حضور للواتساب",
+    desc: "إرسال كشوفات الحضور فورياً لأولياء الأمور",
+    category: "marketing",
+  },
+  {
+    id: "reports",
+    icon: "📈",
     text: "تقارير ولوحة تحكم ذكية",
     title: "تقارير ولوحة تحكم ذكية",
     desc: "مؤشرات حضور يومية وإحصائيات مالية دقيقة",
+    category: "analytics",
   },
   {
-    icon: "📱",
-    text: "يعمل على الجوال والكمبيوتر",
-    title: "يعمل على الجوال والكمبيوتر",
-    desc: "واجهة فائقة السرعة وبدون تحميل أي تطبيق",
-  },
-  {
+    id: "security",
     icon: "🔒",
     text: "نظام آمن وموثوق",
     title: "نظام آمن وموثوق",
     desc: "نسخ احتياطي سحابي فوري وحماية تامة للبيانات",
+    category: "security",
+  },
+  {
+    id: "mobile_fast",
+    icon: "📱",
+    text: "يعمل على الجوال والكمبيوتر",
+    title: "يعمل على الجوال والكمبيوتر",
+    desc: "واجهة فائقة السرعة وبدون تحميل أي تطبيق",
+    category: "platform",
   },
 ];
+
+// Features list shown on the card by default (Includes newly added Excel Export)
+export const SYSTEM_FEATURES = [
+  PLATFORM_CAPABILITIES_REGISTRY[0], // excel_export (NEW!)
+  PLATFORM_CAPABILITIES_REGISTRY[1], // players
+  PLATFORM_CAPABILITIES_REGISTRY[2], // branches
+  PLATFORM_CAPABILITIES_REGISTRY[3], // events
+  PLATFORM_CAPABILITIES_REGISTRY[4], // finances
+  PLATFORM_CAPABILITIES_REGISTRY[5], // birthdays
+  PLATFORM_CAPABILITIES_REGISTRY[7], // reports
+  PLATFORM_CAPABILITIES_REGISTRY[8], // security
+];
+
+export const PROMO_FEATURES_STORAGE_KEY = "coachmaster_promo_card_features_v2";
+
+export const FEATURE_PRESETS = {
+  default: [
+    "excel_export",
+    "players",
+    "branches",
+    "events",
+    "finances",
+    "birthdays",
+    "reports",
+    "security",
+  ],
+  new_features: [
+    "excel_export",
+    "birthdays",
+    "whatsapp_attendance",
+    "events",
+    "players",
+    "branches",
+    "finances",
+    "reports",
+  ],
+  finance_admin: [
+    "excel_export",
+    "finances",
+    "reports",
+    "security",
+    "players",
+    "branches",
+    "mobile_fast",
+    "events",
+  ],
+  training: [
+    "players",
+    "branches",
+    "events",
+    "birthdays",
+    "whatsapp_attendance",
+    "excel_export",
+    "finances",
+    "reports",
+  ],
+};
+
+export function getStoredPromoFeatures() {
+  if (typeof window === "undefined") return SYSTEM_FEATURES;
+  try {
+    const raw = localStorage.getItem(PROMO_FEATURES_STORAGE_KEY);
+    if (!raw) return SYSTEM_FEATURES;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+    return SYSTEM_FEATURES;
+  } catch (err) {
+    console.warn("Failed to load promo features from storage:", err);
+    return SYSTEM_FEATURES;
+  }
+}
+
+export function saveStoredPromoFeatures(features) {
+  if (typeof window === "undefined" || !Array.isArray(features)) return;
+  try {
+    localStorage.setItem(PROMO_FEATURES_STORAGE_KEY, JSON.stringify(features));
+  } catch (err) {
+    console.warn("Failed to save promo features:", err);
+  }
+}
+
+export function resetPromoFeatures() {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.removeItem(PROMO_FEATURES_STORAGE_KEY);
+    } catch (_) {}
+  }
+  return SYSTEM_FEATURES;
+}
+
+/**
+ * Auto-detect platform capabilities and identify added/removed features.
+ * Automatically brings in newly added features like Excel export.
+ */
+export function autoDetectPlatformFeatures(currentFeatures = []) {
+  const allRegistry = [...PLATFORM_CAPABILITIES_REGISTRY];
+  const existingCustom = Array.isArray(currentFeatures)
+    ? currentFeatures.filter((f) => f && f.isCustom)
+    : [];
+
+  const combinedAll = [...allRegistry, ...existingCustom];
+  const currentIds = new Set(
+    Array.isArray(currentFeatures) ? currentFeatures.map((f) => f.id || f.title) : []
+  );
+
+  const addedFeatures = [];
+  allRegistry.forEach((reg) => {
+    if (!currentIds.has(reg.id)) {
+      addedFeatures.push(reg);
+    }
+  });
+
+  // Build the optimal 8 features (placing new features like excel_export in high visibility)
+  const defaultIds = FEATURE_PRESETS.default;
+  const recommendedFeatures = defaultIds
+    .map((id) => combinedAll.find((f) => f.id === id))
+    .filter(Boolean);
+
+  return {
+    detectedFeatures: combinedAll,
+    addedFeatures,
+    recommendedFeatures: recommendedFeatures.slice(0, 8),
+  };
+}
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -104,7 +264,10 @@ export async function generatePromoCardCanvas({
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  const featureList = (features || SYSTEM_FEATURES).slice(0, 8);
+  const activeFeatures = (features && features.length > 0)
+    ? features
+    : (getStoredPromoFeatures() || SYSTEM_FEATURES);
+  const featureList = activeFeatures.slice(0, 8);
   const isMultiCaptains = isAllSubscribers || (Array.isArray(captains) && captains.length > 0);
   const captainsList = Array.isArray(captains) && captains.length > 0 ? captains : [];
 
@@ -551,6 +714,31 @@ export async function generatePromoCardCanvas({
       const icon = typeof feat === "object" ? feat.icon : feat.split(" ")[0];
       const title = typeof feat === "object" ? (feat.title || feat.text) : feat.split(" ").slice(1).join(" ");
       const desc = typeof feat === "object" && feat.desc ? feat.desc : "";
+      const isNew = Boolean(feat.isNew || feat.badge);
+      const badgeText = typeof feat === "object" && feat.badge ? feat.badge : (isNew ? "جديد ⚡" : null);
+
+      if (badgeText && featItemH >= 65) {
+        ctx.save();
+        ctx.font = featItemH >= 90 ? "900 11px 'Cairo', sans-serif" : "900 9.5px 'Cairo', sans-serif";
+        const bTextW = ctx.measureText(badgeText).width;
+        const bW = bTextW + 12;
+        const bH = featItemH >= 90 ? 20 : 16;
+        const bx = fx + 10;
+        const by = fy + 10;
+        roundRect(ctx, bx, by, bW, bH, 8);
+        ctx.fillStyle = "rgba(239, 68, 68, 0.22)";
+        ctx.fill();
+        ctx.strokeStyle = pal.accent;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = pal.gold;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.direction = "rtl";
+        ctx.fillText(badgeText, bx + bW / 2, by + bH / 2 + 1);
+        ctx.restore();
+      }
 
       // Adaptive text & icon rendering for features
       if (featItemH >= 115) {
@@ -807,6 +995,31 @@ export async function generatePromoCardCanvas({
       const icon = typeof feat === "object" ? feat.icon : feat.split(" ")[0];
       const title = typeof feat === "object" ? (feat.title || feat.text) : feat.split(" ").slice(1).join(" ");
       const desc = typeof feat === "object" && feat.desc ? feat.desc : "";
+      const isNew = Boolean(feat.isNew || feat.badge);
+      const badgeText = typeof feat === "object" && feat.badge ? feat.badge : (isNew ? "جديد ⚡" : null);
+
+      if (badgeText) {
+        ctx.save();
+        ctx.font = "900 11.5px 'Cairo', 'Arial', sans-serif";
+        const bTextW = ctx.measureText(badgeText).width;
+        const bW = bTextW + 16;
+        const bH = 22;
+        const bx = itemX + 14;
+        const by = itemY + 12;
+        roundRect(ctx, bx, by, bW, bH, 11);
+        ctx.fillStyle = "rgba(239, 68, 68, 0.22)";
+        ctx.fill();
+        ctx.strokeStyle = pal.accent;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        ctx.fillStyle = pal.gold;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.direction = "rtl";
+        ctx.fillText(badgeText, bx + bW / 2, by + bH / 2 + 1);
+        ctx.restore();
+      }
 
       // Large Icon
       ctx.save();

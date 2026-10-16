@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   Sparkles,
   Download,
@@ -17,12 +17,22 @@ import {
   Loader2,
   FileImage,
   Filter,
+  Wand2,
+  Plus,
+  Trash2,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   generatePromoCardCanvas,
   downloadPromoCard,
   canvasToBlob,
   SYSTEM_FEATURES,
+  PLATFORM_CAPABILITIES_REGISTRY,
+  autoDetectPlatformFeatures,
+  getStoredPromoFeatures,
+  saveStoredPromoFeatures,
+  resetPromoFeatures,
+  FEATURE_PRESETS,
 } from "../../lib/promo-card-utils";
 
 // ─── Themes ──────────────────────────────────────────────────────────────────
@@ -33,7 +43,7 @@ const THEMES = [
 ];
 
 // ─── Single captain card row (for bulk list) ─────────────────────────────────
-function CaptainCardRow({ captain, theme, onGenerate }) {
+function CaptainCardRow({ captain, theme, features, onGenerate }) {
   const [state, setState] = useState("idle"); // idle | generating | done | error
   const [dataUrl, setDataUrl] = useState("");
   const canvasRef = useRef(null);
@@ -46,6 +56,7 @@ function CaptainCardRow({ captain, theme, onGenerate }) {
         captainName: captain.name || "كابتن الأكاديمية",
         academyName: captain.academyName || "الأكاديمية",
         theme,
+        features,
       });
       if (!canvas) throw new Error("no canvas");
       canvasRef.current = canvas;
@@ -55,7 +66,7 @@ function CaptainCardRow({ captain, theme, onGenerate }) {
     } catch {
       setState("error");
     }
-  }, [captain, theme, onGenerate]);
+  }, [captain, theme, features, onGenerate]);
 
   const handleDownload = () => {
     if (!canvasRef.current) return;
@@ -155,6 +166,24 @@ export default function AdminPromoTab({ captains = [] }) {
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0, running: false });
   const canvasRef = useRef(null);
 
+  // ─── Dynamic Feature Generator & Management State ─────────────────────────
+  const [promoFeatures, setPromoFeatures] = useState(() => getStoredPromoFeatures());
+  const [selectedFeatureIds, setSelectedFeatureIds] = useState(() => {
+    const initial = getStoredPromoFeatures();
+    return new Set(initial.map((f) => f.id || f.title));
+  });
+  const [detecting, setDetecting] = useState(false);
+  const [activePreset, setActivePreset] = useState("default");
+  const [showAddFeature, setShowAddFeature] = useState(false);
+  const [newFeatureIcon, setNewFeatureIcon] = useState("📊");
+  const [newFeatureTitle, setNewFeatureTitle] = useState("");
+  const [newFeatureDesc, setNewFeatureDesc] = useState("");
+
+  // Compute active features list chosen for the card (max 8)
+  const activePromoFeatures = useMemo(() => {
+    return promoFeatures.filter((f) => selectedFeatureIds.has(f.id || f.title));
+  }, [promoFeatures, selectedFeatureIds]);
+
   const selectedCaptain = captains.find((c) => (c.id || c._id) === selectedCaptainId) || null;
 
   const captainName =
@@ -218,7 +247,7 @@ export default function AdminPromoTab({ captains = [] }) {
     setTimeout(() => setNotice(null), 4000);
   }, []);
 
-  // Auto-generate card on initial mount or mode switch
+  // Auto-generate card on initial mount or mode/feature/theme switch
   const generateCard = useCallback(async () => {
     setGenerating(true);
     setDataUrl("");
@@ -238,18 +267,21 @@ export default function AdminPromoTab({ captains = [] }) {
           ],
           isAllSubscribers: true,
           theme,
+          features: activePromoFeatures,
         });
       } else if (mode === "select") {
         canvas = await generatePromoCardCanvas({
           captainName: selectedCaptain?.name || "كابتن الأكاديمية",
           academyName: selectedCaptain?.academyName || "أكاديمية الفنون القتالية",
           theme,
+          features: activePromoFeatures,
         });
       } else if (mode === "manual") {
         canvas = await generatePromoCardCanvas({
           captainName: manualName || "كابتن الأكاديمية",
           academyName: manualAcademy || "أكاديمية الفنون القتالية",
           theme,
+          features: activePromoFeatures,
         });
       }
 
@@ -263,7 +295,149 @@ export default function AdminPromoTab({ captains = [] }) {
     } finally {
       setGenerating(false);
     }
-  }, [mode, captains, excludedCaptainIds, theme, selectedCaptain, manualName, manualAcademy, showNotice]);
+  }, [mode, captains, excludedCaptainIds, theme, selectedCaptain, manualName, manualAcademy, showNotice, activePromoFeatures]);
+
+  // Live auto-update preview when features or settings change
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (!cancelled) {
+        generateCard();
+      }
+    }, 150);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [generateCard]);
+
+  // ─── Smart Auto-Detect & Generator Handler ─────────────────────────────────
+  const handleAutoDetect = useCallback(() => {
+    setDetecting(true);
+    try {
+      const result = autoDetectPlatformFeatures(promoFeatures);
+      setPromoFeatures(result.detectedFeatures);
+      const newSelected = new Set(result.recommendedFeatures.map((f) => f.id || f.title));
+      setSelectedFeatureIds(newSelected);
+      saveStoredPromoFeatures(result.recommendedFeatures);
+      setActivePreset("default");
+
+      if (result.addedFeatures.length > 0) {
+        const addedTitles = result.addedFeatures.map((f) => f.title).join("، ");
+        showNotice(`⚡ تم فحص المنصة واكتشاف ميزة جديدة: (${addedTitles}) وتم إدراجها بالكارت فوراً!`, "success");
+      } else {
+        showNotice("✨ تم فحص مميزات المنصة وتحديثها بنجاح (بما فيها تصدير Excel)!", "success");
+      }
+    } catch (err) {
+      console.error(err);
+      showNotice("حدث خطأ أثناء فحص وتوليد المميزات", "error");
+    } finally {
+      setDetecting(false);
+    }
+  }, [promoFeatures, showNotice]);
+
+  // Reset to default
+  const handleResetDefault = useCallback(() => {
+    const def = resetPromoFeatures();
+    setPromoFeatures(def);
+    setSelectedFeatureIds(new Set(def.map((f) => f.id || f.title)));
+    setActivePreset("default");
+    showNotice("تمت استعادة المميزات الافتراضية للكارت (بما فيها تصدير Excel) 🔄", "success");
+  }, [showNotice]);
+
+  // Apply Presets
+  const applyPreset = useCallback((presetKey) => {
+    setActivePreset(presetKey);
+    const targetIds = FEATURE_PRESETS[presetKey] || FEATURE_PRESETS.default;
+    const targetSet = new Set(targetIds);
+    setSelectedFeatureIds(targetSet);
+
+    const matched = promoFeatures.filter((f) => targetSet.has(f.id || f.title));
+    saveStoredPromoFeatures(matched);
+
+    const labelMap = {
+      default: "الافتراضي الشامل (بما فيها Excel)",
+      new_features: "أحدث الإضافات والإمكانيات",
+      finance_admin: "الباقة الإدارية والمالية",
+      training: "الباقة الفنية والبطولات",
+    };
+    showNotice(`تم تفعيل: ${labelMap[presetKey] || presetKey} بنجاح! ✅`, "success");
+  }, [promoFeatures, showNotice]);
+
+  // Toggle single feature inclusion in promo card
+  const toggleFeatureSelection = useCallback((feat) => {
+    const id = feat.id || feat.title;
+    setSelectedFeatureIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        if (next.size <= 1) {
+          showNotice("يجب الإبقاء على ميزة واحدة على الأقل داخل الكارت", "error");
+          return prev;
+        }
+        next.delete(id);
+      } else {
+        if (next.size >= 8) {
+          showNotice("الحد الأقصى لكارت الترويج 8 مميزات للحفاظ على فخامة وتناسق التصميم", "warning");
+          return prev;
+        }
+        next.add(id);
+      }
+      const updatedActive = promoFeatures.filter((f) => next.has(f.id || f.title));
+      saveStoredPromoFeatures(updatedActive);
+      return next;
+    });
+  }, [promoFeatures, showNotice]);
+
+  // Add custom feature
+  const handleAddCustomFeature = (e) => {
+    e.preventDefault();
+    if (!newFeatureTitle.trim()) {
+      showNotice("يرجى كتابة عنوان الميزة", "error");
+      return;
+    }
+    const customId = `custom_${Date.now()}`;
+    const newFeat = {
+      id: customId,
+      icon: newFeatureIcon.trim() || "⭐",
+      text: newFeatureTitle.trim(),
+      title: newFeatureTitle.trim(),
+      desc: newFeatureDesc.trim() || "ميزة حصرية للمدربين والأكاديميات",
+      isCustom: true,
+      isNew: true,
+      badge: "جديد ⚡",
+    };
+    const updatedFeatures = [newFeat, ...promoFeatures];
+    setPromoFeatures(updatedFeatures);
+
+    setSelectedFeatureIds((prev) => {
+      const next = new Set(prev);
+      if (next.size < 8) {
+        next.add(customId);
+      }
+      const updatedActive = updatedFeatures.filter((f) => next.has(f.id || f.title));
+      saveStoredPromoFeatures(updatedActive);
+      return next;
+    });
+
+    setNewFeatureTitle("");
+    setNewFeatureDesc("");
+    setShowAddFeature(false);
+    showNotice(`تمت إضافة الميزة (${newFeat.title}) وإدراجها بالكارت! 🎉`, "success");
+  };
+
+  // Remove custom feature
+  const handleRemoveCustomFeature = (e, id) => {
+    e.stopPropagation();
+    const updated = promoFeatures.filter((f) => (f.id || f.title) !== id);
+    setPromoFeatures(updated);
+    setSelectedFeatureIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      saveStoredPromoFeatures(updated.filter((f) => next.has(f.id || f.title)));
+      return next;
+    });
+    showNotice("تم حذف الميزة بنجاح", "success");
+  };
 
   // Bulk download as separate cards
   const generateBulk = async () => {
@@ -278,6 +452,7 @@ export default function AdminPromoTab({ captains = [] }) {
           captainName: c.name || "كابتن الأكاديمية",
           academyName: c.academyName || "الأكاديمية",
           theme,
+          features: activePromoFeatures,
         });
         if (canvas) {
           await new Promise((r) => setTimeout(r, 300));
@@ -670,24 +845,208 @@ export default function AdminPromoTab({ captains = [] }) {
             </div>
           </div>
 
-          {/* Features badge overview with subtext */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-2">
-            <h3 className="text-xs font-black text-slate-700 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-emerald-500" />
-              مميزات تبرز داخل الكارت الترويجي
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {SYSTEM_FEATURES.map((feat, i) => (
-                <div key={i} className="flex flex-col gap-0.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100/90 text-right">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base leading-none">{feat.icon}</span>
-                    <span className="text-xs font-bold text-slate-800 leading-tight">{feat.title || feat.text}</span>
-                  </div>
-                  {feat.desc && (
-                    <p className="text-[10.5px] text-slate-500 font-medium mr-6 leading-tight">{feat.desc}</p>
-                  )}
+          {/* ── Dynamic Feature Generator & Manager ─────────────────── */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-red-50 text-red-600">
+                    <Wand2 className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-xs font-black text-slate-800">
+                    مولد ومُنسق مميزات الكارت الترويجي
+                  </h3>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-black ${
+                    selectedFeatureIds.size === 8
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                  }`}>
+                    {selectedFeatureIds.size} من 8 للكارت
+                  </span>
                 </div>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  فحص تلقائي لاكتشاف أي ميزة جديدة أضيفت للنظام (مثل تصدير Excel) وإدراجها بالكارت
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleAutoDetect}
+                  disabled={detecting}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 hover:opacity-95 text-white text-[11px] font-black shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition disabled:opacity-50"
+                  title="فحص المنصة واكتشاف وتوليد المميزات الجديدة تلقائياً"
+                >
+                  <Wand2 className={`w-3.5 h-3.5 ${detecting ? "animate-spin" : "animate-pulse"}`} />
+                  <span>{detecting ? "جارٍ الفحص..." : "⚡ توليد واكتشاف المميزات"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddFeature((v) => !v)}
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black flex items-center gap-1 cursor-pointer transition"
+                  title="إضافة ميزة مخصصة يدوياً"
+                >
+                  <Plus className="w-3.5 h-3.5 text-red-500" />
+                  <span>إضافة</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetDefault}
+                  className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer transition"
+                  title="استعادة المميزات الافتراضية"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Presets Bar */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
+              <span className="text-slate-400 font-black shrink-0 text-[10px]">باقات جاهزة:</span>
+              {[
+                { id: "default", label: "🌟 الافتراضي (مع Excel)" },
+                { id: "new_features", label: "🚀 أحدث الإمكانيات" },
+                { id: "finance_admin", label: "💼 الإدارية والمالية" },
+                { id: "training", label: "🥋 التدريب والبطولات" },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => applyPreset(p.id)}
+                  className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition cursor-pointer text-[10.5px] ${
+                    activePreset === p.id
+                      ? "bg-red-600 text-white shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                  }`}
+                >
+                  {p.label}
+                </button>
               ))}
+            </div>
+
+            {/* Add Custom Feature Form */}
+            {showAddFeature && (
+              <form onSubmit={handleAddCustomFeature} className="p-3 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5 text-red-600" />
+                    إضافة ميزة جديدة للكارت الترويجي
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddFeature(false)}
+                    className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                  <div className="sm:col-span-1">
+                    <label className="block text-[10px] font-bold text-slate-500 mb-0.5">الأيقونة (إيموجي)</label>
+                    <input
+                      type="text"
+                      value={newFeatureIcon}
+                      onChange={(e) => setNewFeatureIcon(e.target.value)}
+                      placeholder="📊 أو ⚡"
+                      className="w-full text-center px-2 py-1.5 rounded-lg border border-slate-200 text-sm bg-white outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="block text-[10px] font-bold text-slate-500 mb-0.5">عنوان الميزة</label>
+                    <input
+                      type="text"
+                      value={newFeatureTitle}
+                      onChange={(e) => setNewFeatureTitle(e.target.value)}
+                      placeholder="مثال: تصدير كشوفات Excel المتكاملة"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white outline-none focus:border-red-500"
+                      dir="rtl"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 mb-0.5">وصف الميزة (يظهر كسطر فرعي داخل الكارت)</label>
+                  <input
+                    type="text"
+                    value={newFeatureDesc}
+                    onChange={(e) => setNewFeatureDesc(e.target.value)}
+                    placeholder="مثال: تصدير بيانات اللاعبين والفعاليات بملفات Excel منسقة"
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white outline-none focus:border-red-500"
+                    dir="rtl"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-black text-xs transition cursor-pointer shadow-xs"
+                >
+                  ✓ حفظ وإدراج الميزة بالكارت الترويجي
+                </button>
+              </form>
+            )}
+
+            {/* Feature Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
+              {promoFeatures.map((feat) => {
+                const id = feat.id || feat.title;
+                const isSelected = selectedFeatureIds.has(id);
+                const isNew = Boolean(feat.isNew || feat.badge);
+                const activeIndex = isSelected
+                  ? activePromoFeatures.findIndex((f) => (f.id || f.title) === id) + 1
+                  : null;
+
+                return (
+                  <div
+                    key={id}
+                    onClick={() => toggleFeatureSelection(feat)}
+                    className={`relative flex flex-col gap-1 p-2.5 rounded-xl border transition cursor-pointer text-right select-none ${
+                      isSelected
+                        ? "bg-red-50/50 border-red-300 shadow-2xs"
+                        : "bg-slate-50/80 border-slate-200/80 opacity-60 hover:opacity-100 hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base leading-none shrink-0">{feat.icon}</span>
+                        <span className="text-xs font-black text-slate-800 truncate">
+                          {feat.title || feat.text}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isNew && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black animate-pulse">
+                            {feat.badge || "جديد ⚡"}
+                          </span>
+                        )}
+                        {isSelected ? (
+                          <span className="w-5 h-5 rounded-md bg-red-600 text-white font-black text-[10px] flex items-center justify-center">
+                            #{activeIndex}
+                          </span>
+                        ) : (
+                          <span className="w-5 h-5 rounded-md border border-slate-300 text-slate-400 text-[10px] flex items-center justify-center">
+                            —
+                          </span>
+                        )}
+                        {feat.isCustom && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleRemoveCustomFeature(e, id)}
+                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                            title="حذف الميزة"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {feat.desc && (
+                      <p className="text-[10px] text-slate-500 font-medium leading-tight mr-6">
+                        {feat.desc}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -772,6 +1131,7 @@ export default function AdminPromoTab({ captains = [] }) {
                       key={c.id || c._id}
                       captain={c}
                       theme={theme}
+                      features={activePromoFeatures}
                     />
                   ))}
                 </div>
