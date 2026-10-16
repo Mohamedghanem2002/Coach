@@ -161,6 +161,12 @@ export function getStoredPromoFeatures() {
     if (!raw) return SYSTEM_FEATURES;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
+      // Ensure all platform capabilities are present in the features pool
+      const existingIds = new Set(parsed.map((f) => f.id || f.title));
+      const missing = PLATFORM_CAPABILITIES_REGISTRY.filter((reg) => !existingIds.has(reg.id));
+      if (missing.length > 0) {
+        return [...parsed, ...missing];
+      }
       return parsed;
     }
     return SYSTEM_FEATURES;
@@ -844,8 +850,8 @@ export async function generatePromoCardCanvas({
     });
 
     // ── SECTION 3: PROMINENT CTA BANNER ─────────────────────────────────────
-    const ctaY = featGridY + 4 * (featItemH + featGapY) + sectionGap2;
-    const ctaH = ctaTargetH;
+    const ctaY = featGridY + featGridH + sectionGap2;
+    const ctaH = Math.min(ctaTargetH, footerTopY - ctaY);
 
     ctx.save();
     const ctaGrad = ctx.createLinearGradient(50, ctaY, W - 50, ctaY + ctaH);
@@ -971,14 +977,14 @@ export async function generatePromoCardCanvas({
 
     const gapX = 16;
     const colW = (W - 100 - gapX) / 2;
-    const ctaH = 120;
-    const sectionGap2 = 20;
+    const featRows = Math.max(1, Math.ceil(featureList.length / 2));
+    const ctaTargetH = featRows <= 4 ? 120 : featRows <= 5 ? 102 : 88;
+    const sectionGap2 = featRows <= 4 ? 20 : 14;
 
     // Remaining height exactly calculated for features grid
     const featGridY = featSecY + featTitleH + 8;
-    const featGridH = (footerTopY - sectionGap2 - ctaH) - featGridY;
-    const featRows = Math.max(1, Math.ceil(featureList.length / 2));
-    const gapY = featRows <= 4 ? 12 : featRows <= 5 ? 10 : featRows <= 6 ? 8 : 6;
+    const featGridH = (footerTopY - sectionGap2 - ctaTargetH) - featGridY;
+    const gapY = featRows <= 4 ? 12 : featRows <= 5 ? 9 : featRows <= 6 ? 7 : 5;
     const itemH = (featGridH - (featRows - 1) * gapY) / featRows;
 
     featureList.forEach((feat, i) => {
@@ -1128,7 +1134,8 @@ export async function generatePromoCardCanvas({
     });
 
     // ── SECTION 3: CTA BANNER ───────────────────────────────────────────────
-    const ctaY = featGridY + featRows * (itemH + gapY) + sectionGap2;
+    const ctaY = featGridY + featGridH + sectionGap2;
+    const ctaH = Math.min(ctaTargetH || 110, footerTopY - ctaY);
 
     ctx.save();
     const ctaGrad = ctx.createLinearGradient(50, ctaY, W - 50, ctaY + ctaH);
