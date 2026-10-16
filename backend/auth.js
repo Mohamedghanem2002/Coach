@@ -129,7 +129,7 @@ export const { handlers, auth } = NextAuth({
         users
           .updateOne(
             { _id: user._id },
-            { $set: { lastLoginAt: loginTime, lastActiveAt: loginTime } }
+            { $set: { lastLoginAt: loginTime, lastActiveAt: loginTime, lastSeenAt: loginTime } }
           )
           .catch(() => {});
 

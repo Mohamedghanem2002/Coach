@@ -80,6 +80,11 @@ export default function AdminCaptainsTab({
 
   const statusOptions = [
     { id: "all", label: "الكل", badge: summary.totalAccounts ?? summary.totalCaptains ?? null },
+    { id: "online", label: "متصل الآن 🟢", badge: summary.onlineCaptains ?? null },
+    { id: "frequent", label: "استخدام متكرر ⚡", badge: summary.frequentCaptains ?? null },
+    { id: "occasional", label: "استخدام دوري 🟢", badge: summary.occasionalCaptains ?? null },
+    { id: "low_activity", label: "نشاط منخفض 🟡", badge: summary.lowActivityCaptains ?? null },
+    { id: "insufficient_data", label: "بيانات غير كافية ⚪", badge: summary.insufficientDataCaptains ?? null },
     { id: "daily_active", label: "نشط شبه يومي ⚡", badge: summary.dailyActiveCaptains ?? null },
     { id: "weekly_active", label: "نشط أسبوعياً 🟢", badge: summary.weeklyActiveCaptains ?? null },
     { id: "dormant", label: "خامل / لم يبدأ 💤", badge: summary.dormantCaptains ?? null },
@@ -101,8 +106,13 @@ export default function AdminCaptainsTab({
 
   const sortOptions = [
     { id: "newest", label: "الأحدث انضماماً ⏱️" },
+    { id: "online_first", label: "المتصلون أولاً 🟢" },
+    { id: "active_days_desc", label: "الأكثر أيام نشاط (30 يوم) ⚡" },
+    { id: "active_days_asc", label: "الأقل أيام نشاط 💤" },
     { id: "activity_desc", label: "الأكثر تفاعلاً ونشاطاً ⚡" },
     { id: "activity_asc", label: "الخامل والأقل نشاطاً 💤" },
+    { id: "last_seen_desc", label: "آخر تواجد الأحدث 👁️" },
+    { id: "last_login_desc", label: "آخر تسجيل دخول 🔑" },
     { id: "expiring_soon", label: "الأقرب انتهاءً (تجديد) ⏳" },
     { id: "oldest", label: "الأقدم انضماماً 📅" },
     { id: "players_desc", label: "الأكثر لاعبين 👥" },
@@ -167,7 +177,7 @@ export default function AdminCaptainsTab({
         </div>
 
         {/* Integrated KPI Capsules Strip (Interactive Quick Filters) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5 mt-4 pt-4 border-t border-slate-200/70">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 mt-4 pt-4 border-t border-slate-200/70">
           {/* Total Captains */}
           <button
             type="button"
@@ -184,6 +194,31 @@ export default function AdminCaptainsTab({
             </div>
             <div className="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
               <Users className="w-4 h-4" />
+            </div>
+          </button>
+
+          {/* Online Captains Now (120s timeout) */}
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange("online")}
+            className={`flex items-center justify-between p-3 rounded-2xl border text-right transition cursor-pointer active:scale-95 ${
+              statusFilter === "online"
+                ? "bg-emerald-50 border-emerald-400 ring-2 ring-emerald-200"
+                : (summary.onlineCaptains ?? 0) > 0
+                ? "bg-emerald-50/60 border-emerald-200/80 hover:bg-emerald-100/60"
+                : "bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/70"
+            }`}
+            title="الكباتن المتصلون الآن بالمنصة (تحديث فوري خلال 120 ثانية)"
+          >
+            <div>
+              <span className="block text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                <span>متصل الآن</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </span>
+              <strong className="text-lg sm:text-xl font-black text-emerald-800">{summary.onlineCaptains ?? 0}</strong>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Activity className="w-4 h-4" />
             </div>
           </button>
 
@@ -515,39 +550,66 @@ export default function AdminCaptainsTab({
                     </div>
                   </div>
 
-                  {/* Activity Badge & Expiry Warning Banner (Mobile) */}
-                  <div className="flex flex-wrap items-center justify-between gap-1.5 p-2 rounded-xl bg-slate-50/90 border border-slate-100 text-xs">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      {c.isDailyActive ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black border border-emerald-300">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>نشط شبه يومي ⚡</span>
-                        </span>
-                      ) : c.isWeeklyActive ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-bold border border-blue-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                          <span>نشط أسبوعياً 🟢</span>
-                        </span>
-                      ) : c.isDormant ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-800 text-[10px] font-black border border-rose-200">
-                          <span>{c.activityLabel || "سجّل ولم يبدأ 💤"}</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
-                          <span>قليل التفاعل 🟡</span>
+                  {/* Activity Badge, Online Status, Active Days & Expiry Warning Banner (Mobile) */}
+                  <div className="p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 space-y-2 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                        {/* Online Status Pill (120s timeout) */}
+                        {c.isOnline ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black border border-emerald-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>متصل الآن 🟢</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                            <span>{c.lastSeenFormatted || "غير متصل"}</span>
+                          </span>
+                        )}
+
+                        {/* Activity Classification Badge */}
+                        {c.activityClassification === "frequent" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-800 text-[10px] font-black border border-purple-200">
+                            <Zap className="w-3 h-3 text-purple-600" />
+                            <span>استخدام متكرر ⚡</span>
+                          </span>
+                        ) : c.activityClassification === "occasional" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 text-[10px] font-bold border border-blue-200">
+                            <Activity className="w-3 h-3 text-blue-600" />
+                            <span>استخدام دوري 🟢</span>
+                          </span>
+                        ) : c.activityClassification === "low_activity" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
+                            <span>نشاط منخفض 🟡</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                            <span>بيانات غير كافية ⚪</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {c.isExpiringSoon && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black animate-pulse">
+                          <AlertTriangle className="w-3 h-3 text-amber-700" />
+                          <span>ينتهي خلال {c.daysRemaining === 0 ? "اليوم" : c.daysRemaining === 1 ? "يوم" : `${c.daysRemaining} أيام`} ⏳</span>
                         </span>
                       )}
-                      <span className="text-[10px] text-slate-500 font-bold truncate">
-                        {c.lastActiveFormatted ? `آخر تواجد: ${c.lastActiveFormatted}` : ""}
-                      </span>
                     </div>
 
-                    {c.isExpiringSoon && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black animate-pulse">
-                        <AlertTriangle className="w-3 h-3 text-amber-700" />
-                        <span>ينتهي خلال {c.daysRemaining === 0 ? "اليوم" : c.daysRemaining === 1 ? "يوم" : `${c.daysRemaining} أيام`} ⏳</span>
-                      </span>
-                    )}
+                    {/* Active Days Counts & Last Login Strip */}
+                    <div className="flex flex-wrap items-center justify-between gap-1 pt-1.5 border-t border-slate-200/60 text-[10px]">
+                      <div className="flex items-center gap-1 font-bold text-slate-700">
+                        <span className="text-slate-400">أيام النشاط:</span>
+                        <span className="text-emerald-700 font-black">{c.activeDays7 ?? 0}/7 أيام</span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-blue-700 font-black">{c.activeDays30 ?? 0}/30 يوماً</span>
+                      </div>
+                      <div className="text-slate-500 font-medium">
+                        <span className="text-slate-400">آخر دخول: </span>
+                        <span className="font-bold text-slate-700">{c.lastLoginFormatted || "لم يسجل بعد"}</span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Quick Contact & Date Strip */}
@@ -753,35 +815,60 @@ export default function AdminCaptainsTab({
                           )}
                         </td>
 
-                        {/* Activity & Platform Usage (Requirement 1) */}
+                        {/* Activity & Platform Usage (Requirement 1 & 2) */}
                         <td className="p-4">
-                          <div className="space-y-1">
-                            {c.isDailyActive ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-[11px] font-black shadow-2xs">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span>نشط شبه يومي ⚡</span>
-                              </span>
-                            ) : c.isWeeklyActive ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200/80 text-[11px] font-bold">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                <span>نشط أسبوعياً 🟢</span>
-                              </span>
-                            ) : c.isDormant ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200 text-[11px] font-black">
-                                <span>{c.activityLabel || "سجّل ولم يبدأ 💤"}</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
-                                <span>قليل التفاعل 🟡</span>
-                              </span>
-                            )}
-                            <span className="block text-[10px] text-slate-500 font-bold">
-                              {c.stats?.players === 0
-                                ? "لم يضف أي لاعبين بعد"
-                                : c.lastActiveFormatted
-                                ? `آخر تواجد: ${c.lastActiveFormatted}`
-                                : "لم ينشط مؤخراً"}
-                            </span>
+                          <div className="space-y-1.5">
+                            {/* Online / Last Seen Badge & Classification Badge */}
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {c.isOnline ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black shadow-2xs">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                  <span>متصل الآن 🟢</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold" title={c.lastSeenAt ? new Date(c.lastSeenAt).toLocaleString("ar-EG") : ""}>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                  <span>{c.lastSeenFormatted || "غير متصل"}</span>
+                                </span>
+                              )}
+
+                              {/* Activity Classification Badge */}
+                              {c.activityClassification === "frequent" ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200 text-[10px] font-black">
+                                  <Zap className="w-3 h-3 text-purple-600" />
+                                  <span>استخدام متكرر ⚡</span>
+                                </span>
+                              ) : c.activityClassification === "occasional" ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-bold">
+                                  <Activity className="w-3 h-3 text-blue-600" />
+                                  <span>استخدام دوري 🟢</span>
+                                </span>
+                              ) : c.activityClassification === "low_activity" ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                                  <span>نشاط منخفض 🟡</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold">
+                                  <span>بيانات غير كافية ⚪</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Genuine Active Days Counters (7d & 30d) */}
+                            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-700 bg-slate-50/80 px-2 py-0.5 rounded-md border border-slate-200/60 w-fit">
+                              <span className="text-slate-500 text-[10px]">أيام النشاط:</span>
+                              <span className="font-mono text-emerald-700 font-black">{c.activeDays7 ?? 0}</span>
+                              <span className="text-slate-400 text-[10px]">/ 7 أيام</span>
+                              <span className="text-slate-300">•</span>
+                              <span className="font-mono text-blue-700 font-black">{c.activeDays30 ?? 0}</span>
+                              <span className="text-slate-400 text-[10px]">/ 30 يوماً</span>
+                            </div>
+
+                            {/* Last Login Timestamp */}
+                            <div className="text-[10px] text-slate-500 font-medium truncate" title={c.lastLoginAt ? new Date(c.lastLoginAt).toLocaleString("ar-EG") : ""}>
+                              <span className="text-slate-400">آخر دخول: </span>
+                              <strong className="text-slate-700 font-bold">{c.lastLoginFormatted || "لم يسجل بعد"}</strong>
+                            </div>
                           </div>
                         </td>
 

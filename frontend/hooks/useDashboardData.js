@@ -43,6 +43,38 @@ export function useDashboardData({ setNotice } = {}) {
     } catch (_) {}
   }, []);
 
+  // Lightweight captain heartbeat tracking (50s interval within 120s timeout)
+  useEffect(() => {
+    if (sessionStatus !== "authenticated" || isUserAdmin) return;
+
+    const pingHeartbeat = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      fetch("/api/account/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+      }).catch(() => {});
+    };
+
+    // Immediate initial ping
+    pingHeartbeat();
+
+    // Regular heartbeat interval (every 50s keeps status active within 120s window)
+    const intervalId = setInterval(pingHeartbeat, 50000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        pingHeartbeat();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [sessionStatus, isUserAdmin]);
+
   // Check if admin updated the captain's plan or subscription
   useEffect(() => {
     if (!accountUser) return;

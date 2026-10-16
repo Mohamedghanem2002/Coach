@@ -8,6 +8,7 @@ import {
   computeCaptainActivity,
   getSubscriptionAlertInfo,
 } from "../../../../backend/subscription-utils";
+import { computeCaptainActivityStats } from "../../../../backend/activity-tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -109,6 +110,65 @@ export async function GET(request) {
       db.collection("events").find({}).toArray(),
     ]);
 
+    // 2.2 Collect genuine historical activity dates per captain
+    const captainActivityDatesMap = new Map();
+    try {
+      const allPlayersForActivity = await db.collection("players").find(
+        {},
+        { projection: { ownerId: 1, createdAt: 1, updatedAt: 1, attendance: 1, paymentHistory: 1 } }
+      ).toArray();
+
+      for (const p of allPlayersForActivity) {
+        const oId = p.ownerId ? p.ownerId.toString() : "";
+        if (!oId) continue;
+        if (!captainActivityDatesMap.has(oId)) {
+          captainActivityDatesMap.set(oId, { attendanceDates: [], paymentDates: [], mutationDates: [] });
+        }
+        const bucket = captainActivityDatesMap.get(oId);
+        if (p.createdAt) bucket.mutationDates.push(p.createdAt);
+        if (p.updatedAt) bucket.mutationDates.push(p.updatedAt);
+        if (Array.isArray(p.attendance)) {
+          for (const att of p.attendance) {
+            if (att?.date) bucket.attendanceDates.push(att.date);
+            else if (typeof att === "string") bucket.attendanceDates.push(att);
+          }
+        }
+        if (Array.isArray(p.paymentHistory)) {
+          for (const pay of p.paymentHistory) {
+            if (pay?.date) bucket.paymentDates.push(pay.date);
+            else if (pay?.createdAt) bucket.paymentDates.push(pay.createdAt);
+          }
+        }
+      }
+    } catch {
+      // Graceful fallback
+    }
+
+    for (const b of allBranches) {
+      const oId = b.ownerId ? b.ownerId.toString() : "";
+      if (oId) {
+        if (!captainActivityDatesMap.has(oId)) {
+          captainActivityDatesMap.set(oId, { attendanceDates: [], paymentDates: [], mutationDates: [] });
+        }
+        const bucket = captainActivityDatesMap.get(oId);
+        if (b.createdAt) bucket.mutationDates.push(b.createdAt);
+        if (b.updatedAt) bucket.mutationDates.push(b.updatedAt);
+      }
+    }
+
+    for (const e of allEvents) {
+      const oId = e.ownerId ? e.ownerId.toString() : "";
+      if (oId) {
+        if (!captainActivityDatesMap.has(oId)) {
+          captainActivityDatesMap.set(oId, { attendanceDates: [], paymentDates: [], mutationDates: [] });
+        }
+        const bucket = captainActivityDatesMap.get(oId);
+        if (e.createdAt) bucket.mutationDates.push(e.createdAt);
+        if (e.updatedAt) bucket.mutationDates.push(e.updatedAt);
+        if (e.date) bucket.mutationDates.push(e.date);
+      }
+    }
+
     // Build lookup maps for counts: key = `${ownerId}:::${branchName}` and totalCountByOwner
     const branchCountMap = new Map();
     const totalCountByOwner = new Map();
@@ -194,6 +254,10 @@ export async function GET(request) {
         now
       );
 
+      // Compute comprehensive activity tracking stats (genuine usage, heartbeat, server timestamps)
+      const historicalData = captainActivityDatesMap.get(uId) || {};
+      const activityTracking = computeCaptainActivityStats(u, historicalData, now);
+
       // Check for 3-day subscription expiration warning
       const expiryAlert = getSubscriptionAlertInfo(u, now);
 
@@ -229,6 +293,20 @@ export async function GET(request) {
         isWeeklyActive: activity.isWeeklyActive,
         isDormant: activity.isDormant,
         hasEverStarted: activity.hasEverStarted,
+        // Activity Tracking & Genuine Usage
+        isOnline: activityTracking.isOnline,
+        onlineStatus: activityTracking.onlineStatus,
+        lastSeenAt: activityTracking.lastSeenAt,
+        lastSeenFormatted: activityTracking.lastSeenFormatted,
+        lastLoginAt: activityTracking.lastLoginAt,
+        lastLoginFormatted: activityTracking.lastLoginFormatted,
+        activeDays7: activityTracking.activeDays7,
+        activeDays30: activityTracking.activeDays30,
+        totalRecordedActiveDays: activityTracking.totalRecordedActiveDays,
+        activityClassification: activityTracking.activityClassification,
+        activityClassificationLabel: activityTracking.activityClassificationLabel,
+        activityClassificationBadge: activityTracking.activityClassificationBadge,
+        activityClassificationColor: activityTracking.activityClassificationColor,
         // Expiration notification alert
         isExpiringSoon: expiryAlert.isExpiringSoon,
         expiryAlert,
@@ -266,6 +344,12 @@ export async function GET(request) {
     const dormantCaptains = processedCaptains.filter((c) => c.activityStatus === "dormant").length;
     const expiringSoonCaptains = processedCaptains.filter((c) => c.isExpiringSoon).length;
 
+    const onlineCaptains = processedCaptains.filter((c) => c.isOnline).length;
+    const frequentCaptains = processedCaptains.filter((c) => c.activityClassification === "frequent").length;
+    const occasionalCaptains = processedCaptains.filter((c) => c.activityClassification === "occasional").length;
+    const lowActivityCaptains = processedCaptains.filter((c) => c.activityClassification === "low_activity").length;
+    const insufficientDataCaptains = processedCaptains.filter((c) => c.activityClassification === "insufficient_data").length;
+
     const summary = {
       totalCaptains: processedCaptains.length,
       totalAccounts: processedCaptains.length,
@@ -276,6 +360,11 @@ export async function GET(request) {
       weeklyActiveCaptains,
       dormantCaptains,
       expiringSoonCaptains,
+      onlineCaptains,
+      frequentCaptains,
+      occasionalCaptains,
+      lowActivityCaptains,
+      insufficientDataCaptains,
     };
 
     // 5. Apply Search & Filters
@@ -301,7 +390,12 @@ export async function GET(request) {
       if (statusFilter === "has_halls" && c.stats.halls === 0) return false;
       if (statusFilter === "has_events" && c.stats.events === 0) return false;
 
-      // 5.3 Activity & Engagement filters (Requirement 1)
+      // 5.3 Activity & Genuine Engagement filters
+      if (statusFilter === "online" && !c.isOnline) return false;
+      if (statusFilter === "frequent" && c.activityClassification !== "frequent") return false;
+      if (statusFilter === "occasional" && c.activityClassification !== "occasional") return false;
+      if (statusFilter === "low_activity" && c.activityClassification !== "low_activity") return false;
+      if (statusFilter === "insufficient_data" && c.activityClassification !== "insufficient_data") return false;
       if (statusFilter === "daily_active" && c.activityStatus !== "daily") return false;
       if (statusFilter === "weekly_active" && c.activityStatus !== "weekly") return false;
       if (statusFilter === "dormant" && c.activityStatus !== "dormant") return false;
@@ -333,6 +427,22 @@ export async function GET(request) {
 
     // 6. Sorting
     filtered.sort((a, b) => {
+      if (sortBy === "online_first") {
+        if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+        return (b.activeDays30 || 0) - (a.activeDays30 || 0);
+      }
+      if (sortBy === "active_days_desc") {
+        return (b.activeDays30 || 0) - (a.activeDays30 || 0);
+      }
+      if (sortBy === "active_days_asc") {
+        return (a.activeDays30 || 0) - (b.activeDays30 || 0);
+      }
+      if (sortBy === "last_seen_desc") {
+        return new Date(b.lastSeenAt || 0) - new Date(a.lastSeenAt || 0);
+      }
+      if (sortBy === "last_login_desc") {
+        return new Date(b.lastLoginAt || 0) - new Date(a.lastLoginAt || 0);
+      }
       if (sortBy === "activity_desc") {
         return (b.activityScore || 0) - (a.activityScore || 0);
       }

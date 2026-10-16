@@ -11,6 +11,7 @@ import {
   computeCaptainActivity,
   getSubscriptionAlertInfo,
 } from "../../../../../backend/subscription-utils";
+import { computeCaptainActivityStats } from "../../../../../backend/activity-tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -117,7 +118,7 @@ export async function GET(request, context) {
       $or: [{ ownerId: uStrId }, { ownerId: uOId }],
     };
 
-    const [playersCount, branches, events, auditLogs] = await Promise.all([
+    const [playersCount, branches, events, auditLogs, allPlayersForActivity] = await Promise.all([
       db.collection("players").countDocuments(ownerFilter),
       db.collection("branches").find(ownerFilter).toArray(),
       db.collection("events").find(ownerFilter).toArray(),
@@ -126,10 +127,43 @@ export async function GET(request, context) {
         .sort({ createdAt: -1 })
         .limit(20)
         .toArray(),
+      db.collection("players")
+        .find(ownerFilter, { projection: { createdAt: 1, updatedAt: 1, attendance: 1, paymentHistory: 1 } })
+        .toArray(),
     ]);
 
     const latestPlayer = await db.collection("players").find(ownerFilter).sort({ updatedAt: -1 }).limit(1).toArray();
     const latestPlayerUpdate = latestPlayer[0]?.updatedAt || null;
+
+    // Collect genuine historical activity dates
+    const historicalData = { attendanceDates: [], paymentDates: [], mutationDates: [] };
+    if (Array.isArray(allPlayersForActivity)) {
+      for (const p of allPlayersForActivity) {
+        if (p.createdAt) historicalData.mutationDates.push(p.createdAt);
+        if (p.updatedAt) historicalData.mutationDates.push(p.updatedAt);
+        if (Array.isArray(p.attendance)) {
+          for (const att of p.attendance) {
+            if (att?.date) historicalData.attendanceDates.push(att.date);
+            else if (typeof att === "string") historicalData.attendanceDates.push(att);
+          }
+        }
+        if (Array.isArray(p.paymentHistory)) {
+          for (const pay of p.paymentHistory) {
+            if (pay?.date) historicalData.paymentDates.push(pay.date);
+            else if (pay?.createdAt) historicalData.paymentDates.push(pay.createdAt);
+          }
+        }
+      }
+    }
+    for (const b of branches) {
+      if (b.createdAt) historicalData.mutationDates.push(b.createdAt);
+      if (b.updatedAt) historicalData.mutationDates.push(b.updatedAt);
+    }
+    for (const e of events) {
+      if (e.createdAt) historicalData.mutationDates.push(e.createdAt);
+      if (e.updatedAt) historicalData.mutationDates.push(e.updatedAt);
+      if (e.date) historicalData.mutationDates.push(e.date);
+    }
 
     const activity = computeCaptainActivity(
       user,
@@ -141,6 +175,8 @@ export async function GET(request, context) {
       },
       now
     );
+
+    const activityTracking = computeCaptainActivityStats(user, historicalData, now);
 
     const expiryAlert = getSubscriptionAlertInfo(user, now);
 
@@ -192,6 +228,20 @@ export async function GET(request, context) {
       isWeeklyActive: activity.isWeeklyActive,
       isDormant: activity.isDormant,
       hasEverStarted: activity.hasEverStarted,
+      // Activity Tracking & Genuine Usage
+      isOnline: activityTracking.isOnline,
+      onlineStatus: activityTracking.onlineStatus,
+      lastSeenAt: activityTracking.lastSeenAt,
+      lastSeenFormatted: activityTracking.lastSeenFormatted,
+      lastLoginAt: activityTracking.lastLoginAt,
+      lastLoginFormatted: activityTracking.lastLoginFormatted,
+      activeDays7: activityTracking.activeDays7,
+      activeDays30: activityTracking.activeDays30,
+      totalRecordedActiveDays: activityTracking.totalRecordedActiveDays,
+      activityClassification: activityTracking.activityClassification,
+      activityClassificationLabel: activityTracking.activityClassificationLabel,
+      activityClassificationBadge: activityTracking.activityClassificationBadge,
+      activityClassificationColor: activityTracking.activityClassificationColor,
       // Expiration warning alert
       isExpiringSoon: expiryAlert.isExpiringSoon,
       expiryAlert,

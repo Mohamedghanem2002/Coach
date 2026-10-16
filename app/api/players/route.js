@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import clientPromise from "../../../backend/mongodb";
 import { requireActiveTenant } from "../../../backend/tenant";
+import { recordCaptainGenuineActivity } from "../../../backend/activity-tracking";
 export const dynamic = "force-dynamic";
 function appDate() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -133,6 +134,14 @@ function serializePlayer(player) {
     _id: player._id ? player._id.toString() : "",
   });
 }
+
+function respondPlayer(player, ownerId) {
+  if (player && ownerId) {
+    recordCaptainGenuineActivity(ownerId);
+  }
+  return NextResponse.json(player ? serializePlayer(player) : null);
+}
+
 export async function GET() {
   try {
     const tenant = await requireActiveTenant();
@@ -261,6 +270,7 @@ export async function POST(request) {
         });
       }
 
+      recordCaptainGenuineActivity(ownerId);
       return NextResponse.json({
         success: true,
         message: "تمت استعادة النسخة الاحتياطية بنجاح",
@@ -322,6 +332,7 @@ export async function POST(request) {
       .db(process.env.MONGODB_DB)
       .collection("players")
       .insertOne(player);
+    recordCaptainGenuineActivity(ownerId);
     return NextResponse.json(
       Object.assign(Object.assign({}, player), {
         _id: result.insertedId.toString(),
@@ -360,7 +371,7 @@ export async function PATCH(request) {
         { $set: { welcomeCardHandledAt: new Date() } },
         { returnDocument: "after" }
       );
-      return NextResponse.json(player ? serializePlayer(player) : null);
+      return respondPlayer(player, ownerId);
     }
     if (body.updateInfo === true || body.updateInfo === "true") {
       const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -413,7 +424,7 @@ export async function PATCH(request) {
         { $set: updateData },
         { returnDocument: "after" },
       );
-      return NextResponse.json(player ? serializePlayer(player) : null);
+      return respondPlayer(player, ownerId);
     }
     if (body.lastBirthdayWishedYear !== undefined) {
       const year = Number(body.lastBirthdayWishedYear);
@@ -422,7 +433,7 @@ export async function PATCH(request) {
         { $set: { lastBirthdayWishedYear: year } },
         { returnDocument: "after" },
       );
-      return NextResponse.json(player ? serializePlayer(player) : null);
+      return respondPlayer(player, ownerId);
     }
     if (body.attendanceStatus === "clear" && typeof body.date === "string") {
       const today = appDate();
@@ -445,7 +456,7 @@ export async function PATCH(request) {
         },
         { returnDocument: "after" },
       );
-      return NextResponse.json(player ? serializePlayer(player) : null);
+      return respondPlayer(player, ownerId);
     }
     if (
       body.attendanceStatus === "present" ||
@@ -493,7 +504,7 @@ export async function PATCH(request) {
           { returnDocument: "after" },
         );
       }
-      return NextResponse.json(player ? serializePlayer(player) : null);
+      return respondPlayer(player, ownerId);
     }
     if (body.paymentStatus === "clear") {
       const month =
@@ -534,7 +545,7 @@ export async function PATCH(request) {
         { $set: updateFields },
         { returnDocument: "after" },
       );
-      return NextResponse.json(player ? serializePlayer(player) : null);
+      return respondPlayer(player, ownerId);
     }
 
     if (body.purchaseAction) {
@@ -706,7 +717,7 @@ export async function PATCH(request) {
         },
         { returnDocument: "after" },
       );
-      return NextResponse.json(player ? serializePlayer(player) : null);
+      return respondPlayer(player, ownerId);
     }
 
     if (
@@ -822,7 +833,7 @@ export async function PATCH(request) {
         },
         { returnDocument: "after" },
       );
-      return NextResponse.json(player ? serializePlayer(player) : null);
+      return respondPlayer(player, ownerId);
     }
 
     return NextResponse.json(
@@ -867,6 +878,10 @@ export async function DELETE(request) {
         ownerId,
       });
 
+      if ((result.deletedCount || 0) > 0) {
+        recordCaptainGenuineActivity(ownerId);
+      }
+
       return NextResponse.json({
         deleted: (result.deletedCount || 0) > 0,
         deletedCount: result.deletedCount || 0,
@@ -884,6 +899,9 @@ export async function DELETE(request) {
       _id: new ObjectId(body.id),
       ownerId,
     });
+    if (result.deletedCount === 1) {
+      recordCaptainGenuineActivity(ownerId);
+    }
     return NextResponse.json({
       deleted: result.deletedCount === 1,
       deletedCount: result.deletedCount || 0,

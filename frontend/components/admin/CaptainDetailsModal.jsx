@@ -602,50 +602,73 @@ export default function CaptainDetailsModal({
                     </div>
                   </div>
 
-                  {captain?.activity && (
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-black border flex items-center gap-1.5 shadow-2xs ${
-                        captain.activity.level === "daily"
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                          : captain.activity.level === "weekly"
-                          ? "bg-blue-50 text-blue-800 border-blue-300"
-                          : captain.activity.level === "dormant"
-                          ? "bg-slate-100 text-slate-700 border-slate-300"
-                          : "bg-amber-50 text-amber-800 border-amber-300"
-                      }`}
-                    >
-                      <span>{captain.activity.badgeLabel}</span>
-                    </span>
-                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Online Status Pill */}
+                    {captain?.isOnline ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-black border border-emerald-300 bg-emerald-50 text-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>متصل الآن 🟢</span>
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold border border-slate-200 bg-slate-100 text-slate-600 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        <span>{captain?.lastSeenFormatted || "غير متصل"}</span>
+                      </span>
+                    )}
+
+                    {/* Activity Classification Badge */}
+                    {captain?.activityClassification === "frequent" ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-black border border-purple-200 bg-purple-50 text-purple-800 flex items-center gap-1.5 shadow-2xs">
+                        <Zap className="w-3.5 h-3.5 text-purple-600" />
+                        <span>استخدام متكرر ⚡</span>
+                      </span>
+                    ) : captain?.activityClassification === "occasional" ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold border border-blue-200 bg-blue-50 text-blue-800 flex items-center gap-1.5 shadow-2xs">
+                        <span>استخدام دوري 🟢</span>
+                      </span>
+                    ) : captain?.activityClassification === "low_activity" ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold border border-amber-200 bg-amber-50 text-amber-800 flex items-center gap-1.5">
+                        <span>نشاط منخفض 🟡</span>
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold border border-slate-200 bg-slate-100 text-slate-600 flex items-center gap-1.5">
+                        <span>بيانات غير كافية ⚪</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
                   <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">
-                    <span className="text-slate-500 font-bold block mb-1">آخر تفاعل / حضور:</span>
-                    <strong className="text-slate-900 font-black text-sm">
-                      {captain?.activity?.lastActiveFormatted || "لا يوجد بعد"}
+                    <span className="text-slate-500 font-bold block mb-1">حالة الاتصال والظهور:</span>
+                    <strong className="text-slate-900 font-black text-sm block">
+                      {captain?.isOnline ? "متصل الآن 🟢" : (captain?.lastSeenFormatted || "غير متصل")}
                     </strong>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">مهلة الاتصال: 120 ثانية</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">
                     <span className="text-slate-500 font-bold block mb-1">آخر تسجيل دخول:</span>
-                    <strong className="text-slate-900 font-black text-sm">
-                      {captain?.lastLoginAt
-                        ? new Date(captain.lastLoginAt).toLocaleDateString("ar-EG", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "لم يسجل بعد"}
+                    <strong className="text-slate-900 font-black text-sm block">
+                      {captain?.lastLoginFormatted || "لم يسجل بعد"}
                     </strong>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">تسجيل دخول موثق</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">
-                    <span className="text-slate-500 font-bold block mb-1">عمليات الحضور المسجلة:</span>
-                    <strong className="text-slate-900 font-black text-sm">
-                      {captain?.activity?.attendanceLogsCount || 0} عملية حضور
+                    <span className="text-slate-500 font-bold block mb-1">أيام النشاط (آخر 7 أيام):</span>
+                    <strong className="text-emerald-700 font-black text-sm block font-mono">
+                      {captain?.activeDays7 ?? 0} / 7 أيام
                     </strong>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">نشاط واستخدام حقيقي</span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                    <span className="text-slate-500 font-bold block mb-1">أيام النشاط (آخر 30 يوماً):</span>
+                    <strong className="text-blue-700 font-black text-sm block font-mono">
+                      {captain?.activeDays30 ?? 0} / 30 يوماً
+                    </strong>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">إجراءات فعلية بالمنصة</span>
                   </div>
                 </div>
 

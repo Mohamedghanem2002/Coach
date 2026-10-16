@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import clientPromise from "../../../backend/mongodb";
 import { requireActiveTenant } from "../../../backend/tenant";
+import { recordCaptainGenuineActivity } from "../../../backend/activity-tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -185,6 +186,7 @@ export async function POST(request) {
     }
 
     await eventsCollection.insertOne(newEvent);
+    recordCaptainGenuineActivity(ownerId);
 
     return NextResponse.json(serializeEvent(newEvent), { status: 201 });
   } catch (error) {
@@ -446,6 +448,7 @@ export async function PATCH(request) {
       _id: new ObjectId(eventId),
       ownerId,
     });
+    recordCaptainGenuineActivity(ownerId);
     return NextResponse.json(serializeEvent(updated));
   } catch (error) {
     console.error("PATCH /api/events error:", error);
@@ -477,6 +480,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "الحدث غير موجود أو تم حذفه مسبقًا" }, { status: 404 });
     }
 
+    recordCaptainGenuineActivity(ownerId);
     return NextResponse.json({ success: true, message: "تم حذف الحدث بنجاح" });
   } catch (error) {
     console.error("DELETE /api/events error:", error);

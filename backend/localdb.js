@@ -747,6 +747,18 @@ export function getLocalDbClient() {
                   if (update.$set) {
                     Object.assign(user, update.$set);
                   }
+                  if (update.$addToSet) {
+                    for (const [key, val] of Object.entries(update.$addToSet)) {
+                      if (!Array.isArray(user[key])) user[key] = [];
+                      if (val && typeof val === "object" && Array.isArray(val.$each)) {
+                        for (const item of val.$each) {
+                          if (!user[key].includes(item)) user[key].push(item);
+                        }
+                      } else {
+                        if (!user[key].includes(val)) user[key].push(val);
+                      }
+                    }
+                  }
                   if (update.$unset) {
                     for (const k of Object.keys(update.$unset)) {
                       delete user[k];
@@ -773,6 +785,18 @@ export function getLocalDbClient() {
                 if (user) {
                   if (update.$set) {
                     Object.assign(user, update.$set);
+                  }
+                  if (update.$addToSet) {
+                    for (const [key, val] of Object.entries(update.$addToSet)) {
+                      if (!Array.isArray(user[key])) user[key] = [];
+                      if (val && typeof val === "object" && Array.isArray(val.$each)) {
+                        for (const item of val.$each) {
+                          if (!user[key].includes(item)) user[key].push(item);
+                        }
+                      } else {
+                        if (!user[key].includes(val)) user[key].push(val);
+                      }
+                    }
                   }
                   saveData(currentData);
                   return { ...user };

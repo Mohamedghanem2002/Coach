@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import clientPromise from "../../../backend/mongodb";
 import { requireActiveTenant } from "../../../backend/tenant";
+import { recordCaptainGenuineActivity } from "../../../backend/activity-tracking";
 export const dynamic = "force-dynamic";
 
 // Normalise a single days entry: accepts a legacy string or a {day, from, to} object.
@@ -81,6 +82,7 @@ export async function POST(request) {
       );
     const branch = { ownerId, name, days, createdAt: new Date() };
     const result = await collection.insertOne(branch);
+    recordCaptainGenuineActivity(ownerId);
     return NextResponse.json(
       Object.assign(Object.assign({}, branch), {
         _id: result.insertedId.toString(),
@@ -119,6 +121,9 @@ export async function DELETE(request) {
       .db(process.env.MONGODB_DB)
       .collection("branches")
       .deleteOne({ name, ownerId });
+    if (result.deletedCount === 1) {
+      recordCaptainGenuineActivity(ownerId);
+    }
     return NextResponse.json({ deleted: result.deletedCount === 1 });
   } catch (_a) {
     return NextResponse.json({ error: "تعذر حذف الفرع" }, { status: 500 });
@@ -205,6 +210,7 @@ export async function PATCH(request) {
       );
     }
 
+    recordCaptainGenuineActivity(ownerId);
     return NextResponse.json({
       success: true,
       oldName,
