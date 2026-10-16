@@ -120,19 +120,25 @@ export async function updateCaptainHeartbeat(userIdOrEmail) {
 }
 
 /**
- * Formats relative Arabic time string (e.g., "متصل الآن 🟢", "منذ 15 دقيقة", "أمس 04:30 م")
+ * Formats relative Arabic time string (e.g., "متصل الآن 🟢", "منذ 15 دقيقة", "منذ يومين")
  */
-export function formatRelativeArabicTime(date, now = new Date()) {
+export function formatRelativeArabicTime(date, now = new Date(), options = {}) {
   if (!date) return "لم ينشط بعد";
   const parsed = date instanceof Date ? date : new Date(date);
   if (isNaN(parsed.getTime())) return "غير محدد";
 
   const diffMs = now.getTime() - parsed.getTime();
-  if (diffMs < 0) return "متصل الآن 🟢";
+  if (diffMs < 0) {
+    return options.allowOnline ? "متصل الآن 🟢" : "منذ ثوانٍ";
+  }
 
   const diffSec = Math.floor(diffMs / 1000);
   if (diffSec <= 120) {
-    return "متصل الآن 🟢";
+    if (options.allowOnline) {
+      return "متصل الآن 🟢";
+    }
+    if (diffSec < 60) return "منذ ثوانٍ";
+    return "منذ دقيقة";
   }
 
   const diffMin = Math.floor(diffSec / 60);
@@ -264,22 +270,42 @@ export function computeCaptainActivityStats(user, historicalData = {}, now = new
     : null;
 
   // 2. Online status with 120-second timeout
-  const explicitSeen = user.lastSeenAt ? new Date(user.lastSeenAt) : null;
-  const isValidSeen = explicitSeen && !isNaN(explicitSeen.getTime());
-  const isOnline = Boolean(isValidSeen && nowMs - explicitSeen.getTime() <= ONLINE_TIMEOUT_MS);
+  // Online flag checks any valid server timestamp indicating presence in the last 120 seconds
+  const presenceCandidates = [];
+  const addPresenceTime = (val) => {
+    if (!val) return;
+    try {
+      const d = val instanceof Date ? val : new Date(val);
+      if (!isNaN(d.getTime()) && d.getTime() > 0) presenceCandidates.push(d.getTime());
+    } catch {}
+  };
+
+  addPresenceTime(user.lastSeenAt);
+  addPresenceTime(user.lastActiveAt);
+  addPresenceTime(user.lastLoginAt);
+
+  const latestPresenceMs = presenceCandidates.length > 0 ? Math.max(...presenceCandidates) : 0;
+  const isOnline = Boolean(latestPresenceMs > 0 && nowMs - latestPresenceMs <= ONLINE_TIMEOUT_MS);
   const onlineStatus = isOnline ? "online" : "offline";
 
-  // Last seen formatted
-  const lastSeenRefDate = isValidSeen ? explicitSeen : effectiveLastLoginDate;
+  // Last seen reference timestamp:
+  // Prefer direct presence (lastSeenAt/lastActiveAt/lastLoginAt), else fallback to effective interaction date
+  const lastSeenRefDate = latestPresenceMs > 0 ? new Date(latestPresenceMs) : effectiveLastLoginDate;
+
+  // Last seen formatted:
+  // If isOnline is true -> "متصل الآن 🟢"
+  // If isOnline is false -> accurate past relative time ("منذ دقيقتين", "منذ ساعة", "منذ يومين", etc.)
+  // NEVER says "متصل الآن" if isOnline is false!
   const lastSeenFormatted = isOnline
     ? "متصل الآن 🟢"
     : lastSeenRefDate
-    ? formatRelativeArabicTime(lastSeenRefDate, now)
+    ? formatRelativeArabicTime(lastSeenRefDate, now, { allowOnline: false })
     : "لم ينشط بعد";
 
   // Last login formatted in relative Arabic ("منذ يوم", "منذ يومين", "منذ 17 يوماً", etc.)
+  // NEVER says "متصل الآن 🟢" for a login event!
   const lastLoginFormatted = effectiveLastLoginDate
-    ? formatRelativeArabicTime(effectiveLastLoginDate, now)
+    ? formatRelativeArabicTime(effectiveLastLoginDate, now, { allowOnline: false })
     : "لم يسجل بعد";
 
   const lastLoginExact = effectiveLastLoginDate

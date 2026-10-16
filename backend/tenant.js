@@ -182,10 +182,10 @@ export async function requireActiveTenant() {
     }
   }
 
-  // Update captain's lastActiveAt & lastSeenAt timestamp (throttled to once every 2 minutes to minimize DB writes)
+  // Update captain's lastActiveAt & lastSeenAt timestamp (throttled to 30 seconds to minimize DB writes while keeping 120s online status reliable)
   const nowMs = Date.now();
   const lastActiveMs = user.lastActiveAt ? new Date(user.lastActiveAt).getTime() : 0;
-  if (nowMs - lastActiveMs > 2 * 60 * 1000) {
+  if (nowMs - lastActiveMs > 30 * 1000) {
     user.lastActiveAt = new Date(nowMs);
     user.lastSeenAt = user.lastActiveAt;
     users.updateOne({ _id: user._id }, { $set: { lastActiveAt: user.lastActiveAt, lastSeenAt: user.lastSeenAt } }).catch(() => {});

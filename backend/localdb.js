@@ -734,15 +734,20 @@ export function getLocalDbClient() {
                 return { matchedCount: 0, modifiedCount: 0 };
               }
               if (collectionName === "users") {
-                const user = (currentData.users || []).find((u) => {
-                  if ("_id" in filter) {
-                    return Boolean(filter._id && matchId(u._id, filter._id));
+                const matchUser = (u, f) => {
+                  if (!f || Object.keys(f).length === 0) return true;
+                  if (Array.isArray(f.$or)) {
+                    return f.$or.some((sub) => matchUser(u, sub));
                   }
-                  if (filter.email) {
-                    return (u.email || "").toLowerCase().trim() === filter.email.toLowerCase().trim();
+                  if ("_id" in f) {
+                    if (!matchId(u._id, f._id)) return false;
                   }
-                  return false;
-                });
+                  if (f.email) {
+                    if ((u.email || "").toLowerCase().trim() !== (f.email || "").toLowerCase().trim()) return false;
+                  }
+                  return true;
+                };
+                const user = (currentData.users || []).find((u) => matchUser(u, filter));
                 if (user) {
                   if (update.$set) {
                     Object.assign(user, update.$set);
@@ -773,15 +778,20 @@ export function getLocalDbClient() {
 
             async findOneAndUpdate(filter = {}, update = {}, _options = {}) {
               if (collectionName === "users") {
-                const user = (currentData.users || []).find((u) => {
-                  if ("_id" in filter) {
-                    return Boolean(filter._id && matchId(u._id, filter._id));
+                const matchUser = (u, f) => {
+                  if (!f || Object.keys(f).length === 0) return true;
+                  if (Array.isArray(f.$or)) {
+                    return f.$or.some((sub) => matchUser(u, sub));
                   }
-                  if (filter.email) {
-                    return u.email?.toLowerCase() === filter.email?.toLowerCase();
+                  if ("_id" in f) {
+                    if (!matchId(u._id, f._id)) return false;
                   }
-                  return false;
-                });
+                  if (f.email) {
+                    if ((u.email || "").toLowerCase().trim() !== (f.email || "").toLowerCase().trim()) return false;
+                  }
+                  return true;
+                };
+                const user = (currentData.users || []).find((u) => matchUser(u, filter));
                 if (user) {
                   if (update.$set) {
                     Object.assign(user, update.$set);
