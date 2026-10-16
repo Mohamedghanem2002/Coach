@@ -1,179 +1,238 @@
 "use client";
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import {
-  localDate,
-  normalizePlayer,
-  paymentStatusFor,
-  getPaymentDetailsFor,
-  getBirthdayInfo,
-  getTodayBirthdays,
-  isBirthdayCongratulated,
-  getPurchasesSummary,
-  isBranchWorkingDate,
-  formatBranchDays,
-  isPlayerPresentOnDate,
-  isPlayerAbsentOnDate,
-} from "../lib/dashboard-utils";
-import {
-  Plus,
-  Users,
-  Building2,
-  CalendarDays,
-  CreditCard,
-  Check,
-  X,
-  Search,
-  Bell,
-  UserPlus,
-  Trash2,
-  MessageSquare,
-  Filter,
-  ChevronDown,
-  SlidersHorizontal,
-  Cake,
-  Clock,
-  ArrowUpDown,
-  CheckCircle2,
-  AlertCircle,
-  Info,
-  Compass,
-  ArrowRight,
-  ShoppingBag,
-  ShieldCheck,
-  RotateCcw,
-  Mail,
-  Sparkles,
-  FileText,
-  Zap,
-  FileSpreadsheet,
-} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Zap } from "lucide-react";
 
-import BranchManager from "../components/dashboard/BranchManager";
-import PlayerRow from "../components/dashboard/PlayerRow";
-import Profile from "../components/dashboard/Profile";
+// Hooks
+import { useToast } from "../hooks/useToast";
+import { useDashboardData } from "../hooks/useDashboardData";
+import { usePlayerFilters } from "../hooks/usePlayerFilters";
+import { usePlayerOperations } from "../hooks/usePlayerOperations";
+import { useBranchOperations } from "../hooks/useBranchOperations";
+import { useEventOperations } from "../hooks/useEventOperations";
+import { useBackupOperations } from "../hooks/useBackupOperations";
+
+// Components
 import Header from "../components/dashboard/Header";
+import Footer from "../components/dashboard/Footer";
+import MobileBottomNav from "../components/dashboard/MobileBottomNav";
+import DashboardHero from "../components/dashboard/DashboardHero";
+import PlayerRow from "../components/dashboard/PlayerRow";
+import Pagination from "../components/dashboard/Pagination";
 import StatsGrid from "../components/dashboard/StatsGrid";
-import AddPlayerModal from "../components/dashboard/AddPlayerModal";
 import BranchOverview from "../components/dashboard/BranchOverview";
 import BirthdayReminder from "../components/dashboard/BirthdayReminder";
-import Pagination from "../components/dashboard/Pagination";
-import MobileBottomNav from "../components/dashboard/MobileBottomNav";
 import EventsView from "../components/dashboard/EventsView";
-import AddEventModal from "../components/dashboard/AddEventModal";
-import AddParticipantsModal from "../components/dashboard/AddParticipantsModal";
-import EventPaymentModal from "../components/dashboard/EventPaymentModal";
-import Footer from "../components/dashboard/Footer";
-import EmailBackupModal from "../components/dashboard/EmailBackupModal";
-import RestoreModal from "../components/dashboard/RestoreModal";
-import WelcomeCardModal from "../components/dashboard/WelcomeCardModal";
-import BranchAttendanceModal from "../components/dashboard/BranchAttendanceModal";
-import AccountSettingsModal from "../components/dashboard/AccountSettingsModal";
 import SubscriptionSuspended from "../components/SubscriptionSuspended";
-import DashboardHero from "../components/dashboard/DashboardHero";
-import SystemFeaturesModal from "../components/dashboard/SystemFeaturesModal";
-import ExportExcelModal from "../components/dashboard/ExportExcelModal";
-const today = localDate();
-const currentMonth = today.slice(0, 7);
-const DASHBOARD_CACHE_KEY = "coachmaster_dashboard_cache_v2";
 
-/** Cross-tab real-time sync broadcaster */
-function broadcastSyncEvent(payload) {
-  try {
-    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-      const channel = new BroadcastChannel("coachmaster_sync");
-      channel.postMessage(payload);
-      channel.close();
-    }
-    if (typeof window !== "undefined" && window.localStorage) {
-      window.localStorage.setItem("coachmaster_sync_event", Date.now().toString());
-    }
-  } catch (_) {}
-}
+// Extracted Subcomponents
+import DesktopWorkspaceTabs from "../components/dashboard/DesktopWorkspaceTabs";
+import CommandBar from "../components/dashboard/CommandBar";
+import MobileCommandSurface from "../components/dashboard/MobileCommandSurface";
+import BulkActionDock from "../components/dashboard/BulkActionDock";
+import DashboardModals from "../components/dashboard/DashboardModals";
+import ToastNotification from "../components/dashboard/ToastNotification";
 
 export default function Home() {
-  const router = useRouter();
-  const { data: session, status: sessionStatus, update: updateSession } = useSession();
-  const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "mg0447837@gmail.com").trim().toLowerCase();
-  const isUserAdmin =
-    session?.user?.role === "admin" ||
-    (session?.user?.email && session.user.email.trim().toLowerCase() === adminEmail);
-  const [localCoachName, setLocalCoachName] = useState(null);
-  const [localAcademyName, setLocalAcademyName] = useState(null);
-  const captainName = localCoachName || session?.user?.name || "كابتن";
-  const academyName = localAcademyName || session?.user?.academyName || "CoachMaster";
-  const [players, setPlayers] = useState([]);
-  const [branches, setBranches] = useState([]);
-  const [branch, setBranch] = useState("كل الصالات");
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null);
-  const [showBranches, setShowBranches] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("newest");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [sessionDate, setSessionDate] = useState(today);
-  const [paymentMonth, setPaymentMonth] = useState(currentMonth);
-  const [quickBranchName, setQuickBranchName] = useState("");
-  const [isAddingBranch, setIsAddingBranch] = useState(false);
-  const [busyBranch, setBusyBranch] = useState("");
-  const [selectedPlayerIds, setSelectedPlayerIds] = useState([]);
-  const [bulkAttendanceBusy, setBulkAttendanceBusy] = useState(false);
+  // 1. Notifications & Toasts
+  const { toast, setToast, showToast, setNotice } = useToast();
+
+  // 2. Birthday Congratulated listener
   const [congratulatedTick, setCongratulatedTick] = useState(0);
-  const [mobileTab, setMobileTab] = useState("players");
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [showEmailBackupModal, setShowEmailBackupModal] = useState(false);
-  const [showRestoreModal, setShowRestoreModal] = useState(false);
-  const [isCloudBackingUp, setIsCloudBackingUp] = useState(false);
-  const [welcomePlayer, setWelcomePlayer] = useState(null);
-  const [branchAttendanceReport, setBranchAttendanceReport] = useState(null);
-  const [showAccountSettings, setShowAccountSettings] = useState(false);
-  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
-  const [subscriptionInactive, setSubscriptionInactive] = useState(null);
-  const [accountUser, setAccountUser] = useState(null);
-  const [hasUnreadPlanUpdate, setHasUnreadPlanUpdate] = useState(false);
-  const [hasUnreadGuide, setHasUnreadGuide] = useState(false);
-  const [showExportExcelModal, setShowExportExcelModal] = useState(false);
-  const [exportInitialTab, setExportInitialTab] = useState("players");
-  const [exportInitialEventId, setExportInitialEventId] = useState(null);
-
-  const handleOpenExportExcel = (tab = "players", eventId = null) => {
-    setExportInitialTab(tab);
-    setExportInitialEventId(eventId);
-    setShowExportExcelModal(true);
-  };
-
-  // Check if platform guide has been read
   useEffect(() => {
-    try {
-      const guideRead = localStorage.getItem("coachmaster_features_guide_read_v1");
-      if (!guideRead) {
-        const timer = setTimeout(() => setHasUnreadGuide(true), 0);
-        return () => clearTimeout(timer);
-      }
-    } catch (_) {}
+    const handleCongratulated = () => setCongratulatedTick((t) => t + 1);
+    window.addEventListener("birthday_congratulated", handleCongratulated);
+    return () => window.removeEventListener("birthday_congratulated", handleCongratulated);
   }, []);
 
-  // Check if admin updated the captain's plan or subscription
-  useEffect(() => {
-    if (!accountUser) return;
-    try {
-      const currentSubFingerprint = `${accountUser.subscriptionPlan}_${accountUser.subscriptionExpiresAt}_${accountUser.subscriptionStatus}_${accountUser.subscriptionPaidAmount}_${accountUser.subscriptionRemainingAmount}_${accountUser.subscriptionTotalAmount}_${accountUser.subscriptionPaymentStatus}_${accountUser.updatedAt}`;
-      const lastSeenFingerprint = localStorage.getItem("coachmaster_last_seen_sub_fingerprint");
-      if (lastSeenFingerprint) {
-        if (lastSeenFingerprint !== currentSubFingerprint) {
-          const timer = setTimeout(() => setHasUnreadPlanUpdate(true), 0);
-          return () => clearTimeout(timer);
-        }
-      } else {
-        localStorage.setItem("coachmaster_last_seen_sub_fingerprint", currentSubFingerprint);
-      }
-    } catch (_) {}
-  }, [accountUser]);
+  // 3. Unified Dashboard Data & Real-Time Sync
+  const {
+    session,
+    sessionStatus,
+    updateSession,
+    isUserAdmin,
+    captainName,
+    academyName,
+    players,
+    setPlayers,
+    branches,
+    setBranches,
+    events,
+    setEvents,
+    loading,
+    setLoading,
+    subscriptionInactive,
+    setSubscriptionInactive,
+    accountUser,
+    setAccountUser,
+    setLocalCoachName,
+    setLocalAcademyName,
+    hasUnreadPlanUpdate,
+    setHasUnreadPlanUpdate,
+    hasUnreadGuide,
+    setHasUnreadGuide,
+    reloadAllData,
+  } = useDashboardData({ setNotice });
+
+  // 4. Player Filtering, Sorting, and Metrics
+  const {
+    today,
+    currentMonth,
+    branch,
+    setBranch,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    sortBy,
+    setSortBy,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    sessionDate,
+    setSessionDate,
+    paymentMonth,
+    setPaymentMonth,
+    paymentMonthLabel,
+    showMobileFilters,
+    setShowMobileFilters,
+    filteredPlayers,
+    sortedFilteredPlayers,
+    paginatedPlayers,
+    totalPages,
+    dashboardPlayers,
+    paidCount,
+    partialCount,
+    unpaidCount,
+    totalPendingPaymentCount,
+    purchasesDebtCount,
+    presentToday,
+    absentToday,
+    attendanceRateToday,
+    todayBirthdaysCount,
+    todayBirthdaysList,
+  } = usePlayerFilters({ players, branches, congratulatedTick });
+
+  // 5. Selected player & Mobile Tab & Navigation
+  const [selected, setSelected] = useState(null);
+  const [mobileTab, setMobileTab] = useState("players");
+  const playerListRef = useRef(null);
+
+  // 6. Player Operations (CRUD, Attendance, Payments, Bulk)
+  const {
+    showForm,
+    setShowForm,
+    welcomePlayer,
+    setWelcomePlayer,
+    selectedPlayerIds,
+    setSelectedPlayerIds,
+    bulkAttendanceBusy,
+    updatePlayer,
+    handleAddPlayer,
+    deletePlayer,
+    togglePlayerSelection,
+    toggleFilteredSelection,
+    markSelectedAttendance,
+    markSelectedPayment,
+    deleteSelectedPlayers,
+  } = usePlayerOperations({
+    setPlayers,
+    setSelected,
+    selected,
+    branch,
+    setBranch,
+    setSearch,
+    paymentMonth,
+    today,
+    setNotice,
+    showToast,
+  });
+
+  // 7. Branch Operations
+  const {
+    showBranches,
+    setShowBranches,
+    quickBranchName,
+    setQuickBranchName,
+    isAddingBranch,
+    setIsAddingBranch,
+    busyBranch,
+    branchAttendanceReport,
+    setBranchAttendanceReport,
+    addBranch,
+    updateBranch,
+    renameBranch,
+    deleteBranch,
+    handleSelectBranch,
+    handleBlockedBranchDelete,
+    handleQuickBranchSubmit,
+    markBranchPresent,
+  } = useBranchOperations({
+    branches,
+    setBranches,
+    players,
+    setPlayers,
+    branch,
+    setBranch,
+    playerListRef,
+    showToast,
+    setNotice,
+  });
+
+  // 8. Event Operations
+  const {
+    activeView,
+    setActiveView,
+    showAddEventModal,
+    setShowAddEventModal,
+    editingEvent,
+    setEditingEvent,
+    addParticipantsEvent,
+    setAddParticipantsEvent,
+    paymentParticipantData,
+    setPaymentParticipantData,
+    eventActionBusy,
+    handleSaveEvent,
+    handleDeleteEvent,
+    handleAddParticipants,
+    handleSaveParticipantPayment,
+    handleUpdateParticipantAttendance,
+    handleRemoveParticipant,
+    handleBulkParticipantPayment,
+  } = useEventOperations({
+    events,
+    setEvents,
+    showToast,
+  });
+
+  // 9. Backup & Snapshot Operations
+  const {
+    isBackingUp,
+    isCloudBackingUp,
+    isRestoring,
+    restoreProgressModal,
+    showEmailBackupModal,
+    setShowEmailBackupModal,
+    showRestoreModal,
+    setShowRestoreModal,
+    showExportExcelModal,
+    setShowExportExcelModal,
+    exportInitialTab,
+    exportInitialEventId,
+    restoreFileRef,
+    handleOpenExportExcel,
+    handleInstantCloudBackup,
+    handleDownloadBackup,
+    handleFileSelectedForRestore,
+  } = useBackupOperations({
+    players,
+    reloadAllData,
+    showToast,
+  });
+
+  // 10. Account Settings & System Features
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
 
   const handleOpenAccountSettings = () => {
     setShowAccountSettings(true);
@@ -194,1360 +253,7 @@ export default function Home() {
     setHasUnreadGuide(false);
   };
 
-  // Events management state
-  const [events, setEvents] = useState([]);
-  const [activeView, setActiveView] = useState("players"); // "players" | "events"
-  const [showAddEventModal, setShowAddEventModal] = useState(false);
-  const [editingEvent, setEditingEvent] = useState(null);
-  const [addParticipantsEvent, setAddParticipantsEvent] = useState(null);
-  const [paymentParticipantData, setPaymentParticipantData] = useState(null);
-  const [eventActionBusy, setEventActionBusy] = useState(false);
-
-  // 2. Persist to local cache whenever data updates
-  useEffect(() => {
-    if (players.length === 0 && branches.length === 0 && events.length === 0) return;
-    try {
-      localStorage.setItem(
-        DASHBOARD_CACHE_KEY,
-        JSON.stringify({
-          players,
-          branches,
-          events,
-          savedAt: Date.now(),
-        })
-      );
-    } catch (err) {
-      console.warn("Failed persisting dashboard cache:", err);
-    }
-  }, [players, branches, events]);
-
-  useEffect(() => {
-    const handleCongratulated = () => setCongratulatedTick((t) => t + 1);
-    window.addEventListener("birthday_congratulated", handleCongratulated);
-    return () =>
-      window.removeEventListener("birthday_congratulated", handleCongratulated);
-  }, []);
-
-  const playerListRef = useRef(null);
-  const deferredSearch = useDeferredValue(search);
-  const paymentMonthLabel = new Intl.DateTimeFormat("ar-EG", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(`${paymentMonth}-01T00:00:00`));
-
-  // 3. Fast Unified Bootstrap Network Fetching
-  useEffect(() => {
-    if (sessionStatus === "unauthenticated") {
-      router.push("/auth/signin");
-      return;
-    }
-    if (sessionStatus === "authenticated" && isUserAdmin) {
-      router.replace("/admin");
-      return;
-    }
-    let cancelled = false;
-
-    // Defer non-critical background backup check
-    const backupTimer = setTimeout(() => {
-      fetch("/api/backup/email").catch(() => {});
-    }, 10000);
-
-    async function loadData() {
-      // 1. Instant 0ms local cache hydration (runs immediately on client after SSR mount)
-      try {
-        const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed === "object") {
-            const cachedP = Array.isArray(parsed.players)
-              ? parsed.players.map((p) => normalizePlayer(p))
-              : [];
-            const cachedB = Array.isArray(parsed.branches) ? parsed.branches : [];
-            const cachedE = Array.isArray(parsed.events) ? parsed.events : [];
-            if ((cachedP.length > 0 || cachedB.length > 0) && !cancelled) {
-              setPlayers(cachedP);
-              setBranches(cachedB);
-              setEvents(cachedE);
-              setLoading(false);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Cached dashboard read warning:", err);
-      }
-
-      // 2. Network bootstrap fetch
-      try {
-        const bootstrapRes = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
-        if (bootstrapRes.status === 401) {
-          router.push("/auth/signin");
-          return;
-        }
-        if (bootstrapRes.status === 403) {
-          const errData = await bootstrapRes.json().catch(() => ({}));
-          if (errData?.isAdmin || errData?.redirectTo) {
-            router.replace(errData.redirectTo || "/admin");
-            return;
-          }
-          if (
-            (errData.code === "SUBSCRIPTION_INACTIVE" ||
-              errData.code === "ACCOUNT_SUSPENDED" ||
-              errData.error === "SUBSCRIPTION_INACTIVE" ||
-              errData.error === "ACCOUNT_SUSPENDED") &&
-            !cancelled
-          ) {
-            setSubscriptionInactive(errData);
-            setLoading(false);
-            return;
-          }
-        }
-
-        if (bootstrapRes.ok) {
-          const data = await bootstrapRes.json();
-          if (!cancelled && data?.success) {
-            setPlayers(Array.isArray(data.players) ? data.players.map((p) => normalizePlayer(p)) : []);
-            setBranches(Array.isArray(data.branches) ? data.branches : []);
-            setEvents(Array.isArray(data.events) ? data.events : []);
-            if (data.user) {
-              if (data.user.name) setLocalCoachName(data.user.name);
-              if (data.user.academyName) setLocalAcademyName(data.user.academyName);
-              setAccountUser(data.user);
-            }
-            setLoading(false);
-            return;
-          }
-        }
-
-        // Fallback to individual endpoints if bootstrap endpoint is unavailable
-        const [playersResponse, branchesResponse, eventsResponse] = await Promise.all([
-          fetch("/api/players", { cache: "no-store" }),
-          fetch("/api/branches", { cache: "no-store" }),
-          fetch("/api/events", { cache: "no-store" }),
-        ]);
-
-        if (playersResponse.status === 401 || branchesResponse.status === 401) {
-          router.push("/auth/signin");
-          return;
-        }
-
-        if (playersResponse.status === 403 || branchesResponse.status === 403 || eventsResponse.status === 403) {
-          const pErr = await playersResponse.json().catch(() => ({}));
-          const bErr = await branchesResponse.json().catch(() => ({}));
-          const eErr = await eventsResponse.json().catch(() => ({}));
-          const inactive =
-            (pErr.code === "SUBSCRIPTION_INACTIVE" || pErr.code === "ACCOUNT_SUSPENDED" || pErr.error === "SUBSCRIPTION_INACTIVE" || pErr.error === "ACCOUNT_SUSPENDED")
-              ? pErr
-              : (bErr.code === "SUBSCRIPTION_INACTIVE" || bErr.code === "ACCOUNT_SUSPENDED" || bErr.error === "SUBSCRIPTION_INACTIVE" || bErr.error === "ACCOUNT_SUSPENDED")
-              ? bErr
-              : (eErr.code === "SUBSCRIPTION_INACTIVE" || eErr.code === "ACCOUNT_SUSPENDED" || eErr.error === "SUBSCRIPTION_INACTIVE" || eErr.error === "ACCOUNT_SUSPENDED")
-              ? eErr
-              : null;
-          if (inactive && !cancelled) {
-            setSubscriptionInactive(inactive);
-            setLoading(false);
-            return;
-          }
-        }
-
-        if (playersResponse.ok && branchesResponse.ok) {
-          const [playersData, branchesData, eventsData] = await Promise.all([
-            playersResponse.json(),
-            branchesResponse.json(),
-            eventsResponse.ok ? eventsResponse.json() : [],
-          ]);
-          if (!cancelled) {
-            setPlayers(Array.isArray(playersData) ? playersData.map((p) => normalizePlayer(p)) : []);
-            setBranches(Array.isArray(branchesData) ? branchesData : []);
-            setEvents(Array.isArray(eventsData) ? eventsData : []);
-          }
-        }
-      } catch (err) {
-        console.error("Data loading error:", err);
-        if (!cancelled && players.length === 0) {
-          setNotice("تعذر تحميل البيانات. تأكد من اتصال MongoDB.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    loadData();
-
-    return () => {
-      cancelled = true;
-      clearTimeout(backupTimer);
-    };
-  }, [router, sessionStatus, isUserAdmin]);
-
-  // ─── Silent Real-time Revalidation Function ───
-  const revalidateDashboard = useCallback(async ({ silent = true } = {}) => {
-    if (sessionStatus !== "authenticated" || isUserAdmin) return;
-    try {
-      const bootstrapRes = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
-      if (bootstrapRes.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-      if (bootstrapRes.ok) {
-        const data = await bootstrapRes.json();
-        if (data?.success) {
-          if (Array.isArray(data.players)) {
-            setPlayers(data.players.map((p) => normalizePlayer(p)));
-          }
-          if (Array.isArray(data.branches)) {
-            setBranches(data.branches);
-          }
-          if (Array.isArray(data.events)) {
-            setEvents(data.events);
-          }
-          if (data.user) {
-            if (data.user.name) setLocalCoachName(data.user.name);
-            if (data.user.academyName) setLocalAcademyName(data.user.academyName);
-            setAccountUser(data.user);
-          }
-          try {
-            localStorage.setItem(
-              DASHBOARD_CACHE_KEY,
-              JSON.stringify({
-                players: data.players,
-                branches: data.branches,
-                events: data.events,
-                timestamp: Date.now(),
-              })
-            );
-          } catch (_) {}
-        }
-      }
-    } catch (err) {
-      if (!silent) console.warn("Background revalidation warning:", err);
-    }
-  }, [router, sessionStatus, isUserAdmin]);
-
-  // ─── Instant Cache Persistence on Any State Change ───
-  useEffect(() => {
-    if (players.length > 0 || branches.length > 0 || events.length > 0) {
-      try {
-        localStorage.setItem(
-          DASHBOARD_CACHE_KEY,
-          JSON.stringify({
-            players,
-            branches,
-            events,
-            timestamp: Date.now(),
-          })
-        );
-      } catch (_) {}
-    }
-  }, [players, branches, events]);
-
-  // ─── Real-Time Live Sync & Auto-Revalidation Hooks ───
-  useEffect(() => {
-    if (sessionStatus !== "authenticated") return;
-
-    // 1. Silent revalidation on Window / App Focus
-    const handleFocus = () => {
-      revalidateDashboard({ silent: true });
-    };
-
-    // 2. Silent revalidation when Tab becomes visible
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        revalidateDashboard({ silent: true });
-      }
-    };
-
-    // 3. Periodic Background Sync (every 15 seconds if tab is active)
-    const pollInterval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        revalidateDashboard({ silent: true });
-      }
-    }, 15000);
-
-    // 4. Cross-Tab Real-Time Sync via BroadcastChannel & Storage Event
-    let channel = null;
-    try {
-      if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-        channel = new BroadcastChannel("coachmaster_sync");
-        channel.onmessage = (event) => {
-          const payload = event.data;
-          if (!payload) return;
-          // ── Instant 0ms Cross-Tab State Updates ──
-          if (payload.type === "PLAYER_UPDATED" && payload.player) {
-            const safe = normalizePlayer(payload.player);
-            setPlayers((current) =>
-              current.map((p) => (p._id === safe._id ? safe : p))
-            );
-            setSelected((current) =>
-              current?._id === safe._id ? safe : current
-            );
-          } else if (payload.type === "PLAYER_ADDED" && payload.player) {
-            const safe = normalizePlayer(payload.player);
-            setPlayers((current) => {
-              if (current.some((p) => p._id === safe._id)) return current;
-              return [safe, ...current];
-            });
-          } else if (payload.type === "PLAYER_DELETED" && payload.id) {
-            setPlayers((current) => current.filter((p) => p._id !== payload.id));
-            setSelected((current) => (current?._id === payload.id ? null : current));
-          } else if (payload.type === "BULK_PLAYERS_DELETED" && Array.isArray(payload.ids)) {
-            setPlayers((current) => current.filter((p) => !payload.ids.includes(p._id)));
-            setSelected((current) => (payload.ids.includes(current?._id) ? null : current));
-          } else if (payload.type === "BRANCHES_UPDATED" && Array.isArray(payload.branches)) {
-            setBranches(payload.branches);
-          }
-          // Also perform background silent reconciliation with server
-          revalidateDashboard({ silent: true });
-        };
-      }
-    } catch (_) {}
-
-    const handleStorage = (e) => {
-      if (e.key === "coachmaster_sync_event") {
-        revalidateDashboard({ silent: true });
-      }
-    };
-
-    // 5. In-App Custom Event Listener for instant sync from any component/modal
-    const handleCustomRefresh = () => {
-      revalidateDashboard({ silent: true });
-    };
-
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener("coachmaster_refresh_data", handleCustomRefresh);
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("coachmaster_refresh_data", handleCustomRefresh);
-      clearInterval(pollInterval);
-      if (channel) {
-        channel.close();
-      }
-    };
-  }, [sessionStatus, revalidateDashboard]);
-
-  function showToast(message, type = "success") {
-    if (!message) {
-      setToast(null);
-      return;
-    }
-    setToast({ message, type });
-  }
-
-  function setNotice(message) {
-    if (!message) {
-      setToast(null);
-      return;
-    }
-    const isError =
-      message.includes("تعذر") ||
-      message.includes("خطأ") ||
-      message.includes("لا يمكن") ||
-      message.includes("راجع بيانات");
-    showToast(message, isError ? "error" : "success");
-  }
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null);
-      }, 4500);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCurrentPage(1);
-  }, [branch, deferredSearch, statusFilter, sortBy]);
-  const filteredPlayers = useMemo(
-    () => {
-      void congratulatedTick;
-      return players.filter((player) => {
-        const matchesBranch =
-          branch === "كل الصالات" || player.branch === branch;
-        const isPresent = isPlayerPresentOnDate(player, sessionDate);
-        const isAbsent = isPlayerAbsentOnDate(player, branches, sessionDate);
-        const paymentDetails = getPaymentDetailsFor(player, paymentMonth);
-        const purchasesSum = getPurchasesSummary(player);
-        const matchesStatus =
-          statusFilter === "all" ||
-          (statusFilter === "present" && isPresent) ||
-          (statusFilter === "absent" && isAbsent) ||
-          (statusFilter === "paid" &&
-            paymentDetails.status === "paid") ||
-          (statusFilter === "partially_paid" &&
-            paymentDetails.status === "partially_paid") ||
-          (statusFilter === "unpaid" &&
-            paymentDetails.status !== "paid") ||
-          (statusFilter === "purchases_debt" &&
-            (purchasesSum.remainingAmount > 0 || purchasesSum.undeliveredCount > 0)) ||
-          (statusFilter === "birthday" &&
-            Boolean(
-              getBirthdayInfo(player)?.isToday ||
-              getBirthdayInfo(player)?.daysLeft === 1
-            ));
-        const q = deferredSearch.trim();
-        const matchesSearch =
-          !q ||
-          player.name.includes(q) ||
-          (player.fileNumber && String(player.fileNumber).includes(q)) ||
-          (player.guardianPhone && String(player.guardianPhone).includes(q));
-        return matchesBranch && matchesStatus && matchesSearch;
-      });
-    },
-    [
-      players,
-      branch,
-      branches,
-      deferredSearch,
-      statusFilter,
-      sessionDate,
-      paymentMonth,
-      congratulatedTick,
-    ],
-  );
-
-  const sortedFilteredPlayers = useMemo(() => {
-    const list = [...filteredPlayers];
-    switch (sortBy) {
-      case "alphabetical":
-        return list.sort((a, b) => a.name.localeCompare(b.name, "ar"));
-      case "oldest":
-        return list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      case "age-asc":
-        return list.sort((a, b) => (a.age || 0) - (b.age || 0));
-      case "age-desc":
-        return list.sort((a, b) => (b.age || 0) - (a.age || 0));
-      case "unpaid-first":
-        return list.sort((a, b) => {
-          const aDetails = getPaymentDetailsFor(a, paymentMonth);
-          const bDetails = getPaymentDetailsFor(b, paymentMonth);
-          if (bDetails.remainingAmount !== aDetails.remainingAmount) {
-            return bDetails.remainingAmount - aDetails.remainingAmount;
-          }
-          const aPaid = aDetails.status === "paid" ? 1 : 0;
-          const bPaid = bDetails.status === "paid" ? 1 : 0;
-          return aPaid - bPaid;
-        });
-      case "purchases-debt-first":
-        return list.sort((a, b) => {
-          const aSum = getPurchasesSummary(a);
-          const bSum = getPurchasesSummary(b);
-          if (bSum.remainingAmount !== aSum.remainingAmount) {
-            return bSum.remainingAmount - aSum.remainingAmount;
-          }
-          return bSum.undeliveredCount - aSum.undeliveredCount;
-        });
-      case "attendance-desc":
-        return list.sort((a, b) => {
-          const aPresent = (a.attendance || []).filter((x) => x.status === "present").length;
-          const aTotal = (a.attendance || []).length;
-          const aRate = aTotal ? aPresent / aTotal : 0;
-
-          const bPresent = (b.attendance || []).filter((x) => x.status === "present").length;
-          const bTotal = (b.attendance || []).length;
-          const bRate = bTotal ? bPresent / bTotal : 0;
-
-          return bRate - aRate;
-        });
-      case "newest":
-      default:
-        return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-  }, [filteredPlayers, sortBy, paymentMonth]);
-
-  const totalPages = pageSize === 0 ? 1 : Math.ceil(sortedFilteredPlayers.length / pageSize);
-
-  const paginatedPlayers = useMemo(() => {
-    if (pageSize === 0) return sortedFilteredPlayers;
-    const start = (currentPage - 1) * pageSize;
-    return sortedFilteredPlayers.slice(start, start + pageSize);
-  }, [sortedFilteredPlayers, currentPage, pageSize]);
-
-  const [isBackingUp, setIsBackingUp] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
-  const [restoreProgressModal, setRestoreProgressModal] = useState(null);
-  const restoreFileRef = useRef(null);
-
-  async function handleInstantCloudBackup() {
-    if (isCloudBackingUp) return;
-    setIsCloudBackingUp(true);
-    try {
-      const res = await fetch("/api/backup/snapshots", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create_snapshot" }),
-      });
-
-      const result = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        showToast(result.error || result.details || "تعذر حفظ النسخة السحابية", "error");
-        return;
-      }
-
-      showToast(`✓ تم حفظ النسخة السحابية بنجاح! تم تأمين بيانات (${result.stats?.playersCount ?? players.length}) لاعب.`);
-    } catch {
-      showToast("تعذر الاتصال بالخادم لحفظ النسخة السحابية", "error");
-    } finally {
-      setIsCloudBackingUp(false);
-    }
-  }
-
-  async function handleDownloadBackup() {
-    if (isBackingUp) return;
-    setIsBackingUp(true);
-    try {
-      const res = await fetch("/api/backup");
-      if (!res.ok) throw new Error();
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const dateStr = new Date().toISOString().slice(0, 10);
-      a.download = `نسخة_احتياطية_أكاديمية_${dateStr}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      showToast("✓ تم تنزيل النسخة الاحتياطية بنجاح. احتفظ بالملف في مكان آمن.");
-    } catch {
-      showToast("تعذر تنزيل النسخة الاحتياطية. حاول مرة أخرى.", "error");
-    } finally {
-      setIsBackingUp(false);
-    }
-  }
-
-  async function reloadAllData() {
-    try {
-      const res = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.success) {
-          setPlayers(Array.isArray(data.players) ? data.players.map((p) => normalizePlayer(p)) : []);
-          setBranches(Array.isArray(data.branches) ? data.branches : []);
-          setEvents(Array.isArray(data.events) ? data.events : []);
-          return;
-        }
-      }
-      const [pRes, bRes, eRes] = await Promise.all([
-        fetch("/api/players", { cache: "no-store" }),
-        fetch("/api/branches", { cache: "no-store" }),
-        fetch("/api/events", { cache: "no-store" }),
-      ]);
-      if (pRes.ok) {
-        const pData = await pRes.json();
-        setPlayers(Array.isArray(pData) ? pData.map((p) => normalizePlayer(p)) : []);
-      }
-      if (bRes.ok) {
-        const bData = await bRes.json();
-        setBranches(Array.isArray(bData) ? bData : []);
-      }
-      if (eRes.ok) {
-        const eData = await eRes.json();
-        setEvents(Array.isArray(eData) ? eData : []);
-      }
-    } catch (err) {
-      console.error("Error reloading all data:", err);
-    }
-  }
-
-  async function handleFileSelectedForRestore(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (restoreFileRef.current) restoreFileRef.current.value = "";
-
-    const sizeStr = (bytes) => {
-      if (!bytes || bytes === 0) return "0 بايت";
-      const k = 1024;
-      const sizes = ["بايت", "كيلوبايت", "ميجابايت", "جيجابايت"];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-    };
-
-    const formattedSize = sizeStr(file.size);
-
-    // 1. Immediately activate loader so screen is NEVER static
-    setIsRestoring(true);
-    setRestoreProgressModal({
-      status: "reading",
-      fileName: file.name,
-      fileSize: formattedSize,
-      stepText: "جارٍ قراءة وفحص ملف النسخة من ذاكرة الجهاز...",
-      subText: "يتم قراءة محتوى الملف والتحقق من سلامة البيانات",
-    });
-
-    try {
-      // Yield execution to paint the loader immediately
-      await new Promise((r) => setTimeout(r, 80));
-
-      const text = await file.text();
-
-      setRestoreProgressModal((prev) => ({
-        ...prev,
-        status: "analyzing",
-        stepText: "جارٍ فحص سلامة البيانات وتوافق اللاعبين...",
-      }));
-
-      await new Promise((r) => setTimeout(r, 80));
-
-      let parsed;
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        setRestoreProgressModal(null);
-        setIsRestoring(false);
-        showToast("الملف المحدد ليس ملف JSON صالحاً أو تالف.", "error");
-        return;
-      }
-
-      const backupData = parsed?.data || parsed;
-      const countPlayers = (backupData.players || []).length;
-      const countBranches = (backupData.branches || []).length;
-
-      if (!countPlayers && !countBranches) {
-        setRestoreProgressModal(null);
-        setIsRestoring(false);
-        showToast("الملف المحدد لا يحتوي على بيانات صالحة للاستعادة.", "error");
-        return;
-      }
-
-      setRestoreProgressModal((prev) => ({
-        ...prev,
-        status: "restoring",
-        stepText: `جارٍ استرجاع وحفظ البيانات في السحابة (${countPlayers} لاعب)...`,
-        subText: "يتم الآن تحديث قاعدة بيانات الأكاديمية وربط الحساب",
-      }));
-
-      let res;
-      try {
-        res = await fetch("/api/backup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(parsed),
-        });
-      } catch (networkErr) {
-        console.warn("/api/backup network error, will try /api/players fallback:", networkErr);
-      }
-
-      if (!res || !res.ok) {
-        // Fallback to /api/players restore endpoint
-        try {
-          res = await fetch("/api/players", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "restore_backup", data: backupData }),
-          });
-        } catch (playerErr) {
-          console.error("/api/players fallback error:", playerErr);
-        }
-      }
-
-      const rawText = res ? await res.text() : "";
-      let result = {};
-      try {
-        result = JSON.parse(rawText);
-      } catch {
-        result = { error: rawText.slice(0, 200) };
-      }
-
-      if (!res || !res.ok) {
-        const errorMsg = result.details
-          ? `${result.error || "تعذر استعادة النسخة الاحتياطية"}: ${result.details}`
-          : result.error || `تعذر استعادة النسخة الاحتياطية (${res?.status || "خطأ اتصال"})`;
-        setRestoreProgressModal(null);
-        setIsRestoring(false);
-        showToast(errorMsg, "error");
-        return;
-      }
-
-      // Success!
-      setRestoreProgressModal((prev) => ({
-        ...prev,
-        status: "success",
-        stepText: "تمت الاستعادة بنجاح!",
-        subText: `تم استرجاع (${result.stats?.playersRestored ?? countPlayers}) لاعب و (${result.stats?.branchesRestored ?? countBranches}) صالة`,
-      }));
-
-      // Reload fresh data
-      const [pRes, bRes, eRes] = await Promise.all([
-        fetch("/api/players", { cache: "no-store" }),
-        fetch("/api/branches", { cache: "no-store" }),
-        fetch("/api/events", { cache: "no-store" }),
-      ]);
-      if (pRes.ok) {
-        const pData = await pRes.json();
-        setPlayers(Array.isArray(pData) ? pData.map((p) => normalizePlayer(p)) : []);
-      }
-      if (bRes.ok) {
-        const bData = await bRes.json();
-        setBranches(Array.isArray(bData) ? bData : []);
-      }
-      if (eRes.ok) {
-        const eData = await eRes.json();
-        setEvents(Array.isArray(eData) ? eData : []);
-      }
-
-      showToast(`✓ تمت الاستعادة بنجاح! تم استرجاع (${result.stats?.playersRestored ?? countPlayers}) لاعب.`);
-
-      setTimeout(() => {
-        setRestoreProgressModal(null);
-        setIsRestoring(false);
-      }, 1200);
-    } catch (err) {
-      console.error("Restore failed:", err);
-      setRestoreProgressModal(null);
-      setIsRestoring(false);
-      showToast("حدث خطأ أثناء قراءة ملف النسخة الاحتياطية.", "error");
-    } finally {
-      if (restoreFileRef.current) restoreFileRef.current.value = "";
-    }
-  }
-
-  const dashboardPlayers =
-    branch === "كل الصالات"
-      ? players
-      : players.filter((player) => player.branch === branch);
-  const paidCount = dashboardPlayers.filter(
-    (player) => paymentStatusFor(player, paymentMonth) === "paid",
-  ).length;
-  const partialCount = dashboardPlayers.filter(
-    (player) => paymentStatusFor(player, paymentMonth) === "partially_paid",
-  ).length;
-  const unpaidCount = dashboardPlayers.filter(
-    (player) => paymentStatusFor(player, paymentMonth) === "unpaid",
-  ).length;
-  const totalPendingPaymentCount = unpaidCount + partialCount;
-  const purchasesDebtCount = dashboardPlayers.filter((player) => {
-    const s = getPurchasesSummary(player);
-    return s.remainingAmount > 0 || s.undeliveredCount > 0;
-  }).length;
-  const presentToday = dashboardPlayers.filter((player) =>
-    isPlayerPresentOnDate(player, sessionDate),
-  ).length;
-  const absentToday = dashboardPlayers.filter((player) =>
-    isPlayerAbsentOnDate(player, branches, sessionDate),
-  ).length;
-  const attendanceRateToday =
-    (presentToday + absentToday) > 0
-      ? Math.round((presentToday / (presentToday + absentToday)) * 100)
-      : dashboardPlayers.length > 0
-      ? Math.round((presentToday / dashboardPlayers.length) * 100)
-      : 0;
-
-  const activeBranchData = useMemo(
-    () => (branches || []).find((b) => b.name === branch),
-    [branches, branch]
-  );
-  // Re-evaluate every 30 seconds so the attendance lock lifts when training time arrives
-  const [nowTick, setNowTick] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNowTick(Date.now()), 30000);
-    return () => clearInterval(id);
-  }, []);
-  const isBranchWorkingToday = useMemo(
-    () => isBranchWorkingDate(activeBranchData, sessionDate, new Date(nowTick)),
-    [activeBranchData, sessionDate, nowTick]
-  );
-  const todayBirthdaysCount = dashboardPlayers.filter((player) => {
-    const bday = getBirthdayInfo(player);
-    return Boolean(bday?.isToday || bday?.daysLeft === 1);
-  }).length;
-  const todayBirthdaysList = useMemo(() => {
-    return getTodayBirthdays(players);
-  }, [players]);
-  async function updatePlayer(id, data) {
-    if (data.attendanceStatus && data.date > today) {
-      setNotice("لا يمكن تسجيل حضور أو غياب في تاريخ مستقبلي.");
-      return null;
-    }
-
-    // ─── 1. Instant 0ms Optimistic UI for ALL Player Updates (No Refresh Needed) ───
-    let previousPlayer = null;
-    const didOptimistic = true;
-
-    setPlayers((current) =>
-      current.map((p) => {
-        if (p._id !== id) return p;
-        previousPlayer = p;
-        let updated = { ...p, ...data };
-
-        if (data.attendanceStatus) {
-          const currentAtt = Array.isArray(p.attendance) ? p.attendance : [];
-          const filteredAtt = currentAtt.filter((item) => item.date !== data.date);
-          if (data.attendanceStatus !== "clear") {
-            filteredAtt.push({ date: data.date, status: data.attendanceStatus });
-          }
-          updated.attendance = filteredAtt;
-        }
-
-        if (data.paymentStatus) {
-          const month = data.paymentMonth || paymentMonth;
-          const history = Array.isArray(p.paymentHistory) ? p.paymentHistory : [];
-          const otherPayments = history.filter((pay) => pay.month !== month);
-          const amount = p.totalAmount || p.defaultTotalAmount || 0;
-          if (data.paymentStatus === "paid") {
-            otherPayments.push({
-              month,
-              status: "paid",
-              paidAmount: amount,
-              remainingAmount: 0,
-              totalAmount: amount,
-              updatedAt: new Date().toISOString(),
-            });
-            updated.paymentStatus = "paid";
-            updated.paidAmount = amount;
-            updated.remainingAmount = 0;
-          } else {
-            otherPayments.push({
-              month,
-              status: "unpaid",
-              paidAmount: 0,
-              remainingAmount: amount,
-              totalAmount: amount,
-              updatedAt: new Date().toISOString(),
-            });
-            updated.paymentStatus = "unpaid";
-            updated.paidAmount = 0;
-            updated.remainingAmount = amount;
-          }
-          updated.paymentHistory = otherPayments;
-        }
-
-        return normalizePlayer(updated);
-      })
-    );
-
-    setSelected((current) => {
-      if (current?._id !== id) return current;
-      let updated = { ...current, ...data };
-      if (data.attendanceStatus) {
-        const currentAtt = Array.isArray(current.attendance) ? current.attendance : [];
-        const filteredAtt = currentAtt.filter((item) => item.date !== data.date);
-        if (data.attendanceStatus !== "clear") {
-          filteredAtt.push({ date: data.date, status: data.attendanceStatus });
-        }
-        updated.attendance = filteredAtt;
-      }
-      if (data.paymentStatus) {
-        updated.paymentStatus = data.paymentStatus;
-      }
-      return normalizePlayer(updated);
-    });
-
-    try {
-      const response = await fetch("/api/players", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          Object.assign(Object.assign({ id }, data), {
-            paymentMonth: data.paymentMonth || paymentMonth,
-          }),
-        ),
-      });
-      const result = await response.json();
-      if (!response.ok || !result) {
-        if (didOptimistic && previousPlayer) {
-          setPlayers((current) =>
-            current.map((p) => (p._id === id ? previousPlayer : p))
-          );
-          setSelected((current) =>
-            current?._id === id ? previousPlayer : current
-          );
-        }
-        setNotice(
-          (result === null || result === void 0 ? void 0 : result.error) ||
-            "تعذر تحديث بيانات اللاعب.",
-        );
-        return null;
-      }
-      const safePlayer = normalizePlayer(result);
-      setPlayers((current) =>
-        current.map((player) => (player._id === id ? safePlayer : player)),
-      );
-      setSelected((current) =>
-        (current === null || current === void 0 ? void 0 : current._id) === id
-          ? safePlayer
-          : current,
-      );
-
-      // Broadcast update across tabs immediately
-      broadcastSyncEvent({ type: "PLAYER_UPDATED", player: safePlayer });
-
-      if (data.attendanceStatus) {
-        setNotice(
-          `تم تسجيل ${data.attendanceStatus === "present" ? "حضور" : "غياب"} اللاعب بنجاح.`,
-        );
-      } else if (data.paymentStatus) {
-        setNotice(
-          `تم ${data.paymentStatus === "paid" ? "تسجيل دفع" : "إلغاء الدفع"} اللاعب بنجاح.`,
-        );
-      } else if (data.purchaseAction === "add") {
-        setNotice(`تم تسجيل السلعة (${data.title || "السلعة"}) بنجاح.`);
-      } else if (data.purchaseAction === "toggle_delivery") {
-        setNotice(
-          data.deliveryStatus === "received"
-            ? "تم تسجيل استلام السلعة بنجاح ✓"
-            : "تم تغيير حالة السلعة إلى (لم يستلم بعد) ⏳"
-        );
-      } else if (data.purchaseAction === "update") {
-        setNotice("تم تحديث بيانات السلعة بنجاح.");
-      } else if (data.purchaseAction === "delete") {
-        setNotice("تم حذف السلعة من حساب اللاعب بنجاح.");
-      } else {
-        setNotice("تم تحديث بيانات اللاعب بنجاح ✓");
-      }
-      return safePlayer;
-    } catch (_a) {
-      if (didOptimistic && previousPlayer) {
-        setPlayers((current) =>
-          current.map((p) => (p._id === id ? previousPlayer : p))
-        );
-        setSelected((current) =>
-          current?._id === id ? previousPlayer : current
-        );
-      }
-      setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
-      return null;
-    }
-  }
-  async function handleAddPlayer(playerData) {
-    try {
-      const response = await fetch("/api/players", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(playerData),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        setNotice(result.error || "راجع بيانات اللاعب وحاول مرة أخرى.");
-        return;
-      }
-      const newPlayer = normalizePlayer(result);
-      setPlayers((current) => [newPlayer, ...current]);
-      setShowForm(false);
-      // Ensure newly added player is visible without filtering hurdles
-      if (branch !== "كل الصالات" && newPlayer.branch && newPlayer.branch !== branch) {
-        setBranch(newPlayer.branch);
-      }
-      setSearch("");
-      broadcastSyncEvent({ type: "PLAYER_ADDED", player: newPlayer });
-      setNotice("تمت إضافة اللاعب بنجاح! تم تجهيز كارت الترحيب 🥋");
-      setWelcomePlayer(newPlayer);
-    } catch (_error) {
-      setNotice("تعذر الاتصال بالخادم. حاول مرة أخرى.");
-    }
-  }
-  async function addBranch(name, days = []) {
-    try {
-      const response = await fetch("/api/branches", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, days }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        const errMsg = data.error || "تعذر إضافة الفرع.";
-        showToast(errMsg, "error");
-        setNotice(errMsg);
-        return null;
-      }
-      const nextBranches = [...branches, data];
-      setBranches(nextBranches);
-      broadcastSyncEvent({ type: "BRANCHES_UPDATED", branches: nextBranches });
-      showToast("تمت إضافة الصالة ومواعيدها بنجاح.");
-      setNotice("تمت إضافة الفرع بنجاح.");
-      return data;
-    } catch {
-      showToast("تعذر الاتصال بالخادم لإضافة الصالة.", "error");
-      return null;
-    }
-  }
-  async function updateBranch(oldName, { newName, days }) {
-    try {
-      const response = await fetch("/api/branches", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oldName, newName, days }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        const errMsg = data.error || "تعذر تعديل بيانات الفرع.";
-        showToast(errMsg, "error");
-        return { success: false, error: errMsg };
-      }
-      const effectiveName = data.newName || oldName;
-      const nextBranches = branches.map((b) =>
-        (b.name || "").trim() === (oldName || "").trim()
-          ? {
-              ...b,
-              name: effectiveName,
-              days: data.days !== undefined ? data.days : b.days,
-            }
-          : b
-      );
-      setBranches(nextBranches);
-      broadcastSyncEvent({ type: "BRANCHES_UPDATED", branches: nextBranches });
-      if (data.newName && data.newName !== oldName) {
-        setPlayers((current) =>
-          current.map((p) =>
-            (p.branch || "").trim() === (oldName || "").trim()
-              ? { ...p, branch: data.newName }
-              : p
-          )
-        );
-        if (branch === oldName) setBranch(data.newName);
-        showToast(`تم تعديل اسم الفرع إلى "${data.newName}" وتحديث جميع بيانات اللاعبين.`);
-      } else {
-        showToast("تم تحديث مواعيد وأيام عمل الصالة بنجاح.");
-      }
-      return { success: true };
-    } catch {
-      showToast("تعذر الاتصال بالخادم لتعديل بيانات الفرع.", "error");
-      return { success: false };
-    }
-  }
-  const renameBranch = (oldName, newName) => updateBranch(oldName, { newName });
-  async function deleteBranch(name) {
-    const response = await fetch("/api/branches", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setNotice(data.error || "تعذر حذف الفرع.");
-      return;
-    }
-    const nextBranches = branches.filter((branchItem) => branchItem.name !== name);
-    setBranches(nextBranches);
-    broadcastSyncEvent({ type: "BRANCHES_UPDATED", branches: nextBranches });
-    if (branch === name) setBranch("كل الصالات");
-    setNotice("تم حذف الفرع.");
-  }
-  function handleSelectBranch(name) {
-    setBranch(name);
-    window.setTimeout(() => {
-      playerListRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 80);
-  }
-  function handleBlockedBranchDelete(name, playerCount) {
-    setNotice(
-      `لا يمكن حذف ${name} لأنها تحتوي على ${playerCount} لاعب. انقل اللاعبين أولًا إلى صالة أخرى.`,
-    );
-  }
-  async function deletePlayer(id) {
-    const response = await fetch("/api/players", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    if (!response.ok) {
-      setNotice("تعذر حذف اللاعب.");
-      return;
-    }
-    setPlayers((current) => current.filter((player) => player._id !== id));
-    setSelected(null);
-    broadcastSyncEvent({ type: "PLAYER_DELETED", id });
-    setNotice("تم حذف اللاعب.");
-  }
-  async function handleQuickBranchSubmit(e) {
-    e.preventDefault();
-    if (!quickBranchName.trim()) return;
-    await addBranch(quickBranchName.trim());
-    setQuickBranchName("");
-    setIsAddingBranch(false);
-  }
-  async function markBranchPresent(branchName) {
-    const branchPlayers = players.filter(
-      (player) => player.branch === branchName,
-    );
-    if (!branchPlayers.length) {
-      setNotice("لا يوجد لاعبين مسجلين في هذه الصالة.");
-      return;
-    }
-    const targetBranch = (branches || []).find((b) => b.name === branchName);
-    if (targetBranch && !isBranchWorkingDate(targetBranch, sessionDate)) {
-      setNotice(`لا يمكن تسجيل الحضور لأن الوقت الحالي خارج مواعيد عمل صالة ${branchName}.`);
-      return;
-    }
-    setBusyBranch(branchName);
-    const results = await Promise.all(
-      branchPlayers.map((player) =>
-        updatePlayer(player._id, {
-          attendanceStatus: "present",
-          date: sessionDate,
-        }),
-      ),
-    );
-    setBusyBranch("");
-    const savedCount = results.filter(Boolean).length;
-    if (savedCount) {
-      setNotice(`تم تسجيل حضور ${savedCount} لاعب من ${branchName}.`);
-    }
-  }
-  function togglePlayerSelection(id) {
-    setSelectedPlayerIds((current) =>
-      current.includes(id)
-        ? current.filter((playerId) => playerId !== id)
-        : [...current, id],
-    );
-  }
-  function toggleFilteredSelection() {
-    const filteredIds = filteredPlayers.map((player) => player._id);
-    const allSelected = filteredIds.every((id) =>
-      selectedPlayerIds.includes(id),
-    );
-    setSelectedPlayerIds((current) =>
-      allSelected
-        ? current.filter((id) => !filteredIds.includes(id))
-        : [...new Set([...current, ...filteredIds])],
-    );
-  }
-  async function markSelectedAttendance(status) {
-    if (!selectedPlayerIds.length || bulkAttendanceBusy) return;
-    setBulkAttendanceBusy(true);
-    const results = await Promise.all(
-      selectedPlayerIds.map((id) =>
-        updatePlayer(id, {
-          attendanceStatus: status,
-          date: sessionDate,
-        }),
-      ),
-    );
-    const savedCount = results.filter(Boolean).length;
-    setBulkAttendanceBusy(false);
-    setSelectedPlayerIds([]);
-    if (savedCount) {
-      setNotice(
-        `تم تسجيل ${status === "present" ? "حضور" : "غياب"} ${savedCount} لاعب.`,
-      );
-    }
-  }
-  async function markSelectedPayment(status) {
-    if (!selectedPlayerIds.length || bulkAttendanceBusy) return;
-    setBulkAttendanceBusy(true);
-    const results = await Promise.all(
-      selectedPlayerIds.map((id) =>
-        updatePlayer(id, { paymentStatus: status }),
-      ),
-    );
-    const savedCount = results.filter(Boolean).length;
-    setBulkAttendanceBusy(false);
-    setSelectedPlayerIds([]);
-    if (savedCount) {
-      setNotice(
-        `تم ${status === "paid" ? "تسجيل دفع" : "إلغاء دفع"} ${savedCount} لاعب.`,
-      );
-    }
-  }
-
-  async function deleteSelectedPlayers() {
-    if (!selectedPlayerIds.length || bulkAttendanceBusy) return;
-    const count = selectedPlayerIds.length;
-    const confirmMessage =
-      count === 1
-        ? "هل أنت متأكد من حذف هذا اللاعب نهائياً؟ لا يمكن التراجع عن هذا الإجراء."
-        : `هل أنت متأكد من حذف ${count} لاعبين محددين نهائياً؟ لا يمكن التراجع عن هذا الإجراء.`;
-    if (!window.confirm(confirmMessage)) return;
-
-    setBulkAttendanceBusy(true);
-    try {
-      const response = await fetch("/api/players", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedPlayerIds }),
-      });
-      if (!response.ok) {
-        setNotice("تعذر حذف اللاعبين المحددين.");
-        return;
-      }
-      const data = await response.json();
-      const deletedCount = data.deletedCount || count;
-      setPlayers((current) =>
-        current.filter((p) => !selectedPlayerIds.includes(p._id)),
-      );
-      if (selected && selectedPlayerIds.includes(selected._id)) {
-        setSelected(null);
-      }
-      broadcastSyncEvent({ type: "BULK_PLAYERS_DELETED", ids: selectedPlayerIds });
-      setSelectedPlayerIds([]);
-      setNotice(`✓ تم حذف ${deletedCount} لاعب بنجاح.`);
-    } catch (err) {
-      console.error("Bulk delete error:", err);
-      setNotice("حدث خطأ أثناء حذف اللاعبين.");
-    } finally {
-      setBulkAttendanceBusy(false);
-    }
-  }
-
-  // Event handlers
-  async function handleSaveEvent(data) {
-    setEventActionBusy(true);
-    try {
-      const isEditing = Boolean(data.id);
-      const res = await fetch("/api/events", {
-        method: isEditing ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error();
-      const saved = await res.json();
-      if (isEditing) {
-        setEvents((prev) => prev.map((e) => (e._id === saved._id ? saved : e)));
-        showToast("تم تحديث بيانات الفعالية بنجاح");
-      } else {
-        setEvents((prev) => [saved, ...prev]);
-        showToast("تم إنشاء الفعالية بنجاح");
-      }
-      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
-      setShowAddEventModal(false);
-      setEditingEvent(null);
-    } catch {
-      showToast("تعذر حفظ الفعالية، يرجى المحاولة ثانية", "error");
-    } finally {
-      setEventActionBusy(false);
-    }
-  }
-
-  async function handleDeleteEvent(eventId) {
-    try {
-      const res = await fetch(`/api/events?id=${eventId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      setEvents((prev) => prev.filter((e) => e._id !== eventId));
-      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
-      showToast("تم حذف الفعالية بنجاح");
-    } catch {
-      showToast("تعذر حذف الفعالية", "error");
-    }
-  }
-
-  async function handleAddParticipants({ eventId, playerIds, fee }) {
-    setEventActionBusy(true);
-    try {
-      const res = await fetch("/api/events", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventId,
-          action: "add_participants",
-          playerIds,
-          fee,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const updated = await res.json();
-      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
-      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
-      showToast(`تمت إضافة (${playerIds.length}) لاعبين إلى الفعالية بنجاح`);
-      setAddParticipantsEvent(null);
-    } catch {
-      showToast("تعذر إضافة اللاعبين للفعالية", "error");
-    } finally {
-      setEventActionBusy(false);
-    }
-  }
-
-  async function handleSaveParticipantPayment({ playerId, paidAmount, totalAmount, notes }) {
-    if (!paymentParticipantData?.event?._id) return;
-    setEventActionBusy(true);
-    try {
-      const res = await fetch("/api/events", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventId: paymentParticipantData.event._id,
-          action: "update_payment",
-          playerId,
-          paidAmount,
-          totalAmount,
-          notes,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const updated = await res.json();
-      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
-      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
-      showToast("تم تسجيل دفعة الفعالية بنجاح");
-      setPaymentParticipantData(null);
-    } catch {
-      showToast("تعذر حفظ دفعة الفعالية", "error");
-    } finally {
-      setEventActionBusy(false);
-    }
-  }
-
-  async function handleUpdateParticipantAttendance(eventId, playerId, attended) {
-    try {
-      const res = await fetch("/api/events", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventId,
-          action: "update_attendance",
-          playerId,
-          attended,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const updated = await res.json();
-      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
-      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
-    } catch {
-      showToast("تعذر تحديث الحضور", "error");
-    }
-  }
-
-  async function handleRemoveParticipant(eventId, playerId) {
-    try {
-      const res = await fetch("/api/events", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventId,
-          action: "remove_participant",
-          playerId,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const updated = await res.json();
-      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
-      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
-      showToast("تمت إزالة اللاعب من الفعالية");
-    } catch {
-      showToast("تعذر إزالة اللاعب", "error");
-    }
-  }
-
-  async function handleBulkParticipantPayment({ eventId, playerIds, status }) {
-    try {
-      const res = await fetch("/api/events", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventId,
-          action: "bulk_payment",
-          playerIds,
-          status,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const updated = await res.json();
-      setEvents((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
-      broadcastSyncEvent({ type: "EVENTS_UPDATED" });
-      showToast("تم تحديث السداد الجماعي بنجاح");
-    } catch {
-      showToast("تعذر تحديث السداد الجماعي", "error");
-    }
-  }
-
+  // Subscription Suspended Screen
   if (subscriptionInactive) {
     return (
       <SubscriptionSuspended
@@ -1565,7 +271,7 @@ export default function Home() {
     );
   }
 
-  // Zero-flicker server auth protection (only shown on initial cold start without cache)
+  // Cold Start Loading Screen
   if (sessionStatus === "loading" && loading && players.length === 0) {
     return (
       <div
@@ -1577,14 +283,10 @@ export default function Home() {
             <Zap className="h-7 w-7 fill-white stroke-white" />
           </div>
           <div>
-            <h2 className="text-lg font-black tracking-tight text-white">
-              CoachMaster
-            </h2>
+            <h2 className="text-lg font-black tracking-tight text-white">CoachMaster</h2>
             <div className="flex items-center justify-center gap-2 mt-2.5">
               <span className="h-4 w-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
-              <p className="text-xs font-semibold text-slate-400">
-                جاري تحميل لوحة التحكم...
-              </p>
+              <p className="text-xs font-semibold text-slate-400">جاري تحميل لوحة التحكم...</p>
             </div>
           </div>
         </div>
@@ -1596,18 +298,28 @@ export default function Home() {
     return null;
   }
 
+  // Admin Account Redirect Guard
   if (sessionStatus === "authenticated" && isUserAdmin) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800 p-6" dir="rtl">
+      <div
+        className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800 p-6"
+        dir="rtl"
+      >
         <div className="w-12 h-12 border-3 border-red-600 border-t-transparent rounded-full animate-spin mb-4" />
         <h2 className="text-base font-black text-slate-900">حساب إدارة المنصة 👑</h2>
-        <p className="text-xs text-slate-500 font-bold mt-1">هذا الحساب مخصص لإدارة المنصة فقط، جاري تحويلك إلى لوحة التحكم...</p>
+        <p className="text-xs text-slate-500 font-bold mt-1">
+          هذا الحساب مخصص لإدارة المنصة فقط، جاري تحويلك إلى لوحة التحكم...
+        </p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen flex flex-col justify-between text-slate-900 selection:bg-red-500 selection:text-white w-full max-w-full overflow-x-hidden" dir="rtl">
+    <main
+      className="min-h-screen flex flex-col justify-between text-slate-900 selection:bg-red-500 selection:text-white w-full max-w-full overflow-x-hidden"
+      dir="rtl"
+    >
+      {/* ━━━ Header ━━━ */}
       <Header
         academyName={academyName}
         players={players}
@@ -1638,6 +350,7 @@ export default function Home() {
       />
 
       <section className="mx-auto w-full max-w-[1600px] 2xl:max-w-[1760px] px-3 sm:px-6 lg:px-8 xl:px-10 pt-3.5 pb-28 sm:py-6 overflow-x-hidden">
+        {/* Hidden File Input for JSON Backup Restore */}
         <input
           ref={restoreFileRef}
           type="file"
@@ -1676,7 +389,7 @@ export default function Home() {
               }
               onInstantCloudBackup={handleInstantCloudBackup}
               onRestore={() => setShowRestoreModal(true)}
-              onMarkBranchPresent={markBranchPresent}
+              onMarkBranchPresent={(bName) => markBranchPresent(bName, sessionDate, updatePlayer)}
               onOpenEvents={() => {
                 setActiveView("events");
                 setMobileTab("events");
@@ -1703,449 +416,59 @@ export default function Home() {
 
         {/* ━━━ تجربة الموبايل المخصصة بالكامل (Mobile-First Experience) ━━━ */}
         <div className="md:hidden">
-
-          {/* ━━━ لوحة التحكم السريعة للموبايل (Native Mobile Command Surface) ━━━ */}
           {mobileTab === "players" && activeView === "players" && (
-            <div className="space-y-2 mb-3">
-              {/* شريط مؤشر حضور اليوم السريع للموبايل (~38px) */}
-              <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                  <span className="text-xs font-black text-slate-800 shrink-0">
-                    حضور اليوم:
-                  </span>
-                  <span className="text-xs font-black text-emerald-700 shrink-0">
-                    {attendanceRateToday}%
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 truncate">
-                    ({presentToday} من {dashboardPlayers.length})
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setBranchAttendanceReport({
-                      branchName: branch === "كل الصالات" ? (branches[0]?.name || "كل الصالات") : branch,
-                      date: sessionDate,
-                    })
-                  }
-                  className="shrink-0 flex items-center gap-1 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 px-2.5 py-1 text-[11px] font-black transition active-press cursor-pointer touch-manipulation"
-                  title="توليد كارت تقرير غياب وحضور الصالة للواتساب"
-                >
-                  <FileText className="h-3 w-3 text-red-600 shrink-0" />
-                  <span>تقرير الحضور 📋</span>
-                </button>
-              </div>
-
-              {/* شريط الإجراءات والخدمات السريعة للموبايل (Mobile Primary Actions & Cloud Hub) */}
-              <div className="grid grid-cols-2 gap-2">
-                {/* 1. زر تصدير إكسيل بارز للموبايل */}
-                <button
-                  type="button"
-                  id="mobile-main-excel-btn"
-                  onClick={() => handleOpenExportExcel("players")}
-                  className="flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black shadow-xs shadow-emerald-600/20 active-press transition cursor-pointer touch-manipulation"
-                  title="تصدير كشف اللاعبين والفعاليات إلى Excel"
-                >
-                  <FileSpreadsheet className="h-4 w-4 text-white shrink-0" />
-                  <span className="truncate">تصدير إكسيل 📊</span>
-                </button>
-
-                {/* 2. زر دليل المنصة للموبايل */}
-                <button
-                  type="button"
-                  id="mobile-main-guide-btn"
-                  onClick={handleOpenFeatures}
-                  className="relative flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 border border-amber-300 text-amber-950 text-xs font-black shadow-2xs active-press transition cursor-pointer touch-manipulation"
-                  title="دليل ومميزات المنصة للكابتن"
-                >
-                  <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-                  <span className="truncate">دليل المنصة ✨</span>
-                  {hasUnreadGuide && (
-                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black text-white shadow-xs animate-bounce">
-                      1
-                    </span>
-                  )}
-                </button>
-              </div>
-
-              {/* شريط أدوات النسخ الاحتياطي السحابي والاستعادة للموبايل (Mobile Cloud Backup & Restore Toolbar) */}
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  type="button"
-                  id="mobile-cloud-backup-btn"
-                  onClick={handleInstantCloudBackup}
-                  disabled={isCloudBackingUp || isBackingUp || isRestoring}
-                  className="flex items-center justify-center gap-1.5 h-9 px-1.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-300 text-emerald-900 text-[11px] font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
-                  title="حفظ نسخة سحابية فورية بحسابك (Gmail)"
-                >
-                  <Sparkles className={`h-3 w-3 text-emerald-600 shrink-0 ${isCloudBackingUp ? "animate-spin" : ""}`} />
-                  <span className="truncate">{isCloudBackingUp ? "جارٍ..." : "نسخ سحابي ☁️"}</span>
-                </button>
-
-                <button
-                  type="button"
-                  id="mobile-restore-btn"
-                  onClick={() => setShowRestoreModal(true)}
-                  disabled={isRestoring || isBackingUp || isCloudBackingUp}
-                  className="flex items-center justify-center gap-1.5 h-9 px-1.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border border-amber-300 text-amber-950 text-[11px] font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
-                  title="استعادة البيانات من نسخة سحابية أو ملف"
-                >
-                  <RotateCcw className={`h-3 w-3 text-amber-600 shrink-0 ${isRestoring ? "animate-spin" : ""}`} />
-                  <span className="truncate">{isRestoring ? "جارٍ..." : "استعادة نسخة 🔄"}</span>
-                </button>
-
-                <button
-                  type="button"
-                  id="mobile-local-backup-btn"
-                  onClick={handleDownloadBackup}
-                  disabled={isBackingUp || isRestoring}
-                  className="flex items-center justify-center gap-1.5 h-9 px-1.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 text-[11px] font-black shadow-2xs active-press transition cursor-pointer touch-manipulation disabled:opacity-50"
-                  title="تنزيل نسخة احتياطية محلية بصيغة JSON على جهازك"
-                >
-                  <ShieldCheck className={`h-3 w-3 text-blue-600 shrink-0 ${isBackingUp ? "animate-spin" : ""}`} />
-                  <span className="truncate">{isBackingUp ? "جارٍ..." : "نسخ محلي 💾"}</span>
-                </button>
-              </div>
-
-              {/* Row 1: Search Bar + Integrated Branch Selector + Advanced Filters Button */}
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-3.5 shadow-2xs focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 transition-all">
-                  <Search className="h-4 w-4 shrink-0 text-slate-400" />
-                  <input
-                    className="min-w-0 flex-1 bg-transparent py-2.5 text-base sm:text-sm text-slate-900 outline-none placeholder:text-slate-400 font-bold"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="بحث باسم البطل، رقم الملف، أو الهاتف..."
-                  />
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setSearch("")}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                {/* Branch Quick Dropdown Selector */}
-                <div className="relative shrink-0">
-                  <select
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                    className="h-11 rounded-2xl border border-slate-200/90 bg-white pr-3 pl-7 text-xs font-black text-slate-800 shadow-2xs outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 cursor-pointer appearance-none touch-manipulation max-w-[125px] truncate"
-                    title="تصفية حسب صالة التدريب"
-                  >
-                    <option value="كل الصالات">كل الصالات ({players.length})</option>
-                    {branches.map((b) => {
-                      const count = players.filter((p) => p.branch === b.name).length;
-                      return (
-                        <option key={b._id} value={b.name}>
-                          {b.name} ({count})
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                </div>
-
-                {/* Filter Options & Date Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowMobileFilters(true)}
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition active-press cursor-pointer touch-manipulation ${
-                    sortBy !== "newest" || sessionDate !== today || paymentMonth !== currentMonth
-                      ? "border-red-300 bg-red-50 text-red-600 shadow-xs ring-2 ring-red-200/50"
-                      : "border-slate-200/90 bg-white text-slate-600 shadow-2xs hover:bg-slate-50"
-                  }`}
-                  title="تخصيص الفلاتر والترتيب وتاريخ الحصة"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Row 2: Swipeable Horizontal Filter Capsules with Live Counts */}
-              <div className="w-full max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
-                {/* All */}
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter("all")}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                    statusFilter === "all"
-                      ? "bg-slate-900 text-white shadow-xs"
-                      : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50"
-                  }`}
-                >
-                  <span>الكل</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    statusFilter === "all" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-                  }`}>
-                    {dashboardPlayers.length}
-                  </span>
-                </button>
-
-                {/* Present */}
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter(statusFilter === "present" ? "all" : "present")}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                    statusFilter === "present"
-                      ? "bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-300"
-                      : "bg-white text-emerald-800 border border-emerald-200 hover:bg-emerald-50"
-                  }`}
-                >
-                  <Check className="h-3 w-3 stroke-[3]" />
-                  <span>حاضر</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    statusFilter === "present" ? "bg-white/25 text-white" : "bg-emerald-100 text-emerald-800"
-                  }`}>
-                    {presentToday}
-                  </span>
-                </button>
-
-                {/* Absent */}
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter(statusFilter === "absent" ? "all" : "absent")}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                    statusFilter === "absent"
-                      ? "bg-rose-600 text-white shadow-xs ring-2 ring-rose-300"
-                      : "bg-white text-rose-800 border border-rose-200 hover:bg-rose-50"
-                  }`}
-                >
-                  <X className="h-3 w-3 stroke-[3]" />
-                  <span>غائب</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    statusFilter === "absent" ? "bg-white/25 text-white" : "bg-rose-100 text-rose-800"
-                  }`}>
-                    {absentToday}
-                  </span>
-                </button>
-
-                {/* Paid */}
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter(statusFilter === "paid" ? "all" : "paid")}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                    statusFilter === "paid"
-                      ? "bg-sky-600 text-white shadow-xs ring-2 ring-sky-300"
-                      : "bg-white text-sky-800 border border-sky-200 hover:bg-sky-50"
-                  }`}
-                >
-                  <CreditCard className="h-3 w-3" />
-                  <span>مسدد</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    statusFilter === "paid" ? "bg-white/25 text-white" : "bg-sky-100 text-sky-800"
-                  }`}>
-                    {paidCount}
-                  </span>
-                </button>
-
-                {/* Unpaid / Pending */}
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid")}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                    statusFilter === "unpaid"
-                      ? "bg-amber-600 text-white shadow-xs ring-2 ring-amber-300"
-                      : "bg-white text-amber-800 border border-amber-200 hover:bg-amber-50"
-                  }`}
-                >
-                  <Clock className="h-3 w-3" />
-                  <span>متأخر</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    statusFilter === "unpaid" ? "bg-white/25 text-white" : "bg-amber-100 text-amber-900"
-                  }`}>
-                    {totalPendingPaymentCount}
-                  </span>
-                </button>
-
-                {/* Partially paid if any */}
-                {partialCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setStatusFilter(statusFilter === "partially_paid" ? "all" : "partially_paid")}
-                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                      statusFilter === "partially_paid"
-                        ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-white text-amber-800 border border-amber-300 hover:bg-amber-50"
-                    }`}
-                  >
-                    <span>دفع جزئي</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      statusFilter === "partially_paid" ? "bg-white/25 text-white" : "bg-amber-100 text-amber-900"
-                    }`}>
-                      {partialCount}
-                    </span>
-                  </button>
-                )}
-
-                {/* Purchases debt if any */}
-                {purchasesDebtCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setStatusFilter(statusFilter === "purchases_debt" ? "all" : "purchases_debt")}
-                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation ${
-                      statusFilter === "purchases_debt"
-                        ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-white text-amber-900 border border-amber-300 hover:bg-amber-50"
-                    }`}
-                  >
-                    <ShoppingBag className="h-3 w-3 text-amber-600" />
-                    <span>أدوات</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      statusFilter === "purchases_debt" ? "bg-white/25 text-white" : "bg-amber-100 text-amber-900"
-                    }`}>
-                      {purchasesDebtCount}
-                    </span>
-                  </button>
-                )}
-
-                {/* Today birthdays if any */}
-                {todayBirthdaysCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileTab("birthdays");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all active-press min-h-[34px] cursor-pointer touch-manipulation bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-xs hover:shadow-sm ring-2 ring-rose-300/70 animate-pulse"
-                  >
-                    <Cake className="h-3.5 w-3.5 text-white animate-bounce" />
-                    <span>أعياد الميلاد</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-rose-700 font-black">
-                      {todayBirthdaysCount}
-                    </span>
-                  </button>
-                )}
-              </div>
-
-              {/* نافذة الفلاتر السفلية المنبثقة للموبايل (Mobile Bottom Sheet) */}
-              {showMobileFilters && (
-                <div
-                  className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 p-0 sm:p-4 backdrop-blur-xs animate-backdrop"
-                  onClick={() => setShowMobileFilters(false)}
-                >
-                  <div
-                    className="relative w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 shadow-2xl space-y-4 animate-bottom-sheet sm:animate-fade-in-scale pb-safe"
-                    onClick={(e) => e.stopPropagation()}
-                    dir="rtl"
-                  >
-                    {/* مقبض السحب للموبايل */}
-                    <div className="sheet-drag-handle sm:hidden" />
-
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 border border-red-200">
-                          <SlidersHorizontal className="h-4 w-4" />
-                        </div>
-                        <span className="font-cairo text-sm font-black text-slate-900">خيارات متقدمة وتاريخ الحصة</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowMobileFilters(false)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500 hover:bg-slate-200 cursor-pointer"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <label className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-extrabold text-slate-600">تاريخ الحصة</span>
-                          <button
-                            type="button"
-                            onClick={() => setSessionDate(today)}
-                            className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition cursor-pointer ${
-                              sessionDate === today ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
-                          >
-                            اليوم
-                          </button>
-                        </div>
-                        <input
-                          type="date"
-                          max={today}
-                          value={sessionDate}
-                          onChange={(e) => { if (e.target.value <= today) setSessionDate(e.target.value); }}
-                          className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-base sm:text-xs font-bold text-slate-800 outline-none focus:border-red-500 focus:bg-white"
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-extrabold text-slate-600">شهر الاشتراك</span>
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMonth(currentMonth)}
-                            className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition cursor-pointer ${
-                              paymentMonth === currentMonth ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
-                          >
-                            الشهر الحالي
-                          </button>
-                        </div>
-                        <input
-                          type="month"
-                          value={paymentMonth}
-                          onChange={(e) => setPaymentMonth(e.target.value)}
-                          className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-base sm:text-xs font-bold text-slate-800 outline-none focus:border-red-500 focus:bg-white"
-                        />
-                      </label>
-                    </div>
-
-                    <div>
-                      <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-extrabold text-slate-600">ترتيب عرض اللاعبين</span>
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value)}
-                          className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-base sm:text-xs font-bold text-slate-800 outline-none focus:border-red-500 focus:bg-white cursor-pointer"
-                        >
-                          <option value="newest">الأحدث تسجيلاً (افتراضي)</option>
-                          <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
-                          <option value="oldest">الأقدم تسجيلاً</option>
-                          <option value="age-asc">السن: الأصغر أولاً</option>
-                          <option value="age-desc">السن: الأكبر أولاً</option>
-                          <option value="unpaid-first">متأخرو اشتراك الشهر أولاً</option>
-                          <option value="purchases-debt-first">متبقي الأدوات والمشتريات أولاً</option>
-                          <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
-                        </select>
-                      </label>
-                    </div>
-
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          toggleFilteredSelection();
-                          setShowMobileFilters(false);
-                        }}
-                        className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-black text-slate-800 active:scale-95 transition cursor-pointer"
-                      >
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        <span>تحديد كل المعروض للتحضير السريع</span>
-                      </button>
-                    </div>
-
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowMobileFilters(false)}
-                        className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 font-cairo text-xs font-black text-white active:scale-98 transition cursor-pointer shadow-sm"
-                      >
-                        تطبيق الفلاتر وإغلاق
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <MobileCommandSurface
+              attendanceRateToday={attendanceRateToday}
+              presentToday={presentToday}
+              absentToday={absentToday}
+              paidCount={paidCount}
+              totalPendingPaymentCount={totalPendingPaymentCount}
+              partialCount={partialCount}
+              purchasesDebtCount={purchasesDebtCount}
+              todayBirthdaysCount={todayBirthdaysCount}
+              dashboardPlayers={dashboardPlayers}
+              branch={branch}
+              setBranch={setBranch}
+              branches={branches}
+              players={players}
+              sessionDate={sessionDate}
+              setSessionDate={setSessionDate}
+              today={today}
+              paymentMonth={paymentMonth}
+              setPaymentMonth={setPaymentMonth}
+              currentMonth={currentMonth}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              search={search}
+              setSearch={setSearch}
+              showMobileFilters={showMobileFilters}
+              setShowMobileFilters={setShowMobileFilters}
+              onOpenAttendanceReport={(bName) =>
+                setBranchAttendanceReport({
+                  branchName: bName,
+                  date: sessionDate,
+                })
+              }
+              onOpenExportExcel={handleOpenExportExcel}
+              onOpenFeatures={handleOpenFeatures}
+              hasUnreadGuide={hasUnreadGuide}
+              onInstantCloudBackup={handleInstantCloudBackup}
+              isCloudBackingUp={isCloudBackingUp}
+              onRestore={() => setShowRestoreModal(true)}
+              isRestoring={isRestoring}
+              onDownloadBackup={handleDownloadBackup}
+              isBackingUp={isBackingUp}
+              onNavigateToBirthdays={() => {
+                setMobileTab("birthdays");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onToggleFilteredSelection={() => toggleFilteredSelection(filteredPlayers)}
+            />
           )}
 
-
-          {/* محتوى تبويب المؤشرات والإحصائيات على الموبايل (Mobile App Analytics Hub) */}
+          {/* محتوى تبويب المؤشرات والإحصائيات على الموبايل */}
           {mobileTab === "stats" && (
             <div className="mb-6 animate-fade-in">
               <StatsGrid
@@ -2185,7 +508,9 @@ export default function Home() {
           {mobileTab === "branches" && (
             <div className="space-y-4 mb-6">
               <div className="flex items-center justify-between">
-                <h2 className="font-cairo text-base font-black text-slate-900">صالات وفروع الأكاديمية ({branches.length})</h2>
+                <h2 className="font-cairo text-base font-black text-slate-900">
+                  صالات وفروع الأكاديمية ({branches.length})
+                </h2>
                 <button
                   type="button"
                   className="flex items-center gap-1 text-xs font-extrabold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl active:scale-95 cursor-pointer"
@@ -2204,7 +529,7 @@ export default function Home() {
                   handleSelectBranch(bName);
                   setMobileTab("players");
                 }}
-                onMarkPresent={markBranchPresent}
+                onMarkPresent={(bName) => markBranchPresent(bName, sessionDate, updatePlayer)}
                 onOpenAttendanceReport={(bName) =>
                   setBranchAttendanceReport({ branchName: bName, date: sessionDate })
                 }
@@ -2224,7 +549,6 @@ export default function Home() {
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 text-xs font-black text-slate-700 hover:bg-slate-50 active-press transition shadow-2xs cursor-pointer min-h-[36px]"
                 >
-                  <ArrowRight className="h-3.5 w-3.5 text-slate-500" />
                   <span>العودة لقائمة اللاعبين</span>
                 </button>
 
@@ -2281,123 +605,24 @@ export default function Home() {
           )}
         </div>
 
-        {/* ━━━ Executive Workspace Navigation Bar (على الديسكتوب فقط) ━━━ */}
-        <div className="hidden md:flex items-center justify-between gap-3 xl:gap-4 border-b border-slate-200/90 pb-4 mb-6">
-          <div className="workspace-tabs-container shadow-2xs overflow-x-auto scrollbar-none min-w-0 flex-1 max-w-fit p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/80">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveView("players");
-                setMobileTab("players");
-              }}
-              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
-                activeView === "players"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              <Users className="h-4 w-4 text-red-600 shrink-0" />
-              <span className="shrink-0 whitespace-nowrap">قائمة الأبطال والتحضير</span>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-black shrink-0 ${activeView === "players" ? "bg-red-100 text-red-800" : "bg-slate-200/80 text-slate-700"}`}>
-                {players.length}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveView("finances");
-                setMobileTab("stats");
-              }}
-              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
-                activeView === "finances"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              <CreditCard className="h-4 w-4 text-sky-600 shrink-0" />
-              <span className="shrink-0 whitespace-nowrap">المركز المالي والتقارير</span>
-              {totalPendingPaymentCount > 0 ? (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-black text-amber-800 shrink-0">
-                  {totalPendingPaymentCount} معلق
-                </span>
-              ) : (
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-800 shrink-0">
-                  منضبط ✨
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveView("branches");
-                setMobileTab("branches");
-              }}
-              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
-                activeView === "branches"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              <Building2 className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span className="shrink-0 whitespace-nowrap">الصالات ومراكز التدريب</span>
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-black text-slate-700 shrink-0">
-                {branches.length}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveView("events");
-                setMobileTab("events");
-              }}
-              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
-                activeView === "events"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              <Compass className="h-4 w-4 text-purple-600 shrink-0" />
-              <span className="shrink-0 whitespace-nowrap">الفعاليات والبطولات</span>
-              {events.length > 0 && (
-                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-black text-sky-700 shrink-0">
-                  {events.length}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveView("birthdays");
-                setMobileTab("birthdays");
-              }}
-              className={`workspace-tab-btn cursor-pointer px-3.5 xl:px-4.5 py-2 xl:py-2.5 rounded-xl font-black text-xs xl:text-sm transition-all ${
-                activeView === "birthdays"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              <Cake className="h-4 w-4 text-rose-600 shrink-0" />
-              <span className="shrink-0 whitespace-nowrap">تذكار أعياد الميلاد</span>
-              {todayBirthdaysCount > 0 && (
-                <span className="rounded-full bg-red-600 text-white px-2 py-0.5 text-[11px] font-black animate-pulse shrink-0 whitespace-nowrap">
-                  {todayBirthdaysCount} اليوم!
-                </span>
-              )}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              id="workspace-add-player-btn"
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 xl:px-5 py-2.5 xl:py-3 rounded-xl xl:rounded-2xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-xs xl:text-sm font-black text-white shadow-xs shadow-red-600/20 cursor-pointer active-press transition shrink-0 whitespace-nowrap select-none"
-            >
-              <Plus className="h-4 w-4 stroke-[3] shrink-0" />
-              <span className="shrink-0 whitespace-nowrap">تسجيل لاعب جديد</span>
-            </button>
-          </div>
-        </div>
+        {/* ━━━ Executive Workspace Navigation Bar (Desktop) ━━━ */}
+        <DesktopWorkspaceTabs
+          activeView={activeView}
+          onChangeView={(view) => {
+            setActiveView(view);
+            if (view === "finances") setMobileTab("stats");
+            else if (view === "branches") setMobileTab("branches");
+            else if (view === "events") setMobileTab("events");
+            else if (view === "birthdays") setMobileTab("birthdays");
+            else setMobileTab("players");
+          }}
+          playersCount={players.length}
+          totalPendingPaymentCount={totalPendingPaymentCount}
+          branchesCount={branches.length}
+          eventsCount={events.length}
+          todayBirthdaysCount={todayBirthdaysCount}
+          onAddPlayer={() => setShowForm(true)}
+        />
 
         {/* ━━━ Workspace 2: المركز المالي والإحصائيات على الديسكتوب ━━━ */}
         {activeView === "finances" && (
@@ -2438,7 +663,7 @@ export default function Home() {
               paymentMonth={paymentMonth}
               busyBranch={busyBranch}
               onSelectBranch={handleSelectBranch}
-              onMarkPresent={markBranchPresent}
+              onMarkPresent={(bName) => markBranchPresent(bName, sessionDate, updatePlayer)}
               onOpenAttendanceReport={(bName) =>
                 setBranchAttendanceReport({ branchName: bName, date: sessionDate })
               }
@@ -2446,7 +671,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ━━━ Workspace 4: الفعاليات والرحلات على الديسكتوب ━━━ */}
+        {/* ━━━ Workspace 4: الفعاليات والبطولات على الديسكتوب ━━━ */}
         {activeView === "events" && (
           <div className="hidden md:block mb-8 animate-fade-in-scale">
             <EventsView
@@ -2494,341 +719,58 @@ export default function Home() {
         {/* ━━━ Workspace 1: الأبطال والتحضير اليومي على الديسكتوب ━━━ */}
         {activeView === "players" && (
           <div className="hidden md:block space-y-4 mb-6 animate-fade-in-scale">
-            {/* Unified Command Bar Surface */}
-            <div className="command-bar-surface p-4 sm:p-5 xl:p-6 space-y-4 rounded-2xl xl:rounded-3xl border border-slate-200/90 bg-white shadow-xs">
-              {/* Row 1: Search + Branches Segment + Branch Management */}
-              <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5">
-                {/* Search Box */}
-                <div className="relative flex min-h-12 min-w-0 items-center gap-2.5 rounded-xl xl:rounded-2xl border border-slate-200/90 bg-slate-50/70 px-3.5 transition-all focus-within:border-red-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-red-100 lg:w-84 xl:w-96">
-                  <Search className="h-4.5 w-4.5 shrink-0 text-slate-400" />
-                  <input
-                    className="min-w-0 flex-1 bg-transparent px-1 py-2 text-xs xl:text-sm font-bold text-slate-900 outline-none placeholder:text-slate-400"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="بحث باسم اللاعب، رقم الملف، أو الهاتف..."
-                  />
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setSearch("")}
-                      className="text-xs text-slate-400 hover:text-slate-700 cursor-pointer p-1"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                {/* Branch Pills */}
-                <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
-                  <div className="flex min-w-max items-center gap-2 py-0.5">
-                    <button
-                      type="button"
-                      className={`whitespace-nowrap rounded-xl xl:rounded-2xl px-4 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
-                        branch === "كل الصالات"
-                          ? "bg-red-600 text-white shadow-sm shadow-red-600/20 font-black"
-                          : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/70"
-                      }`}
-                      onClick={() => setBranch("كل الصالات")}
-                    >
-                      كل الصالات ({players.length})
-                    </button>
-                    {branches.map((item) => {
-                      const count = players.filter((p) => p.branch === item.name).length;
-                      return (
-                        <button
-                          type="button"
-                          key={item._id}
-                          className={`whitespace-nowrap rounded-xl xl:rounded-2xl px-4 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
-                            branch === item.name
-                              ? "bg-red-600 text-white shadow-sm shadow-red-600/20 font-black"
-                              : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/70"
-                          }`}
-                          onClick={() => setBranch(item.name)}
-                        >
-                          {item.name} ({count})
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Add Branch Inline / Manage */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {isAddingBranch ? (
-                    <form
-                      onSubmit={handleQuickBranchSubmit}
-                      className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/50 p-1"
-                    >
-                      <input
-                        value={quickBranchName}
-                        onChange={(e) => setQuickBranchName(e.target.value)}
-                        placeholder="اسم الصالة..."
-                        className="h-10 min-w-0 rounded-lg border border-emerald-300 bg-white px-2.5 text-right text-xs font-bold text-slate-900 outline-none w-36"
-                        autoFocus
-                        required
-                      />
-                      <button
-                        className="h-10 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700 cursor-pointer"
-                        type="submit"
-                      >
-                        حفظ
-                      </button>
-                      <button
-                        className="h-10 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold text-slate-600 cursor-pointer"
-                        type="button"
-                        onClick={() => setIsAddingBranch(false)}
-                      >
-                        إلغاء
-                      </button>
-                    </form>
-                  ) : (
-                    <button
-                      type="button"
-                      className="flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl xl:rounded-2xl border border-emerald-200 bg-emerald-50/70 px-3.5 text-xs xl:text-sm font-black text-emerald-800 transition hover:bg-emerald-100 cursor-pointer"
-                      onClick={() => setIsAddingBranch(true)}
-                    >
-                      <span>＋</span>
-                      <span>صالة جديدة</span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    className="flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl xl:rounded-2xl border border-slate-200/90 bg-white px-3.5 text-xs xl:text-sm font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 cursor-pointer"
-                    onClick={() => setShowBranches(true)}
-                  >
-                    <span>⚙️</span>
-                    <span>إدارة الفروع</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Row 2: Date + Month + Sort + Status Filters */}
-              <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-3.5 border-t border-slate-100 pt-3.5">
-                {/* Date & Month & Sort */}
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                  <div className="flex items-center gap-2 rounded-xl xl:rounded-2xl border border-slate-200/90 bg-slate-50/70 px-3 py-2 text-xs xl:text-sm">
-                    <CalendarDays className="h-4 w-4 text-red-600 shrink-0" />
-                    <span className="font-bold text-slate-500 shrink-0">حصة:</span>
-                    <input
-                      type="date"
-                      max={today}
-                      value={sessionDate}
-                      onChange={(e) => {
-                        if (e.target.value <= today) setSessionDate(e.target.value);
-                      }}
-                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs xl:text-sm"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 rounded-xl xl:rounded-2xl border border-slate-200/90 bg-slate-50/70 px-3 py-2 text-xs xl:text-sm">
-                    <CreditCard className="h-4 w-4 text-red-600 shrink-0" />
-                    <span className="font-bold text-slate-500 shrink-0">اشتراك:</span>
-                    <input
-                      type="month"
-                      value={paymentMonth}
-                      onChange={(e) => setPaymentMonth(e.target.value)}
-                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs xl:text-sm"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 rounded-xl xl:rounded-2xl border border-slate-200/90 bg-slate-50/70 px-3 py-2 text-xs xl:text-sm">
-                    <ArrowUpDown className="h-4 w-4 text-red-600 shrink-0" />
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-transparent font-bold text-slate-900 outline-none cursor-pointer text-xs xl:text-sm"
-                    >
-                      <option value="newest">الأحدث تسجيلاً</option>
-                      <option value="alphabetical">الاسم أبجدياً (أ - ي)</option>
-                      <option value="oldest">الأقدم تسجيلاً</option>
-                      <option value="age-asc">السن: الأصغر أولاً</option>
-                      <option value="age-desc">السن: الأكبر أولاً</option>
-                      <option value="unpaid-first">متأخرو اشتراك الشهر أولاً</option>
-                      <option value="purchases-debt-first">متبقي الأدوات والمشتريات أولاً</option>
-                      <option value="attendance-desc">الأعلى التزاماً بالحضور</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Fast Status Filter Pills */}
-                <div className="flex flex-wrap items-center gap-2 overflow-x-auto no-scrollbar">
-                  <button
-                    type="button"
-                    className={`h-9 xl:h-10 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
-                      statusFilter === "all"
-                        ? "bg-slate-900 text-white shadow-xs"
-                        : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/70"
-                    }`}
-                    onClick={() => setStatusFilter("all")}
-                  >
-                    الكل ({dashboardPlayers.length})
-                  </button>
-                  <button
-                    type="button"
-                    className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
-                      statusFilter === "present"
-                        ? "bg-emerald-600 text-white shadow-xs shadow-emerald-500/20"
-                        : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/70"
-                    }`}
-                    onClick={() => setStatusFilter("present")}
-                  >
-                    <Check className="h-3.5 w-3.5 stroke-[2.5]" />
-                    <span>حاضر ({presentToday})</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
-                      statusFilter === "absent"
-                        ? "bg-rose-600 text-white shadow-xs shadow-rose-500/20"
-                        : "bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200/70"
-                    }`}
-                    onClick={() => setStatusFilter("absent")}
-                  >
-                    <X className="h-3.5 w-3.5 stroke-[2.5]" />
-                    <span>غائب ({absentToday})</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
-                      statusFilter === "paid"
-                        ? "bg-sky-600 text-white shadow-xs shadow-sky-500/20"
-                        : "bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200/70"
-                    }`}
-                    onClick={() => setStatusFilter("paid")}
-                  >
-                    <CreditCard className="h-3.5 w-3.5" />
-                    <span>مسدد ({paidCount})</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
-                      statusFilter === "unpaid"
-                        ? "bg-amber-600 text-white shadow-xs shadow-amber-500/20"
-                        : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200/70"
-                    }`}
-                    onClick={() => setStatusFilter("unpaid")}
-                  >
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>متأخر ({totalPendingPaymentCount})</span>
-                  </button>
-                  {purchasesDebtCount > 0 && (
-                    <button
-                      type="button"
-                      className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
-                        statusFilter === "purchases_debt"
-                          ? "bg-amber-600 text-white shadow-xs"
-                          : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300"
-                      }`}
-                      onClick={() =>
-                        setStatusFilter(
-                          statusFilter === "purchases_debt" ? "all" : "purchases_debt"
-                        )
-                      }
-                    >
-                      <ShoppingBag className="h-3.5 w-3.5 text-amber-600" />
-                      <span>أدوات ({purchasesDebtCount})</span>
-                    </button>
-                  )}
-                  {todayBirthdaysCount > 0 && (
-                    <button
-                      type="button"
-                      className={`flex h-9 xl:h-10 items-center gap-1.5 rounded-xl px-3 xl:px-3.5 text-xs xl:text-sm font-black transition-all cursor-pointer ${
-                        statusFilter === "birthday"
-                          ? "bg-red-600 text-white shadow-xs"
-                          : "bg-rose-100/90 text-rose-800 hover:bg-rose-200 border border-rose-300 ring-2 ring-rose-200/80 animate-pulse"
-                      }`}
-                      onClick={() => setStatusFilter("birthday")}
-                    >
-                      <Cake className="h-3.5 w-3.5 text-rose-600 animate-bounce" />
-                      <span>عيد ميلاد ({todayBirthdaysCount})</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+            <CommandBar
+              search={search}
+              onSearchChange={setSearch}
+              onClearSearch={() => setSearch("")}
+              branch={branch}
+              onSelectBranch={setBranch}
+              branches={branches}
+              players={players}
+              isAddingBranch={isAddingBranch}
+              setIsAddingBranch={setIsAddingBranch}
+              quickBranchName={quickBranchName}
+              setQuickBranchName={setQuickBranchName}
+              onQuickBranchSubmit={handleQuickBranchSubmit}
+              onOpenManageBranches={() => setShowBranches(true)}
+              sessionDate={sessionDate}
+              onSessionDateChange={setSessionDate}
+              today={today}
+              paymentMonth={paymentMonth}
+              onPaymentMonthChange={setPaymentMonth}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              dashboardPlayersCount={dashboardPlayers.length}
+              presentToday={presentToday}
+              absentToday={absentToday}
+              paidCount={paidCount}
+              totalPendingPaymentCount={totalPendingPaymentCount}
+              purchasesDebtCount={purchasesDebtCount}
+              todayBirthdaysCount={todayBirthdaysCount}
+            />
           </div>
         )}
 
-        {/* Toast placeholder removed — now rendered as fixed overlay near </main> */}
-
-        {/* شريط الإجراءات الجماعية العائم الفاخر (Floating Bulk Dock) */}
-        {selectedPlayerIds.length > 0 && (
-          <div className="fixed bottom-22 md:bottom-6 left-1/2 -translate-x-1/2 z-40 md:z-50 glass-dock text-white rounded-2xl shadow-2xl border border-white/15 p-2.5 sm:px-5 flex items-center justify-between gap-2.5 animate-slide-up max-w-4xl w-[96%] sm:w-[94%] mb-safe">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-white shrink-0">
-              <span className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-red-600 font-cairo text-xs sm:text-sm font-black text-white shadow-xs">
-                {selectedPlayerIds.length}
-              </span>
-              <span className="hidden xs:inline text-[11px] sm:text-xs">محدد</span>
-            </div>
-
-            <div className="min-w-0 flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 touch-scroll">
-              <button
-                type="button"
-                className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-200 hover:bg-white/20 transition-all cursor-pointer active-press"
-                onClick={toggleFilteredSelection}
-              >
-                الكل
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 text-xs font-black text-white shadow-xs active-press disabled:opacity-60 cursor-pointer"
-                disabled={bulkAttendanceBusy}
-                onClick={() => markSelectedAttendance("present")}
-              >
-                <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-                <span>حضور</span>
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-rose-600 hover:bg-rose-700 px-3 text-xs font-black text-white shadow-xs active-press disabled:opacity-60 cursor-pointer"
-                disabled={bulkAttendanceBusy}
-                onClick={() => markSelectedAttendance("absent")}
-              >
-                <X className="h-3.5 w-3.5" strokeWidth={2.5} />
-                <span>غياب</span>
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-sky-600 hover:bg-sky-700 px-3 text-xs font-black text-white shadow-xs active-press disabled:opacity-60 cursor-pointer"
-                disabled={bulkAttendanceBusy}
-                onClick={() => markSelectedPayment("paid")}
-              >
-                <CreditCard className="h-3.5 w-3.5" />
-                <span>دفع</span>
-              </button>
-              <button
-                type="button"
-                className="min-h-9 whitespace-nowrap rounded-xl bg-white/10 px-2.5 text-xs font-bold text-slate-300 hover:bg-white/20 transition-all disabled:opacity-60 cursor-pointer active-press"
-                disabled={bulkAttendanceBusy}
-                onClick={() => markSelectedPayment("unpaid")}
-              >
-                إلغاء
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-1 whitespace-nowrap min-h-9 rounded-xl bg-red-600 hover:bg-red-700 px-3 text-xs font-black text-white shadow-xs active-press disabled:opacity-60 cursor-pointer"
-                disabled={bulkAttendanceBusy}
-                onClick={deleteSelectedPlayers}
-                title="حذف اللاعبين المحددين نهائياً"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span>حذف</span>
-              </button>
-              <button
-                type="button"
-                className="min-h-9 rounded-xl border border-white/20 px-2.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition-all cursor-pointer active-press shrink-0"
-                onClick={() => setSelectedPlayerIds([])}
-                title="إلغاء التحديد"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
+        {/* ━━━ شريط الإجراءات الجماعية العائم (Floating Bulk Dock) ━━━ */}
+        <BulkActionDock
+          selectedPlayerIds={selectedPlayerIds}
+          bulkAttendanceBusy={bulkAttendanceBusy}
+          onToggleAll={() => toggleFilteredSelection(filteredPlayers)}
+          onMarkAttendance={(status) => markSelectedAttendance(status, sessionDate)}
+          onMarkPayment={markSelectedPayment}
+          onDeleteSelected={deleteSelectedPlayers}
+          onClearSelection={() => setSelectedPlayerIds([])}
+        />
 
         {/* ━━━ Player Table & Pagination Container ━━━ */}
-        <div className={`${mobileTab === "players" ? "block" : "hidden"} ${activeView === "players" ? "md:block" : "md:hidden"}`}>
+        <div
+          ref={playerListRef}
+          className={`${mobileTab === "players" ? "block" : "hidden"} ${
+            activeView === "players" ? "md:block" : "md:hidden"
+          }`}
+        >
           {/* شريط موجز عدد اللاعبين السريع للموبايل */}
           <div className="md:hidden flex items-center justify-between px-1 py-1.5 mb-1 text-xs font-bold text-slate-500">
             <div className="flex items-center gap-1.5">
@@ -2845,13 +787,16 @@ export default function Home() {
             {filteredPlayers.length > 0 && (
               <button
                 type="button"
-                onClick={toggleFilteredSelection}
+                onClick={() => toggleFilteredSelection(filteredPlayers)}
                 className="text-[11px] font-black text-slate-600 hover:text-red-600 bg-white border border-slate-200 rounded-lg px-2.5 py-1 active-press cursor-pointer"
               >
-                {selectedPlayerIds.length === filteredPlayers.length ? "إلغاء التحديد" : "تحديد المعروض"}
+                {selectedPlayerIds.length === filteredPlayers.length
+                  ? "إلغاء التحديد"
+                  : "تحديد المعروض"}
               </button>
             )}
           </div>
+
           <div className="mt-3 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/80 md:bg-white md:shadow-xs">
             <div className="hidden grid-cols-[minmax(320px,2.8fr)_100px_150px_210px_minmax(300px,2.6fr)_56px] xl:grid-cols-[minmax(360px,3.2fr)_110px_170px_230px_minmax(340px,2.8fr)_60px] items-center gap-4 xl:gap-5 border-b border-slate-200/90 bg-slate-50/95 px-6 xl:px-8 py-3.5 font-cairo text-xs xl:text-sm font-black text-slate-600 md:grid">
               <span>اللاعب والبيانات</span>
@@ -2864,10 +809,13 @@ export default function Home() {
 
             {loading ? (
               <>
-                {/* Mobile loading skeleton – matches the PlayerRow mobile card layout */}
+                {/* Mobile loading skeleton */}
                 <div className="md:hidden space-y-2.5">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs">
+                    <div
+                      key={i}
+                      className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs"
+                    >
                       <div className="flex items-start gap-2.5">
                         <div className="skeleton h-5 w-5 rounded-md shrink-0 mt-1" />
                         <div className="skeleton h-11 w-11 rounded-xl shrink-0" />
@@ -2960,10 +908,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* تذييل الصفحة / Footer */}
+      {/* ━━━ Footer ━━━ */}
       <Footer academyName={academyName} />
 
-      {/* شريط الملاحة السفلي الثابت على الموبايل */}
+      {/* ━━━ Mobile Bottom Navigation Bar ━━━ */}
       <MobileBottomNav
         activeTab={mobileTab}
         onChangeTab={(tab) => {
@@ -2988,267 +936,81 @@ export default function Home() {
         eventsCount={events.length}
       />
 
-      {showForm && (
-        <AddPlayerModal
-          branches={branches}
-          initialBranch={branch === "كل الصالات" ? "" : branch}
-          onClose={() => setShowForm(false)}
-          onAdd={handleAddPlayer}
-          onManageBranches={() => {
-            setShowForm(false);
-            setShowBranches(true);
-          }}
-        />
-      )}
-
-      {showBranches && (
-        <BranchManager
-          branches={branches}
-          players={players}
-          onAdd={addBranch}
-          onRename={renameBranch}
-          onUpdateBranch={updateBranch}
-          onDelete={deleteBranch}
-          onDeleteBlocked={handleBlockedBranchDelete}
-          notice={toast?.message || ""}
-          onClose={() => setShowBranches(false)}
-        />
-      )}
-
-      {selected && (
-        <Profile
-          player={selected}
-          branches={branches}
-          onClose={() => setSelected(null)}
-          onUpdate={updatePlayer}
-          onDelete={deletePlayer}
-          paymentMonth={paymentMonth}
-          events={events}
-        />
-      )}
-
-      {showAddEventModal && (
-        <AddEventModal
-          isOpen={showAddEventModal}
-          initialEvent={editingEvent}
-          onClose={() => {
-            setShowAddEventModal(false);
-            setEditingEvent(null);
-          }}
-          onSave={handleSaveEvent}
-          isSubmitting={eventActionBusy}
-        />
-      )}
-
-      {addParticipantsEvent && (
-        <AddParticipantsModal
-          isOpen={Boolean(addParticipantsEvent)}
-          event={addParticipantsEvent}
-          players={players}
-          branches={branches}
-          onClose={() => setAddParticipantsEvent(null)}
-          onAddParticipants={handleAddParticipants}
-          isSubmitting={eventActionBusy}
-        />
-      )}
-
-      {paymentParticipantData && (
-        <EventPaymentModal
-          isOpen={Boolean(paymentParticipantData)}
-          participant={paymentParticipantData.participant}
-          eventTitle={paymentParticipantData.event?.title}
-          onClose={() => setPaymentParticipantData(null)}
-          onSavePayment={handleSaveParticipantPayment}
-          isSubmitting={eventActionBusy}
-        />
-      )}
-
-      {showEmailBackupModal && (
-        <EmailBackupModal
-          isOpen={showEmailBackupModal}
-          onClose={() => setShowEmailBackupModal(false)}
-          showToast={showToast}
-          userEmail={session?.user?.email}
-        />
-      )}
-
-      {showRestoreModal && (
-        <RestoreModal
-          isOpen={showRestoreModal}
-          onClose={() => setShowRestoreModal(false)}
-          showToast={showToast}
-          onRestoreSuccess={reloadAllData}
-        />
-      )}
-
-      {restoreProgressModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-backdrop"
-          dir="rtl"
-        >
-          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl text-center space-y-4 animate-scale-up">
-            <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 shadow-2xs">
-              {restoreProgressModal.status === "success" ? (
-                <CheckCircle2 className="h-7 w-7 text-emerald-600 animate-bounce" />
-              ) : (
-                <RotateCcw className="h-7 w-7 animate-spin text-emerald-600" />
-              )}
-            </div>
-
-            <div>
-              <h3 className="font-cairo text-sm font-black text-slate-900">
-                {restoreProgressModal.status === "success"
-                  ? "تمت الاستعادة بنجاح!"
-                  : "جارٍ استعادة النسخة الاحتياطية..."}
-              </h3>
-              <p className="text-xs font-bold text-emerald-700 mt-1">
-                {restoreProgressModal.stepText}
-              </p>
-              {restoreProgressModal.subText && (
-                <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
-                  {restoreProgressModal.subText}
-                </p>
-              )}
-              {restoreProgressModal.fileName && (
-                <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-mono text-slate-600">
-                  <span className="truncate max-w-[170px]">{restoreProgressModal.fileName}</span>
-                  <span>•</span>
-                  <span>{restoreProgressModal.fileSize}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Animated Progress Bar */}
-            {restoreProgressModal.status !== "success" ? (
-              <div className="space-y-1.5 pt-1">
-                <div className="h-2.5 w-full bg-emerald-100 rounded-full overflow-hidden p-0.5">
-                  <div className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 rounded-full animate-pulse w-full" />
-                </div>
-                <div className="text-[10px] text-slate-400 font-semibold">
-                  يرجى الانتظار، جاري قراءة الملف وتحديث الأكاديمية...
-                </div>
-              </div>
-            ) : (
-              <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 py-1.5 px-3 rounded-xl border border-emerald-200">
-                ✓ تم تحديث جميع القوائم واللاعبين بنجاح
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {welcomePlayer && (
-        <WelcomeCardModal
-          player={welcomePlayer}
-          captainName={captainName}
-          academyName={academyName}
-          isOpen={Boolean(welcomePlayer)}
-          onClose={() => setWelcomePlayer(null)}
-        />
-      )}
-
-      {branchAttendanceReport && (
-        <BranchAttendanceModal
-          branchName={branchAttendanceReport.branchName || branchAttendanceReport}
-          sessionDate={branchAttendanceReport.date || sessionDate}
-          players={players}
-          captainName={captainName}
-          academyName={academyName}
-          isOpen={Boolean(branchAttendanceReport)}
-          onClose={() => setBranchAttendanceReport(null)}
-        />
-      )}
-
-      {showAccountSettings && (
-        <AccountSettingsModal
-          isOpen={showAccountSettings}
-          onClose={() => setShowAccountSettings(false)}
-          showToast={showToast}
-          onUserUpdated={(updatedUser) => {
-            if (updatedUser) {
-              if (updatedUser.name) setLocalCoachName(updatedUser.name);
-              if (updatedUser.academyName) setLocalAcademyName(updatedUser.academyName);
-              setAccountUser(updatedUser);
-              if (typeof updateSession === "function") {
-                updateSession(updatedUser);
-              }
+      {/* ━━━ All Modals (Lazily loaded) ━━━ */}
+      <DashboardModals
+        showForm={showForm}
+        setShowForm={setShowForm}
+        branches={branches}
+        branch={branch}
+        onAddPlayer={handleAddPlayer}
+        onOpenManageBranches={() => {
+          setShowForm(false);
+          setShowBranches(true);
+        }}
+        showBranches={showBranches}
+        setShowBranches={setShowBranches}
+        players={players}
+        onAddBranch={addBranch}
+        onRenameBranch={renameBranch}
+        onUpdateBranch={updateBranch}
+        onDeleteBranch={deleteBranch}
+        onDeleteBlockedBranch={handleBlockedBranchDelete}
+        toastMessage={toast?.message || ""}
+        selected={selected}
+        setSelected={setSelected}
+        onUpdatePlayer={updatePlayer}
+        onDeletePlayer={deletePlayer}
+        paymentMonth={paymentMonth}
+        events={events}
+        showAddEventModal={showAddEventModal}
+        setShowAddEventModal={setShowAddEventModal}
+        editingEvent={editingEvent}
+        setEditingEvent={setEditingEvent}
+        onSaveEvent={handleSaveEvent}
+        eventActionBusy={eventActionBusy}
+        addParticipantsEvent={addParticipantsEvent}
+        setAddParticipantsEvent={setAddParticipantsEvent}
+        onAddParticipants={handleAddParticipants}
+        paymentParticipantData={paymentParticipantData}
+        setPaymentParticipantData={setPaymentParticipantData}
+        onSaveParticipantPayment={handleSaveParticipantPayment}
+        showEmailBackupModal={showEmailBackupModal}
+        setShowEmailBackupModal={setShowEmailBackupModal}
+        userEmail={session?.user?.email}
+        showRestoreModal={showRestoreModal}
+        setShowRestoreModal={setShowRestoreModal}
+        onReloadAllData={reloadAllData}
+        restoreProgressModal={restoreProgressModal}
+        welcomePlayer={welcomePlayer}
+        setWelcomePlayer={setWelcomePlayer}
+        branchAttendanceReport={branchAttendanceReport}
+        setBranchAttendanceReport={setBranchAttendanceReport}
+        sessionDate={sessionDate}
+        captainName={captainName}
+        academyName={academyName}
+        showAccountSettings={showAccountSettings}
+        setShowAccountSettings={setShowAccountSettings}
+        onUserUpdated={(updatedUser) => {
+          if (updatedUser) {
+            if (updatedUser.name) setLocalCoachName(updatedUser.name);
+            if (updatedUser.academyName) setLocalAcademyName(updatedUser.academyName);
+            setAccountUser(updatedUser);
+            if (typeof updateSession === "function") {
+              updateSession(updatedUser);
             }
-          }}
-        />
-      )}
+          }
+        }}
+        showFeaturesModal={showFeaturesModal}
+        setShowFeaturesModal={setShowFeaturesModal}
+        showExportExcelModal={showExportExcelModal}
+        setShowExportExcelModal={setShowExportExcelModal}
+        exportInitialTab={exportInitialTab}
+        exportInitialEventId={exportInitialEventId}
+        showToast={showToast}
+      />
 
-      {showFeaturesModal && (
-        <SystemFeaturesModal
-          isOpen={showFeaturesModal}
-          onClose={() => setShowFeaturesModal(false)}
-        />
-      )}
-
-      {showExportExcelModal && (
-        <ExportExcelModal
-          isOpen={showExportExcelModal}
-          onClose={() => setShowExportExcelModal(false)}
-          players={players}
-          events={events}
-          branches={branches}
-          paymentMonth={paymentMonth}
-          academyName={academyName}
-          captainName={captainName}
-          initialTab={exportInitialTab}
-          initialEventId={exportInitialEventId}
-          showToast={showToast}
-        />
-      )}
-      {/* ━━━ Global Fixed Toast Notification Overlay ━━━
-           Always visible on every tab and scroll position.
-           Positioned below the sticky header, above all content.
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {toast && (
-        <div
-          className={`fixed top-[66px] md:top-[80px] left-1/2 -translate-x-1/2 z-[70]
-            w-[calc(100%-32px)] max-w-md
-            flex cursor-pointer items-center justify-between gap-2.5
-            rounded-2xl border px-4 py-3 text-xs font-bold
-            shadow-xl backdrop-blur-sm animate-slide-up ${
-            toast.type === "error"
-              ? "border-rose-200 bg-rose-50/97 text-rose-800"
-              : toast.type === "info"
-              ? "border-sky-200 bg-sky-50/97 text-sky-800"
-              : "border-emerald-200 bg-emerald-50/97 text-emerald-800"
-          }`}
-          onClick={() => setToast(null)}
-          role="alert"
-          aria-live="polite"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                toast.type === "error"
-                  ? "bg-rose-100 text-rose-600"
-                  : toast.type === "info"
-                  ? "bg-sky-100 text-sky-600"
-                  : "bg-emerald-100 text-emerald-600"
-              }`}
-            >
-              {toast.type === "error" ? (
-                <AlertCircle className="h-4 w-4" />
-              ) : toast.type === "info" ? (
-                <Info className="h-4 w-4" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4" />
-              )}
-            </span>
-            <span className="font-extrabold min-w-0 leading-snug">{toast.message}</span>
-          </div>
-          <button
-            type="button"
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-black/5 transition-colors"
-            aria-label="إغلاق الإشعار"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
+      {/* ━━━ Global Fixed Toast Notification Overlay ━━━ */}
+      <ToastNotification toast={toast} onClose={() => setToast(null)} />
     </main>
   );
 }

@@ -39,15 +39,34 @@ export async function GET() {
     const captainUsers = allUsers.filter((u) => !isSystemAdmin(u));
 
     // 2. Query player counts per owner via aggregation, plus branches, events, and audit logs
-    const [playerCounts, playersLast7Days, playersLast30Days, allBranches, allEvents, recentAuditLogs] = await Promise.all([
-      db.collection("players").aggregate([
-        {
-          $group: {
-            _id: { $toString: "$ownerId" },
-            count: { $sum: 1 },
+    let playerCounts = [];
+    try {
+      if (typeof db.collection("players").aggregate === "function") {
+        playerCounts = await db.collection("players").aggregate([
+          {
+            $group: {
+              _id: { $toString: "$ownerId" },
+              count: { $sum: 1 },
+            },
           },
-        },
-      ]).toArray(),
+        ]).toArray();
+      } else {
+        throw new Error("aggregate not supported");
+      }
+    } catch {
+      const allPlayers = await db.collection("players").find({}).toArray();
+      const countMap = new Map();
+      for (const p of allPlayers) {
+        const oId = p.ownerId ? p.ownerId.toString() : "";
+        if (oId) countMap.set(oId, (countMap.get(oId) || 0) + 1);
+      }
+      playerCounts = Array.from(countMap.entries()).map(([oId, count]) => ({
+        _id: oId,
+        count,
+      }));
+    }
+
+    const [playersLast7Days, playersLast30Days, allBranches, allEvents, recentAuditLogs] = await Promise.all([
       db.collection("players").countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
       db.collection("players").countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
       db.collection("branches").find({}).toArray(),

@@ -244,6 +244,11 @@ export function getLocalDbClient() {
                 return currentData.players.filter((p) => {
                   if (filter.ownerId && p.ownerId !== filter.ownerId && !matchId(p.ownerId, filter.ownerId)) return false;
                   if (filter.branch && p.branch !== filter.branch) return false;
+                  if (filter.createdAt && typeof filter.createdAt === "object") {
+                    const itemTime = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+                    if (filter.createdAt.$gte && itemTime < new Date(filter.createdAt.$gte).getTime()) return false;
+                    if (filter.createdAt.$lte && itemTime > new Date(filter.createdAt.$lte).getTime()) return false;
+                  }
                   return true;
                 }).length;
               }
@@ -267,6 +272,113 @@ export function getLocalDbClient() {
                 }).length;
               }
               return 0;
+            },
+
+            aggregate(pipeline = []) {
+              return {
+                async toArray() {
+                  let items = Array.isArray(currentData[collectionName])
+                    ? [...currentData[collectionName]]
+                    : [];
+
+                  for (const stage of pipeline) {
+                    if (stage.$match) {
+                      const matchFilter = stage.$match;
+                      items = items.filter((item) => {
+                        for (const [k, v] of Object.entries(matchFilter)) {
+                          if (v && typeof v === "object" && v.$gte) {
+                            const itemTime = item[k] ? new Date(item[k]).getTime() : 0;
+                            const gteTime = new Date(v.$gte).getTime();
+                            if (itemTime < gteTime) return false;
+                          } else if (v && typeof v === "object" && v.$lte) {
+                            const itemTime = item[k] ? new Date(item[k]).getTime() : 0;
+                            const lteTime = new Date(v.$lte).getTime();
+                            if (itemTime > lteTime) return false;
+                          } else if (!matchId(item[k], v)) {
+                            return false;
+                          }
+                        }
+                        return true;
+                      });
+                    }
+
+                    if (stage.$group) {
+                      const groupSpec = stage.$group;
+                      const groups = new Map();
+
+                      for (const item of items) {
+                        let keyObj = null;
+                        let keyStr = "";
+
+                        if (groupSpec._id && typeof groupSpec._id === "object" && groupSpec._id.$toString) {
+                          const prop = groupSpec._id.$toString.replace(/^\$/, "");
+                          keyObj = item[prop] ? item[prop].toString() : "";
+                          keyStr = String(keyObj);
+                        } else if (groupSpec._id && typeof groupSpec._id === "object") {
+                          const obj = {};
+                          for (const [fName, expr] of Object.entries(groupSpec._id)) {
+                            if (expr && typeof expr === "object" && expr.$toString) {
+                              const prop = expr.$toString.replace(/^\$/, "");
+                              obj[fName] = item[prop] ? item[prop].toString() : "";
+                            } else if (expr && typeof expr === "object" && expr.$trim) {
+                              const inputExpr = expr.$trim?.input;
+                              if (inputExpr && typeof inputExpr === "object" && inputExpr.$ifNull) {
+                                const prop = inputExpr.$ifNull[0]?.replace(/^\$/, "");
+                                obj[fName] = (item[prop] || inputExpr.$ifNull[1] || "").toString().trim();
+                              } else {
+                                obj[fName] = (item[fName] || "").toString().trim();
+                              }
+                            } else if (typeof expr === "string" && expr.startsWith("$")) {
+                              const prop = expr.slice(1);
+                              obj[fName] = item[prop];
+                            } else {
+                              obj[fName] = expr;
+                            }
+                          }
+                          keyObj = obj;
+                          keyStr = JSON.stringify(obj);
+                        } else if (typeof groupSpec._id === "string" && groupSpec._id.startsWith("$")) {
+                          const prop = groupSpec._id.slice(1);
+                          keyObj = item[prop] ? item[prop].toString() : "";
+                          keyStr = String(keyObj);
+                        } else {
+                          keyObj = groupSpec._id;
+                          keyStr = String(keyObj);
+                        }
+
+                        if (!groups.has(keyStr)) {
+                          groups.set(keyStr, { _id: keyObj, count: 0 });
+                        }
+                        const entry = groups.get(keyStr);
+                        if (groupSpec.count && typeof groupSpec.count === "object" && groupSpec.count.$sum) {
+                          entry.count += groupSpec.count.$sum;
+                        } else {
+                          entry.count += 1;
+                        }
+                      }
+                      items = Array.from(groups.values());
+                    }
+
+                    if (stage.$sort) {
+                      const sortSpec = stage.$sort;
+                      items.sort((a, b) => {
+                        for (const [k, dir] of Object.entries(sortSpec)) {
+                          if (a[k] !== b[k]) {
+                            return dir === -1 ? (b[k] > a[k] ? 1 : -1) : (a[k] > b[k] ? 1 : -1);
+                          }
+                        }
+                        return 0;
+                      });
+                    }
+
+                    if (stage.$limit && typeof stage.$limit === "number") {
+                      items = items.slice(0, stage.$limit);
+                    }
+                  }
+
+                  return items;
+                },
+              };
             },
 
             async distinct(field, filter = {}) {

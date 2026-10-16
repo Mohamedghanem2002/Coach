@@ -43,18 +43,42 @@ export async function GET(request) {
     const captainUsers = allUsers.filter((u) => !isSystemAdmin(u));
 
     // 2. Fetch aggregation counts and infrastructure data
-    const [branchPlayerCounts, allBranches, allEvents] = await Promise.all([
-      db.collection("players").aggregate([
-        {
-          $group: {
-            _id: {
-              ownerId: { $toString: "$ownerId" },
-              branch: { $trim: { input: { $ifNull: ["$branch", ""] } } },
+    let branchPlayerCounts = [];
+    try {
+      if (typeof db.collection("players").aggregate === "function") {
+        branchPlayerCounts = await db.collection("players").aggregate([
+          {
+            $group: {
+              _id: {
+                ownerId: { $toString: "$ownerId" },
+                branch: { $trim: { input: { $ifNull: ["$branch", ""] } } },
+              },
+              count: { $sum: 1 },
             },
-            count: { $sum: 1 },
           },
-        },
-      ]).toArray(),
+        ]).toArray();
+      } else {
+        throw new Error("aggregate not supported");
+      }
+    } catch {
+      const allPlayers = await db.collection("players").find({}).toArray();
+      const countMap = new Map();
+      for (const p of allPlayers) {
+        const oId = p.ownerId ? p.ownerId.toString() : "";
+        const bName = (p.branch || "").trim();
+        const key = `${oId}:::${bName}`;
+        countMap.set(key, (countMap.get(key) || 0) + 1);
+      }
+      branchPlayerCounts = Array.from(countMap.entries()).map(([key, count]) => {
+        const [ownerId, branch] = key.split(":::");
+        return {
+          _id: { ownerId, branch },
+          count,
+        };
+      });
+    }
+
+    const [allBranches, allEvents] = await Promise.all([
       db.collection("branches").find({}).toArray(),
       db.collection("events").find({}).toArray(),
     ]);
