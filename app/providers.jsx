@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
+import PwaInstallPrompt from "../frontend/components/PwaInstallPrompt";
 
 function GlobalCaptainHeartbeat() {
   const { data: session, status } = useSession();
@@ -44,6 +45,7 @@ export default function Providers({ children }) {
   return (
     <SessionProvider>
       <GlobalCaptainHeartbeat />
+      <PwaInstallPrompt />
       {children}
     </SessionProvider>
   );

@@ -142,13 +142,11 @@ export default function SignInPage() {
 
   // Mode: "login" | "register" | "admin" | "forgot"
   const [mode, setMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      const adminParam = searchParams.get("admin");
-      const modeParam = searchParams.get("mode");
-      if (adminParam === "true") return "admin";
-      if (modeParam === "register") return "register";
-      if (modeParam === "forgot") return "forgot";
-    }
+    const adminParam = searchParams?.get("admin");
+    const modeParam = searchParams?.get("mode");
+    if (adminParam === "true") return "admin";
+    if (modeParam === "register") return "register";
+    if (modeParam === "forgot") return "forgot";
     return "login";
   });
 

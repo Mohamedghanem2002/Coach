@@ -13,6 +13,7 @@ import {
   ChevronDown,
   X,
   AlertTriangle,
+  Smartphone,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -112,6 +113,8 @@ function SettingsMenuItem({
           className={`rounded-full px-2 py-0.5 text-[9.5px] font-black shrink-0 ${
             badgeVariant === "red"
               ? "bg-red-500 text-white"
+              : badgeVariant === "emerald"
+              ? "bg-emerald-600 text-white"
               : "bg-amber-100 text-amber-800 border border-amber-200"
           }`}
         >
@@ -251,6 +254,22 @@ function SettingsFlyout({
               onClose={onClose}
             />
           )}
+
+          {/* 4. تثبيت CoatchMaster كتطبيق */}
+          <SettingsMenuItem
+            icon={Smartphone}
+            iconClass="text-emerald-600"
+            label="تثبيت CoatchMaster كتطبيق"
+            subtitle="إضافة التطبيق إلى الشاشة الرئيسية لهاتفك"
+            badge="تطبيق"
+            badgeVariant="emerald"
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("trigger_pwa_install"));
+              }
+            }}
+            onClose={onClose}
+          />
 
           {/* فاصل */}
           <div className="my-1.5 border-t border-slate-100" />

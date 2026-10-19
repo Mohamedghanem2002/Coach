@@ -10,10 +10,23 @@ const cairo = Cairo({
 });
 
 export const metadata = {
-  title: "CoachMaster | لوحة إدارة أكاديمية الكاراتيه",
-  description: "نظام CoachMaster الرقمي المتقدم لإدارة حضور واشتراكات لاعبي أكاديمية الكاراتيه",
+  title: "CoatchMaster | لوحة إدارة أكاديمية الكاراتيه",
+  description: "نظام CoatchMaster الرقمي المتقدم لإدارة حضور واشتراكات لاعبي أكاديمية الكاراتيه",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CoatchMaster",
+  },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
