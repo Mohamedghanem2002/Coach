@@ -46,6 +46,14 @@ export default function RootLayout({ children }) {
       data-scroll-behavior="smooth"
       className={`${cairo.variable} h-full antialiased overflow-x-hidden`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__deferredPrompt=e;});",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-cairo bg-[#f8fafc] text-slate-900 selection:bg-red-500 selection:text-white overflow-x-hidden w-full max-w-full">
         <Providers>{children}</Providers>
       </body>

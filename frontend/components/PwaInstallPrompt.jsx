@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import Image from "next/image";
-import { Download, X, Share, PlusSquare, CheckCircle2 } from "lucide-react";
+import { Download, X, Share, PlusSquare, CheckCircle2, MoreVertical, Smartphone } from "lucide-react";
 
 // Safe hydration helper using React's official useSyncExternalStore
 const emptySubscribe = () => () => {};
@@ -17,7 +17,7 @@ function useIsClientMounted() {
 export default function PwaInstallPrompt() {
   const isMounted = useIsClientMounted();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showIOSModal, setShowIOSModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [installedSuccess, setInstalledSuccess] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -47,21 +47,25 @@ export default function PwaInstallPrompt() {
     })();
 
   const triggerInstall = useCallback(async () => {
-    if (deferredPrompt) {
+    // If prompt is ready from browser (Chrome / Edge / Android)
+    const promptToUse = deferredPrompt || (typeof window !== "undefined" ? window.__deferredPrompt : null);
+    if (promptToUse) {
       try {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
+        await promptToUse.prompt();
+        const choice = await promptToUse.userChoice;
         if (choice.outcome === "accepted") {
           setIsDismissed(true);
         }
         setDeferredPrompt(null);
+        if (typeof window !== "undefined") window.__deferredPrompt = null;
       } catch (err) {
         console.warn("[PWA] Prompt error:", err);
       }
       return;
     }
 
-    setShowIOSModal(true);
+    // Otherwise show visual instructions
+    setShowModal(true);
   }, [deferredPrompt]);
 
   useEffect(() => {
@@ -75,21 +79,23 @@ export default function PwaInstallPrompt() {
     // 2. Listen for beforeinstallprompt (Android, Chrome, Edge)
     const handleBeforeInstall = (e) => {
       e.preventDefault();
+      window.__deferredPrompt = e;
       setDeferredPrompt(e);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
-    // 3. Listen for appinstalled
+    // 4. Listen for appinstalled
     const handleAppInstalled = () => {
       setInstalledSuccess(true);
       setDeferredPrompt(null);
+      if (typeof window !== "undefined") window.__deferredPrompt = null;
       setTimeout(() => setInstalledSuccess(false), 5000);
     };
 
     window.addEventListener("appinstalled", handleAppInstalled);
 
-    // 4. Custom global event to open install from anywhere (e.g. Header button)
+    // 5. Custom global event to open install from anywhere (e.g. Header button)
     const handleTriggerInstall = () => {
       triggerInstall();
     };
@@ -161,11 +167,11 @@ export default function PwaInstallPrompt() {
                     CoatchMaster
                   </h3>
                   <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 text-[9px] font-black text-red-600">
-                    تطبيق
+                    تطبيق رسمي
                   </span>
                 </div>
                 <p className="font-cairo text-[11px] text-slate-500 truncate mt-0.5">
-                  ثبّت التطبيق على جهازك للوصول السريع
+                  تثبيت كتطبيق مستقل بدون علامة المتصفح
                 </p>
               </div>
 
@@ -193,8 +199,8 @@ export default function PwaInstallPrompt() {
         </div>
       )}
 
-      {/* ── iOS / Manual Installation Modal ── */}
-      {showIOSModal && (
+      {/* ── Guided Installation Modal ── */}
+      {showModal && (
         <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/50 backdrop-blur-xs animate-fade-in">
           <div
             dir="rtl"
@@ -217,81 +223,133 @@ export default function PwaInstallPrompt() {
                     تثبيت CoatchMaster
                   </h4>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    على الشاشة الرئيسية لجهازك
+                    {isIOS ? "على شاشة الآيفون الرئيسية" : "كتطبيق أندرويد مستقل"}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setShowIOSModal(false)}
+                onClick={() => setShowModal(false)}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Step-by-Step Instructions */}
-            <div className="space-y-3 font-cairo text-xs text-slate-700">
-              {/* Step 1 */}
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black text-xs border border-blue-200">
-                  1
+            {/* Instruction Steps */}
+            {isIOS ? (
+              /* ── iOS (iPhone / iPad) Guide ── */
+              <div className="space-y-3 font-cairo text-xs text-slate-700">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black text-xs border border-blue-200">
+                    1
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900">
+                      اضغط على زر المشاركة{" "}
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-blue-600 font-bold mx-0.5">
+                        <Share className="h-3.5 w-3.5 inline ml-1" />
+                        مشاركة
+                      </span>
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      في شريط سفاري السفلي على الآيفون.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900">
-                    اضغط على زر المشاركة{" "}
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-blue-600 font-bold mx-0.5">
-                      <Share className="h-3.5 w-3.5 inline ml-1" />
-                      مشاركة
-                    </span>
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {isIOS
-                      ? "ستجده في الشريط السفلي في متصفح سفاري (Safari) على الآيفون."
-                      : "أو من قائمة خيارات المتصفح (⋮)."}
-                  </p>
-                </div>
-              </div>
 
-              {/* Step 2 */}
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 font-black text-xs border border-rose-200">
-                  2
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 font-black text-xs border border-rose-200">
+                    2
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900">
+                      مرر لأسفل واختر{" "}
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-rose-600 font-bold mx-0.5">
+                        <PlusSquare className="h-3.5 w-3.5 inline ml-1" />
+                        إضافة إلى الصفحة الرئيسية
+                      </span>
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900">
-                    مرر لأسفل واختر{" "}
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-rose-600 font-bold mx-0.5">
-                      <PlusSquare className="h-3.5 w-3.5 inline ml-1" />
-                      إضافة إلى الصفحة الرئيسية
-                    </span>
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    (Add to Home Screen)
-                  </p>
-                </div>
-              </div>
 
-              {/* Step 3 */}
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-black text-xs">
-                  3
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-emerald-950">
-                    اضغط على كلمة <strong>إضافة (Add)</strong> في أعلى الزاوية.
-                  </p>
-                  <p className="text-[11px] text-emerald-800 mt-0.5">
-                    وسيظهر تطبيق CoatchMaster بأيقونته الرسمية على هاتفك فوراً!
-                  </p>
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-black text-xs">
+                    3
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-emerald-950">
+                      اضغط على <strong>إضافة (Add)</strong> بالأعلى.
+                    </p>
+                    <p className="text-[11px] text-emerald-800 mt-0.5">
+                      وسيظهر التطبيق بأيقونته الرسمية المستقلة فوراً!
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* ── Android (Chrome / Edge) Guide: Crucial to avoid shortcut badge ── */
+              <div className="space-y-3 font-cairo text-xs text-slate-700">
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 font-bold leading-relaxed">
+                  💡 لتثبيته <strong>كتطبيق حقيقي مستقل بدون علامة كروم</strong>، اختر خيار &quot;تثبيت التطبيق&quot; كما في الخطوات التالية:
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-black text-xs border border-blue-200">
+                    1
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900">
+                      اضغط على قائمة المتصفح{" "}
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-900 font-bold mx-0.5">
+                        <MoreVertical className="h-3.5 w-3.5 inline ml-0.5 text-slate-600" />
+                        الخيارات (⋮)
+                      </span>
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      أعلى يسار أو يمين متصفح كروم.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-black text-xs">
+                    2
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-emerald-950">
+                      اختر{" "}
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white border border-emerald-300 text-emerald-700 font-black mx-0.5">
+                        <Smartphone className="h-3.5 w-3.5 inline ml-1 text-emerald-600" />
+                        تثبيت التطبيق (Install app)
+                      </span>
+                    </p>
+                    <p className="text-[10.5px] text-emerald-800 mt-1 font-semibold">
+                      ⚠️ انتبه: لا تختر &quot;إضافة إلى الشاشة الرئيسية&quot; لأنها تنشئ اختصاراً، بل اختر <strong>&quot;تثبيت التطبيق&quot;</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white font-black text-xs">
+                    3
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900">
+                      اضغط <strong>تثبيت (Install)</strong>.
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      سينزل كتطبيق مستقل في قائمة التطبيقات وشاشتك دون أي علامة لكروم.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Bottom button */}
             <button
               type="button"
-              onClick={() => setShowIOSModal(false)}
+              onClick={() => setShowModal(false)}
               className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white text-xs font-black transition-all cursor-pointer"
             >
               فهمت، شكراً لك 👍
