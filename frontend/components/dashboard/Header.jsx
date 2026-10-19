@@ -14,6 +14,7 @@ import {
   X,
   AlertTriangle,
   Smartphone,
+  Download,
 } from "lucide-react";
 import {
   getTodayBirthdays,
@@ -270,6 +271,29 @@ function SettingsFlyout({
             }}
             onClose={onClose}
           />
+
+          {/* 5. تحميل ملف تطبيق أندرويد (APK) المباشر */}
+          <a
+            href="/CoatchMaster.apk"
+            download="CoatchMaster.apk"
+            onClick={onClose}
+            className="w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 active:bg-slate-100 transition-all text-right select-none"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <Download className="h-4 w-4 shrink-0" />
+              </div>
+              <div className="min-w-0 text-right">
+                <p className="truncate font-bold leading-tight">تحميل تطبيق أندرويد (APK)</p>
+                <p className="text-[10.5px] font-normal text-slate-400 truncate mt-0.5 leading-tight">
+                  تنزيل ملف CoatchMaster.apk المباشر
+                </p>
+              </div>
+            </div>
+            <span className="rounded-full px-2 py-0.5 text-[9.5px] font-black shrink-0 bg-emerald-600 text-white">
+              APK
+            </span>
+          </a>
 
           {/* فاصل */}
           <div className="my-1.5 border-t border-slate-100" />

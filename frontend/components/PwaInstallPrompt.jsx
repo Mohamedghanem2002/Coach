@@ -339,9 +339,24 @@ export default function PwaInstallPrompt() {
                       اضغط <strong>تثبيت (Install)</strong>.
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      سينزل كتطبيق مستقل في قائمة التطبيقات وشاشتك دون أي علامة لكروم.
+                      سينزل كتطبيق مستقل في قائمة التطبيقات وشاشتك.
                     </p>
                   </div>
+                </div>
+
+                {/* خيار تحميل ملف APK المباشر */}
+                <div className="pt-2 border-t border-slate-100">
+                  <a
+                    href="/CoatchMaster.apk"
+                    download="CoatchMaster.apk"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-black transition-all shadow-xs"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>تحميل ملف التطبيق المباشر (CoatchMaster.apk)</span>
+                  </a>
+                  <p className="text-[10px] text-center text-slate-400 mt-1 font-medium">
+                    تطبيق أندرويد حقيقي مستقل بدون أي علامة متصفح
+                  </p>
                 </div>
               </div>
             )}
@@ -352,7 +367,7 @@ export default function PwaInstallPrompt() {
               onClick={() => setShowModal(false)}
               className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white text-xs font-black transition-all cursor-pointer"
             >
-              فهمت، شكراً لك 👍
+              إغلاق النافذة
             </button>
           </div>
         </div>

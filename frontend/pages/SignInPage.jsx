@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { useSession, getSession, signIn, signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -1067,6 +1068,52 @@ export default function SignInPage() {
                     </button>
                   </span>
                 )}
+              </div>
+
+              {/* بطاقة تثبيت تطبيق CoatchMaster */}
+              <div className="pt-2">
+                <div className="flex items-center justify-between gap-2 p-3 rounded-2xl border border-slate-200/90 bg-slate-50/80">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-9 w-9 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0 shadow-2xs">
+                      <Image
+                        src="/icons/icon-192.png"
+                        alt="CoatchMaster"
+                        width={36}
+                        height={36}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 text-right">
+                      <p className="text-xs font-black text-slate-900 truncate">
+                        تطبيق CoatchMaster
+                      </p>
+                      <p className="text-[10px] text-slate-500 truncate">
+                        تثبيت على جهازك للوصول السريع
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          window.dispatchEvent(new CustomEvent("trigger_pwa_install"));
+                        }
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white text-[11px] font-black transition-all cursor-pointer shadow-2xs"
+                    >
+                      تثبيت التطبيق
+                    </button>
+                    <a
+                      href="/CoatchMaster.apk"
+                      download="CoatchMaster.apk"
+                      title="تحميل ملف APK مباشر للأندرويد"
+                      className="px-2 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-95 text-[11px] font-black transition-all"
+                    >
+                      APK ⬇️
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
