@@ -663,10 +663,10 @@ export default function Header({
         {/* ═══════════════════════════════════════════════════════════════════
             الجزء السفلي (BOTTOM ROW): باقي العناصر (تمت إزالة اللاعبين والفعاليات)
             ═══════════════════════════════════════════════════════════════════ */}
-        <div className="flex min-h-[44px] py-1.5 items-center justify-between gap-2 relative overflow-visible">
+        <div className="flex min-h-[36px] py-1 items-center justify-between gap-1.5 sm:gap-2 relative overflow-visible">
           
           {/* الجانب الأيمن: تصدير إكسيل وأعياد الميلاد */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             
             {/* 1. زر تصدير إكسيل المميز */}
             {onOpenExportExcel && (
@@ -674,10 +674,10 @@ export default function Header({
                 type="button"
                 id="header-export-excel-btn"
                 onClick={() => onOpenExportExcel("players")}
-                className="flex h-8 sm:h-8.5 items-center gap-1.5 rounded-xl border border-emerald-200/90 bg-emerald-50/70 hover:bg-emerald-100/80 text-emerald-800 px-2.5 sm:px-3 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-97 select-none shrink-0"
+                className="flex h-7.5 sm:h-8.5 items-center gap-1 sm:gap-1.5 rounded-lg sm:rounded-xl border border-emerald-200/90 bg-emerald-50/70 hover:bg-emerald-100/80 text-emerald-800 px-2 sm:px-3 text-[11px] sm:text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-97 select-none shrink-0"
                 title="تصدير بيانات الأكاديمية واللاعبين إلى ملف إكسيل (.xlsx)"
               >
-                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <FileSpreadsheet className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-600 shrink-0" />
                 <span className="font-cairo">تصدير إكسيل</span>
               </button>
             )}
@@ -701,7 +701,7 @@ export default function Header({
                   }
                 }}
                 className={[
-                  "relative flex h-8 sm:h-8.5 items-center gap-1.5 rounded-xl border px-2.5 text-xs font-bold transition-all cursor-pointer active:scale-97 select-none shrink-0",
+                  "relative flex h-7.5 sm:h-8.5 items-center gap-1 sm:gap-1.5 rounded-lg sm:rounded-xl border px-2 sm:px-2.5 text-[11px] sm:text-xs font-bold transition-all cursor-pointer active:scale-97 select-none shrink-0",
                   activeMenu === "birthdays" || currentView === "birthdays"
                     ? "border-rose-300 bg-rose-50 text-rose-800 shadow-2xs"
                     : todayBirthdays.length > 0
@@ -710,7 +710,7 @@ export default function Header({
                 ].join(" ")}
                 title="أعياد ميلاد أبطال الأكاديمية"
               >
-                <Cake className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+                <Cake className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-rose-500 shrink-0" />
                 <span className="font-cairo">أعياد الميلاد</span>
                 {totalBirthdayCount > 0 && (
                   <CountBadge
@@ -737,7 +737,7 @@ export default function Header({
           </div>
 
           {/* الجانب الأيسر: اختصارات سريعة (دليل المنصة + نسخ سحابي) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             
             {/* دليل المنصة */}
             {onOpenFeatures && (
@@ -745,10 +745,10 @@ export default function Header({
                 type="button"
                 id="header-features-quick-btn"
                 onClick={onOpenFeatures}
-                className="flex h-8 sm:h-8.5 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 px-2.5 sm:px-3 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-97 select-none shrink-0"
+                className="flex h-7.5 sm:h-8.5 items-center gap-1 sm:gap-1.5 rounded-lg sm:rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 px-2 sm:px-3 text-[11px] sm:text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-97 select-none shrink-0"
                 title="دليل ومميزات المنصة"
               >
-                <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-500 shrink-0" />
                 <span className="hidden xs:inline font-cairo">دليل المنصة</span>
                 {hasUnreadGuide && (
                   <span className="flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-red-500 px-0.5 text-[8.5px] font-black text-white">
@@ -765,10 +765,10 @@ export default function Header({
                 id="header-backup-quick-btn"
                 disabled={isCloudBackingUp}
                 onClick={onInstantCloudBackup}
-                className="flex h-8 sm:h-8.5 items-center gap-1.5 rounded-xl border border-sky-200/80 bg-sky-50/60 hover:bg-sky-100/80 text-sky-800 px-2.5 sm:px-3 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-97 select-none shrink-0 disabled:opacity-50"
+                className="flex h-7.5 sm:h-8.5 items-center gap-1 sm:gap-1.5 rounded-lg sm:rounded-xl border border-sky-200/80 bg-sky-50/60 hover:bg-sky-100/80 text-sky-800 px-2 sm:px-3 text-[11px] sm:text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-97 select-none shrink-0 disabled:opacity-50"
                 title="حفظ نسخة احتياطية سحابية فورية"
               >
-                <Cloud className={`h-3.5 w-3.5 text-sky-600 shrink-0 ${isCloudBackingUp ? "animate-pulse" : ""}`} />
+                <Cloud className={`h-3 w-3 sm:h-3.5 sm:w-3.5 text-sky-600 shrink-0 ${isCloudBackingUp ? "animate-pulse" : ""}`} />
                 <span className="hidden xs:inline font-cairo">
                   {isCloudBackingUp ? "جاري الحفظ..." : "نسخ سحابي"}
                 </span>

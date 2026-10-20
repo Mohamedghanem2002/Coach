@@ -832,7 +832,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="mt-3 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/80 md:bg-white md:shadow-xs">
+          <div className="mt-1 md:mt-3 overflow-visible rounded-2xl border-0 bg-transparent shadow-none md:overflow-hidden md:border md:border-slate-200/80 md:bg-white md:shadow-xs">
             <div className="hidden grid-cols-[minmax(320px,2.8fr)_100px_150px_210px_minmax(300px,2.6fr)_56px] xl:grid-cols-[minmax(360px,3.2fr)_110px_170px_230px_minmax(340px,2.8fr)_60px] items-center gap-4 xl:gap-5 border-b border-slate-200/90 bg-slate-50/95 px-6 xl:px-8 py-3.5 font-cairo text-xs xl:text-sm font-black text-slate-600 md:grid">
               <span>اللاعب والبيانات</span>
               <span>العمر</span>
