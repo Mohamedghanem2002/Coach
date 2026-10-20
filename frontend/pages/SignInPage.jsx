@@ -5,7 +5,7 @@ import { useSession, getSession, signIn, signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye, EyeOff, Mail, Lock, User, CheckCircle2, ShieldCheck,
-  Zap, Sparkles, Building2, Crown, KeyRound,
+  Zap, Sparkles, Building2, KeyRound,
   RefreshCw, AlertCircle, ShieldAlert, Users, CalendarCheck,
   CreditCard, Trophy, CloudUpload, Phone, Copy, Check,
   ExternalLink, ChevronDown, ChevronUp,
@@ -141,11 +141,9 @@ export default function SignInPage() {
   const searchParams = useSearchParams();
   const { data: currentSession, status: sessionStatus } = useSession();
 
-  // Mode: "login" | "register" | "admin" | "forgot"
+  // Mode: "login" | "register" | "forgot"
   const [mode, setMode] = useState(() => {
-    const adminParam = searchParams?.get("admin");
     const modeParam = searchParams?.get("mode");
-    if (adminParam === "true") return "admin";
     if (modeParam === "register") return "register";
     if (modeParam === "forgot") return "forgot";
     return "login";
@@ -265,19 +263,13 @@ export default function SignInPage() {
             if (recheckData?.suspended) { setSuspendedDetails(recheckData); setError(`⛔ تم إيقاف هذا الحساب من قِبل إدارة المنصة. سبب الإيقاف: ${recheckData.reason || "غير محدد"}`); setBusy(false); return; }
           }
         } catch { }
-        setError(mode === "admin" ? "البريد الإلكتروني أو كلمة المرور الإدارية غير صحيحة" : "البريد الإلكتروني أو كلمة المرور غير صحيحة");
+        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
         setBusy(false); return;
       }
       const session = await getSession();
       if (session?.user?.role === "admin") {
         router.push("/admin");
         router.refresh();
-        return;
-      }
-      if (mode === "admin") {
-        await signOut({ redirect: false });
-        setError("عذراً، هذا الحساب ليس لديه صلاحيات الوصول إلى لوحة تحكم المنصة الإدارية.");
-        setBusy(false);
         return;
       }
       router.push("/");
@@ -329,7 +321,6 @@ export default function SignInPage() {
     setError(""); setSuccess(""); setSuspendedDetails(null); setMode(m);
   }
 
-  const isAdmin = mode === "admin";
   const isForgot = mode === "forgot";
 
   const inputClass = "w-full rounded-xl border border-slate-200 bg-slate-50/60 pr-10 pl-3.5 py-2.5 sm:py-3 text-sm font-semibold text-slate-900 outline-none transition focus:bg-white focus:border-red-500 focus:ring-3 focus:ring-red-50 placeholder:text-slate-400 placeholder:font-normal";
@@ -468,15 +459,14 @@ export default function SignInPage() {
           <section className="p-5 sm:p-7 lg:p-8 bg-white flex flex-col justify-center order-1 lg:order-2">
             <div className="w-full max-w-md mx-auto space-y-4">
 
-              {/* ── التبويبات الثلاثة الرئيسية ── */}
+              {/* ── التبويبات الرئيسية ── */}
               <nav
                 aria-label="نوع تسجيل الدخول"
-                className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/80"
+                className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/80"
               >
                 {[
                   { id: "login", label: "تسجيل الدخول", icon: <Zap className="w-3.5 h-3.5" /> },
                   { id: "register", label: "حساب جديد", icon: <Sparkles className="w-3.5 h-3.5" /> },
-                  { id: "admin", label: "لوحة التحكم", icon: <Crown className="w-3.5 h-3.5" /> },
                 ].map((tab) => {
                   const isActive = (mode === tab.id || (tab.id === "login" && mode === "forgot"));
                   return (
@@ -489,9 +479,7 @@ export default function SignInPage() {
                         py-2 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer
                         flex items-center justify-center gap-1.5
                         ${isActive
-                          ? tab.id === "admin"
-                            ? "bg-amber-500 text-white shadow-xs"
-                            : "bg-white text-slate-900 shadow-xs border border-slate-200/90"
+                          ? "bg-white text-slate-900 shadow-xs border border-slate-200/90"
                           : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
                         }
                       `}
@@ -506,12 +494,7 @@ export default function SignInPage() {
               {/* ── عنوان النموذج التفاعلي ── */}
               <header className="text-right space-y-0.5">
                 <h1 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-                  {isAdmin ? (
-                    <>
-                      <span>دخول لوحة التحكم المركزية</span>
-                      <Crown className="w-4 h-4 text-amber-500" />
-                    </>
-                  ) : isForgot ? (
+                  {isForgot ? (
                     <>
                       <span>استعادة كلمة المرور</span>
                       <KeyRound className="w-4 h-4 text-red-600" />
@@ -523,9 +506,7 @@ export default function SignInPage() {
                   )}
                 </h1>
                 <p className="text-xs text-slate-500 font-medium">
-                  {isAdmin
-                    ? "أدخل البريد الإداري وكلمة المرور لإدارة منصة الأكاديميات."
-                    : isForgot
+                  {isForgot
                     ? (forgotStep === 1
                         ? "أدخل بريدك الإلكتروني المسجل وسنرسل لك رمز تحقق سريعاً."
                         : "أدخل رمز التحقق المكون من 6 أرقام لتعيين كلمة مرور جديدة.")
@@ -790,7 +771,7 @@ export default function SignInPage() {
                   {/* البريد الإلكتروني */}
                   <div>
                     <label htmlFor="auth-email" className="block text-xs font-bold text-slate-700 mb-1.5">
-                      {isAdmin ? "البريد الإلكتروني للإدارة" : "البريد الإلكتروني"} <span className="text-red-500">*</span>
+                      البريد الإلكتروني <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -800,7 +781,7 @@ export default function SignInPage() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder={isAdmin ? "mg0447837@gmail.com" : "coach@example.com"}
+                        placeholder="coach@example.com"
                         autoComplete="email"
                         dir="ltr"
                       />
@@ -811,7 +792,7 @@ export default function SignInPage() {
                   {/* كلمة المرور */}
                   <div>
                     <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700 mb-1.5">
-                      {isAdmin ? "كلمة المرور الإدارية" : "كلمة المرور"} <span className="text-red-500">*</span>
+                      كلمة المرور <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -999,11 +980,7 @@ export default function SignInPage() {
                   {/* زر الإرسال الرئيسي */}
                   <button
                     id="submit-auth-btn"
-                    className={`w-full h-11 rounded-xl font-bold text-white text-xs sm:text-sm active-press transition cursor-pointer flex items-center justify-center gap-2 shadow-xs ${
-                      isAdmin
-                        ? "bg-amber-500 hover:bg-amber-600"
-                        : "bg-red-600 hover:bg-red-700"
-                    }`}
+                    className="w-full h-11 rounded-xl font-bold text-white text-xs sm:text-sm active-press transition cursor-pointer flex items-center justify-center gap-2 shadow-xs bg-red-600 hover:bg-red-700"
                     type="submit"
                     disabled={busy}
                   >
@@ -1011,11 +988,6 @@ export default function SignInPage() {
                       <>
                         <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
                         <span>جاري المعالجة...</span>
-                      </>
-                    ) : isAdmin ? (
-                      <>
-                        <Crown className="h-4 w-4" />
-                        <span>فتح لوحة التحكم المركزية</span>
                       </>
                     ) : mode === "register" ? (
                       <>
@@ -1045,7 +1017,7 @@ export default function SignInPage() {
                       أنشئ حسابك الآن مجاناً
                     </button>
                   </span>
-                ) : mode === "register" ? (
+                ) : (
                   <span>
                     لديك حساب بالفعل؟{" "}
                     <button
@@ -1054,17 +1026,6 @@ export default function SignInPage() {
                       className="font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
                     >
                       تسجيل الدخول
-                    </button>
-                  </span>
-                ) : (
-                  <span>
-                    العودة لبوابة الكباتن؟{" "}
-                    <button
-                      type="button"
-                      onClick={() => clearAndSetMode("login")}
-                      className="font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
-                    >
-                      دخول الكابتن
                     </button>
                   </span>
                 )}
