@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import Image from "next/image";
-import { Download, X, Share, PlusSquare, CheckCircle2, MoreVertical, Smartphone } from "lucide-react";
+import { X, Share, PlusSquare, CheckCircle2, MoreVertical, Smartphone } from "lucide-react";
 
 // Safe hydration helper using React's official useSyncExternalStore
 const emptySubscribe = () => () => {};
@@ -171,7 +171,7 @@ export default function PwaInstallPrompt() {
                   </span>
                 </div>
                 <p className="font-cairo text-[11px] text-slate-500 truncate mt-0.5">
-                  تثبيت كتطبيق مستقل بدون علامة المتصفح
+                  تثبيت أيقونة التطبيق على شاشة هاتفك
                 </p>
               </div>
 
@@ -181,8 +181,8 @@ export default function PwaInstallPrompt() {
                 onClick={triggerInstall}
                 className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 active:scale-95 text-white px-3 sm:px-3.5 py-2 text-xs font-black shadow-md shadow-red-500/25 transition-all cursor-pointer shrink-0"
               >
-                <Download className="h-3.5 w-3.5 shrink-0" />
-                <span>تثبيت</span>
+                <Smartphone className="h-3.5 w-3.5 shrink-0" />
+                <span>تثبيت الأيقونة</span>
               </button>
 
               {/* Close Button */}
@@ -220,10 +220,10 @@ export default function PwaInstallPrompt() {
                 </div>
                 <div>
                   <h4 className="font-cairo text-sm font-black text-slate-900">
-                    تثبيت CoatchMaster
+                    تثبيت أيقونة CoatchMaster
                   </h4>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    {isIOS ? "على شاشة الآيفون الرئيسية" : "كتطبيق أندرويد مستقل"}
+                    {isIOS ? "على شاشة الآيفون الرئيسية" : "على شاشة هاتفك الرئيسية"}
                   </p>
                 </div>
               </div>
@@ -291,7 +291,7 @@ export default function PwaInstallPrompt() {
               /* ── Android (Chrome / Edge) Guide: Crucial to avoid shortcut badge ── */
               <div className="space-y-3 font-cairo text-xs text-slate-700">
                 <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 font-bold leading-relaxed">
-                  💡 لتثبيته <strong>كتطبيق حقيقي مستقل بدون علامة كروم</strong>، اختر خيار &quot;تثبيت التطبيق&quot; كما في الخطوات التالية:
+                  💡 لتثبيت <strong>أيقونة التطبيق على شاشة هاتفك</strong>، اتبع الخطوات البسيطة التالية:
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
@@ -321,11 +321,11 @@ export default function PwaInstallPrompt() {
                       اختر{" "}
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white border border-emerald-300 text-emerald-700 font-black mx-0.5">
                         <Smartphone className="h-3.5 w-3.5 inline ml-1 text-emerald-600" />
-                        تثبيت التطبيق (Install app)
+                        تثبيت التطبيق أو إضافة للشاشة
                       </span>
                     </p>
                     <p className="text-[10.5px] text-emerald-800 mt-1 font-semibold">
-                      ⚠️ انتبه: لا تختر &quot;إضافة إلى الشاشة الرئيسية&quot; لأنها تنشئ اختصاراً، بل اختر <strong>&quot;تثبيت التطبيق&quot;</strong>.
+                      اختر <strong>&quot;تثبيت التطبيق&quot;</strong> أو <strong>&quot;إضافة إلى الشاشة الرئيسية&quot;</strong> لتثبيت أيقونة التطبيق مباشرة.
                     </p>
                   </div>
                 </div>
@@ -336,27 +336,12 @@ export default function PwaInstallPrompt() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-900">
-                      اضغط <strong>تثبيت (Install)</strong>.
+                      اضغط <strong>تثبيت (Install)</strong> أو <strong>إضافة (Add)</strong>.
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      سينزل كتطبيق مستقل في قائمة التطبيقات وشاشتك.
+                      ستظهر أيقونة التطبيق فوراً على شاشتك الرئيسية للوصول السريع.
                     </p>
                   </div>
-                </div>
-
-                {/* خيار تحميل ملف APK المباشر */}
-                <div className="pt-2 border-t border-slate-100">
-                  <a
-                    href="/CoatchMaster.apk"
-                    download="CoatchMaster.apk"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-black transition-all shadow-xs"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>تحميل ملف التطبيق المباشر (CoatchMaster.apk)</span>
-                  </a>
-                  <p className="text-[10px] text-center text-slate-400 mt-1 font-medium">
-                    تطبيق أندرويد حقيقي مستقل بدون أي علامة متصفح
-                  </p>
                 </div>
               </div>
             )}
