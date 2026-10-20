@@ -141,20 +141,20 @@ export default function PwaInstallPrompt() {
       {shouldShowBanner && (
         <div
           dir="rtl"
-          className="fixed bottom-3 sm:bottom-5 inset-x-3 sm:inset-x-auto sm:left-6 z-50 sm:max-w-md animate-fade-in"
+          className="fixed bottom-2 sm:bottom-4 inset-x-2 sm:inset-x-auto sm:left-4 z-50 sm:max-w-sm animate-fade-in"
         >
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 p-3 sm:p-3.5 shadow-2xl shadow-slate-900/20 backdrop-blur-md">
+          <div className="relative overflow-hidden rounded-xl border border-slate-200/90 bg-white/95 p-2 sm:p-2.5 shadow-xl shadow-slate-900/15 backdrop-blur-md">
             {/* Ambient light glow */}
-            <div className="absolute top-0 right-0 -mr-6 -mt-6 h-20 w-20 rounded-full bg-red-500/10 blur-xl pointer-events-none" />
+            <div className="absolute top-0 right-0 -mr-4 -mt-4 h-16 w-16 rounded-full bg-red-500/10 blur-xl pointer-events-none" />
 
-            <div className="flex items-center gap-3">
-              {/* App Icon (White/Light Karate Emblem) */}
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs">
+            <div className="flex items-center gap-2">
+              {/* App Icon */}
+              <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-slate-200/80 bg-white shadow-2xs">
                 <Image
                   src="/icons/icon-192.png"
                   alt="CoatchMaster Icon"
-                  width={48}
-                  height={48}
+                  width={36}
+                  height={36}
                   className="h-full w-full object-cover"
                   priority
                 />
@@ -162,16 +162,16 @@ export default function PwaInstallPrompt() {
 
               {/* Text Info */}
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-cairo text-xs sm:text-sm font-black text-slate-900 truncate">
+                <div className="flex items-center gap-1">
+                  <h3 className="font-cairo text-xs font-black text-slate-900 truncate">
                     CoatchMaster
                   </h3>
-                  <span className="rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 text-[9px] font-black text-red-600">
-                    تطبيق رسمي
+                  <span className="rounded bg-red-50 border border-red-200/80 px-1 py-0.2 text-[8.5px] font-black text-red-600">
+                    تطبيق
                   </span>
                 </div>
-                <p className="font-cairo text-[11px] text-slate-500 truncate mt-0.5">
-                  تثبيت أيقونة التطبيق على شاشة هاتفك
+                <p className="font-cairo text-[10px] text-slate-500 truncate leading-tight">
+                  إضافة للشاشة الرئيسية
                 </p>
               </div>
 
@@ -179,9 +179,9 @@ export default function PwaInstallPrompt() {
               <button
                 type="button"
                 onClick={triggerInstall}
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 active:scale-95 text-white px-3 sm:px-3.5 py-2 text-xs font-black shadow-md shadow-red-500/25 transition-all cursor-pointer shrink-0"
+                className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 active:scale-95 text-white px-2.5 py-1.5 text-[11px] font-black shadow-xs transition-all cursor-pointer shrink-0"
               >
-                <Smartphone className="h-3.5 w-3.5 shrink-0" />
+                <Smartphone className="h-3 w-3 shrink-0" />
                 <span>تثبيت الأيقونة</span>
               </button>
 
@@ -190,9 +190,9 @@ export default function PwaInstallPrompt() {
                 type="button"
                 onClick={handleDismiss}
                 aria-label="إغلاق التنبيه"
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
+                className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>

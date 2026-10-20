@@ -41,7 +41,7 @@ function PlayerAvatar({ player, birthdayInfo, isNew, size = "md" }) {
 
   return (
     <div
-      className={`relative flex ${sizeClass} shrink-0 items-center justify-center overflow-hidden rounded-xl bg-red-600 font-black text-white shadow-xs ring-2 transition-all duration-200 ${ringClass}`}
+      className={`relative flex ${sizeClass} shrink-0 items-center justify-center overflow-hidden ${size === "sm" ? "rounded-lg" : "rounded-xl"} bg-red-600 font-black text-white shadow-xs ring-2 transition-all duration-200 ${ringClass}`}
     >
       {player.photo ? (
         <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
@@ -71,20 +71,20 @@ function PlayerAvatar({ player, birthdayInfo, isNew, size = "md" }) {
 function SpecialBadge({ birthdayInfo, isNew }) {
   if (birthdayInfo?.isToday)
     return (
-      <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 px-2 py-0.5 text-[9.5px] font-black text-white shadow-xs ring-1 ring-rose-300/60 animate-pulse">
+      <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 px-1.5 py-0.5 text-[8.5px] font-black text-white shadow-xs ring-1 ring-rose-300/60 animate-pulse">
         🎂 اليوم
       </span>
     );
   if (birthdayInfo?.daysLeft === 1)
     return (
-      <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-2 py-0.5 text-[9.5px] font-black text-white shadow-xs ring-1 ring-amber-300/60 animate-pulse">
+      <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-1.5 py-0.5 text-[8.5px] font-black text-white shadow-xs ring-1 ring-amber-300/60 animate-pulse">
         🎂 غداً
       </span>
     );
   if (isNew)
     return (
-      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-2 py-0.5 text-[9.5px] font-black text-white shadow-xs ring-1 ring-emerald-300/60">
-        <Sparkles className="h-2.5 w-2.5 text-amber-200 shrink-0" />
+      <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-1.5 py-0.5 text-[8.5px] font-black text-white shadow-xs ring-1 ring-emerald-300/60">
+        <Sparkles className="h-2 w-2 text-amber-200 shrink-0" />
         <span>جديد</span>
       </span>
     );
@@ -92,23 +92,27 @@ function SpecialBadge({ birthdayInfo, isNew }) {
 }
 
 /* ── Attendance button ──────────────────────────────────────────────────── */
-function AttendBtn({ active, color, busy, disabled, onClick, children }) {
+function AttendBtn({ active, color, busy, disabled, onClick, children, size = "md" }) {
   const colors = {
     green: {
-      active: "bg-emerald-600 text-white ring-2 ring-emerald-200 shadow-xs",
+      active: "bg-emerald-600 text-white ring-1.5 ring-emerald-200 shadow-xs",
       inactive: "bg-slate-50 text-slate-600 border border-slate-200/70 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200",
     },
     red: {
-      active: "bg-rose-600 text-white ring-2 ring-rose-200 shadow-xs",
+      active: "bg-rose-600 text-white ring-1.5 ring-rose-200 shadow-xs",
       inactive: "bg-slate-50 text-slate-600 border border-slate-200/70 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200",
     },
   };
+  const sizeClasses = size === "sm"
+    ? "min-h-[34px] px-2.5 py-1.5 rounded-lg text-[11px] gap-1"
+    : "min-h-[44px] px-3 py-2 rounded-xl text-xs gap-1.5";
+
   return (
     <button
       type="button"
       disabled={Boolean(disabled)}
       onClick={disabled || busy ? undefined : onClick}
-      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl min-h-[44px] px-3 py-2 transition-all duration-100 touch-manipulation font-black text-xs ${
+      className={`flex flex-1 items-center justify-center transition-all duration-100 touch-manipulation font-black ${sizeClasses} ${
         disabled
           ? "opacity-35 grayscale pointer-events-none cursor-not-allowed bg-slate-100 text-slate-400 border border-slate-200/80 shadow-none ring-0 select-none"
           : `${active ? colors[color].active : colors[color].inactive} active:scale-95 cursor-pointer`
@@ -116,7 +120,7 @@ function AttendBtn({ active, color, busy, disabled, onClick, children }) {
     >
       {children}
       {busy && (
-        <span className="h-3 w-3 rounded-full border-2 border-current/40 border-t-current animate-spin shrink-0" />
+        <span className="h-2.5 w-2.5 rounded-full border-2 border-current/40 border-t-current animate-spin shrink-0" />
       )}
     </button>
   );
@@ -297,45 +301,47 @@ function PlayerRow({
   return (
     <>
       {/* ════════════════════ MOBILE CARD (< md) ════════════════════ */}
-      <div className={`md:hidden relative mb-2.5 rounded-2xl border p-3 sm:p-3.5 transition-all duration-200 w-full max-w-full min-w-0 overflow-hidden ${cardBg}`}>
+      <div className={`md:hidden relative mb-2 rounded-xl border p-2.5 transition-all duration-200 w-full max-w-full min-w-0 overflow-hidden ${cardBg}`}>
 
         {/* Left accent strip for selected */}
         {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-red-500" />}
 
         {/* ── Row 1: Checkbox + Avatar + Name + Open ── */}
-        <div className="flex items-start justify-between gap-2.5">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <input
               type="checkbox"
               aria-label={`اختيار ${player.name}`}
               checked={isSelected}
               onChange={() => onToggleSelection(player._id)}
-              className="h-5 w-5 shrink-0 rounded-md border-slate-300 accent-red-600 cursor-pointer touch-manipulation"
+              className="h-4 w-4 shrink-0 rounded border-slate-300 accent-red-600 cursor-pointer touch-manipulation"
             />
             <button
               type="button"
-              className="flex min-w-0 flex-1 items-center gap-2.5 text-right cursor-pointer touch-manipulation"
+              className="flex min-w-0 flex-1 items-center gap-2 text-right cursor-pointer touch-manipulation"
               onClick={onOpen}
             >
-              <PlayerAvatar player={player} birthdayInfo={birthdayInfo} isNew={isNew} />
+              <PlayerAvatar player={player} birthdayInfo={birthdayInfo} isNew={isNew} size="sm" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <strong className="truncate text-sm font-black text-slate-900">{player.name}</strong>
+                  <strong className="truncate text-xs sm:text-sm font-black text-slate-900 leading-tight">
+                    {player.name}
+                  </strong>
                   <SpecialBadge birthdayInfo={birthdayInfo} isNew={isNew} />
                 </div>
-                {/* Belt + Level */}
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
-                  <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-extrabold ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
+                {/* Belt + Level + FileNumber */}
+                <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[9.5px]">
+                  <span className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-extrabold border ${beltStyle.bg} ${beltStyle.text} ${beltStyle.border}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${beltStyle.dot}`} />
                     حزام {player.belt || "أبيض"}
                   </span>
-                  <span className="inline-flex items-center rounded-md bg-red-50 border border-red-200/80 px-1.5 py-0.5 font-black text-red-700">
+                  <span className="inline-flex items-center rounded bg-red-50 border border-red-200/80 px-1.5 py-0.5 font-black text-red-700">
                     مستوى {player.level || "A"}
                   </span>
                   {player.fileNumber && (
-                    <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 border border-slate-200/90 px-1.5 py-0.5 font-bold text-slate-700">
-                      <span className="text-slate-400">ملف:</span>
-                      <span>#{player.fileNumber}</span>
+                    <span className="inline-flex items-center gap-0.5 rounded bg-slate-100 border border-slate-200/90 px-1 py-0.5 font-bold text-slate-600">
+                      <span className="text-slate-400">#</span>
+                      <span>{player.fileNumber}</span>
                     </span>
                   )}
                 </div>
@@ -347,65 +353,71 @@ function PlayerRow({
           <button
             type="button"
             onClick={onOpen}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200/70 text-slate-400 hover:text-slate-700 active:scale-90 transition-all touch-manipulation cursor-pointer"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-50 border border-slate-200/70 text-slate-400 hover:text-slate-700 active:scale-90 transition-all touch-manipulation cursor-pointer"
             title="عرض ملف اللاعب"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3.5 w-3.5" />
           </button>
         </div>
 
         {/* ── Row 2: Meta info + Quick contact ── */}
-        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] font-bold text-slate-500">
-          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 max-w-[130px] truncate">
-              <Building2 className="h-3 w-3 text-slate-400 shrink-0" />
+        <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1.5 border-t border-slate-100 pt-1.5 text-[10px] font-bold text-slate-500">
+          <div className="flex flex-wrap items-center gap-1 min-w-0">
+            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 max-w-[120px] truncate text-[10px]">
+              <Building2 className="h-2.5 w-2.5 text-slate-400 shrink-0" />
               <span className="truncate">{player.branch}</span>
             </span>
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 shrink-0">
-              <Cake className="h-3 w-3 text-slate-400 shrink-0" />
+            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 shrink-0 text-[10px]">
+              <Cake className="h-2.5 w-2.5 text-slate-400 shrink-0" />
               <span>{currentAge} سنة</span>
             </span>
             {totalSessions > 0 && (
-              <span className={`rounded-md px-1.5 py-0.5 font-extrabold shrink-0 ${attendanceRate >= 75 ? "bg-emerald-50 text-emerald-700"
-                  : attendanceRate >= 50 ? "bg-amber-50 text-amber-700"
-                    : "bg-rose-50 text-rose-700"
+              <span className={`rounded px-1.5 py-0.5 font-extrabold shrink-0 text-[9.5px] ${attendanceRate >= 75 ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                  : attendanceRate >= 50 ? "bg-amber-50 text-amber-700 border border-amber-200/60"
+                    : "bg-rose-50 text-rose-700 border border-rose-200/60"
                 }`}>
                 التزام {attendanceRate}%
               </span>
             )}
           </div>
           {phone && (
-            <div className="flex items-center gap-1.5 shrink-0">
-              <a href={`tel:${phone}`} className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 hover:bg-blue-100 active-press transition-all touch-manipulation" title={`اتصال (${phone})`}>
-                <Phone className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1 shrink-0">
+              <a
+                href={`tel:${phone}`}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 border border-blue-200/80 text-blue-700 hover:bg-blue-100 active-press transition-all touch-manipulation"
+                title={`اتصال (${phone})`}
+              >
+                <Phone className="h-3 w-3" />
               </a>
               <a
                 href={cleanPhone ? `https://wa.me/${cleanPhone}` : "https://wa.me"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 hover:bg-emerald-100 active-press transition-all touch-manipulation"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200/80 text-emerald-700 hover:bg-emerald-100 active-press transition-all touch-manipulation"
                 title={`واتساب (${phone})`}
               >
-                <MessageCircle className="h-3.5 w-3.5" />
+                <MessageCircle className="h-3 w-3" />
               </a>
             </div>
           )}
         </div>
 
         {/* ── Row 3: Attendance Buttons ── */}
-        <div className="mt-2.5">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="mt-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
             <AttendBtn
+              size="sm"
               active={isWorkingDay && present}
               color="green"
               busy={attendanceBusy === "present"}
               disabled={!isWorkingDay}
               onClick={() => updateAttendance(present ? "absent" : "present")}
             >
-              <Check className="h-4 w-4 stroke-[3]" />
+              <Check className="h-3.5 w-3.5 stroke-[2.5]" />
               <span>{present ? "حاضر التدريب ✓" : "تسجيل حضور"}</span>
             </AttendBtn>
             <AttendBtn
+              size="sm"
               active={isWorkingDay && absent}
               color="red"
               busy={attendanceBusy === "absent"}
@@ -414,13 +426,13 @@ function PlayerRow({
                 if (present) updateAttendance("absent");
               }}
             >
-              <X className="h-4 w-4 stroke-[3]" />
+              <X className="h-3.5 w-3.5 stroke-[2.5]" />
               <span>{absent ? "غائب (تلقائي) ×" : "غائب اليوم"}</span>
             </AttendBtn>
           </div>
           {!isWorkingDay && (
-            <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[10.5px] font-bold text-slate-400 select-none">
-              <Lock className="h-3 w-3 text-slate-400 shrink-0" />
+            <div className="mt-1 flex items-center justify-center gap-1 text-[9.5px] font-bold text-slate-400 select-none">
+              <Lock className="h-2.5 w-2.5 text-slate-400 shrink-0" />
               {isTooEarly
                 ? <span>التسجيل يبدأ الساعة <strong className="text-red-500">{formatTime12h(branchDaySchedule.from)}</strong> (لسه مجاش الوقت)</span>
                 : <span>غير متاح اليوم (أيام عمل الصالة: {formattedBranchDays})</span>
@@ -430,17 +442,19 @@ function PlayerRow({
         </div>
 
         {/* ── Row 4: Financial Buttons ── */}
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-1.5 grid grid-cols-2 gap-1.5">
           {/* Subscription */}
-          <button type="button" onClick={() => { setPaymentModalTab("subscription"); setShowPaymentModal(true); }}
-            className={`w-full min-h-[46px] rounded-xl p-2 text-xs transition-all duration-150 flex items-center justify-between gap-1.5 active-press touch-manipulation cursor-pointer border ${paymentBtnClass}`}
+          <button
+            type="button"
+            onClick={() => { setPaymentModalTab("subscription"); setShowPaymentModal(true); }}
+            className={`w-full min-h-[38px] rounded-lg px-2 py-1 text-[11px] transition-all duration-150 flex items-center justify-between gap-1 active-press touch-manipulation cursor-pointer border ${paymentBtnClass}`}
             title={`تسجيل اشتراك شهر ${paymentMonth}`}
           >
-            <div className="flex items-center gap-1.5 min-w-0">
-              <CreditCard className={`h-3.5 w-3.5 shrink-0 ${paymentStatus === "paid" ? "text-emerald-600" : paymentStatus === "partially_paid" ? "text-amber-600" : "text-rose-500"}`} />
+            <div className="flex items-center gap-1 min-w-0">
+              <CreditCard className={`h-3 w-3 shrink-0 ${paymentStatus === "paid" ? "text-emerald-600" : paymentStatus === "partially_paid" ? "text-amber-600" : "text-rose-500"}`} />
               <div className="text-right min-w-0">
-                <div className="text-[10px] text-slate-500 font-bold leading-tight">اشتراك الشهر</div>
-                <div className="font-black text-[11px] truncate">
+                <div className="text-[9px] text-slate-500 font-bold leading-none">اشتراك الشهر</div>
+                <div className="font-black text-[10px] truncate mt-0.5 leading-tight">
                   {paymentStatus === "paid"
                     ? <span className="text-emerald-700">{paidAmount > 0 ? `${paidAmount} ج.م ✓` : "مسدد ✓"}</span>
                     : paymentStatus === "partially_paid"
@@ -451,19 +465,23 @@ function PlayerRow({
                 </div>
               </div>
             </div>
-            <span className={`text-[9px] font-black rounded-md px-1.5 py-0.5 shrink-0 ${paymentBadgeClass}`}>تحصيل 💳</span>
+            <span className={`text-[8.5px] font-black rounded px-1.5 py-0.5 shrink-0 ${paymentBadgeClass}`}>
+              تحصيل 💳
+            </span>
           </button>
 
           {/* Purchases */}
-          <button type="button" onClick={() => { setPaymentModalTab("purchases"); setShowPaymentModal(true); }}
-            className={`w-full min-h-[46px] rounded-xl p-2 text-xs transition-all duration-150 flex items-center justify-between gap-1.5 active-press touch-manipulation cursor-pointer border ${purchaseBtnClass}`}
+          <button
+            type="button"
+            onClick={() => { setPaymentModalTab("purchases"); setShowPaymentModal(true); }}
+            className={`w-full min-h-[38px] rounded-lg px-2 py-1 text-[11px] transition-all duration-150 flex items-center justify-between gap-1 active-press touch-manipulation cursor-pointer border ${purchaseBtnClass}`}
             title="حساب مشتريات وأدوات اللاعب"
           >
-            <div className="flex items-center gap-1.5 min-w-0">
-              <ShoppingBag className={`h-3.5 w-3.5 shrink-0 ${purchasesSummary.count === 0 ? "text-slate-400" : hasPurchasePending ? "text-amber-600" : "text-emerald-600"}`} />
+            <div className="flex items-center gap-1 min-w-0">
+              <ShoppingBag className={`h-3 w-3 shrink-0 ${purchasesSummary.count === 0 ? "text-slate-400" : hasPurchasePending ? "text-amber-600" : "text-emerald-600"}`} />
               <div className="text-right min-w-0">
-                <div className="text-[10px] text-slate-500 font-bold leading-tight">أدوات وبدل</div>
-                <div className="font-black text-[11px] truncate">
+                <div className="text-[9px] text-slate-500 font-bold leading-none">أدوات وبدل</div>
+                <div className="font-black text-[10px] truncate mt-0.5 leading-tight">
                   {purchasesSummary.count === 0 ? (
                     <span className="text-slate-500">+ تسجيل أدوات</span>
                   ) : purchasesSummary.remainingAmount > 0 ? (
@@ -472,14 +490,14 @@ function PlayerRow({
                       {purchasesSummary.undeliveredCount > 0 ? " (لم يستلم ⏳)" : ""}
                     </span>
                   ) : purchasesSummary.undeliveredCount > 0 ? (
-                    <span className="text-amber-700">مسدد (لم يستلم بعد ⏳)</span>
+                    <span className="text-amber-700">مسدد (لم يستلم ⏳)</span>
                   ) : (
                     <span className="text-emerald-700">خالصة ومستلمة ✓</span>
                   )}
                 </div>
               </div>
             </div>
-            <span className={`text-[9px] font-black rounded-md px-1.5 py-0.5 shrink-0 ${purchaseBadgeClass}`}>
+            <span className={`text-[8.5px] font-black rounded px-1.5 py-0.5 shrink-0 ${purchaseBadgeClass}`}>
               {purchasesSummary.count === 0
                 ? "＋"
                 : purchasesSummary.remainingAmount > 0
