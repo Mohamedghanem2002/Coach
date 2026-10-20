@@ -293,7 +293,12 @@ export default function Home() {
         onRefresh={() => {
           setSubscriptionInactive(null);
           setLoading(true);
-          window.location.reload();
+          reloadAllData().finally(() => setLoading(false));
+        }}
+        onReactivated={() => {
+          setSubscriptionInactive(null);
+          setLoading(false);
+          reloadAllData();
         }}
       />
     );

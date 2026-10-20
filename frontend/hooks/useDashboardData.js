@@ -263,7 +263,26 @@ export function useDashboardData({ setNotice } = {}) {
         router.push("/auth/signin");
         return;
       }
+      if (bootstrapRes.status === 403) {
+        const errData = await bootstrapRes.json().catch(() => ({}));
+        if (errData?.isAdmin || errData?.redirectTo) {
+          router.replace(errData.redirectTo || "/admin");
+          return;
+        }
+        if (
+          errData.code === "SUBSCRIPTION_INACTIVE" ||
+          errData.code === "ACCOUNT_SUSPENDED" ||
+          errData.error === "SUBSCRIPTION_INACTIVE" ||
+          errData.error === "ACCOUNT_SUSPENDED"
+        ) {
+          setSubscriptionInactive(errData);
+          setLoading(false);
+          return;
+        }
+      }
       if (bootstrapRes.ok) {
+        // If previously inactive, clear inactive state immediately
+        setSubscriptionInactive(null);
         const data = await bootstrapRes.json();
         if (data?.success) {
           if (Array.isArray(data.players)) {
@@ -302,12 +321,31 @@ export function useDashboardData({ setNotice } = {}) {
   const reloadAllData = useCallback(async () => {
     try {
       const res = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
+      if (res.status === 403) {
+        const errData = await res.json().catch(() => ({}));
+        if (
+          errData.code === "SUBSCRIPTION_INACTIVE" ||
+          errData.code === "ACCOUNT_SUSPENDED" ||
+          errData.error === "SUBSCRIPTION_INACTIVE" ||
+          errData.error === "ACCOUNT_SUSPENDED"
+        ) {
+          setSubscriptionInactive(errData);
+          setLoading(false);
+          return;
+        }
+      }
       if (res.ok) {
+        setSubscriptionInactive(null);
         const data = await res.json();
         if (data?.success) {
           setPlayers(Array.isArray(data.players) ? data.players.map((p) => normalizePlayer(p)) : []);
           setBranches(Array.isArray(data.branches) ? data.branches : []);
           setEvents(Array.isArray(data.events) ? data.events : []);
+          if (data.user) {
+            if (data.user.name) setLocalCoachName(data.user.name);
+            if (data.user.academyName) setLocalAcademyName(data.user.academyName);
+            setAccountUser(data.user);
+          }
           return;
         }
       }
@@ -316,16 +354,30 @@ export function useDashboardData({ setNotice } = {}) {
         fetch("/api/branches", { cache: "no-store" }),
         fetch("/api/events", { cache: "no-store" }),
       ]);
-      if (pRes.ok) {
-        const pData = await pRes.json();
+      if (pRes.status === 403 || bRes.status === 403 || eRes.status === 403) {
+        const pErr = await pRes.json().catch(() => ({}));
+        const bErr = await bRes.json().catch(() => ({}));
+        const eErr = await eRes.json().catch(() => ({}));
+        const inactive =
+          (pErr.code === "SUBSCRIPTION_INACTIVE" || pErr.code === "ACCOUNT_SUSPENDED") ? pErr
+          : (bErr.code === "SUBSCRIPTION_INACTIVE" || bErr.code === "ACCOUNT_SUSPENDED") ? bErr
+          : (eErr.code === "SUBSCRIPTION_INACTIVE" || eErr.code === "ACCOUNT_SUSPENDED") ? eErr
+          : null;
+        if (inactive) {
+          setSubscriptionInactive(inactive);
+          setLoading(false);
+          return;
+        }
+      }
+      if (pRes.ok && bRes.ok) {
+        setSubscriptionInactive(null);
+        const [pData, bData, eData] = await Promise.all([
+          pRes.json(),
+          bRes.json(),
+          eRes.ok ? eRes.json() : [],
+        ]);
         setPlayers(Array.isArray(pData) ? pData.map((p) => normalizePlayer(p)) : []);
-      }
-      if (bRes.ok) {
-        const bData = await bRes.json();
         setBranches(Array.isArray(bData) ? bData : []);
-      }
-      if (eRes.ok) {
-        const eData = await eRes.json();
         setEvents(Array.isArray(eData) ? eData : []);
       }
     } catch (err) {
@@ -347,13 +399,13 @@ export function useDashboardData({ setNotice } = {}) {
       }
     };
 
+    // Fast polling (every 3.5s) to detect status changes across devices
     const pollInterval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        revalidateDashboard({ silent: true });
-      }
-    }, 15000);
+      revalidateDashboard({ silent: true });
+    }, 3500);
 
     let channel = null;
+    let adminBc = null;
     try {
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
         channel = new BroadcastChannel("coachmaster_sync");
@@ -379,6 +431,20 @@ export function useDashboardData({ setNotice } = {}) {
             setBranches(payload.branches);
           }
           revalidateDashboard({ silent: true });
+        };
+
+        // Instant admin sync listener for 0ms cross-tab reaction
+        adminBc = new BroadcastChannel("coachmaster_admin_sync");
+        adminBc.onmessage = (event) => {
+          const type = event.data?.type;
+          if (
+            type === "ACADEMY_SUSPENDED" ||
+            type === "ACADEMY_REACTIVATED" ||
+            type === "SUBSCRIPTION_EXTENDED" ||
+            type === "PAYMENT_TOGGLED"
+          ) {
+            revalidateDashboard({ silent: false });
+          }
         };
       }
     } catch (_) {}
@@ -406,6 +472,9 @@ export function useDashboardData({ setNotice } = {}) {
       clearInterval(pollInterval);
       if (channel) {
         channel.close();
+      }
+      if (adminBc) {
+        adminBc.close();
       }
     };
   }, [sessionStatus, revalidateDashboard]);

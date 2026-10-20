@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import {
   ShieldAlert,
@@ -28,9 +28,73 @@ export default function SubscriptionSuspended({
   subscriptionExpiresAt,
   adminEmail = "mg0447837@gmail.com",
   onRefresh,
+  onReactivated,
 }) {
   const [copiedNumber, setCopiedNumber] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Auto-detect when admin reactivates or extends account in real-time
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkActivation = async () => {
+      try {
+        const res = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (data?.success && !cancelled) {
+            if (typeof onReactivated === "function") {
+              onReactivated();
+            } else if (typeof onRefresh === "function") {
+              onRefresh();
+            } else {
+              window.location.reload();
+            }
+          }
+        }
+      } catch (_) {}
+    };
+
+    // 1. Check immediately when user switches tabs or window gets focus
+    const handleFocus = () => checkActivation();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") checkActivation();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    // 2. Poll every 2.5s for zero-click automatic recovery
+    const interval = setInterval(checkActivation, 2500);
+
+    // 3. Instant 0ms reaction if admin is on the same browser/machine
+    let adminBc = null;
+    try {
+      if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+        adminBc = new BroadcastChannel("coachmaster_admin_sync");
+        adminBc.onmessage = (event) => {
+          const type = event.data?.type;
+          if (
+            type === "ACADEMY_REACTIVATED" ||
+            type === "SUBSCRIPTION_EXTENDED" ||
+            type === "PAYMENT_TOGGLED"
+          ) {
+            checkActivation();
+          }
+        };
+      }
+    } catch (_) {}
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      if (adminBc) {
+        adminBc.close();
+      }
+    };
+  }, [onReactivated, onRefresh]);
 
   const isSuspendedByAdmin = reason === "suspended";
 
@@ -69,11 +133,25 @@ export default function SubscriptionSuspended({
     }
   };
 
-  const handleRefreshClick = () => {
+  const handleRefreshClick = async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await fetch("/api/dashboard/bootstrap", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data?.success) {
+          if (typeof onReactivated === "function") {
+            onReactivated();
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+
     if (onRefresh) {
-      setIsRefreshing(true);
       onRefresh();
     }
+    setTimeout(() => setIsRefreshing(false), 1200);
   };
 
   const defaultSuspensionMessage = isSuspendedByAdmin
